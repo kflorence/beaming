@@ -1,0 +1,15 @@
+{
+  "name": "untitled",
+  "source": "src/index.html",
+  "browserslist": "defaults",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build"
+  },
+  "devDependencies": {
+    "parcel": "^2.4.0"
+  },
+  "dependencies": {
+    "paper": "^0.12.15"
+  }
+}
