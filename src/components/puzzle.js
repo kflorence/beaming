@@ -8,43 +8,40 @@ import { Terminus } from './terminus';
 
 export class Puzzle {
   constructor(configuration) {
-    const tileSize = configuration.layout.tileSize;
+    this.tileSize = configuration.layout.tileSize;
+    this.layout = new Layout(configuration.layout);
 
-    let layout = new Layout(configuration.layout);
-
-    let reflectors = [];
+    this.reflectors = [];
     for (let i = 0; i < configuration.objects.reflectors.length; i++) {
       const reflectorConfiguration = configuration.objects.reflectors[i];
-      const tile = layout.getTileByOffset(
+      const tile = this.layout.getTileByOffset(
         new OffsetCoordinates(...reflectorConfiguration.offsetCoordinates)
       );
       const reflector = new Reflector(tile, reflectorConfiguration);
       tile.objects.reflector = reflector;
-      reflectors.push(reflector);
+      this.reflectors.push(reflector);
     }
 
-    let beams = [];
-    let terminuses = [];
+    this.beams = [];
+    this.terminuses = [];
     for (let i = 0; i < configuration.objects.terminuses.length; i++) {
       const terminusConfiguration = configuration.objects.terminuses[i];
-      const tile = layout.getTileByOffset(
+      const tile = this.layout.getTileByOffset(
         new OffsetCoordinates(...terminusConfiguration.offsetCoordinates)
       );
       const terminus = new Terminus(tile, terminusConfiguration);
       tile.objects.terminus = terminus;
-      terminuses.push(terminus);
-      beams.push(
-        ...terminus.openings.map((direction) => {
-          return new Beam(terminus, { direction });
-        })
-      );
+      this.terminuses.push(terminus);
+      const beams = terminus.openings.map((direction) => {
+        return new Beam(terminus, { activated: terminus.activated, direction });
+      });
+      tile.objects.beams.push(...beams);
+      this.beams.push(...beams);
     }
 
-    this.beams = beams;
-    this.layout = layout;
-    this.reflectors = reflectors;
-    this.terminuses = terminuses;
-    this.tileSize = tileSize;
+    this.beams.forEach((beam) => beam.group.bringToFront());
+    this.reflectors.forEach((reflector) => reflector.group.bringToFront());
+
     this.selectedTile = null;
 
     paper.view.onClick = (event) => {
@@ -52,7 +49,7 @@ export class Puzzle {
       const hit = paper.project.hitTest(event.point);
       if (hit && hit.item.data.type == "tile") {
         const [q, r] = hit.item.data.axialId.split(",");
-        tile = layout.getTileByAxial(new CubeCoordinates(q, r));
+        tile = this.layout.getTileByAxial(new CubeCoordinates(q, r));
       }
       this.onClick(event, tile);
     };
@@ -66,9 +63,6 @@ export class Puzzle {
       if (tile == this.selectedTile) {
         if (tile.objects.reflector) {
           tile.objects.reflector.onClick(event);
-          this.beams.forEach((beam) => {
-            beam.update();
-          });
         }
       }
 
@@ -82,10 +76,12 @@ export class Puzzle {
       }
 
       if (tile.objects.terminus) {
-        tile.objects.terminus.onClick(event);
+        tile.objects.beams
+          .filter((beam) => beam.startTerminus == tile.objects.terminus)
+          .forEach((beam) => beam.toggle(event));
       }
 
-      tile.objects.beams.forEach((beam) => beam.update());
+      this.beams.forEach((beam) => beam.update());
     }
 
     // Something other than a tile was clicked
@@ -95,4 +91,3 @@ export class Puzzle {
     }
   }
 }
-

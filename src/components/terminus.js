@@ -13,13 +13,18 @@ export class Terminus {
     this.ui = ui;
   }
 
-  onClick(event) {
-    this.activated = !this.activated;
+  activate() {
+    this.activated = true;
+    this.update();
+  }
+
+  deactivate() {
+    this.activated = false;
     this.update();
   }
 
   update() {
-    // TODO
+    this.ui.hexagon.opacity = this.activated ? 1 : 0.5;
   }
 
   static ui(tile, configuration) {
