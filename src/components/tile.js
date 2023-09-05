@@ -73,7 +73,7 @@ export class Tile {
 
   onSelected(event) {
     this.selected = true;
-    this.indicator.opacity = 0.25;
+    this.indicator.opacity = 0.15;
   }
 
   onUnselected(event) {

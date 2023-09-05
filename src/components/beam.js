@@ -51,10 +51,10 @@ export class Beam {
 
       // Check for other beams.
       const otherBeams = currentTile.objects.beams
-        .filter((beam) => beam.activated && beam.startTerminus != this.startTerminus);
+        .filter((beam) => beam.activated && beam.startTerminus !== this.startTerminus);
       if (otherBeams.length) {
         // If there's another beam in the start terminus, de-activate.
-        if (segmentIndex == 0) {
+        if (segmentIndex === 0) {
           console.log("deactivating");
           this.activated = false;
           this.update();
@@ -75,7 +75,7 @@ export class Beam {
       }
 
       // If the direction has changed, remove the current segments and all that follow.
-      if (currentSegment && currentSegment.directionTo != nextDirectionTo) {
+      if (currentSegment && currentSegment.directionTo !== nextDirectionTo) {
         // Remove beam references in tiles
         for (let i = segmentIndex; i < this.segments.length; i++) {
           currentSegment = this.segments[i];
@@ -112,7 +112,7 @@ export class Beam {
         this.path.add(currentTile.center);
       }
 
-      if (currentTile.objects.terminus && currentTile.objects.terminus != this.startTerminus) {
+      if (currentTile.objects.terminus && currentTile.objects.terminus !== this.startTerminus) {
         // We have reached a terminus with an opening that matches our direction.
         if (currentTile.objects.terminus.openings.includes(nextDirectionFrom)) {
           console.log("end terminus reached");
@@ -133,12 +133,12 @@ export class Beam {
 
       if (
         currentTile.objects.reflector &&
-        nextDirectionTo == currentDirectionTo
+        nextDirectionTo === currentDirectionTo
       ) {
-        // TODO: ideally the path would be updated to meet the end of the relfector instead of the center of the tile.
+        // TODO: ideally the path would be updated to meet the end of the reflector instead of the center of the tile.
         console.log("stopping path due to collision with reflector");
         break;
-      } else if (nextDirectionTo == currentDirectionFrom) {
+      } else if (nextDirectionTo === currentDirectionFrom) {
         console.log("stopping path due to reflection back at self");
         break;
       }

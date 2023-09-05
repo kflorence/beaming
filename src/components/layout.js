@@ -19,7 +19,7 @@ export class Layout {
       const rowOffset = Math.floor(r / 2);
       const rowWidth = rowConfiguration.length * tileParameters.width;
       const startingOffsetX =
-        center.x - rowWidth / 2 + (r % 2 == 0 ? 0 : tileParameters.inradius);
+        center.x - rowWidth / 2 + (r % 2 === 0 ? 0 : tileParameters.inradius);
 
       let row = new Array(rowConfiguration.length);
       for (let c = 0; c < rowConfiguration.length; c++) {

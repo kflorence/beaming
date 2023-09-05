@@ -7,7 +7,16 @@
   </head>
   <body>
     <section id="container">
-      <canvas id="canvas"></canvas>
+      <div id="error"></div>
+      <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
+      <footer>
+        <div class="left">
+          <label>
+            <select name="id" id="puzzle-selector"></select>
+          </label>
+        </div>
+        <div id="restart">restart</div>
+      </footer>
     </section>
   </body>
   <script type="module" src="index.js"></script>
