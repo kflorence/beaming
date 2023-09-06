@@ -1,68 +1,11 @@
 import paper from 'paper';
 import { Puzzle } from './components/puzzle';
+import puzzles from './puzzles';
 
-const puzzles = {
-  "01": {
-    layout: {
-      tiles: [
-        [null, null, {}, null],
-        [null, {}, null, null],
-        [null, {}, null, null]
-      ],
-      tileSize: 100
-    },
-    objects: {
-      termini: [
-        {
-          color: "blue",
-          offsetCoordinates: [0, 2],
-          openings: [2]
-        },
-        {
-          color: "blue",
-          offsetCoordinates: [2, 1],
-          openings: [5]
-        }
-      ]
-    }
-  },
-  "02": {
-    layout: {
-      tiles: [
-        [null, null, {}, null, null],
-        [null, {}, {}, null, null],
-        [null, {}, null, {}, null],
-        [null, {}, {}, null, null],
-        [null, null, {}, null, null]
-      ],
-      tileSize: 100
-    },
-    objects: {
-      reflectors: [
-        {
-          direction: 3,
-          offsetCoordinates: [2, 1]
-        },
-        {
-          direction: 3,
-          offsetCoordinates: [2, 3]
-        }
-      ],
-      termini: [
-        {
-          color: "blue",
-          offsetCoordinates: [0, 2],
-          openings: [1, 2]
-        },
-        {
-          color: "blue",
-          offsetCoordinates: [4, 2],
-          openings: [4, 5]
-        }
-      ]
-    }
-  }
-};
+document.body.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+  return false;
+});
 
 const canvas = document.getElementById("puzzle");
 const error = document.getElementById("error");

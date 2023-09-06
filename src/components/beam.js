@@ -103,18 +103,23 @@ export class Beam {
           currentTile.objects.beams.push(this);
         }
 
-        const data = {
+        this.segments[segmentIndex] = {
           directionFrom: nextDirectionFrom,
           directionTo: nextDirectionTo,
           tile: currentTile
         };
-        this.segments[segmentIndex] = data;
+
         this.path.add(currentTile.center);
       }
 
       if (currentTile.objects.terminus && currentTile.objects.terminus !== this.startTerminus) {
+        // The terminus is for a different color.
+        if (currentTile.objects.terminus.color !== this.startTerminus.color) {
+          console.log("end terminus wrong color");
+          break;
+        }
         // We have reached a terminus with an opening that matches our direction.
-        if (currentTile.objects.terminus.openings.includes(nextDirectionFrom)) {
+        else if (currentTile.objects.terminus.openings.includes(nextDirectionFrom)) {
           console.log("end terminus reached");
           if (!this.endTerminus) {
             this.endTerminus = currentTile.objects.terminus;

@@ -1,3 +1,8 @@
+export const Buttons = Object.freeze({
+  Left: 0,
+  Right: 2
+});
+
 export function getReflectedDirection(beamDirection, reflectorDirection) {
   const beamAngle = beamDirection * 60;
   const reflectorAngle = reflectorDirection * 30;

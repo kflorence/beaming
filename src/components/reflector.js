@@ -1,4 +1,5 @@
 import { Group, Path, Point, Size } from 'paper';
+import { Buttons } from "./util";
 
 export class Reflector {
   constructor(tile, configuration) {
@@ -34,7 +35,17 @@ export class Reflector {
   }
 
   onClick(event) {
-    this.direction = this.direction == 11 ? 0 : this.direction + 1;
-    this.group.rotate(30, this.wall.bounds.center);
+    const direction = event.event.button === Buttons.Left ? -1 : 1;
+
+    // The reflector rotates like the hands on a clock. Zero and twelve are equal.
+    if (direction < 0 && this.direction === 0) {
+      this.direction = 11;
+    } else if (direction > 0 && this.direction === 12) {
+      this.direction = 1;
+    } else {
+      this.direction += direction;
+    }
+
+    this.group.rotate(direction * 30, this.wall.bounds.center);
   }
 }

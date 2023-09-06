@@ -64,23 +64,20 @@ export class Puzzle {
   onClick(event) {
     const tile = this.getTile(event);
 
-    console.log(tile);
-
     if (tile) {
       if (tile.objects.reflector) {
         tile.objects.reflector.onClick(event);
       }
 
       if (tile.objects.terminus) {
+        // Toggle each beam which originates at this terminus
         tile.objects.beams
-          .filter((beam) => beam.startTerminus === tile.objects.terminus)
-          .forEach((beam) => beam.toggle(event));
+            .filter((beam) => beam.startTerminus === tile.objects.terminus)
+            .forEach((beam) => beam.toggle(event));
       }
-
-      this.beams.forEach((beam) => beam.update());
     }
 
-    // TODO Check for solution
+    this.update();
   }
 
   onMouseMove(event) {
@@ -100,5 +97,12 @@ export class Puzzle {
       this.selectedTile.onUnselected(event);
       this.selectedTile = null;
     }
+  }
+
+  update() {
+    this.beams.forEach((beam) => beam.update());
+
+    // Check for solution.
+
   }
 }
