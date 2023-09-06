@@ -1,7 +1,7 @@
-import { Path, Point } from 'paper';
+import { Path, Point } from 'paper'
 
 export class Tile {
-  constructor(
+  constructor (
     axialCoordinates,
     offsetCoordinates,
     layoutParameters,
@@ -12,8 +12,8 @@ export class Tile {
     const data = {
       axialId: axialCoordinates.toString(),
       offsetId: offsetCoordinates.toString(),
-      type: "tile"
-    };
+      type: 'tile'
+    }
 
     const center = new Point(
       layoutParameters.startingOffsetX +
@@ -22,13 +22,13 @@ export class Tile {
       layoutParameters.startingOffsetY +
       tileParameters.circumradius +
       layoutParameters.row * tileParameters.offsetY
-    );
+    )
 
     const style = Object.assign(
       {},
       Tile.styles.default,
       configuration.style || {}
-    );
+    )
 
     const hexagon = new Path.RegularPolygon({
       center,
@@ -37,9 +37,9 @@ export class Tile {
       radius: tileParameters.circumradius,
       sides: 6,
       style
-    });
+    })
 
-    const indicatorWidth = tileParameters.circumradius / 12;
+    const indicatorWidth = tileParameters.circumradius / 12
     const indicator = new Path.RegularPolygon({
       center,
       closed: true,
@@ -47,45 +47,45 @@ export class Tile {
       opacity: 0,
       radius: tileParameters.circumradius - indicatorWidth - style.strokeWidth,
       sides: 6,
-      strokeColor: "black",
+      strokeColor: 'black',
       strokeWidth: indicatorWidth
-    });
+    })
 
-    this.axialCoordinates = axialCoordinates;
-    this.center = center;
-    this.configuration = configuration;
-    this.data = data;
-    this.getNeighboringTile = getNeighboringTile;
-    this.hexagon = hexagon;
-    this.indicator = indicator;
-    this.indicatorWidth = indicatorWidth;
-    this.layoutParameters = layoutParameters;
+    this.axialCoordinates = axialCoordinates
+    this.center = center
+    this.configuration = configuration
+    this.data = data
+    this.getNeighboringTile = getNeighboringTile
+    this.hexagon = hexagon
+    this.indicator = indicator
+    this.indicatorWidth = indicatorWidth
+    this.layoutParameters = layoutParameters
     this.objects = {
       beams: [],
       reflector: null,
       terminus: null
-    };
-    this.offsetCoordinates = offsetCoordinates;
-    this.parameters = tileParameters;
-    this.selected = false;
-    this.style = style;
+    }
+    this.offsetCoordinates = offsetCoordinates
+    this.parameters = tileParameters
+    this.selected = false
+    this.style = style
   }
 
-  onSelected(event) {
-    this.selected = true;
-    this.indicator.opacity = 0.15;
+  onSelected (event) {
+    this.selected = true
+    this.indicator.opacity = 0.15
   }
 
-  onUnselected(event) {
-    this.selected = false;
-    this.indicator.opacity = 0;
+  onUnselected (event) {
+    this.selected = false
+    this.indicator.opacity = 0
   }
 
-  static parameters(height) {
-    const circumradius = height / 2;
-    const width = Math.sqrt(3) * circumradius;
-    const inradius = width / 2;
-    const offsetY = height * (3 / 4);
+  static parameters (height) {
+    const circumradius = height / 2
+    const width = Math.sqrt(3) * circumradius
+    const inradius = width / 2
+    const offsetY = height * (3 / 4)
 
     return {
       circumradius,
@@ -93,21 +93,21 @@ export class Tile {
       inradius,
       offsetY,
       width
-    };
+    }
   }
 
   static styles = {
     default: {
-      fillColor: "white",
-      strokeColor: "black",
+      fillColor: 'white',
+      strokeColor: 'black',
       strokeWidth: 1
     },
     hover: {
-      strokeColor: "gray",
+      strokeColor: 'gray',
       strokeWidth: 2
     },
     selected: {
-      strokeColor: "blue",
+      strokeColor: 'blue',
       strokeWidth: 2
     }
   }

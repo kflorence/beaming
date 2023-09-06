@@ -1,7 +1,7 @@
-import { default as puzzleOne } from './01';
-import { default as puzzleTwo } from './02';
+import one from './01'
+import two from './02'
 
 export default {
-  "01": puzzleOne,
-  "02": puzzleTwo
-};
+  '01': one,
+  '02': two
+}

@@ -10,15 +10,15 @@ export default {
   objects: {
     termini: [
       {
-        color: "blue",
+        color: 'blue',
         offsetCoordinates: [0, 2],
         openings: [2]
       },
       {
-        color: "blue",
+        color: 'blue',
         offsetCoordinates: [2, 1],
         openings: [5]
       }
     ]
   }
-};
+}

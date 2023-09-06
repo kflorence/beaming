@@ -7,7 +7,8 @@
     "build": "parcel build"
   },
   "devDependencies": {
-    "parcel": "^2.4.0"
+    "parcel": "^2.4.0",
+    "standard": "^17.1.0"
   },
   "dependencies": {
     "paper": "^0.12.15"
