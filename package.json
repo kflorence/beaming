@@ -10,10 +10,10 @@
     "test": "standard"
   },
   "devDependencies": {
-    "parcel": "^2.4.0",
+    "parcel": "^2.9.3",
     "standard": "^17.1.0"
   },
   "dependencies": {
-    "paper": "^0.12.15"
+    "paper": "^0.12.17"
   }
 }
