@@ -1,10 +1,13 @@
 {
   "name": "untitled",
   "source": "src/index.html",
-  "browserslist": "defaults",
+  "browserslist": [
+    "defaults"
+  ],
   "scripts": {
     "start": "parcel",
-    "build": "parcel build"
+    "build": "parcel build",
+    "test": "standard"
   },
   "devDependencies": {
     "parcel": "^2.4.0",

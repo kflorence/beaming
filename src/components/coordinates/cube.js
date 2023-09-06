@@ -33,7 +33,7 @@ export class CubeCoordinates {
     // PaperJS uses a clockwise system, but the axial system is counter-clockwise.
     // So we flip the direction here by subtracting it from six
     return CubeCoordinates.directions[6 - direction]
-  };
+  }
 
   static directions = [
     new CubeCoordinates(1, 0),
