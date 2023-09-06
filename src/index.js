@@ -2,6 +2,7 @@ import paper from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
 
+// Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {
   event.preventDefault()
   return false
@@ -9,7 +10,7 @@ document.body.addEventListener('contextmenu', (event) => {
 
 const canvas = document.getElementById('puzzle')
 const error = document.getElementById('error')
-// const restart = document.getElementById("restart");
+// const reset = document.getElementById("reset");
 
 const puzzleSelector = document.getElementById('puzzle-selector')
 for (const id of Object.keys(puzzles)) {

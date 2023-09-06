@@ -10,6 +10,7 @@ export class Puzzle {
   constructor (configuration) {
     const reflectors = configuration.objects.reflectors || []
 
+    this.configuration = configuration
     this.tileSize = configuration.layout.tileSize
     this.layout = new Layout(configuration.layout)
 
@@ -97,9 +98,21 @@ export class Puzzle {
     }
   }
 
+  solved () {
+    // TODO
+    // - lock the puzzle to prevent changes
+    // - fade each hex the beam moves through to the color of the beam
+    // - activate the "reset" button and make it operable
+    console.log("puzzle solved")
+  }
+
   update () {
     this.beams.forEach((beam) => beam.update())
 
     // Check for solution.
+    const connections = this.beams.filter((beam) => beam.activated && beam.endTerminus)
+    if (this.configuration.connections === connections.length) {
+      this.solved()
+    }
   }
 }

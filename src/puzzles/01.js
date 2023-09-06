@@ -1,4 +1,5 @@
 export default {
+  connections: 1,
   layout: {
     tiles: [
       [null, null, {}, null],
