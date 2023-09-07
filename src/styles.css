@@ -38,12 +38,12 @@ footer div {
   justify-content: center;
 }
 
-#restart {
+#reset {
   display: none;
   color: blue;
   cursor: pointer;
 }
 
-#restart:hover {
+#reset:hover {
   text-decoration: underline;
 }

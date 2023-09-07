@@ -2,19 +2,20 @@ import { Group, Path, Point } from 'paper'
 import { getOppositeDirection, getReflectedDirection } from './util'
 
 export class Beam {
-  constructor (terminus, configuration) {
+  constructor (startTerminus, configuration) {
     this.activated = configuration.activated || false
     this.initialDirection = configuration.direction
+    this.color = startTerminus.ui.color
     this.path = new Path({
       opacity: 0,
-      strokeColor: terminus.ui.color,
+      strokeColor: this.color,
       strokeJoin: 'round',
-      strokeWidth: terminus.ui.openingWidth / 2
+      strokeWidth: startTerminus.ui.openingWidth / 2
     })
     this.segments = []
 
-    this.startBulb = Beam.bulb(terminus)
-    this.startTerminus = terminus
+    this.startBulb = Beam.bulb(startTerminus)
+    this.startTerminus = startTerminus
     this.endBulb = null
     this.endTerminus = null
 
@@ -112,16 +113,17 @@ export class Beam {
         this.path.add(currentTile.center)
       }
 
-      if (currentTile.objects.terminus && currentTile.objects.terminus !== this.startTerminus) {
+      const terminus = currentTile.objects.terminus
+      if (terminus && terminus !== this.startTerminus) {
         // The terminus is for a different color.
-        if (currentTile.objects.terminus.color !== this.startTerminus.color) {
+        if (terminus.ui.color !== this.color) {
           console.log('end terminus wrong color')
           break
-        } else if (currentTile.objects.terminus.openings.includes(nextDirectionFrom)) {
+        } else if (terminus.openings.includes(nextDirectionFrom)) {
           // We have reached a terminus with an opening that matches our direction.
           console.log('end terminus reached')
           if (!this.endTerminus) {
-            this.endTerminus = currentTile.objects.terminus
+            this.endTerminus = terminus
             this.endBulb = Beam.bulb(this.endTerminus)
             this.group.addChild(this.endBulb)
           }

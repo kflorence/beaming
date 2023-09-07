@@ -2,7 +2,7 @@ import { Beam } from './beam'
 import { CubeCoordinates } from './coordinates/cube'
 import { Layout } from './layout'
 import { OffsetCoordinates } from './coordinates/offset'
-import paper from 'paper'
+import paper, { Path } from 'paper'
 import { Reflector } from './reflector'
 import { Terminus } from './terminus'
 
@@ -13,6 +13,7 @@ export class Puzzle {
     this.configuration = configuration
     this.tileSize = configuration.layout.tileSize
     this.layout = new Layout(configuration.layout)
+    this.solved = false
 
     this.reflectors = []
     for (let i = 0; i < reflectors.length; i++) {
@@ -63,6 +64,10 @@ export class Puzzle {
   }
 
   onClick (event) {
+    if (this.solved) {
+      return
+    }
+
     const tile = this.getTile(event)
 
     if (tile) {
@@ -82,6 +87,10 @@ export class Puzzle {
   }
 
   onMouseMove (event) {
+    if (this.solved) {
+      return
+    }
+
     const tile = this.getTile(event)
 
     if (tile) {
@@ -98,12 +107,39 @@ export class Puzzle {
     }
   }
 
-  solved () {
-    // TODO
-    // - lock the puzzle to prevent changes
-    // - fade each hex the beam moves through to the color of the beam
-    // - activate the "reset" button and make it operable
-    console.log("puzzle solved")
+  onSolved (beams) {
+    this.solved = true
+
+    if (this.selectedTile) {
+      this.selectedTile.onUnselected(null)
+      this.selectedTile = null
+    }
+
+    const event = new CustomEvent('puzzle-solved')
+    document.dispatchEvent(event)
+
+    // TODO add 'fade-in' animation
+    // Loop through each connected beam and draw a mask over each tile
+    beams.forEach((beam) => beam.segments.forEach((segment) => {
+      const style = Object.assign(
+        {},
+        segment.tile.style,
+        {
+          fillColor: beam.color
+        }
+      )
+      // eslint-disable-next-line no-new
+      new Path.RegularPolygon({
+        center: segment.tile.center,
+        closed: true,
+        opacity: 0.25,
+        radius: segment.tile.parameters.circumradius + 1,
+        sides: 6,
+        style
+      })
+    }))
+
+    console.log('puzzle solved')
   }
 
   update () {
@@ -112,7 +148,7 @@ export class Puzzle {
     // Check for solution.
     const connections = this.beams.filter((beam) => beam.activated && beam.endTerminus)
     if (this.configuration.connections === connections.length) {
-      this.solved()
+      this.onSolved(connections)
     }
   }
 }
