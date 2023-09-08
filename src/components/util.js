@@ -3,6 +3,12 @@ export const Buttons = Object.freeze({
   Right: 2
 })
 
+export const Modifiers = Object.freeze({
+  Locked: "locked",
+  Movable: "movable",
+  Rotatable: "rotatable"
+})
+
 export function getReflectedDirection (beamDirection, reflectorDirection) {
   const beamAngle = beamDirection * 60
   const reflectorAngle = reflectorDirection * 30

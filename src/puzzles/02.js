@@ -28,7 +28,7 @@ export default {
         openings: [1, 2]
       },
       {
-        color: 'blue',
+        color: 'red',
         offsetCoordinates: [4, 2],
         openings: [4, 5]
       }

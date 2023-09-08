@@ -11,6 +11,15 @@ document.body.addEventListener('contextmenu', (event) => {
 const canvas = document.getElementById('puzzle')
 const error = document.getElementById('error')
 
+// Handle puzzle reset button
+const reset = document.getElementById('reset')
+reset.addEventListener('click', () => {
+  if (reset.style.display === 'block') {
+    selectPuzzle(puzzleSelector.value)
+  }
+})
+
+// Handle puzzle selector dropdown
 const puzzleSelector = document.getElementById('puzzle-selector')
 for (const id of Object.keys(puzzles)) {
   const option = document.createElement('option')
@@ -31,6 +40,8 @@ function selectPuzzle (id) {
     paper.project.clear()
   }
 
+  reset.style.display = 'none'
+
   if (configuration) {
     puzzleSelector.value = id
     document.body.style.cursor = 'auto'
@@ -48,14 +59,6 @@ paper.setup(canvas)
 
 const params = new URLSearchParams(window.location.search)
 selectPuzzle(params.get('id') || '01')
-
-const reset = document.getElementById('reset')
-reset.addEventListener('click', () => {
-  if (reset.style.display === 'block') {
-    reset.style.display = 'none'
-    selectPuzzle(puzzleSelector.value)
-  }
-})
 
 document.addEventListener('puzzle-solved', () => {
   document.body.style.cursor = 'not-allowed'

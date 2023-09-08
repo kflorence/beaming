@@ -1,4 +1,3 @@
-import { Beam } from './beam'
 import { CubeCoordinates } from './coordinates/cube'
 import { Layout } from './layout'
 import { OffsetCoordinates } from './coordinates/offset'
@@ -8,45 +7,33 @@ import { Terminus } from './terminus'
 
 export class Puzzle {
   constructor (configuration) {
-    const reflectors = configuration.objects.reflectors || []
-
     this.configuration = configuration
     this.tileSize = configuration.layout.tileSize
-    this.layout = new Layout(configuration.layout)
-    this.solved = false
-
-    this.reflectors = []
-    for (let i = 0; i < reflectors.length; i++) {
-      const reflectorConfiguration = reflectors[i]
-      const tile = this.layout.getTileByOffset(
-        new OffsetCoordinates(...reflectorConfiguration.offsetCoordinates)
-      )
-      const reflector = new Reflector(tile, reflectorConfiguration)
-      tile.objects.reflector = reflector
-      this.reflectors.push(reflector)
-    }
-
-    this.beams = []
-    this.termini = []
-    for (let i = 0; i < configuration.objects.termini.length; i++) {
-      const terminusConfiguration = configuration.objects.termini[i]
-      const tile = this.layout.getTileByOffset(
-        new OffsetCoordinates(...terminusConfiguration.offsetCoordinates)
-      )
-      const terminus = new Terminus(tile, terminusConfiguration)
-      tile.objects.terminus = terminus
-      this.termini.push(terminus)
-      const beams = terminus.openings.map((direction) => {
-        return new Beam(terminus, { activated: terminus.activated, direction })
-      })
-      tile.objects.beams.push(...beams)
-      this.beams.push(...beams)
-    }
-
-    this.beams.forEach((beam) => beam.group.bringToFront())
-    this.reflectors.forEach((reflector) => reflector.group.bringToFront())
 
     this.selectedTile = null
+    this.solved = false
+
+    this.layout = new Layout(configuration.layout)
+
+    this.termini = configuration.objects.termini.map((configuration) => {
+      const tile = this.layout.getTileByOffset(new OffsetCoordinates(...configuration.offsetCoordinates))
+      const terminus = new Terminus(tile, configuration)
+      tile.objects.terminus = terminus
+      return terminus
+    })
+
+    this.beams = this.termini.flatMap((terminus) => terminus.beams)
+
+    this.reflectors = (configuration.objects.reflectors || []).map((configuration) => {
+      const tile = this.layout.getTileByOffset(new OffsetCoordinates(...configuration.offsetCoordinates))
+      const reflector = new Reflector(tile, configuration)
+      tile.objects.reflector = reflector
+      return reflector
+    })
+
+    // Order of operations here is important as it controls the stacking order of items in the Paper project
+    this.beams.forEach((beam) => beam.group.bringToFront())
+    this.reflectors.forEach((reflector) => reflector.group.bringToFront())
 
     paper.view.onClick = (event) => this.onClick(event)
     paper.view.onMouseMove = (event) => this.onMouseMove(event)
@@ -76,10 +63,7 @@ export class Puzzle {
       }
 
       if (tile.objects.terminus) {
-        // Toggle each beam which originates at this terminus
-        tile.objects.beams
-          .filter((beam) => beam.startTerminus === tile.objects.terminus)
-          .forEach((beam) => beam.toggle(event))
+        tile.objects.terminus.onClick()
       }
     }
 
@@ -107,7 +91,7 @@ export class Puzzle {
     }
   }
 
-  onSolved (beams) {
+  onSolved (connections) {
     this.solved = true
 
     if (this.selectedTile) {
@@ -118,9 +102,18 @@ export class Puzzle {
     const event = new CustomEvent('puzzle-solved')
     document.dispatchEvent(event)
 
+    let mask = {}
+
     // TODO add 'fade-in' animation
     // Loop through each connected beam and draw a mask over each tile
-    beams.forEach((beam) => beam.segments.forEach((segment) => {
+    connections.forEach((beam) => beam.segments.forEach((segment) => {
+      const id = segment.tile.data.offsetId
+
+      // Don't add multiple masks when beams overlap (e.g. for a terminus with multiple beams)
+      if (mask.hasOwnProperty(id)) {
+        return
+      }
+
       const style = Object.assign(
         {},
         segment.tile.style,
@@ -128,8 +121,8 @@ export class Puzzle {
           fillColor: beam.color
         }
       )
-      // eslint-disable-next-line no-new
-      new Path.RegularPolygon({
+
+      mask[id] = new Path.RegularPolygon({
         center: segment.tile.center,
         closed: true,
         opacity: 0.25,
@@ -138,14 +131,13 @@ export class Puzzle {
         style
       })
     }))
-
-    console.log('puzzle solved')
   }
 
   update () {
     this.beams.forEach((beam) => beam.update())
+    this.termini.forEach((terminus) => terminus.update())
 
-    // Check for solution.
+    // Check for solution
     const connections = this.beams.filter((beam) => beam.activated && beam.endTerminus)
     if (this.configuration.connections === connections.length) {
       this.onSolved(connections)

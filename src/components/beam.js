@@ -4,7 +4,7 @@ import { getOppositeDirection, getReflectedDirection } from './util'
 export class Beam {
   constructor (startTerminus, configuration) {
     this.activated = configuration.activated || false
-    this.initialDirection = configuration.direction
+
     this.color = startTerminus.ui.color
     this.path = new Path({
       opacity: 0,
@@ -15,8 +15,11 @@ export class Beam {
     this.segments = []
 
     this.startBulb = Beam.bulb(startTerminus)
+    this.startDirection = configuration.direction
     this.startTerminus = startTerminus
+
     this.endBulb = null
+    this.endDirection = null
     this.endTerminus = null
 
     this.group = new Group({
@@ -27,12 +30,11 @@ export class Beam {
     this.update()
   }
 
-  toggle (event) {
+  toggle () {
     this.activated = !this.activated
   }
 
   update () {
-    console.log('beam update', this.activated)
     if (!this.activated) {
       this.group.opacity = 0
       return
@@ -41,7 +43,7 @@ export class Beam {
     this.group.opacity = 1
 
     let currentTile = this.startTerminus.tile
-    let currentDirectionTo = this.initialDirection
+    let currentDirectionTo = this.startDirection
     let currentDirectionFrom = getOppositeDirection(currentDirectionTo)
     let segmentIndex = 0
 
@@ -49,22 +51,6 @@ export class Beam {
       let currentSegment = this.segments[segmentIndex]
       let nextDirectionFrom = currentDirectionFrom
       let nextDirectionTo = currentDirectionTo
-
-      // Check for other beams.
-      const otherBeams = currentTile.objects.beams
-        .filter((beam) => beam.activated && beam.startTerminus !== this.startTerminus)
-      if (otherBeams.length) {
-        // If there's another beam in the start terminus, de-activate.
-        if (segmentIndex === 0) {
-          console.log('deactivating')
-          this.activated = false
-          this.update()
-        }
-        // We have entered a tile that already contains an activated beam.
-        // TODO this is a collision.
-        // console.log("stopping due to collision with another beam", otherBeams);
-        // break;
-      }
 
       // If the tile has a reflector in it, update the direction accordingly.
       if (currentTile.objects.reflector) {
@@ -75,15 +61,17 @@ export class Beam {
         nextDirectionFrom = getOppositeDirection(nextDirectionTo)
       }
 
-      // If the direction has changed, remove the current segments and all that follow.
-      if (currentSegment && currentSegment.directionTo !== nextDirectionTo) {
+      const otherActivatedBeams = currentTile.objects.beams.filter((beam) =>
+        beam.activated && beam.startTerminus !== this.startTerminus
+      )
+
+      // If the path has changed, remove the current segment and all that follow.
+      if ((currentSegment && currentSegment.directionTo !== nextDirectionTo) || otherActivatedBeams.length) {
         // Remove beam references in tiles
         for (let i = segmentIndex; i < this.segments.length; i++) {
           currentSegment = this.segments[i]
           const beams = currentSegment.tile.objects.beams
-          currentSegment.tile.objects.beams = beams.filter(
-            (beam) => beam !== this
-          )
+          currentSegment.tile.objects.beams = beams.filter((beam) => beam !== this)
         }
 
         this.segments.splice(segmentIndex)
@@ -95,14 +83,15 @@ export class Beam {
         if (this.endTerminus) {
           this.endBulb.remove()
           this.endBulb = null
+          this.endTerminus.disconnect(this)
+          this.endDirection = null
           this.endTerminus = null
         }
       }
 
+      // Add a new segment
       if (!currentSegment) {
-        if (segmentIndex > 0) {
-          currentTile.objects.beams.push(this)
-        }
+        currentTile.objects.beams.push(this)
 
         this.segments[segmentIndex] = {
           directionFrom: nextDirectionFrom,
@@ -111,6 +100,15 @@ export class Beam {
         }
 
         this.path.add(currentTile.center)
+      }
+
+      // Check for other activated beams in this tile
+      if (otherActivatedBeams.length) {
+        // FIXME
+        // Beams should not be allowed to cross, but they should be able to occupy the same tile if:
+        // - there is a reflector in the tile and the beams would not be reflected into each other
+        console.log('stopping due to collision with another beam')
+        break
       }
 
       const terminus = currentTile.objects.terminus
@@ -123,9 +121,12 @@ export class Beam {
           // We have reached a terminus with an opening that matches our direction.
           console.log('end terminus reached')
           if (!this.endTerminus) {
+            this.endDirection = nextDirectionFrom
             this.endTerminus = terminus
-            this.endBulb = Beam.bulb(this.endTerminus)
+            this.endBulb = Beam.bulb(terminus)
             this.group.addChild(this.endBulb)
+
+            terminus.connect(this)
           }
           break
         } else {
@@ -158,6 +159,7 @@ export class Beam {
         const point = currentTile.center.add(vector)
         this.path.add(point)
         // TODO this is a collision.
+        console.log('stopping due to edge of map')
         break
       }
 
