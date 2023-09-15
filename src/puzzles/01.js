@@ -1,5 +1,6 @@
 import { Modifiers, Types } from '../components/util'
 
+// TODO: move items into individual tile configuration
 export default {
   connections: 1,
   layout: {
