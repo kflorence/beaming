@@ -3,10 +3,29 @@ export const Buttons = Object.freeze({
   Right: 2
 })
 
+export const Events = Object.freeze({
+  Error: 'puzzle-error',
+  Solved: 'puzzle-solved',
+  TileSelected: 'puzzle-tile-selected'
+})
+
+export const Messages = Object.freeze({
+  ErrorInvalidId: 'Error: invalid puzzle ID',
+  TileUnselected: 'select a tile'
+})
+
 export const Modifiers = Object.freeze({
-  Locked: "locked",
-  Movable: "movable",
-  Rotatable: "rotatable"
+  Immutable: 'modifier-immutable',
+  Locked: 'modifier-locked',
+  Movable: 'modifier-movable',
+  Rotatable: 'modifier-rotatable',
+  Toggleable: 'modifier-toggleable'
+})
+
+export const Types = Object.freeze({
+  Reflector: 'Reflector',
+  Terminus: 'Terminus',
+  Tile: 'Tile'
 })
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {

@@ -1,84 +1,27 @@
-import { Path, Point } from 'paper'
+import { Group, Path, Point } from 'paper'
+import { Types } from './util'
 
 export class Tile {
-  constructor (
-    axialCoordinates,
-    offsetCoordinates,
-    layoutParameters,
-    tileParameters,
-    configuration,
-    getNeighboringTile
-  ) {
-    const data = {
-      axialId: axialCoordinates.toString(),
-      offsetId: offsetCoordinates.toString(),
-      type: 'tile'
-    }
+  #ui
 
-    const center = new Point(
-      layoutParameters.startingOffsetX +
-      tileParameters.inradius +
-      layoutParameters.column * tileParameters.width,
-      layoutParameters.startingOffsetY +
-      tileParameters.circumradius +
-      layoutParameters.row * tileParameters.offsetY
-    )
+  constructor ({ coordinates, layout, parameters, configuration }) {
+    this.#ui = Tile.ui(coordinates, layout, parameters, configuration)
 
-    const style = Object.assign(
-      {},
-      Tile.styles.default,
-      configuration.style || {}
-    )
-
-    const hexagon = new Path.RegularPolygon({
-      center,
-      closed: true,
-      data,
-      radius: tileParameters.circumradius,
-      sides: 6,
-      style
-    })
-
-    const indicatorWidth = tileParameters.circumradius / 12
-    const indicator = new Path.RegularPolygon({
-      center,
-      closed: true,
-      locked: true,
-      opacity: 0,
-      radius: tileParameters.circumradius - indicatorWidth - style.strokeWidth,
-      sides: 6,
-      strokeColor: 'black',
-      strokeWidth: indicatorWidth
-    })
-
-    this.axialCoordinates = axialCoordinates
-    this.center = center
-    this.configuration = configuration
-    this.data = data
-    this.getNeighboringTile = getNeighboringTile
-    this.hexagon = hexagon
-    this.indicator = indicator
-    this.indicatorWidth = indicatorWidth
-    this.layoutParameters = layoutParameters
-    this.objects = {
-      beams: [],
-      reflector: null,
-      terminus: null
-    }
-    this.offsetCoordinates = offsetCoordinates
-    this.parameters = tileParameters
+    this.center = this.#ui.center
+    this.coordinates = coordinates
+    this.group = this.#ui.group
+    this.parameters = parameters
     this.selected = false
-    this.style = style
   }
 
-  onSelected (event) {
+  onSelected () {
     this.selected = true
-    this.indicator.opacity = 0.15
+    this.#ui.indicator.opacity = 0.15
   }
 
-  onUnselected (event) {
+  onUnselected () {
     this.selected = false
-    this.indicator.opacity = 0
+    this.#ui.indicator.opacity = 0
   }
 
   static parameters (height) {
@@ -96,7 +39,58 @@ export class Tile {
     }
   }
 
-  static styles = {
+  static ui (coordinates, layout, parameters, configuration) {
+    const data = {
+      axialId: coordinates.axial.toString(),
+      offsetId: coordinates.offset.toString(),
+      type: Types.Tile
+    }
+
+    const center = new Point(
+      layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
+      layout.startingOffsetY + parameters.circumradius + layout.row * parameters.offsetY
+    )
+
+    const style = Object.assign(
+      {},
+      Tile.Styles.default,
+      configuration.style || {}
+    )
+
+    const tile = new Path.RegularPolygon({
+      center,
+      closed: true,
+      data,
+      insert: false,
+      radius: parameters.circumradius,
+      sides: 6,
+      style
+    })
+
+    const indicatorWidth = parameters.circumradius / 12
+
+    const indicator = new Path.RegularPolygon({
+      center,
+      closed: true,
+      insert: false,
+      locked: true,
+      opacity: 0,
+      radius: parameters.circumradius - indicatorWidth - style.strokeWidth,
+      sides: 6,
+      strokeColor: 'black',
+      strokeWidth: indicatorWidth
+    })
+
+    const group = new Group({
+      children: [tile, indicator],
+      // Allow this group to be clicked on
+      locked: false
+    })
+
+    return { center, data, tile, indicator, group }
+  }
+
+  static Styles = Object.freeze({
     default: {
       fillColor: 'white',
       strokeColor: 'black',
@@ -110,5 +104,5 @@ export class Tile {
       strokeColor: 'blue',
       strokeWidth: 2
     }
-  }
+  })
 }

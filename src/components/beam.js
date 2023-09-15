@@ -34,6 +34,8 @@ export class Beam {
     this.activated = !this.activated
   }
 
+  // TODO:
+  // This all needs to be moved into puzzle and out of here
   update () {
     if (!this.activated) {
       this.group.opacity = 0

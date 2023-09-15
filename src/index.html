@@ -3,21 +3,42 @@
   <head>
     <meta charset="utf-8"/>
     <title>Untitled</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <section id="container">
-      <div id="error"></div>
-      <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
-      <footer>
-        <div class="left">
+    <div id="container-outer">
+      <div id="container-inner">
+        <header>
           <label>
             <select name="id" id="puzzle-selector"></select>
           </label>
-        </div>
-        <div id="reset">reset</div>
-      </footer>
-    </section>
+          <div id="state" style="display:none">
+            <span id="connections-completed" title="Connections completed">0</span> /
+            <span id="connections-required" title="Connections required">0</span>
+          </div>
+        </header>
+        <main>
+          <span id="error" class="material-symbols-outlined" title="Error">error</span>
+          <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
+        </main>
+        <footer>
+          <ul id="modifiers-static" class="modifiers">
+            <li><button id="modifier-immutable" class="material-symbols-outlined" title="Immutable">block</button></li>
+            <li><button id="modifier-locked" class="material-symbols-outlined" title="Locked">lock</button></li>
+          </ul>
+          <div id="info">
+            <div id="message">...</div>
+            <span id="reset" class="material-symbols-outlined" title="Reset">restart_alt</span>
+          </div>
+          <ul id="modifiers-dynamic" class="modifiers">
+            <li><button id="modifier-toggleable" class="material-symbols-outlined" title="Toggleable">toggle_on</button></li>
+            <li><button id="modifier-movable" class="material-symbols-outlined" title="Movable">drag_pan</button></li>
+            <li><button id="modifier-rotatable" class="material-symbols-outlined active" title="Rotatable">rotate_right</button></li>
+          </ul>
+        </footer>
+      </div>
+    </div>
   </body>
   <script type="module" src="index.js"></script>
 </html>

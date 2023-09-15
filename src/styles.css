@@ -1,49 +1,170 @@
 html,
 body {
-  background-color: white;
+  background-color: #999;
   font-family: Menlo, Consolas, "Vera Mono", monospace;
   height: 100%;
   margin: 0;
 }
 
-footer {
-  background-color: white;
+footer,
+header {
+  background-color: #eee;
   display: flex;
+  padding: 0.5em;
+}
+
+header {
   justify-content: space-between;
-  width: 600px;
+  border-bottom: 1px solid #999;
 }
 
-footer div {
-  padding: 0.5em 0;
+header select {
+  appearance: none;
+  background-color: white;
+  border: 1px solid #999;
+  cursor: pointer;
+  font-size: 1em;
+  padding: 0.5em 1em;
 }
 
-#container {
+footer {
+  border-top: 1px solid #999;
+  flex: 1;
+  justify-content: center;
+}
+
+main {
+  height: 800px;
+}
+
+#container-outer {
   align-items: center;
   display: flex;
+  filter: drop-shadow(0 0 1rem rgba(0, 0, 0, 0.5));
   flex-direction: column;
   height: 100%;
   justify-content: center;
 }
 
+#container-inner {
+  border: 1px solid #666;
+  width: 600px;
+}
+
 #error,
 #puzzle {
   background-color: #bbb;
-  height: 800px;
-  width: 600px;
+  height: 100%;
+  width: 100%;
 }
 
 #error {
   align-items: center;
+  color: #666;
+  cursor: not-allowed;
   display: none;
+  font-size: 6em;
   justify-content: center;
+}
+
+#info {
+  align-items: center;
+  color: #999;
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  padding: 0.5em;
+  width: 100%;
+}
+
+#modifiers-static button {
+  border: 1px solid #ccc;
+  color: black;
+  cursor: auto;
+}
+
+#modifiers-dynamic {
+  justify-content: flex-end;
+}
+
+#modifiers-dynamic button:not(.active):hover {
+  background-color: #ddd;
+  border-color: #aaa;
+}
+
+#modifiers-dynamic button.active {
+  background-color: white;
+  border: 1px solid #000;
+  color: #000;
 }
 
 #reset {
   display: none;
-  color: blue;
-  cursor: pointer;
 }
 
-#reset:hover {
-  text-decoration: underline;
+#state {
+  border: 1px solid transparent;
+  font-weight: bold;
+  padding: 0.5em;
+}
+
+/* https://developers.google.com/fonts/docs/material_icons */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
+}
+
+.modifiers {
+  display: none;
+  gap: 0.5em;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.modifiers button {
+  background-color: #eee;
+  border: 1px solid #aaa;
+  color: #aaa;
+  cursor: pointer;
+  margin: 0;
+  padding: 0.25em 0.5em;
+}
+
+.puzzle-error #puzzle {
+  display: none;
+}
+
+.puzzle-error #error {
+  display: flex;
+}
+
+.puzzle-error #state {
+  display: none;
+}
+
+.puzzle-solved #message {
+  display: none;
+}
+
+.puzzle-solved #puzzle {
+  cursor: not-allowed;
+}
+
+.puzzle-solved #reset {
+  color: #999;
+  cursor: pointer;
+  display: block;
+}
+
+.puzzle-solved #reset:hover {
+  color: black;
+}
+
+.puzzle-tile-selected .modifiers {
+  display: flex;
 }

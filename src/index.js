@@ -1,20 +1,14 @@
 import paper from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
+import { Events, Messages } from './components/util'
 
-// Prevent browser context menu on right click
-document.body.addEventListener('contextmenu', (event) => {
-  event.preventDefault()
-  return false
-})
-
-const canvas = document.getElementById('puzzle')
-const error = document.getElementById('error')
-
-// Handle puzzle reset button
+const message = document.getElementById('message')
 const reset = document.getElementById('reset')
+
+// Handle puzzle reset
 reset.addEventListener('click', () => {
-  if (reset.style.display === 'block') {
+  if (document.body.classList.contains(Events.Solved)) {
     selectPuzzle(puzzleSelector.value)
   }
 })
@@ -36,31 +30,43 @@ let puzzle
 function selectPuzzle (id) {
   const configuration = puzzles[id]
 
+  document.body.classList.remove(...Object.values(Events))
+
   if (puzzle) {
     paper.project.clear()
   }
 
-  reset.style.display = 'none'
-
   if (configuration) {
+    message.textContent = Messages.TileUnselected
     puzzleSelector.value = id
-    document.body.style.cursor = 'auto'
-    canvas.style.display = 'block'
-    error.style.display = 'none'
     puzzle = new Puzzle(configuration)
   } else {
-    canvas.style.display = 'none'
-    error.textContent = 'Invalid puzzle ID.'
-    error.style.display = 'flex'
+    message.textContent = Messages.ErrorInvalidId
+    document.body.classList.add(Events.Error)
   }
 }
 
-paper.setup(canvas)
-
+// Initiate
+// noinspection JSCheckFunctionSignatures
+paper.setup(document.getElementById('puzzle'))
 const params = new URLSearchParams(window.location.search)
 selectPuzzle(params.get('id') || '01')
 
-document.addEventListener('puzzle-solved', () => {
-  document.body.style.cursor = 'not-allowed'
-  reset.style.display = 'block'
+// Prevent browser context menu on right click
+document.body.addEventListener('contextmenu', (event) => {
+  event.preventDefault()
+  return false
+})
+
+// Handle puzzle being solved
+document.addEventListener(Events.Solved, () => {
+  document.body.classList.remove(Events.TileSelected)
+  document.body.classList.add(Events.Solved)
+})
+
+// Handle tile being selected
+document.addEventListener(Events.TileSelected, (event) => {
+  const tile = event.detail.tile
+  message.textContent = tile ? tile.coordinates.offset.toString() : Messages.TileUnselected
+  document.body.classList[tile ? 'add' : 'remove'](Events.TileSelected)
 })

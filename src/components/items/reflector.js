@@ -1,8 +1,11 @@
 import { Group, Path, Point, Size } from 'paper'
-import { Buttons } from './util'
+import { Buttons } from '../util'
+import { Item } from '../item'
 
-export class Reflector {
+export class Reflector extends Item {
   constructor (tile, configuration) {
+    super(tile, configuration)
+
     const length = tile.parameters.circumradius
     const width = tile.parameters.circumradius / 12
     const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
@@ -10,7 +13,6 @@ export class Reflector {
     const wall = new Path.Rectangle({
       fillColor: 'black',
       point: topLeft,
-      radius: 2,
       size: new Size(width, length)
     })
 
@@ -30,7 +32,6 @@ export class Reflector {
 
     this.direction = configuration.direction
     this.group = group
-    this.tile = tile
     this.wall = wall
   }
 
