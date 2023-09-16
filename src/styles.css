@@ -118,7 +118,7 @@ main {
 }
 
 .modifiers {
-  display: none;
+  display: flex;
   gap: 0.5em;
   list-style: none;
   margin: 0;
@@ -135,7 +135,8 @@ main {
   padding: 0.25em 0.5em;
 }
 
-.puzzle-error #puzzle {
+.puzzle-error #puzzle,
+.puzzle-error .modifiers {
   display: none;
 }
 
@@ -163,8 +164,4 @@ main {
 
 .puzzle-solved #reset:hover {
   color: black;
-}
-
-.puzzle-tile-selected .modifiers {
-  display: flex;
 }

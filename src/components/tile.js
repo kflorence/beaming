@@ -1,8 +1,10 @@
 import { Group, Path, Point } from 'paper'
-import { Types } from './util'
+import { Terminus } from './items/terminus'
 
 export class Tile {
   #ui
+
+  selected = false
 
   constructor ({ coordinates, layout, parameters, configuration }) {
     this.#ui = Tile.ui(coordinates, layout, parameters, configuration)
@@ -11,17 +13,40 @@ export class Tile {
     this.coordinates = coordinates
     this.group = this.#ui.group
     this.parameters = parameters
+
+    // This needs to be last, since it references this
+    this.items = (configuration.items || []).map((configuration) => this.#itemFactory(this, configuration))
+  }
+
+  onClick (event) {
+    this.items.forEach((item) => item.onClick(event))
+  }
+
+  onDeselected () {
     this.selected = false
+    this.#ui.indicator.opacity = 0
+    this.items.forEach((item) => item.onDeselected())
   }
 
   onSelected () {
     this.selected = true
     this.#ui.indicator.opacity = 0.15
+    this.items.forEach((item) => item.onSelected())
   }
 
-  onUnselected () {
-    this.selected = false
-    this.#ui.indicator.opacity = 0
+  #itemFactory (tile, configuration) {
+    let item
+
+    switch (configuration.type) {
+      case Terminus.Type:
+        item = new Terminus(tile, configuration)
+        break
+      default:
+        console.error('Ignoring item with unknown type: ' + configuration.type)
+        break
+    }
+
+    return item
   }
 
   static parameters (height) {
@@ -40,11 +65,7 @@ export class Tile {
   }
 
   static ui (coordinates, layout, parameters, configuration) {
-    const data = {
-      axialId: coordinates.axial.toString(),
-      offsetId: coordinates.offset.toString(),
-      type: Types.Tile
-    }
+    const data = { coordinates, type: Tile.Type }
 
     const center = new Point(
       layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
@@ -105,4 +126,6 @@ export class Tile {
       strokeWidth: 2
     }
   })
+
+  static Type = 'Tile'
 }

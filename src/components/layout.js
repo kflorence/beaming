@@ -4,17 +4,20 @@ import { Layer, Point, view } from 'paper'
 import { Tile } from './tile'
 
 export class Layout {
+  layers = {}
+  tiles = []
+  tileSize = 100
+
   constructor (configuration) {
-    const tileParameters = Tile.parameters(configuration.tileSize)
+    const tileParameters = Tile.parameters(this.tileSize)
     const tilesConfiguration = configuration.tiles
 
     const center = new Point(view.size.width / 2, view.size.height / 2)
     const height = tilesConfiguration.length * tileParameters.height
     const startingOffsetY = center.y - height / 2
 
-    const tiles = []
-
-    this.layer = new Layer()
+    this.layers.tiles = new Layer()
+    this.layers.items = new Layer()
 
     for (let r = 0; r < tilesConfiguration.length; r++) {
       const rowConfiguration = tilesConfiguration[r]
@@ -30,7 +33,6 @@ export class Layout {
 
         const tileConfiguration = rowConfiguration[c]
         if (!tileConfiguration) {
-          row[axialCoordinates.q] = null
           continue
         }
 
@@ -49,26 +51,24 @@ export class Layout {
           configuration: tileConfiguration
         })
 
-        this.layer.addChild(tile.group)
+        this.layers.tiles.addChild(tile.group)
+
+        if (tile.items.length) {
+          this.layers.items.addChildren(tile.items.map((item) => item.group))
+        }
 
         row[axialCoordinates.q] = tile
       }
 
-      tiles.push(row)
+      this.tiles.push(row)
     }
-
-    this.tiles = tiles
   }
 
-  getTileByAxial (axial) {
+  getTile (axial) {
     return (this.tiles[axial.r] || [])[axial.q]
   }
 
-  getTileByOffset (offset) {
-    return this.getTileByAxial(OffsetCoordinates.toAxialCoordinates(offset))
-  }
-
   getNeighboringTile (axial, direction) {
-    return this.getTileByAxial(CubeCoordinates.neighbor(axial, direction))
+    return this.getTile(CubeCoordinates.neighbor(axial, direction))
   }
 }

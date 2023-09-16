@@ -1,119 +1,53 @@
-import { CubeCoordinates } from './coordinates/cube'
 import { Layout } from './layout'
-import { OffsetCoordinates } from './coordinates/offset'
-import paper, { Layer, Path } from 'paper'
-import { Terminus } from './items/terminus'
-import { Events, Types } from './util'
+import paper, { Path } from 'paper'
+import { Events } from './util'
+import { Tile } from './tile'
 
 export class Puzzle {
-  constructor ({ connections, layout, items }) {
-    this.tileSize = layout.tileSize
+  selectedTile
+  solved = false
 
-    this.selectedTile = undefined
-    this.solved = false
-
+  constructor ({ connectionsRequired, layout }) {
     this.layout = new Layout(layout)
 
-    this.items = new Layer()
-    this.layers = [this.layout.layer, this.items]
-
-    items.forEach((configuration) => {
-      const tile = this.layout.getTileByOffset(new OffsetCoordinates(...configuration.offsetCoordinates))
-      const item = this.#itemFactory(tile, configuration)
-      this.items.addChild(item.group)
-    })
-
-    this.layers.concat(this.items)
-
     // TODO:
-    // Beams will now be controlled entirely in the puzzle layer, so this will all need to be refactored.
-    // The general logic will be to add and remove beams as they are turned on/off.
-    // Any active beams will be looped through and updated individually.
-    //
-    // this.beams = this.termini.flatMap((terminus) => terminus.beams)
-    //
-    // this.reflectors = (configuration.objects.reflectors || []).map((configuration) => {
-    //   const tile = this.layout.getTileByOffset(new OffsetCoordinates(...configuration.offsetCoordinates))
-    //   const reflector = new Reflector(tile, configuration)
-    //   tile.objects.reflector = reflector
-    //   return reflector
-    // })
+    // Handle connectionsRequired (update UI)
 
-    paper.view.onClick = (event) => this.onClick(event)
+    paper.view.onClick = (event) => this.#onClick(event)
 
-    this.update()
+    this.#update()
   }
 
-  #itemFactory (tile, configuration) {
-    let item
-
-    switch (configuration.type) {
-      case Types.Terminus:
-        item = new Terminus(tile, configuration)
-        break
-      default:
-        console.error('Ignoring item with unknown type: ' + configuration.type)
-        break
-    }
-
-    return item
-  }
-
-  getTile (event) {
+  #getTile (event) {
     let tile
     const hit = paper.project.hitTest(event.point)
-    if (hit && hit.item.data.type === Types.Tile) {
-      const [q, r] = hit.item.data.axialId.split(',')
-      tile = this.layout.getTileByAxial(new CubeCoordinates(q, r))
+    if (hit && hit.item.data.type === Tile.Type) {
+      tile = this.layout.getTile(hit.item.data.coordinates.axial)
     }
 
     return tile
   }
 
-  selectTile (tile) {
-    const previouslySelectedTile = this.selectedTile
-
-    this.selectedTile = tile
-
-    if (previouslySelectedTile && previouslySelectedTile !== tile) {
-      previouslySelectedTile.onUnselected()
-    }
-
-    if (tile && tile !== previouslySelectedTile) {
-      tile.onSelected()
-    }
-
-    const event = new CustomEvent(Events.TileSelected, { detail: { tile } })
-    document.dispatchEvent(event)
-  }
-
-  onClick (event) {
+  #onClick (event) {
     if (this.solved) {
       return
     }
 
-    const tile = this.getTile(event)
+    const tile = this.#getTile(event)
+    const previouslySelectedTile = this.#updateSelectedTile(tile)
 
-    // if (tile === this.selectedTile) {
-    //   if (tile.objects.reflector) {
-    //     tile.objects.reflector.onClick(event)
-    //   }
-    //
-    //   if (tile.objects.terminus) {
-    //     tile.objects.terminus.onClick(event)
-    //   }
-    // }
+    if (tile && tile === previouslySelectedTile) {
+      tile.onClick(event)
+    }
 
-    this.selectTile(tile)
-
-    this.update()
+    this.#update()
   }
 
-  onSolved (connections) {
+  #onSolved (connections) {
     this.solved = true
 
     if (this.selectedTile) {
-      this.selectedTile.onUnselected(null)
+      this.selectedTile.onDeselected()
       this.selectedTile = null
     }
 
@@ -125,7 +59,7 @@ export class Puzzle {
     // TODO add 'fade-in' animation
     // Loop through each connected beam and draw a mask over each tile
     connections.forEach((beam) => beam.segments.forEach((segment) => {
-      const id = segment.tile.data.offsetId
+      const id = segment.tile.data.coordinates.offset.toString()
 
       // Don't add multiple masks when beams overlap (e.g. for a terminus with multiple beams)
       if (mask[id]) {
@@ -151,7 +85,11 @@ export class Puzzle {
     }))
   }
 
-  update () {
+  #update () {
+    // TODO: update beams
+    // The general logic will be to add and remove beams as they are turned on/off.
+    // Any active beams will be looped through and updated individually.
+
     // this.beams.forEach((beam) => beam.update())
     // this.termini.forEach((terminus) => terminus.update())
     //
@@ -160,5 +98,25 @@ export class Puzzle {
     // if (this.configuration.connections === connections.length) {
     //   this.onSolved(connections)
     // }
+  }
+
+  #updateSelectedTile (tile) {
+    const previouslySelectedTile = this.selectedTile
+
+    this.selectedTile = tile
+
+    if (previouslySelectedTile && previouslySelectedTile !== tile) {
+      previouslySelectedTile.onDeselected()
+    }
+
+    if (tile && tile !== previouslySelectedTile) {
+      tile.onSelected()
+    }
+
+    document.dispatchEvent(new CustomEvent(Events.TileSelected, {
+      detail: { selected: tile, deselected: previouslySelectedTile }
+    }))
+
+    return previouslySelectedTile
   }
 }

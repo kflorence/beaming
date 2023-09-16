@@ -9,11 +9,7 @@ export class Terminus extends Item {
   constructor (tile, { activated, color, openings, type, modifiers }) {
     super(tile, { type, modifiers })
 
-    this.#connections = {}
-    openings.forEach((opening) => {
-      this.#connections[opening] = null
-    })
-
+    this.#connections = new Array(openings.length)
     this.#ui = Terminus.ui(tile, { color, openings })
 
     this.activated = activated
@@ -59,17 +55,6 @@ export class Terminus extends Item {
     }
   }
 
-  onClick (event) {
-    super.onClick(event)
-
-    // If this terminus has outside connections, activation is controlled by those
-    if (Object.values(this.#connections).some((beam) => beam && beam.activated)) {
-      return
-    }
-
-    this.toggle()
-  }
-
   toggle () {
     this.activated = !this.activated
     this.update()
@@ -100,14 +85,17 @@ export class Terminus extends Item {
       sides: 6
     })
 
-    const paths = openings.map((direction) => {
+    const paths = openings.map((opening) => {
+      const directionFrom = opening.direction
+      const directionTo = directionFrom === 5 ? 0 : directionFrom + 1
+
       return new Path({
         closed: true,
         insert: false,
         segments: [
           tile.center,
-          hexagon.segments[direction].point,
-          hexagon.segments[direction === 5 ? 0 : direction + 1].point
+          hexagon.segments[directionFrom].point,
+          hexagon.segments[directionTo].point
         ]
       })
     })
@@ -125,4 +113,6 @@ export class Terminus extends Item {
 
     return { item, group }
   }
+
+  static Type = 'Terminus'
 }

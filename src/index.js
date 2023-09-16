@@ -66,7 +66,7 @@ document.addEventListener(Events.Solved, () => {
 
 // Handle tile being selected
 document.addEventListener(Events.TileSelected, (event) => {
-  const tile = event.detail.tile
+  const tile = event.detail.selected
   message.textContent = tile ? tile.coordinates.offset.toString() : Messages.TileUnselected
   document.body.classList[tile ? 'add' : 'remove'](Events.TileSelected)
 })

@@ -3,5 +3,5 @@ import two from './02'
 
 export default {
   '01': one,
-  '02': two
+  // '02': two
 }
