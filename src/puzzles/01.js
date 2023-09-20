@@ -1,7 +1,7 @@
-import { Toggle } from '../components/modifiers/toggle'
+import { Toggleable } from '../components/modifiers/toggleable'
 import { Terminus } from '../components/items/terminus'
+import { Locked } from '../components/modifiers/locked'
 
-// TODO: move items into individual tile configuration
 export default {
   connectionsRequired: 1,
   layout: {
@@ -13,7 +13,7 @@ export default {
           items: [
             {
               color: 'blue',
-              modifiers: [],
+              modifiers: [{ type: Locked.Type }],
               openings: [{ direction: 4 }],
               type: Terminus.Type
             }
@@ -34,12 +34,13 @@ export default {
             {
               color: 'blue',
               modifiers: [
-                Toggle.Type
+                { type: Locked.Type },
+                { selected: true, type: Toggleable.Type }
               ],
               openings: [
                 {
-                  beam: { active: false },
-                  direction: 1
+                  direction: 1,
+                  toggleable: true
                 }
               ],
               type: Terminus.Type

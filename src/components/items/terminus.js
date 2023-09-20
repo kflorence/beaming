@@ -1,8 +1,8 @@
 import { Group, Path } from 'paper'
 import { Tile } from '../tile'
-import { Item } from '../item'
+import { ToggleableItem } from '../item'
 
-export class Terminus extends Item {
+export class Terminus extends ToggleableItem {
   #connections
   #ui
 
@@ -16,6 +16,8 @@ export class Terminus extends Item {
     this.color = color
     this.group = this.#ui.group
     this.openings = openings
+
+    this.update()
   }
 
   connect (beam) {
@@ -55,11 +57,6 @@ export class Terminus extends Item {
     }
   }
 
-  toggle () {
-    this.activated = !this.activated
-    this.update()
-  }
-
   update () {
     this.#ui.item.fillColor.alpha = this.activated ? 1 : 0.5
   }
@@ -75,8 +72,6 @@ export class Terminus extends Item {
       strokeWidth: 1,
       strokeColor: color
     })
-
-    hexagon.fillColor.alpha = 0.5
 
     const cavity = new Path.RegularPolygon({
       insert: false,

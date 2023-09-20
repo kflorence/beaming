@@ -1,12 +1,15 @@
-import { Toggle } from './modifiers/toggle'
+import { Toggleable } from './modifiers/toggleable'
+import { Locked } from './modifiers/locked'
 
 export class Item {
   group
 
   constructor (tile, { type, modifiers }) {
     this.tile = tile
-    this.modifiers = modifiers.map((type) => this.#modifierFactory(type))
     this.type = type
+
+    // This needs to be last because it references this
+    this.modifiers = modifiers.map((configuration) => this.#modifierFactory(configuration))
   }
 
   // TODO:
@@ -16,25 +19,39 @@ export class Item {
   }
 
   onDeselected () {
-    // TODO: remove modifiers from DOM
+    this.modifiers.forEach((modifier) => modifier.detach())
   }
 
   onSelected () {
-    // TODO: add modifiers to DOM
+    this.modifiers.forEach((modifier) => modifier.attach())
   }
 
-  #modifierFactory (type) {
+  update () {}
+
+  #modifierFactory (configuration) {
     let modifier
 
-    switch (type) {
-      case Toggle.Type:
-        modifier = new Toggle()
+    switch (configuration.type) {
+      case Locked.Type:
+        modifier = new Locked(this, configuration)
+        break
+      case Toggleable.Type:
+        modifier = new Toggleable(this, configuration)
         break
       default:
-        console.error('Ignoring modifier with unknown type: ' + type)
+        console.error('Ignoring modifier with unknown type: ' + configuration.type)
         break
     }
 
     return modifier
+  }
+}
+
+export class ToggleableItem extends Item {
+  activated
+
+  toggle () {
+    this.activated = !this.activated
+    this.update()
   }
 }

@@ -3,6 +3,8 @@ import paper, { Path } from 'paper'
 import { Events } from './util'
 import { Tile } from './tile'
 
+const connectionsRequiredElement = document.getElementById('connections-required')
+
 export class Puzzle {
   selectedTile
   solved = false
@@ -10,8 +12,7 @@ export class Puzzle {
   constructor ({ connectionsRequired, layout }) {
     this.layout = new Layout(layout)
 
-    // TODO:
-    // Handle connectionsRequired (update UI)
+    connectionsRequiredElement.textContent = connectionsRequired
 
     paper.view.onClick = (event) => this.#onClick(event)
 

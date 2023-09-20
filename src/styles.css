@@ -77,22 +77,22 @@ main {
   width: 100%;
 }
 
-#modifiers-static button {
+#modifiers-immutable button {
   border: 1px solid #ccc;
   color: black;
   cursor: auto;
 }
 
-#modifiers-dynamic {
+#modifiers-mutable {
   justify-content: flex-end;
 }
 
-#modifiers-dynamic button:not(.active):hover {
+#modifiers-mutable button:not(.selected):hover {
   background-color: #ddd;
   border-color: #aaa;
 }
 
-#modifiers-dynamic button.active {
+#modifiers-mutable button.selected {
   background-color: white;
   border: 1px solid #000;
   color: #000;
