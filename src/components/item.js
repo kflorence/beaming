@@ -33,10 +33,10 @@ export class Item {
 
     switch (configuration.type) {
       case Locked.Type:
-        modifier = new Locked(this, configuration)
+        modifier = new Locked(this)
         break
       case Toggleable.Type:
-        modifier = new Toggleable(this, configuration)
+        modifier = new Toggleable(this)
         break
       default:
         console.error('Ignoring modifier with unknown type: ' + configuration.type)
@@ -44,14 +44,5 @@ export class Item {
     }
 
     return modifier
-  }
-}
-
-export class ToggleableItem extends Item {
-  activated
-
-  toggle () {
-    this.activated = !this.activated
-    this.update()
   }
 }

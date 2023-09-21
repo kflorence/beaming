@@ -7,7 +7,7 @@ import { Modifier } from '../modifier'
 export class Locked extends Modifier {
   immutable = true
   name = 'lock'
-  title = 'Locked'
+  title = 'This item cannot be modified.'
 
   static Type = 'Locked'
 }

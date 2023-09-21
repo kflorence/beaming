@@ -10,14 +10,7 @@ export const Events = Object.freeze({
 })
 
 export const Messages = Object.freeze({
-  ErrorInvalidId: 'Error: invalid puzzle ID',
-  TileUnselected: 'select a tile'
-})
-
-export const Types = Object.freeze({
-  Reflector: 'Reflector',
-  Terminus: 'Terminus',
-  Tile: 'Tile'
+  ErrorInvalidId: 'Error: invalid puzzle ID'
 })
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {

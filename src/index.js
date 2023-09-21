@@ -37,9 +37,8 @@ function selectPuzzle (id) {
   }
 
   if (configuration) {
-    message.textContent = Messages.TileUnselected
     puzzleSelector.value = id
-    puzzle = new Puzzle(configuration)
+    puzzle = new Puzzle(id, configuration)
   } else {
     message.textContent = Messages.ErrorInvalidId
     document.body.classList.add(Events.Error)
@@ -67,6 +66,5 @@ document.addEventListener(Events.Solved, () => {
 // Handle tile being selected
 document.addEventListener(Events.TileSelected, (event) => {
   const tile = event.detail.selected
-  message.textContent = tile ? tile.coordinates.offset.toString() : Messages.TileUnselected
   document.body.classList[tile ? 'add' : 'remove'](Events.TileSelected)
 })

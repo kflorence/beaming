@@ -35,7 +35,7 @@ export default {
               color: 'blue',
               modifiers: [
                 { type: Locked.Type },
-                { selected: true, type: Toggleable.Type }
+                { type: Toggleable.Type }
               ],
               openings: [
                 {
@@ -51,5 +51,6 @@ export default {
         null
       ]
     ]
-  }
+  },
+  title: 'Connect the dots'
 }

@@ -4,6 +4,9 @@ const modifiersMutable = document.getElementById('modifiers-mutable')
 export class Modifier {
   #container
   #element
+  #eventListeners = {}
+  #selectionTime = 500
+  #timeoutId = 0
 
   immutable = false
   item
@@ -11,12 +14,25 @@ export class Modifier {
   selected = false
   title
 
-  constructor (item, { selected }) {
-    this.onClick = this.onClick.bind(this)
-    this.onDeselected = this.onDeselected.bind(this)
+  constructor (item) {
+    Object.entries({
+      click: (event) => {
+        // Prevent calling onClick when the modifier has just been selected
+        if (this.#timeoutId === 0) {
+          return
+        }
+        this.onClick(event)
+      },
+      deselected: this.onDeselected,
+      mousedown: this.onMouseDown,
+      mouseleave: this.onMouseLeave,
+      mouseup: this.onMouseUp
+    }).forEach(([name, handler]) => {
+      // Ensure proper 'this' context inside of event handlers
+      this.#eventListeners[name] = handler.bind(this)
+    })
 
     this.item = item
-    this.selected = selected || false
   }
 
   /**
@@ -30,8 +46,9 @@ export class Modifier {
 
     this.update()
 
-    button.addEventListener('click', this.onClick)
-    button.addEventListener('deselected', this.onDeselected)
+    // noinspection JSCheckFunctionSignatures
+    Object.entries(this.#eventListeners)
+      .forEach(([event, listener]) => button.addEventListener(event, listener))
 
     li.append(button)
 
@@ -42,23 +59,45 @@ export class Modifier {
    * Remove listeners and the modifier from the DOM.
    */
   detach () {
-    this.#element.removeEventListener('click', this.onClick)
+    Object.entries(this.#eventListeners)
+      .forEach(([event, listener]) => this.#element.removeEventListener(event, listener))
+
     this.#container.remove()
 
+    this.selected = false
     this.#element = undefined
     this.#container = undefined
   }
 
-  onClick (event) {
+  onClick () {
+    this.selected = false
+  }
+
+  onDeselected () {
+    this.update({ selected: false })
+  }
+
+  onMouseDown () {
+    this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+  }
+
+  onMouseLeave () {
+    clearTimeout(this.#timeoutId)
+  }
+
+  onMouseUp () {
+    clearTimeout(this.#timeoutId)
+  }
+
+  onSelected () {
+    this.#timeoutId = 0
+
     const selectedModifier = document.querySelector('.modifiers .selected')
     if (selectedModifier) {
       selectedModifier.dispatchEvent(new Event('deselected'))
     }
-    this.update({ selected: true })
-  }
 
-  onDeselected (event) {
-    this.update({ selected: false })
+    this.update({ selected: true })
   }
 
   update (options) {

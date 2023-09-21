@@ -3,16 +3,23 @@ import paper, { Path } from 'paper'
 import { Events } from './util'
 import { Tile } from './tile'
 
-const connectionsRequiredElement = document.getElementById('connections-required')
+const elements = Object.freeze({
+  connectionsRequired: document.getElementById('connections-required'),
+  message: document.getElementById('message')
+})
 
 export class Puzzle {
   selectedTile
   solved = false
 
-  constructor ({ connectionsRequired, layout }) {
+  constructor (id, { connectionsRequired, layout, title }) {
     this.layout = new Layout(layout)
 
-    connectionsRequiredElement.textContent = connectionsRequired
+    this.id = id
+    this.title = title
+
+    elements.message.textContent = title
+    elements.connectionsRequired.textContent = connectionsRequired
 
     paper.view.onClick = (event) => this.#onClick(event)
 

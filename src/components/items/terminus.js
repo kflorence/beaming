@@ -1,8 +1,9 @@
 import { Group, Path } from 'paper'
 import { Tile } from '../tile'
-import { ToggleableItem } from '../item'
+import { toggleable } from '../modifiers/toggleable'
+import { Item } from '../item'
 
-export class Terminus extends ToggleableItem {
+export class Terminus extends toggleable(Item) {
   #connections
   #ui
 
