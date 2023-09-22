@@ -23,7 +23,7 @@ export class Rotate extends Modifier {
     // Change rotation direction if user right-clicks on the modifier
     if (event.button === Buttons.Right) {
       this.clockwise = !this.clockwise
-      this.update({ name: Rotate.Names[this.clockwise  ? 'right' : 'left'] })
+      this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
     } else {
       super.onMouseDown(event)
     }
