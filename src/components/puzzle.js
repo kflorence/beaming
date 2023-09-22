@@ -19,7 +19,7 @@ export class Puzzle {
     this.title = title
 
     elements.message.textContent = title
-    elements.connectionsRequired.textContent = connectionsRequired
+    elements.connectionsRequired.textContent = connectionsRequired || '?'
 
     paper.view.onClick = (event) => this.#onClick(event)
 

@@ -1,3 +1,4 @@
+import chroma from 'chroma-js'
 import { Group, Path } from 'paper'
 import { Tile } from '../tile'
 import { toggleable } from '../modifiers/toggle'
@@ -10,9 +11,12 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
   rotateDegrees = 60
 
-  constructor (tile, { activated, color, openings, type, modifiers }) {
+  constructor (tile, { activated, openings, type, modifiers }) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
+
+    const colors = openings.filter((opening) => opening.color).map((opening) => opening.color)
+    const color = chroma.average(colors).hex()
 
     this.#connections = new Array(openings.length)
     this.#ui = Terminus.ui(tile, { color, openings })
@@ -63,25 +67,32 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   update () {
-    this.#ui.item.fillColor.alpha = this.activated ? 1 : 0.5
+    this.#ui.item.fillColor.alpha = this.activated ? 1 : 0.25
   }
 
   static ui (tile, { color, openings }) {
     const parameters = Tile.parameters(tile.parameters.circumradius)
     const hexagon = new Path.RegularPolygon({
       center: tile.center,
-      fillColor: color,
+      fillColor: 'black',
       insert: false,
       radius: parameters.circumradius,
-      sides: 6,
-      strokeWidth: 1,
-      strokeColor: color
+      sides: 6
     })
 
     const cavity = new Path.RegularPolygon({
       insert: false,
       center: tile.center,
       radius: parameters.circumradius / 2,
+      sides: 6
+    })
+
+    // TODO: handle 'contains'
+    const center = new Path.RegularPolygon({
+      fillColor: color,
+      insert: false,
+      center: tile.center,
+      radius: parameters.circumradius / 3,
       sides: 6
     })
 
@@ -107,7 +118,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
     )
 
     const group = new Group({
-      children: [item],
+      children: [item, center],
       locked: true
     })
 
