@@ -26,18 +26,7 @@ export default {
       ],
       [
         null,
-        {
-          items: [
-            {
-              direction: 3,
-              modifiers: [
-                { type: Lock.Type },
-                { type: Rotate.Type }
-              ],
-              type: Reflector.Type
-            }
-          ]
-        },
+        {},
         null,
         null
       ],

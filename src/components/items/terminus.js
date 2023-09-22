@@ -11,12 +11,19 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
   rotateDegrees = 60
 
-  constructor (tile, { activated, openings, type, modifiers }) {
+  constructor (tile, { activated, color, openings, type, modifiers }) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
-    const colors = openings.filter((opening) => opening.color).map((opening) => opening.color)
-    const color = chroma.average(colors).hex()
+    if (color === undefined) {
+      const colors = openings.filter((opening) => opening.color).map((opening) => opening.color)
+
+      if (colors.length === 0) {
+        throw new Error('Terminus has no color defined.')
+      }
+
+      color = chroma.average(colors).hex()
+    }
 
     this.#connections = new Array(openings.length)
     this.#ui = Terminus.ui(tile, { color, openings })
