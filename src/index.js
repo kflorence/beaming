@@ -37,6 +37,10 @@ function selectPuzzle (id) {
   }
 
   if (configuration) {
+    const url = new URL(location)
+    url.searchParams.set('id', id)
+    history.pushState({ id }, '', url)
+
     puzzleSelector.value = id
     puzzle = new Puzzle(id, configuration)
   } else {

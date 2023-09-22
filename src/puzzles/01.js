@@ -4,6 +4,7 @@ import { Lock } from '../components/modifiers/lock'
 import { Rotate } from '../components/modifiers/rotate'
 import { Reflector } from '../components/items/reflector'
 import { Immutable } from '../components/modifiers/immutable'
+import { Wall } from '../components/items/wall'
 
 export default {
   connectionsRequired: 1,
@@ -26,7 +27,15 @@ export default {
       ],
       [
         null,
-        {},
+        {
+          items: [
+            {
+              modifiers: [{ type: Immutable.Type }],
+              openings: [1, 4],
+              type: Wall.Type
+            }
+          ]
+        },
         null,
         null
       ],

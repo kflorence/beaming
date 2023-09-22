@@ -20,6 +20,10 @@ export function getReflectedDirection (beamDirection, reflectorDirection) {
   return (addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6
 }
 
+export function getNextDirection (direction, max = 5) {
+  return direction === max ? 0 : direction + 1
+}
+
 export function getOppositeDirection (direction) {
   return direction + (direction >= 3 ? -3 : 3)
 }

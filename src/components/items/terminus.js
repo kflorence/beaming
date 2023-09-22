@@ -1,9 +1,9 @@
 import chroma from 'chroma-js'
-import { Group, Path } from 'paper'
-import { Tile } from '../tile'
+import { Color, Group, Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
+import { Wall } from './wall'
 
 export class Terminus extends rotatable(toggleable(Item)) {
   #connections
@@ -78,51 +78,19 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   static ui (tile, { color, openings }) {
-    const parameters = Tile.parameters(tile.parameters.circumradius)
-    const hexagon = new Path.RegularPolygon({
-      center: tile.center,
-      fillColor: 'black',
-      insert: false,
-      radius: parameters.circumradius,
-      sides: 6
-    })
+    const radius = tile.parameters.circumradius - (tile.parameters.circumradius / 6)
+    const item = Wall.item(tile.center, radius, radius / 2, openings.map((opening) => opening.direction))
 
-    const cavity = new Path.RegularPolygon({
-      insert: false,
-      center: tile.center,
-      radius: parameters.circumradius / 2,
-      sides: 6
-    })
+    item.fillColor = new Color('black')
 
     // TODO: handle 'contains'
     const center = new Path.RegularPolygon({
       fillColor: color,
       insert: false,
       center: tile.center,
-      radius: parameters.circumradius / 3,
+      radius: radius / 3,
       sides: 6
     })
-
-    const paths = openings.map((opening) => {
-      const directionFrom = opening.direction
-      const directionTo = directionFrom === 5 ? 0 : directionFrom + 1
-
-      return new Path({
-        closed: true,
-        insert: false,
-        segments: [
-          tile.center,
-          hexagon.segments[directionFrom].point,
-          hexagon.segments[directionTo].point
-        ]
-      })
-    })
-
-    // Create the final shape
-    const item = paths.reduce(
-      (shape, path) => shape.subtract(path, { insert: false }),
-      hexagon.exclude(cavity, { insert: false })
-    )
 
     const group = new Group({
       children: [item, center],
