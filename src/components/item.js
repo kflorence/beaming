@@ -1,10 +1,15 @@
-import { Toggleable } from './modifiers/toggleable'
-import { Locked } from './modifiers/locked'
+import { Toggle } from './modifiers/toggle'
+import { Lock } from './modifiers/lock'
+import { Rotate } from './modifiers/rotate'
+import { Immutable } from './modifiers/immutable'
 
 export class Item {
+  center
   group
+  tile
 
   constructor (tile, { type, modifiers }) {
+    this.center = tile.center
     this.tile = tile
     this.type = type
 
@@ -32,11 +37,17 @@ export class Item {
     let modifier
 
     switch (configuration.type) {
-      case Locked.Type:
-        modifier = new Locked(this)
+      case Immutable.Type:
+        modifier = new Immutable(this)
         break
-      case Toggleable.Type:
-        modifier = new Toggleable(this)
+      case Lock.Type:
+        modifier = new Lock(this)
+        break
+      case Rotate.Type:
+        modifier = new Rotate(this)
+        break
+      case Toggle.Type:
+        modifier = new Toggle(this)
         break
       default:
         console.error('Ignoring modifier with unknown type: ' + configuration.type)

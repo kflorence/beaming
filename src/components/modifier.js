@@ -3,11 +3,11 @@ const modifiersMutable = document.getElementById('modifiers-mutable')
 
 export class Modifier {
   #container
-  #element
   #eventListeners = {}
   #selectionTime = 500
   #timeoutId = 0
 
+  element
   immutable = false
   item
   name
@@ -40,7 +40,7 @@ export class Modifier {
    */
   attach () {
     const li = this.#container = document.createElement('li')
-    const button = this.#element = document.createElement('button')
+    const button = this.element = document.createElement('button')
 
     button.classList.add('material-symbols-outlined')
 
@@ -60,12 +60,12 @@ export class Modifier {
    */
   detach () {
     Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => this.#element.removeEventListener(event, listener))
+      .forEach(([event, listener]) => this.element.removeEventListener(event, listener))
 
     this.#container.remove()
 
     this.selected = false
-    this.#element = undefined
+    this.element = undefined
     this.#container = undefined
   }
 
@@ -92,10 +92,7 @@ export class Modifier {
   onSelected () {
     this.#timeoutId = 0
 
-    const selectedModifier = document.querySelector('.modifiers .selected')
-    if (selectedModifier) {
-      selectedModifier.dispatchEvent(new Event('deselected'))
-    }
+    Modifier.deselect()
 
     this.update({ selected: true })
   }
@@ -106,9 +103,26 @@ export class Modifier {
       options || {}
     )
 
+    this.name = options.name
+    this.title = options.title
     this.selected = options.selected
-    this.#element.classList.toggle('selected', this.selected)
-    this.#element.textContent = options.name
-    this.#element.title = options.title
+
+    this.element.classList.toggle('selected', this.selected)
+    this.element.textContent = this.name
+    this.element.title = this.title
+  }
+
+  static deselect () {
+    const selectedModifier = document.querySelector('.modifiers .selected')
+    if (selectedModifier) {
+      selectedModifier.dispatchEvent(new Event('deselected'))
+    }
   }
 }
+
+// De-select any selected modifiers if user clicks on anything else in the footer
+document.getElementById('footer').addEventListener('click', (event) => {
+  if (!event.target.classList.contains('selected')) {
+    Modifier.deselect()
+  }
+})

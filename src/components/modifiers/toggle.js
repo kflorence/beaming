@@ -1,18 +1,18 @@
 import { Modifier } from '../modifier'
 
-export class Toggleable extends Modifier {
+export class Toggle extends Modifier {
   title = 'This item can be toggled on and off.'
 
   constructor (item) {
     super(...arguments)
 
     if (typeof item.toggle !== 'function') {
-      throw new Error('Item with Toggleable modifier must mix-in ToggleableItem.')
+      throw new Error('Item with Toggle modifier must mix-in ToggleableItem.')
     }
   }
 
   attach () {
-    this.name = Toggleable.Names[this.item.activated ? 'on' : 'off']
+    this.name = Toggle.Names[this.item.activated ? 'on' : 'off']
     super.attach()
   }
 
@@ -21,11 +21,11 @@ export class Toggleable extends Modifier {
 
     this.item.toggle()
 
-    this.update({ name: Toggleable.Names[this.item.activated ? 'on' : 'off'] })
+    this.update({ name: Toggle.Names[this.item.activated ? 'on' : 'off'] })
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
-  static Type = 'Toggleable'
+  static Type = 'Toggle'
 }
 
 /**

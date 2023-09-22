@@ -1,14 +1,18 @@
 import { Group, Path } from 'paper'
 import { Tile } from '../tile'
-import { toggleable } from '../modifiers/toggleable'
+import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
+import { rotatable } from '../modifiers/rotate'
 
-export class Terminus extends toggleable(Item) {
+export class Terminus extends rotatable(toggleable(Item)) {
   #connections
   #ui
 
+  rotateDegrees = 60
+
   constructor (tile, { activated, color, openings, type, modifiers }) {
-    super(tile, { type, modifiers })
+    // noinspection JSCheckFunctionSignatures
+    super(...arguments)
 
     this.#connections = new Array(openings.length)
     this.#ui = Terminus.ui(tile, { color, openings })

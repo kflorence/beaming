@@ -1,5 +1,6 @@
 import { Group, Path, Point } from 'paper'
 import { Terminus } from './items/terminus'
+import { Reflector } from './items/reflector'
 
 export class Tile {
   #ui
@@ -15,7 +16,9 @@ export class Tile {
     this.parameters = parameters
 
     // This needs to be last, since it references this
-    this.items = (configuration.items || []).map((configuration) => this.#itemFactory(this, configuration))
+    this.items = (configuration.items || [])
+      .map((configuration) => this.#itemFactory(this, configuration))
+      .filter((item) => item !== undefined)
   }
 
   onClick (event) {
@@ -40,6 +43,9 @@ export class Tile {
     switch (configuration.type) {
       case Terminus.Type:
         item = new Terminus(tile, configuration)
+        break
+      case Reflector.Type:
+        item = new Reflector(tile, configuration)
         break
       default:
         console.error('Ignoring item with unknown type: ' + configuration.type)

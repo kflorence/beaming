@@ -1,6 +1,9 @@
-import { Toggleable } from '../components/modifiers/toggleable'
+import { Toggle } from '../components/modifiers/toggle'
 import { Terminus } from '../components/items/terminus'
-import { Locked } from '../components/modifiers/locked'
+import { Lock } from '../components/modifiers/lock'
+import { Rotate } from '../components/modifiers/rotate'
+import { Reflector } from '../components/items/reflector'
+import { Immutable } from '../components/modifiers/immutable'
 
 export default {
   connectionsRequired: 1,
@@ -13,7 +16,7 @@ export default {
           items: [
             {
               color: 'blue',
-              modifiers: [{ type: Locked.Type }],
+              modifiers: [{ type: Immutable.Type }],
               openings: [{ direction: 4 }],
               type: Terminus.Type
             }
@@ -23,7 +26,18 @@ export default {
       ],
       [
         null,
-        {},
+        {
+          items: [
+            {
+              direction: 3,
+              modifiers: [
+                { type: Lock.Type },
+                { type: Rotate.Type }
+              ],
+              type: Reflector.Type
+            }
+          ]
+        },
         null,
         null
       ],
@@ -34,8 +48,9 @@ export default {
             {
               color: 'blue',
               modifiers: [
-                { type: Locked.Type },
-                { type: Toggleable.Type }
+                { type: Lock.Type },
+                { type: Rotate.Type },
+                { type: Toggle.Type }
               ],
               openings: [
                 {
@@ -52,5 +67,5 @@ export default {
       ]
     ]
   },
-  title: 'Connect the dots'
+  title: 'On'
 }
