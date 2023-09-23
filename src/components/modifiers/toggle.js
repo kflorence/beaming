@@ -22,6 +22,8 @@ export class Toggle extends Modifier {
     this.item.toggle()
 
     this.update({ name: Toggle.Names[this.item.activated ? 'on' : 'off'] })
+
+    this.dispatchEvent()
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })

@@ -74,14 +74,18 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   update () {
-    this.#ui.item.fillColor.alpha = this.activated ? 1 : 0.25
+    this.#ui.item.fillColor.alpha = this.activated ? 0.5 : 0.25
+  }
+
+  static radius (tile) {
+    return tile.parameters.circumradius - (tile.parameters.circumradius / 6)
   }
 
   static ui (tile, { color, openings }) {
-    const radius = tile.parameters.circumradius - (tile.parameters.circumradius / 6)
+    const radius = Terminus.radius(tile)
     const item = Wall.item(tile.center, radius, radius / 2, openings.map((opening) => opening.direction))
 
-    item.fillColor = new Color('black')
+    item.fillColor = new Color(color)
 
     // TODO: handle 'contains'
     const center = new Path.RegularPolygon({

@@ -17,6 +17,7 @@ export class Rotate extends Modifier {
   onClick (event) {
     super.onClick(event)
     this.item.rotate(this.clockwise)
+    this.dispatchEvent()
   }
 
   onMouseDown (event) {
@@ -33,7 +34,14 @@ export class Rotate extends Modifier {
   static Type = 'Rotate'
 }
 
+/**
+ * A mixin for Item which provides rotate behaviors.
+ *
+ * @param SuperClass
+ * @returns {{rotateDirection: number, new(): RotatableItem, prototype: RotatableItem}}
+ */
 export const rotatable = (SuperClass) => class RotatableItem extends SuperClass {
+  // Generally 30 (12 rotations) or 60 (6 rotations)
   rotateDegrees = 30
   rotateDirection = 0
 

@@ -5,6 +5,7 @@ export const Buttons = Object.freeze({
 
 export const Events = Object.freeze({
   Error: 'puzzle-error',
+  ItemModified: 'puzzle-item-modified',
   Solved: 'puzzle-solved',
   TileSelected: 'puzzle-tile-selected'
 })

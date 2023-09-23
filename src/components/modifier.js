@@ -1,3 +1,5 @@
+import { Events } from './util'
+
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
 
@@ -13,8 +15,9 @@ export class Modifier {
   name
   selected = false
   title
+  type
 
-  constructor (item) {
+  constructor (item, type) {
     Object.entries({
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
@@ -33,6 +36,7 @@ export class Modifier {
     })
 
     this.item = item
+    this.type = type
   }
 
   /**
@@ -67,6 +71,10 @@ export class Modifier {
     this.selected = false
     this.element = undefined
     this.#container = undefined
+  }
+
+  dispatchEvent () {
+    document.dispatchEvent(new CustomEvent(Events.ItemModified, { detail: { modifier: this, type: this.type } }))
   }
 
   onClick () {

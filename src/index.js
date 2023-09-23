@@ -72,3 +72,8 @@ document.addEventListener(Events.TileSelected, (event) => {
   const tile = event.detail.selected
   document.body.classList[tile ? 'add' : 'remove'](Events.TileSelected)
 })
+
+// Handle item modifications
+document.addEventListener(Events.ItemModified, (event) => {
+  puzzle.update(event)
+})

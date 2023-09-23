@@ -2,6 +2,12 @@ import { Group, Path, Point } from 'paper'
 import { getOppositeDirection, getReflectedDirection } from './util'
 
 export class Beam {
+  constructor (tile, configuration) {
+
+  }
+}
+
+export class OldBeam {
   constructor (startTerminus, configuration) {
     this.activated = configuration.activated || false
 

@@ -23,7 +23,7 @@ export class Puzzle {
 
     paper.view.onClick = (event) => this.#onClick(event)
 
-    this.#update()
+    this.update()
   }
 
   #getTile (event) {
@@ -47,8 +47,6 @@ export class Puzzle {
     if (tile && tile === previouslySelectedTile) {
       tile.onClick(event)
     }
-
-    this.#update()
   }
 
   #onSolved (connections) {
@@ -93,7 +91,10 @@ export class Puzzle {
     }))
   }
 
-  #update () {
+  update (event) {
+    console.log('update', event)
+
+
     // TODO: update beams
     // The general logic will be to add and remove beams as they are turned on/off.
     // Any active beams will be looped through and updated individually.

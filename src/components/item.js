@@ -17,11 +17,7 @@ export class Item {
     this.modifiers = modifiers.map((configuration) => this.#modifierFactory(configuration))
   }
 
-  // TODO:
-  // handle display of and interaction with modifiers
-  onClick (event, previouslySelectedTile) {
-    console.log(event)
-  }
+  onClick () {}
 
   onDeselected () {
     this.modifiers.forEach((modifier) => modifier.detach())
@@ -38,16 +34,16 @@ export class Item {
 
     switch (configuration.type) {
       case Immutable.Type:
-        modifier = new Immutable(this)
+        modifier = new Immutable(this, Immutable.Type)
         break
       case Lock.Type:
-        modifier = new Lock(this)
+        modifier = new Lock(this, Lock.Type)
         break
       case Rotate.Type:
-        modifier = new Rotate(this)
+        modifier = new Rotate(this, Rotate.Type)
         break
       case Toggle.Type:
-        modifier = new Toggle(this)
+        modifier = new Toggle(this, Toggle.Type)
         break
       default:
         console.error('Ignoring modifier with unknown type: ' + configuration.type)
