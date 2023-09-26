@@ -1,14 +1,20 @@
 import { Item } from '../item'
 import { Group, Path } from 'paper'
 import { getNextDirection } from '../util'
+import { rotatable } from '../modifiers/rotate'
 
-export class Wall extends Item {
+export class Wall extends rotatable(Item) {
   #ui
 
+  rotateDegrees = 60
+
   constructor (tile, configuration) {
+    // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
     this.#ui = Wall.ui(tile, configuration)
+
+    this.group = this.#ui.group
   }
 
   static item (center, radius, cavityRadius, openings) {

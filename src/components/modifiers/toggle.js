@@ -1,29 +1,35 @@
 import { Modifier } from '../modifier'
 
 export class Toggle extends Modifier {
-  title = 'This item can be toggled on and off.'
+  items
+  on
+  title = 'Items in this tile can be toggled between states.'
 
-  constructor (item) {
+  constructor(tile, { on }) {
     super(...arguments)
 
-    if (typeof item.toggle !== 'function') {
-      throw new Error('Item with Toggle modifier must mix-in ToggleableItem.')
-    }
+    this.items = this.tile.items.filter((item) => item.toggleable === true)
+    this.on = on || false
+
+    this.#toggle()
   }
 
   attach () {
-    this.name = Toggle.Names[this.item.activated ? 'on' : 'off']
+    this.name = Toggle.Names[this.on ? 'on' : 'off']
     super.attach()
   }
 
   onClick (event) {
     super.onClick(event)
 
-    this.item.toggle()
-
-    this.update({ name: Toggle.Names[this.item.activated ? 'on' : 'off'] })
-
+    this.on = !this.on
+    this.#toggle()
+    this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
     this.dispatchEvent()
+  }
+
+  #toggle () {
+    this.items.forEach((item) => item.toggle(this.on))
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
@@ -38,10 +44,11 @@ export class Toggle extends Modifier {
  * @constructor
  */
 export const toggleable = (SuperClass) => class ToggleableItem extends SuperClass {
-  activated
+  toggleable = true
+  toggled
 
-  toggle () {
-    this.activated = !this.activated
+  toggle (toggled) {
+    this.toggled = toggled
     this.update()
   }
 }

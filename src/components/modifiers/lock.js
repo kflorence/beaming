@@ -7,7 +7,7 @@ import { Modifier } from '../modifier'
 export class Lock extends Modifier {
   immutable = true
   name = 'lock'
-  title = 'This item cannot be modified.'
+  title = 'The items in this tile are locked. They can be updated but they cannot be modified.'
 
   static Type = 'Lock'
 }

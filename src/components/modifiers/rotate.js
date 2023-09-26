@@ -4,19 +4,18 @@ import { Buttons } from '../util'
 export class Rotate extends Modifier {
   clockwise = true
   name = Rotate.Names.right
-  title = 'This item can be rotated.'
+  title = 'Items in this tile can be rotated.'
 
-  constructor (item) {
+  constructor () {
     super(...arguments)
 
-    if (typeof item.rotate !== 'function') {
-      throw new Error('Item with Rotate modifier must mix-in RotatableItem.')
-    }
+    this.items = this.tile.items.filter((item) => item.rotatable === true)
   }
 
   onClick (event) {
     super.onClick(event)
-    this.item.rotate(this.clockwise)
+
+    this.items.forEach((item) => item.rotate(this.clockwise))
     this.dispatchEvent()
   }
 
@@ -41,6 +40,8 @@ export class Rotate extends Modifier {
  * @returns {{rotateDirection: number, new(): RotatableItem, prototype: RotatableItem}}
  */
 export const rotatable = (SuperClass) => class RotatableItem extends SuperClass {
+  rotatable = true
+
   // Generally 30 (12 rotations) or 60 (6 rotations)
   rotateDegrees = 30
   rotateDirection = 0

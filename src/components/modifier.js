@@ -11,13 +11,13 @@ export class Modifier {
 
   element
   immutable = false
-  item
   name
   selected = false
+  tile
   title
   type
 
-  constructor (item, type) {
+  constructor (tile, { type }) {
     Object.entries({
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
@@ -35,7 +35,7 @@ export class Modifier {
       this.#eventListeners[name] = handler.bind(this)
     })
 
-    this.item = item
+    this.tile = tile
     this.type = type
   }
 

@@ -14,15 +14,12 @@ export default {
         {
           items: [
             {
-              // TODO: terminus can contain a modifier that the user can acquire by connecting a beam.
-              // On acquisition, the modifier must be placed on a valid tile.
-              // While a terminus contains a modifier, it cannot be activated.
-              //contains: { type: Key.Type },
-              modifiers: [{ type: Lock.Type }, { type: Toggle.Type }],
-              openings: [{ color: 'blue', direction: 3 }, { direction: 4 }],
+              color: 'blue',
+              openings: [{ direction: 3 }, { direction: 4 }],
               type: Terminus.Type
             }
-          ]
+          ],
+          modifiers: [{ type: Lock.Type }],
         },
         null,
         null
@@ -40,20 +37,21 @@ export default {
           items: [
             {
               direction: 3,
-              modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
               type: Reflector.Type
             }
-          ]
+          ],
+          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
         },
         null,
         {
           items: [
             {
               direction: 3,
-              modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
+
               type: Reflector.Type
             }
-          ]
+          ],
+          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
         },
         null
       ],
@@ -70,11 +68,11 @@ export default {
         {
           items: [
             {
-              modifiers: [{ type: Lock.Type }, { type: Toggle.Type }],
               openings: [{ color: 'blue', direction: 0 }, { color: 'blue', direction: 1 }],
               type: Terminus.Type
             }
-          ]
+          ],
+          modifiers: [{ type: Lock.Type }, { type: Toggle.Type }],
         },
         null,
         null

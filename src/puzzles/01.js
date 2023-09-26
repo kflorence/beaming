@@ -16,25 +16,19 @@ export default {
         {
           items: [
             {
-              color: 'blue',
-              modifiers: [{ type: Immutable.Type }],
+              color: '#5187E8',
               openings: [{ direction: 4 }],
               type: Terminus.Type
             }
-          ]
+          ],
+          modifiers: [{ type: Immutable.Type }]
         },
         null
       ],
       [
         null,
         {
-          items: [
-            {
-              modifiers: [{ type: Immutable.Type }],
-              openings: [1, 4],
-              type: Wall.Type
-            }
-          ]
+          modifiers: [{ type: Immutable.Type }],
         },
         null,
         null
@@ -44,21 +38,23 @@ export default {
         {
           items: [
             {
-              color: 'blue',
-              modifiers: [
-                { type: Lock.Type },
-                { type: Rotate.Type },
-                { type: Toggle.Type }
-              ],
+              color: '#5187E8',
               openings: [
                 {
+                  color: 'red',
                   direction: 1,
-                  toggleable: true
+                  beam: true,
+                  on: true
                 }
               ],
               type: Terminus.Type
             }
-          ]
+          ],
+          modifiers: [
+            { type: Lock.Type },
+            { type: Rotate.Type },
+            { type: Toggle.Type }
+          ],
         },
         null,
         null
