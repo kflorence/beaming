@@ -1,4 +1,4 @@
-import { Color, Group, Path, Point } from 'paper'
+import { Group, Path, Point } from 'paper'
 import { Terminus } from './items/terminus'
 import { Reflector } from './items/reflector'
 import { Wall } from './items/wall'

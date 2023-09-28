@@ -4,6 +4,11 @@
   "browserslist": [
     "defaults"
   ],
+  "eslintConfig": {
+    "env": {
+      "browser": true
+    }
+  },
   "scripts": {
     "start": "parcel",
     "build": "parcel build",

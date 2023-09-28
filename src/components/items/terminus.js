@@ -1,11 +1,11 @@
 import chroma from 'chroma-js'
-import { Group, Path, Point, Size } from 'paper'
+import { Group, Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
+import { getCentroid, getNextDirection } from '../util'
 
 export class Terminus extends rotatable(toggleable(Item)) {
-  #connections
   #ui
 
   rotateDegrees = 60
@@ -15,7 +15,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
     super(...arguments)
 
     if (color === undefined) {
-      const colors = openings.filter((opening) => opening.color).map((opening) => opening.color)
+      const colors = openings.filter((opening) => opening?.color).map((opening) => opening.color)
 
       if (colors.length === 0) {
         throw new Error('Terminus has no color defined.')
@@ -24,7 +24,6 @@ export class Terminus extends rotatable(toggleable(Item)) {
       color = chroma.average(colors).hex()
     }
 
-    this.#connections = new Array(openings.length)
     this.#ui = Terminus.ui(tile, { color, openings })
 
     this.color = color
@@ -35,66 +34,68 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   update () {
-    this.#ui.indicator.fillColor = this.toggled ? this.color : undefined
+    // this.#ui.indicator.fillColor = this.toggled ? this.color : undefined
   }
 
-  static ui (tile, { color, openings }) {
+  static ui (tile, { color, openings: configuration }) {
     const radius = tile.parameters.circumradius / 2
 
-    const indicator = new Path.RegularPolygon({
-      insert: false,
-      center: tile.center,
-      radius: radius,
-      sides: 6
-    })
-
-    const hexagon = new Path.RegularPolygon({
-      fillColor: color,
+    const bounds = new Path.RegularPolygon({
       insert: false,
       center: tile.center,
       sides: 6,
-      radius: radius - (radius / 3)
+      radius
     })
 
-    const pathWidth = radius / 12
-    const pathWidthPoint = new Point(pathWidth, 0)
-    const pathHeight = tile.parameters.inradius / 2
-    const pathHeightPoint = new Point(0, pathHeight)
-    const pathBottomLeft = tile.center.subtract(pathWidthPoint)
-    const pathBottomRight = tile.center.add(pathWidthPoint)
+    const terminus = new Path.RegularPolygon({
+      center: tile.center,
+      fillColor: color,
+      insert: false,
+      opacity: 0.25,
+      sides: 6,
+      radius: radius / 2
+    })
 
-    const paths = openings.map((opening) => {
-      const path = new Path({
-        closed: true,
-        data: opening,
-        fillColor: opening.color || color,
-        insert: false,
-        segments: [
-          pathBottomRight.subtract(new Point(0, pathHeight / 4)),
-          pathBottomLeft.subtract(new Point(0, pathHeight / 4)),
-          pathBottomLeft.subtract(pathHeightPoint),
-          pathBottomRight.subtract(pathHeightPoint)
-        ]
+    const openings = configuration
+      .flatMap((opening, direction) => opening ? [{ direction, ...opening }] : [])
+      .map((opening) => {
+        const direction = opening.direction
+
+        const triangle = new Path({
+          closed: true,
+          fillColor: opening.color || color,
+          insert: false,
+          segments: [
+            bounds.segments[direction].point,
+            bounds.segments[getNextDirection(direction)].point,
+            tile.center
+          ]
+        })
+
+        const vector = triangle.lastSegment.point.subtract(triangle.firstSegment.point)
+
+        const p1 = getCentroid(triangle)
+        const p2 = p1.subtract(vector)
+
+        vector.angle += 60
+
+        const p3 = p1.subtract(vector)
+
+        const cutout = new Path({
+          closed: true,
+          insert: false,
+          segments: [p1, p2, p3]
+        })
+
+        return triangle.subtract(cutout, { insert: false })
       })
 
-      // The path is drawn at the 12 o'clock position, so in order to make the directions align correctly we have to
-      // start by subtracting 30 degrees, since 0 = the 11 o'clock position.
-      path.rotate(-30 + (opening.direction * 60), tile.center)
-
-      return path
-    })
-
-    const terminus = paths.reduce(
-      (shape, path) => path.data.beam ? shape : shape.subtract(path, {insert: false}),
-      hexagon
-    )
-
     const group = new Group({
-      children: [indicator, ...paths.filter((item) => item.data.beam === true), terminus],
+      children: [terminus, ...openings],
       locked: true
     })
 
-    return { group, indicator, paths, terminus }
+    return { group, openings, terminus }
   }
 
   static Type = 'Terminus'

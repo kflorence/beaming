@@ -19,15 +19,15 @@ export class Wall extends rotatable(Item) {
 
   static item (center, radius, cavityRadius, openings) {
     const hexagon = new Path.RegularPolygon({
-      center: center,
+      center,
       insert: false,
-      radius: radius,
+      radius,
       sides: 6
     })
 
     const cavity = new Path.RegularPolygon({
       insert: false,
-      center: center,
+      center,
       radius: radius - cavityRadius,
       sides: 6
     })

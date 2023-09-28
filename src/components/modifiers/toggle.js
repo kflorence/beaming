@@ -5,7 +5,7 @@ export class Toggle extends Modifier {
   on
   title = 'Items in this tile can be toggled between states.'
 
-  constructor(tile, { on }) {
+  constructor (tile, { on }) {
     super(...arguments)
 
     this.items = this.tile.items.filter((item) => item.toggleable === true)

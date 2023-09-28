@@ -14,11 +14,18 @@ export const Messages = Object.freeze({
   ErrorInvalidId: 'Error: invalid puzzle ID'
 })
 
-export function getReflectedDirection (beamDirection, reflectorDirection) {
-  const beamAngle = beamDirection * 60
-  const reflectorAngle = reflectorDirection * 30
-  const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
-  return (addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6
+export function addDegrees (original, degrees) {
+  const result = original + degrees
+  if (result < 0) return 360 + result
+  else if (result > 360) return result - 360
+  return result
+}
+
+export function getCentroid (triangle) {
+  const segments = triangle.segments
+  const vertex = segments[0].point
+  const opposite = segments[1].point.subtract(segments[1].point.subtract(segments[2].point).divide(2))
+  return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
 }
 
 export function getNextDirection (direction, max = 5) {
@@ -29,9 +36,9 @@ export function getOppositeDirection (direction) {
   return direction + (direction >= 3 ? -3 : 3)
 }
 
-export function addDegrees (original, degrees) {
-  const result = original + degrees
-  if (result < 0) return 360 + result
-  else if (result > 360) return result - 360
-  return result
+export function getReflectedDirection (beamDirection, reflectorDirection) {
+  const beamAngle = beamDirection * 60
+  const reflectorAngle = reflectorDirection * 30
+  const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
+  return (addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6
 }

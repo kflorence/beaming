@@ -94,7 +94,6 @@ export class Puzzle {
   update (event) {
     console.log('update', event)
 
-
     // TODO: update beams
     // The general logic will be to add and remove beams as they are turned on/off.
     // Any active beams will be looped through and updated individually.

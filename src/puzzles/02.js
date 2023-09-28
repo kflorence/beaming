@@ -19,7 +19,7 @@ export default {
               type: Terminus.Type
             }
           ],
-          modifiers: [{ type: Lock.Type }],
+          modifiers: [{ type: Lock.Type }]
         },
         null,
         null
@@ -40,7 +40,7 @@ export default {
               type: Reflector.Type
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
+          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }]
         },
         null,
         {
@@ -51,7 +51,7 @@ export default {
               type: Reflector.Type
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }],
+          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }]
         },
         null
       ],
@@ -72,7 +72,7 @@ export default {
               type: Terminus.Type
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Toggle.Type }],
+          modifiers: [{ type: Lock.Type }, { type: Toggle.Type }]
         },
         null,
         null

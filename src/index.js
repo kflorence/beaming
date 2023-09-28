@@ -3,6 +3,9 @@ import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
 import { Events, Messages } from './components/util'
 
+const history = window.history
+const location = window.location
+
 const message = document.getElementById('message')
 const reset = document.getElementById('reset')
 

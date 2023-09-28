@@ -2,9 +2,7 @@ import { Toggle } from '../components/modifiers/toggle'
 import { Terminus } from '../components/items/terminus'
 import { Lock } from '../components/modifiers/lock'
 import { Rotate } from '../components/modifiers/rotate'
-import { Reflector } from '../components/items/reflector'
 import { Immutable } from '../components/modifiers/immutable'
-import { Wall } from '../components/items/wall'
 
 export default {
   connectionsRequired: 1,
@@ -16,8 +14,8 @@ export default {
         {
           items: [
             {
-              color: '#5187E8',
-              openings: [{ direction: 4 }],
+              color: 'blue',
+              openings: [null, null, null, null, {}, null],
               type: Terminus.Type
             }
           ],
@@ -28,7 +26,7 @@ export default {
       [
         null,
         {
-          modifiers: [{ type: Immutable.Type }],
+          modifiers: [{ type: Immutable.Type }]
         },
         null,
         null
@@ -38,15 +36,8 @@ export default {
         {
           items: [
             {
-              color: '#5187E8',
-              openings: [
-                {
-                  color: 'red',
-                  direction: 1,
-                  beam: true,
-                  on: true
-                }
-              ],
+              color: 'blue',
+              openings: [null, {}, null, null, null, null],
               type: Terminus.Type
             }
           ],
@@ -54,7 +45,7 @@ export default {
             { type: Lock.Type },
             { type: Rotate.Type },
             { type: Toggle.Type }
-          ],
+          ]
         },
         null,
         null
