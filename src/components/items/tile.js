@@ -1,19 +1,24 @@
 import { Group, Path, Point } from 'paper'
-import { Terminus } from './items/terminus'
-import { Reflector } from './items/reflector'
-import { Wall } from './items/wall'
-import { Immutable } from './modifiers/immutable'
-import { Lock } from './modifiers/lock'
-import { Rotate } from './modifiers/rotate'
-import { Toggle } from './modifiers/toggle'
+import { Terminus } from './terminus'
+import { Reflector } from './reflector'
+import { Wall } from './wall'
+import { Immutable } from '../modifiers/immutable'
+import { Lock } from '../modifiers/lock'
+import { Rotate } from '../modifiers/rotate'
+import { Toggle } from '../modifiers/toggle'
+import { Item } from '../item'
+import { Modifier } from '../modifier'
 
-export class Tile {
+export class Tile extends Item {
+  selected = false
+  type = Item.Types.tile
+
   #ui
 
-  selected = false
-
   constructor ({ coordinates, layout, parameters, configuration }) {
-    this.#ui = Tile.ui(coordinates, layout, parameters, configuration)
+    super(null)
+
+    this.#ui = Tile.ui(coordinates, layout, parameters, configuration, this.type)
 
     this.center = this.#ui.center
     this.coordinates = coordinates
@@ -31,6 +36,10 @@ export class Tile {
       .map((configuration) => this.#modifierFactory(configuration))
   }
 
+  addModifier (configuration) {
+    this.modifiers.unshift(this.#modifierFactory(configuration))
+  }
+
   onClick (event) {
     this.items.forEach((item) => item.onClick(event))
   }
@@ -41,6 +50,15 @@ export class Tile {
     this.modifiers.forEach((modifier) => modifier.detach())
   }
 
+  onModifierSelected () {
+    const width = this.parameters.circumradius / 10
+    this.hexagon.dashArray = [width, width]
+  }
+
+  onModifierDeselected () {
+    this.hexagon.dashArray = []
+  }
+
   onSelected () {
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
@@ -48,17 +66,21 @@ export class Tile {
     this.modifiers.forEach((modifier) => modifier.attach())
   }
 
+  removeModifier (modifier) {
+    this.modifiers.splice(this.modifiers.indexOf(modifier), 1)
+  }
+
   #itemFactory (configuration) {
     let item
 
     switch (configuration.type) {
-      case Terminus.Type:
+      case Item.Types.terminus:
         item = new Terminus(this, configuration)
         break
-      case Reflector.Type:
+      case Item.Types.reflector:
         item = new Reflector(this, configuration)
         break
-      case Wall.Type:
+      case Item.Types.wall:
         item = new Wall(this, configuration)
         break
       default:
@@ -73,16 +95,16 @@ export class Tile {
     let modifier
 
     switch (configuration.type) {
-      case Immutable.Type:
+      case Modifier.Types.immutable:
         modifier = new Immutable(this, configuration)
         break
-      case Lock.Type:
+      case Modifier.Types.lock:
         modifier = new Lock(this, configuration)
         break
-      case Rotate.Type:
+      case Modifier.Types.rotate:
         modifier = new Rotate(this, configuration)
         break
-      case Toggle.Type:
+      case Modifier.Types.toggle:
         modifier = new Toggle(this, configuration)
         break
       default:
@@ -108,8 +130,8 @@ export class Tile {
     }
   }
 
-  static ui (coordinates, layout, parameters, configuration) {
-    const data = { coordinates, type: Tile.Type }
+  static ui (coordinates, layout, parameters, configuration, type) {
+    const data = { coordinates, type }
 
     const center = new Point(
       layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
@@ -152,6 +174,4 @@ export class Tile {
       strokeWidth: 2
     }
   })
-
-  static Type = 'Tile'
 }

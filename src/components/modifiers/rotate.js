@@ -1,10 +1,11 @@
 import { Modifier } from '../modifier'
-import { Buttons } from '../util'
+import { Buttons, Events } from '../util'
 
 export class Rotate extends Modifier {
   clockwise = true
   name = Rotate.Names.right
   title = 'Items in this tile can be rotated.'
+  type = Modifier.Types.rotate
 
   constructor () {
     super(...arguments)
@@ -16,7 +17,7 @@ export class Rotate extends Modifier {
     super.onClick(event)
 
     this.items.forEach((item) => item.rotate(this.clockwise))
-    this.dispatchEvent()
+    this.dispatchEvent(Events.TileModified)
   }
 
   onMouseDown (event) {
@@ -30,7 +31,6 @@ export class Rotate extends Modifier {
   }
 
   static Names = Object.freeze({ left: 'rotate_left', right: 'rotate_right ' })
-  static Type = 'Rotate'
 }
 
 /**

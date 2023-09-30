@@ -1,5 +1,5 @@
 import { Group, Path, Point } from 'paper'
-import { getOppositeDirection, getReflectedDirection } from './util'
+import { getOppositeDirection, getReflectedDirection } from '../util'
 
 export class Beam {
 }
@@ -47,7 +47,7 @@ export class OldBeam {
 
     this.group.opacity = 1
 
-    let currentTile = this.startTerminus.tile
+    let currentTile = this.startTerminus.parent
     let currentDirectionTo = this.startDirection
     let currentDirectionFrom = getOppositeDirection(currentDirectionTo)
     let segmentIndex = 0
@@ -75,8 +75,8 @@ export class OldBeam {
         // Remove beam references in tiles
         for (let i = segmentIndex; i < this.segments.length; i++) {
           currentSegment = this.segments[i]
-          const beams = currentSegment.tile.objects.beams
-          currentSegment.tile.objects.beams = beams.filter((beam) => beam !== this)
+          const beams = currentSegment.parent.objects.beams
+          currentSegment.parent.objects.beams = beams.filter((beam) => beam !== this)
         }
 
         this.segments.splice(segmentIndex)
@@ -180,7 +180,7 @@ export class OldBeam {
 
   static bulb (terminus) {
     return new Path.Circle({
-      center: terminus.tile.center,
+      center: terminus.parent.center,
       closed: true,
       data: { terminus },
       fillColor: terminus.ui.color,

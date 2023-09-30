@@ -3,6 +3,8 @@ import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 
 export class Reflector extends rotatable(Item) {
+  type = Item.Types.reflector
+
   #ui
 
   constructor (tile, configuration) {
@@ -37,6 +39,4 @@ export class Reflector extends rotatable(Item) {
 
     return { item, group }
   }
-
-  static Type = 'Reflector'
 }

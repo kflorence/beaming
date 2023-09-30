@@ -1,12 +1,17 @@
+import { capitalize } from './util'
+
 export class Item {
   center
   group
-  tile
+  parent
+  type
 
-  constructor (tile, { type }) {
-    this.center = tile.center
-    this.tile = tile
-    this.type = type
+  constructor (parent) {
+    if (parent) {
+      this.center = parent.center
+    }
+
+    this.parent = parent
   }
 
   onClick () {}
@@ -16,4 +21,12 @@ export class Item {
   onSelected () {}
 
   update () {}
+
+  static Types = Object.freeze(Object.fromEntries([
+    'mask',
+    'reflector',
+    'terminus',
+    'tile',
+    'wall'
+  ].map((type) => [type, capitalize(type)])))
 }

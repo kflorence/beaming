@@ -1,98 +1,102 @@
 import { Layout } from './layout'
-import paper, { Path } from 'paper'
+import paper, { Layer } from 'paper'
 import { Events } from './util'
-import { Tile } from './tile'
+import { Item } from './item'
+import { Mask } from './items/mask'
+import { Modifier } from './modifier'
 
 const elements = Object.freeze({
   connectionsRequired: document.getElementById('connections-required'),
-  message: document.getElementById('message')
+  message: document.getElementById('message'),
+  state: document.getElementById('state')
 })
 
 export class Puzzle {
+  layers = {}
   selectedTile
   solved = false
 
-  constructor (id, { connectionsRequired, layout, title }) {
+  #mask
+  #tiles
+
+  constructor (id, { connections, layout, title }) {
     this.layout = new Layout(layout)
+
+    this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
+
+    this.layers.mask = new Layer()
 
     this.id = id
     this.title = title
 
     elements.message.textContent = title
-    elements.connectionsRequired.textContent = connectionsRequired || '?'
+
+    this.#setState(connections)
 
     paper.view.onClick = (event) => this.#onClick(event)
 
     this.update()
   }
 
-  #getTile (event) {
-    let tile
-    const hit = paper.project.hitTest(event.point)
-    if (hit && hit.item.data.type === Tile.Type) {
-      tile = this.layout.getTile(hit.item.data.coordinates.axial)
-    }
-
-    return tile
-  }
-
   #onClick (event) {
+    let tile
+
     if (this.solved) {
       return
     }
 
-    const tile = this.#getTile(event)
-    const previouslySelectedTile = this.#updateSelectedTile(tile)
+    const hit = paper.project.hitTest(event.point)
 
-    if (tile && tile === previouslySelectedTile) {
-      tile.onClick(event)
+    switch (hit?.item.data.type) {
+      case Item.Types.mask:
+        return
+      case Item.Types.tile:
+        tile = this.layout.getTile(hit.item.data.coordinates.axial)
+        break
+    }
+
+    // There is an active mask
+    if (this.#mask) {
+      // An un-masked tile was clicked on
+      if (tile && tile !== this.selectedTile) {
+        switch (this.#mask.type) {
+          case Events.ModifierSelected: {
+            const modifier = this.#mask.detail.modifier
+            modifier.remove()
+            tile.addModifier(modifier.configuration)
+            this.unmask()
+            break
+          }
+        }
+      } else {
+        // Neither a tile nor mask was clicked on
+        Modifier.deselect()
+      }
+    }
+
+    if (!this.#mask) {
+      const previouslySelectedTile = this.#updateSelectedTile(tile)
+
+      if (tile && tile === previouslySelectedTile) {
+        tile.onClick(event)
+      }
     }
   }
 
-  #onSolved (connections) {
-    this.solved = true
+  mask (event) {
+    this.#mask = event
+    // TODO animation?
+    const mask = this.#tiles.filter(event.detail.filter).map((tile) => new Mask(tile, event.detail))
+    this.layers.mask.addChildren(mask.map((mask) => mask.group))
+  }
 
-    if (this.selectedTile) {
-      this.selectedTile.onDeselected()
-      this.selectedTile = null
-    }
-
-    const event = new CustomEvent(Events.Solved)
-    document.dispatchEvent(event)
-
-    const mask = {}
-
-    // TODO add 'fade-in' animation
-    // Loop through each connected beam and draw a mask over each tile
-    connections.forEach((beam) => beam.segments.forEach((segment) => {
-      const id = segment.tile.data.coordinates.offset.toString()
-
-      // Don't add multiple masks when beams overlap (e.g. for a terminus with multiple beams)
-      if (mask[id]) {
-        return
-      }
-
-      const style = Object.assign(
-        {},
-        segment.tile.style,
-        {
-          fillColor: beam.color
-        }
-      )
-
-      mask[id] = new Path.RegularPolygon({
-        center: segment.tile.center,
-        closed: true,
-        opacity: 0.25,
-        radius: segment.tile.parameters.circumradius + 1,
-        sides: 6,
-        style
-      })
-    }))
+  unmask () {
+    this.#mask = undefined
+    this.layers.mask.removeChildren()
   }
 
   update (event) {
-    console.log('update', event)
+    // console.log('update', event)
 
     // TODO: update beams
     // The general logic will be to add and remove beams as they are turned on/off.
@@ -106,6 +110,29 @@ export class Puzzle {
     // if (this.configuration.connections === connections.length) {
     //   this.onSolved(connections)
     // }
+  }
+
+  #onSolved () {
+    this.solved = true
+
+    if (this.selectedTile) {
+      this.selectedTile.onDeselected()
+      this.selectedTile = null
+    }
+
+    const event = new CustomEvent(Events.Solved)
+    document.dispatchEvent(event)
+  }
+
+  #setState (connections) {
+    connections.forEach((color) => {
+      const span = document.createElement('span')
+      span.classList.add('connection', 'material-symbols-outlined')
+      span.textContent = Puzzle.States.disconnected
+      span.style.backgroundColor = color
+      span.title = `Connection: ${color}`
+      elements.state.append(span)
+    })
   }
 
   #updateSelectedTile (tile) {
@@ -127,4 +154,9 @@ export class Puzzle {
 
     return previouslySelectedTile
   }
+
+  static States = Object.freeze({
+    connected: 'power',
+    disconnected: 'power_off'
+  })
 }

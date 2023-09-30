@@ -5,8 +5,10 @@ export const Buttons = Object.freeze({
 
 export const Events = Object.freeze({
   Error: 'puzzle-error',
-  ItemModified: 'puzzle-item-modified',
+  ModifierDeselected: 'puzzle-modifier-deselected',
+  ModifierSelected: 'puzzle-modifier-selected',
   Solved: 'puzzle-solved',
+  TileModified: 'puzzle-tile-modified',
   TileSelected: 'puzzle-tile-selected'
 })
 
@@ -19,6 +21,10 @@ export function addDegrees (original, degrees) {
   if (result < 0) return 360 + result
   else if (result > 360) return result - 360
   return result
+}
+
+export function capitalize (string) {
+  return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
 export function getCentroid (triangle) {

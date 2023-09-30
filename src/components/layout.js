@@ -1,7 +1,7 @@
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Layer, Point, view } from 'paper'
-import { Tile } from './tile'
+import { Tile } from './items/tile'
 
 export class Layout {
   layers = {}

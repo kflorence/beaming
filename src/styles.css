@@ -54,6 +54,7 @@ main {
 #error,
 #puzzle {
   background-color: #ccc;
+  cursor: pointer;
   height: 100%;
   width: 100%;
 }
@@ -104,10 +105,18 @@ main {
   display: none;
 }
 
-#state {
-  border: 1px solid transparent;
-  font-weight: bold;
-  padding: 0.5em;
+.connection {
+  color: white;
+  cursor: default;
+  padding: 0.25em;
+}
+
+.connection:hover {
+  opacity: 1;
+}
+
+.connection.connected {
+  opacity: 1;
 }
 
 /* https://developers.google.com/fonts/docs/material_icons */

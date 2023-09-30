@@ -1,9 +1,11 @@
 import { Modifier } from '../modifier'
+import { Events } from '../util'
 
 export class Toggle extends Modifier {
   items
   on
   title = 'Items in this tile can be toggled between states.'
+  type = Modifier.Types.toggle
 
   constructor (tile, { on }) {
     super(...arguments)
@@ -25,7 +27,7 @@ export class Toggle extends Modifier {
     this.on = !this.on
     this.#toggle()
     this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
-    this.dispatchEvent()
+    this.dispatchEvent(Events.TileModified)
   }
 
   #toggle () {
@@ -33,7 +35,6 @@ export class Toggle extends Modifier {
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
-  static Type = 'Toggle'
 }
 
 /**

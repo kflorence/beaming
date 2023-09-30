@@ -76,7 +76,14 @@ document.addEventListener(Events.TileSelected, (event) => {
   document.body.classList[tile ? 'add' : 'remove'](Events.TileSelected)
 })
 
-// Handle item modifications
-document.addEventListener(Events.ItemModified, (event) => {
+document.addEventListener(Events.TileModified, (event) => {
   puzzle.update(event)
+})
+
+document.addEventListener(Events.ModifierSelected, (event) => {
+  puzzle.mask(event)
+})
+
+document.addEventListener(Events.ModifierDeselected, (event) => {
+  puzzle.unmask()
 })

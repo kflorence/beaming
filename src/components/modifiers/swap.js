@@ -4,4 +4,5 @@ import { Modifier } from '../modifier'
 export class Swap extends Modifier {
   name = 'swap_horiz'
   title = 'Items in this tile can be swapped for items in another tile.'
+  type = Modifier.Types.swap
 }

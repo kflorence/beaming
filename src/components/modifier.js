@@ -1,4 +1,4 @@
-import { Events } from './util'
+import { capitalize, Events } from './util'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -7,8 +7,9 @@ export class Modifier {
   #container
   #eventListeners = {}
   #selectionTime = 500
-  #timeoutId = 0
+  #timeoutId
 
+  configuration
   element
   immutable = false
   name
@@ -17,7 +18,7 @@ export class Modifier {
   title
   type
 
-  constructor (tile, { type }) {
+  constructor (tile, configuration) {
     Object.entries({
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
@@ -35,8 +36,8 @@ export class Modifier {
       this.#eventListeners[name] = handler.bind(this)
     })
 
+    this.configuration = configuration
     this.tile = tile
-    this.type = type
   }
 
   /**
@@ -63,6 +64,8 @@ export class Modifier {
    * Remove listeners and the modifier from the DOM.
    */
   detach () {
+    Modifier.deselect()
+
     Object.entries(this.#eventListeners)
       .forEach(([event, listener]) => this.element.removeEventListener(event, listener))
 
@@ -73,8 +76,9 @@ export class Modifier {
     this.#container = undefined
   }
 
-  dispatchEvent () {
-    document.dispatchEvent(new CustomEvent(Events.ItemModified, { detail: { modifier: this, type: this.type } }))
+  dispatchEvent (event, detail) {
+    detail = detail || { modifier: this }
+    document.dispatchEvent(new CustomEvent(event, { detail }))
   }
 
   onClick () {
@@ -83,10 +87,15 @@ export class Modifier {
 
   onDeselected () {
     this.update({ selected: false })
+    this.tile.onModifierDeselected()
+    this.dispatchEvent(Events.ModifierDeselected, { modifier: this })
   }
 
   onMouseDown () {
-    this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+    // Locked tiles cannot have their modifiers selected
+    if (!this.tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)) {
+      this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+    }
   }
 
   onMouseLeave () {
@@ -103,6 +112,13 @@ export class Modifier {
     Modifier.deselect()
 
     this.update({ selected: true })
+    this.tile.onModifierSelected()
+    this.dispatchEvent(Events.ModifierSelected, { modifier: this, filter: Modifier.selectedMask })
+  }
+
+  remove () {
+    this.detach()
+    this.tile.removeModifier(this)
   }
 
   update (options) {
@@ -120,12 +136,27 @@ export class Modifier {
     this.element.title = this.title
   }
 
+  static selectedMask (tile) {
+    // Include any tiles that are not immutable or locked
+    return tile.modifiers.some((modifier) =>
+      [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+  }
+
   static deselect () {
     const selectedModifier = document.querySelector('.modifiers .selected')
     if (selectedModifier) {
       selectedModifier.dispatchEvent(new Event('deselected'))
     }
   }
+
+  static Types = Object.freeze(Object.fromEntries([
+    'immutable',
+    'lock',
+    'move',
+    'rotate',
+    'swap',
+    'toggle'
+  ].map((type) => [type, capitalize(type)])))
 }
 
 // De-select any selected modifiers if user clicks on anything else in the footer

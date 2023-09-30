@@ -6,9 +6,10 @@ import { rotatable } from '../modifiers/rotate'
 import { getCentroid, getNextDirection } from '../util'
 
 export class Terminus extends rotatable(toggleable(Item)) {
-  #ui
-
   rotateDegrees = 60
+  type = Item.Types.terminus
+
+  #ui
 
   constructor (tile, { color, openings, type, modifiers }) {
     // noinspection JSCheckFunctionSignatures
@@ -97,6 +98,4 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
     return { group, openings, terminus }
   }
-
-  static Type = 'Terminus'
 }

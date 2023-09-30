@@ -6,8 +6,6 @@ import { rotatable } from '../modifiers/rotate'
 export class Wall extends rotatable(Item) {
   #ui
 
-  rotateDegrees = 60
-
   constructor (tile, configuration) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
@@ -64,6 +62,4 @@ export class Wall extends rotatable(Item) {
 
     return { item, group }
   }
-
-  static Type = 'Wall'
 }

@@ -1,11 +1,6 @@
-import { Toggle } from '../components/modifiers/toggle'
-import { Terminus } from '../components/items/terminus'
-import { Lock } from '../components/modifiers/lock'
-import { Rotate } from '../components/modifiers/rotate'
-import { Immutable } from '../components/modifiers/immutable'
-
 export default {
-  connectionsRequired: 1,
+  connections: ['blue'],
+  title: 'Connect the dots',
   layout: {
     tiles: [
       [
@@ -16,17 +11,17 @@ export default {
             {
               color: 'blue',
               openings: [null, null, null, null, {}, null],
-              type: Terminus.Type
+              type: 'Terminus'
             }
           ],
-          modifiers: [{ type: Immutable.Type }]
+          modifiers: [{ type: 'Immutable' }]
         },
         null
       ],
       [
         null,
         {
-          modifiers: [{ type: Immutable.Type }]
+          modifiers: [{ type: 'Immutable' }]
         },
         null,
         null
@@ -38,19 +33,18 @@ export default {
             {
               color: 'blue',
               openings: [null, {}, null, null, null, null],
-              type: Terminus.Type
+              type: 'Terminus'
             }
           ],
           modifiers: [
-            { type: Lock.Type },
-            { type: Rotate.Type },
-            { type: Toggle.Type }
+            { type: 'Lock' },
+            { type: 'Rotate' },
+            { type: 'Toggle' }
           ]
         },
         null,
         null
       ]
     ]
-  },
-  title: 'On'
+  }
 }
