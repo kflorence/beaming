@@ -15,6 +15,12 @@ export class Terminus extends rotatable(toggleable(Item)) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
+    // Normalize openings data
+    openings.filter((opening) => opening).forEach((opening) => {
+      opening.color = opening.color || color
+      opening.on = !!opening.on
+    })
+
     if (color === undefined) {
       const colors = openings.filter((opening) => opening?.color).map((opening) => opening.color)
 
@@ -30,12 +36,15 @@ export class Terminus extends rotatable(toggleable(Item)) {
     this.color = color
     this.group = this.#ui.group
     this.openings = openings
+    this.radius = this.#ui.radius
 
     this.update()
   }
 
-  update () {
-    // this.#ui.indicator.fillColor = this.toggled ? this.color : undefined
+  onToggle () {
+    this.openings.filter((opening) => opening).forEach((opening) => {
+      opening.on = !opening.on
+    })
   }
 
   static ui (tile, { color, openings: configuration }) {
@@ -64,7 +73,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
         const triangle = new Path({
           closed: true,
-          fillColor: opening.color || color,
+          fillColor: opening.color,
           insert: false,
           segments: [
             bounds.segments[direction].point,
@@ -96,6 +105,6 @@ export class Terminus extends rotatable(toggleable(Item)) {
       locked: true
     })
 
-    return { group, openings, terminus }
+    return { group, openings, radius, terminus }
   }
 }

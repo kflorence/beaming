@@ -4,6 +4,7 @@ import { Events } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
+import { Beam } from './items/beam'
 
 const elements = Object.freeze({
   connectionsRequired: document.getElementById('connections-required'),
@@ -16,14 +17,18 @@ export class Puzzle {
   selectedTile
   solved = false
 
+  #beams = []
   #mask
   #tiles
+  #termini
 
   constructor (id, { connections, layout, title }) {
     this.layout = new Layout(layout)
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
+    this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
 
+    this.layers.beams = new Layer()
     this.layers.mask = new Layer()
 
     this.id = id
@@ -35,6 +40,7 @@ export class Puzzle {
 
     paper.view.onClick = (event) => this.#onClick(event)
 
+    this.#createBeams()
     this.update()
   }
 
@@ -57,7 +63,7 @@ export class Puzzle {
 
     // There is an active mask
     if (this.#mask) {
-      // An un-masked tile was clicked on
+      // An un-masked, not currently selected tile was clicked on
       if (tile && tile !== this.selectedTile) {
         switch (this.#mask.type) {
           case Events.ModifierSelected: {
@@ -69,7 +75,7 @@ export class Puzzle {
           }
         }
       } else {
-        // Neither a tile nor mask was clicked on
+        // The user clicked on the currently selected tile, or outside the tiled area
         Modifier.deselect()
       }
     }
@@ -96,20 +102,23 @@ export class Puzzle {
   }
 
   update (event) {
-    // console.log('update', event)
+    switch (event?.type) {
+      case Events.TileModified:
+        this.#updateBeams(event.detail)
+        break
+    }
 
-    // TODO: update beams
-    // The general logic will be to add and remove beams as they are turned on/off.
-    // Any active beams will be looped through and updated individually.
+    this.#onUpdate()
+  }
 
-    // this.beams.forEach((beam) => beam.update())
-    // this.termini.forEach((terminus) => terminus.update())
-    //
-    // // Check for solution
-    // const connections = this.beams.filter((beam) => beam.activated && beam.endTerminus)
-    // if (this.configuration.connections === connections.length) {
-    //   this.onSolved(connections)
-    // }
+  #createBeams () {
+    this.#termini.forEach((terminus) => {
+      // Create beams for each terminus opening
+      const beams = terminus.openings.filter((opening) => opening).map((opening) => new Beam(terminus, opening))
+
+      this.#beams.push(...beams)
+      this.layers.beams.addChildren(beams.map((beam) => beam.group))
+    })
   }
 
   #onSolved () {
@@ -124,6 +133,10 @@ export class Puzzle {
     document.dispatchEvent(event)
   }
 
+  #onUpdate() {
+    // TODO: check for solutions
+  }
+
   #setState (connections) {
     connections.forEach((color) => {
       const span = document.createElement('span')
@@ -133,6 +146,16 @@ export class Puzzle {
       span.title = `Connection: ${color}`
       elements.state.append(span)
     })
+  }
+
+  #updateBeams (event) {
+    // TODO
+    // const modifier = event.modifier
+    // const tile = modifier.tile
+    //
+    // switch (modifier.type) {
+    //   case Modifier.Types.toggle:
+    // }
   }
 
   #updateSelectedTile (tile) {

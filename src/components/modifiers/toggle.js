@@ -13,7 +13,9 @@ export class Toggle extends Modifier {
     this.items = this.tile.items.filter((item) => item.toggleable === true)
     this.on = on || false
 
-    this.#toggle()
+    this.items.forEach((item) => {
+      item.toggled = this.on
+    })
   }
 
   attach () {
@@ -41,15 +43,23 @@ export class Toggle extends Modifier {
  * A mixin for Item which provides toggle behaviors.
  *
  * @param SuperClass
- * @returns {{new(): ToggleableItem, activated, prototype: ToggleableItem}}
+ * @returns {{new(*, *): ToggleableItem, toggled: *, prototype: ToggleableItem}}
  * @constructor
  */
 export const toggleable = (SuperClass) => class ToggleableItem extends SuperClass {
-  toggleable = true
+  toggleable
   toggled
+
+  constructor (parent, configuration) {
+    super(...arguments)
+
+    this.toggleable = configuration.toggleable !== false
+  }
+
+  onToggle () {}
 
   toggle (toggled) {
     this.toggled = toggled
-    this.update()
+    this.onToggle()
   }
 }

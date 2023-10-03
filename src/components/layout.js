@@ -4,6 +4,7 @@ import { Layer, Point, view } from 'paper'
 import { Tile } from './items/tile'
 
 export class Layout {
+  items = []
   layers = {}
   tiles = []
   tileSize = 100
@@ -54,6 +55,7 @@ export class Layout {
         this.layers.tiles.addChild(tile.group)
 
         if (tile.items.length) {
+          this.items.push(...tile.items)
           this.layers.items.addChildren(tile.items.map((item) => item.group))
         }
 

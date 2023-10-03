@@ -23,6 +23,7 @@ export class Item {
   update () {}
 
   static Types = Object.freeze(Object.fromEntries([
+    'beam',
     'mask',
     'reflector',
     'terminus',
