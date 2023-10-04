@@ -2,8 +2,10 @@ import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Layer, Point, view } from 'paper'
 import { Tile } from './items/tile'
+import { Item } from './item'
 
 export class Layout {
+  beams = []
   items = []
   layers = {}
   tiles = []
@@ -18,7 +20,9 @@ export class Layout {
     const startingOffsetY = center.y - height / 2
 
     this.layers.tiles = new Layer()
+    this.layers.beams = new Layer()
     this.layers.items = new Layer()
+    this.layers.debug = new Layer()
 
     for (let r = 0; r < tilesConfiguration.length; r++) {
       const rowConfiguration = tilesConfiguration[r]
@@ -55,6 +59,13 @@ export class Layout {
         this.layers.tiles.addChild(tile.group)
 
         if (tile.items.length) {
+          const beams = tile.items
+            .filter((item) => item.type === Item.Types.terminus)
+            .flatMap((terminus) => terminus.beams)
+
+          this.beams.push(...beams)
+          this.layers.beams.addChildren(beams.map((beam) => beam.group))
+
           this.items.push(...tile.items)
           this.layers.items.addChildren(tile.items.map((item) => item.group))
         }
@@ -71,6 +82,10 @@ export class Layout {
   }
 
   getNeighboringTile (axial, direction) {
+    // Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
+    // first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
+    // point when standardizing directions across everything.
+    direction = direction >= 2 ? direction - 2 : direction + 4
     return this.getTile(CubeCoordinates.neighbor(axial, direction))
   }
 }

@@ -148,7 +148,6 @@ export class Tile extends Item {
       center,
       closed: true,
       data,
-      insert: false,
       radius: parameters.circumradius,
       sides: 6,
       style: styles.default

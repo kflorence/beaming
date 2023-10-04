@@ -18,13 +18,11 @@ export class Wall extends rotatable(Item) {
   static item (center, radius, cavityRadius, openings) {
     const hexagon = new Path.RegularPolygon({
       center,
-      insert: false,
       radius,
       sides: 6
     })
 
     const cavity = new Path.RegularPolygon({
-      insert: false,
       center,
       radius: radius - cavityRadius,
       sides: 6
@@ -33,7 +31,6 @@ export class Wall extends rotatable(Item) {
     const paths = openings.map((direction) => {
       return new Path({
         closed: true,
-        insert: false,
         segments: [
           center,
           hexagon.segments[direction].point,
@@ -44,8 +41,8 @@ export class Wall extends rotatable(Item) {
 
     // Create the final shape
     return paths.reduce(
-      (shape, path) => shape.subtract(path, { insert: false }),
-      hexagon.exclude(cavity, { insert: false })
+      (shape, path) => shape.subtract(path),
+      hexagon.exclude(cavity)
     )
   }
 

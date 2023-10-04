@@ -4,7 +4,6 @@ import { Events } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
-import { Beam } from './items/beam'
 
 const elements = Object.freeze({
   connectionsRequired: document.getElementById('connections-required'),
@@ -17,7 +16,7 @@ export class Puzzle {
   selectedTile
   solved = false
 
-  #beams = []
+  #beams
   #mask
   #tiles
   #termini
@@ -27,8 +26,8 @@ export class Puzzle {
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
+    this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
 
-    this.layers.beams = new Layer()
     this.layers.mask = new Layer()
 
     this.id = id
@@ -38,9 +37,21 @@ export class Puzzle {
 
     this.#setState(connections)
 
-    paper.view.onClick = (event) => this.#onClick(event)
+    paper.view.onClick = (event) => {
+      this.#onClick(event)
+    }
 
-    this.#createBeams()
+    // Add layers in the order we want them
+    [
+      this.layout.layers.tiles,
+      this.layout.layers.beams,
+      this.layout.layers.items,
+      this.layers.mask,
+      this.layout.layers.debug
+    ].forEach((layer) => paper.project.addLayer(layer))
+
+    this.#updateBeams(this.#beams.filter((beam) => beam.on))
+
     this.update()
   }
 
@@ -103,22 +114,14 @@ export class Puzzle {
 
   update (event) {
     switch (event?.type) {
-      case Events.TileModified:
-        this.#updateBeams(event.detail)
+      case Events.TileModified: {
+        this.#beams.forEach((beam) => beam.onEvent(event))
         break
+      }
     }
 
+    this.#updateBeams(this.#beams.filter((beam) => beam.on && !beam.done))
     this.#onUpdate()
-  }
-
-  #createBeams () {
-    this.#termini.forEach((terminus) => {
-      // Create beams for each terminus opening
-      const beams = terminus.openings.filter((opening) => opening).map((opening) => new Beam(terminus, opening))
-
-      this.#beams.push(...beams)
-      this.layers.beams.addChildren(beams.map((beam) => beam.group))
-    })
   }
 
   #onSolved () {
@@ -133,7 +136,7 @@ export class Puzzle {
     document.dispatchEvent(event)
   }
 
-  #onUpdate() {
+  #onUpdate () {
     // TODO: check for solutions
   }
 
@@ -148,14 +151,13 @@ export class Puzzle {
     })
   }
 
-  #updateBeams (event) {
-    // TODO
-    // const modifier = event.modifier
-    // const tile = modifier.tile
-    //
-    // switch (modifier.type) {
-    //   case Modifier.Types.toggle:
-    // }
+  #updateBeams (beams) {
+    beams.forEach((beam) => beam.step(this.layout))
+
+    const beamsToUpdate = beams.filter((beam) => !beam.done)
+    if (beamsToUpdate.length) {
+      this.#updateBeams(beamsToUpdate)
+    }
   }
 
   #updateSelectedTile (tile) {

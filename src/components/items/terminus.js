@@ -4,6 +4,7 @@ import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 import { getCentroid, getNextDirection } from '../util'
+import { Beam } from './beam'
 
 export class Terminus extends rotatable(toggleable(Item)) {
   rotateDegrees = 60
@@ -16,9 +17,12 @@ export class Terminus extends rotatable(toggleable(Item)) {
     super(...arguments)
 
     // Normalize openings data
-    openings.filter((opening) => opening).forEach((opening) => {
-      opening.color = opening.color || color
-      opening.on = !!opening.on
+    openings.forEach((opening, direction) => {
+      if (opening) {
+        opening.color = opening.color || color
+        opening.direction = direction
+        opening.on = !!opening.on
+      }
     })
 
     if (color === undefined) {
@@ -38,20 +42,20 @@ export class Terminus extends rotatable(toggleable(Item)) {
     this.openings = openings
     this.radius = this.#ui.radius
 
+    // Needs to be last since it references 'this'
+    this.beams = openings.filter((opening) => opening).map((opening) => new Beam(this, opening))
+
     this.update()
   }
 
   onToggle () {
-    this.openings.filter((opening) => opening).forEach((opening) => {
-      opening.on = !opening.on
-    })
+    this.beams.forEach((beam) => beam.toggle())
   }
 
   static ui (tile, { color, openings: configuration }) {
     const radius = tile.parameters.circumradius / 2
 
     const bounds = new Path.RegularPolygon({
-      insert: false,
       center: tile.center,
       sides: 6,
       radius
@@ -60,45 +64,40 @@ export class Terminus extends rotatable(toggleable(Item)) {
     const terminus = new Path.RegularPolygon({
       center: tile.center,
       fillColor: color,
-      insert: false,
       opacity: 0.25,
       sides: 6,
       radius: radius / 2
     })
 
-    const openings = configuration
-      .flatMap((opening, direction) => opening ? [{ direction, ...opening }] : [])
-      .map((opening) => {
-        const direction = opening.direction
+    const openings = configuration.filter((opening) => opening).map((opening) => {
+      const direction = opening.direction
 
-        const triangle = new Path({
-          closed: true,
-          fillColor: opening.color,
-          insert: false,
-          segments: [
-            bounds.segments[direction].point,
-            bounds.segments[getNextDirection(direction)].point,
-            tile.center
-          ]
-        })
-
-        const vector = triangle.lastSegment.point.subtract(triangle.firstSegment.point)
-
-        const p1 = getCentroid(triangle)
-        const p2 = p1.subtract(vector)
-
-        vector.angle += 60
-
-        const p3 = p1.subtract(vector)
-
-        const cutout = new Path({
-          closed: true,
-          insert: false,
-          segments: [p1, p2, p3]
-        })
-
-        return triangle.subtract(cutout, { insert: false })
+      const triangle = new Path({
+        closed: true,
+        fillColor: opening.color,
+        segments: [
+          bounds.segments[direction].point,
+          bounds.segments[getNextDirection(direction)].point,
+          tile.center
+        ]
       })
+
+      const vector = triangle.lastSegment.point.subtract(triangle.firstSegment.point)
+
+      const p1 = getCentroid(triangle)
+      const p2 = p1.subtract(vector)
+
+      vector.angle += 60
+
+      const p3 = p1.subtract(vector)
+
+      const cutout = new Path({
+        closed: true,
+        segments: [p1, p2, p3]
+      })
+
+      return triangle.subtract(cutout)
+    })
 
     const group = new Group({
       children: [terminus, ...openings],

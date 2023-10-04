@@ -53,6 +53,10 @@ function selectPuzzle (id) {
 }
 
 // Initiate
+// Don't automatically insert items into the scene graph
+// They must be explicitly inserted
+paper.settings.insertItems = false
+
 // noinspection JSCheckFunctionSignatures
 paper.setup(document.getElementById('puzzle'))
 const params = new URLSearchParams(window.location.search)

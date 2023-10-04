@@ -27,7 +27,6 @@ export class Reflector extends rotatable(Item) {
 
     const item = new Path.Rectangle({
       fillColor: color || 'black',
-      insert: false,
       point: topLeft,
       size: new Size(width, length)
     })

@@ -32,14 +32,14 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, {}, null, null, null, null],
+              openings: [null, { on: true }, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
             { type: 'Lock' },
             { type: 'Rotate' },
-            { type: 'Toggle' }
+            { on: true, type: 'Toggle' }
           ]
         },
         null,
