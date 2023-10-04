@@ -48,59 +48,67 @@ export class Terminus extends rotatable(toggleable(Item)) {
     this.update()
   }
 
-  onToggle () {
-    this.beams.forEach((beam) => beam.toggle())
+  onConnection (direction) {
+    this.openings[direction].on = true
+    this.update()
   }
+
+  onDisconnection (direction) {
+    this.openings[direction].on = false
+    this.update()
+  }
+
+  onToggle () {
+    this.openings.filter((opening) => opening).forEach((opening) => opening.on = !opening.on)
+    this.update()
+  }
+
+  update () {
+    this.beams.forEach((beam) => {
+      this.#ui.openings[beam.direction].opacity = this.openings[beam.direction].on ? 1 : Terminus.#openingOffOpacity
+      beam.update()
+    })
+  }
+
+  static #openingOffOpacity = 0.3
 
   static ui (tile, { color, openings: configuration }) {
     const radius = tile.parameters.circumradius / 2
 
-    const bounds = new Path.RegularPolygon({
-      center: tile.center,
-      sides: 6,
-      radius
-    })
-
     const terminus = new Path.RegularPolygon({
       center: tile.center,
       fillColor: color,
-      opacity: 0.25,
+      opacity: 1,
       sides: 6,
       radius: radius / 2
     })
 
-    const openings = configuration.filter((opening) => opening).map((opening) => {
+    const openings = configuration.map((opening) => {
+      if (!opening) {
+        return opening
+      }
+
       const direction = opening.direction
 
-      const triangle = new Path({
-        closed: true,
-        fillColor: opening.color,
-        segments: [
-          bounds.segments[direction].point,
-          bounds.segments[getNextDirection(direction)].point,
-          tile.center
-        ]
-      })
+      const p1 = terminus.segments[direction].point
+      const p2 = terminus.segments[getNextDirection(direction)].point
 
-      const vector = triangle.lastSegment.point.subtract(triangle.firstSegment.point)
+      const vector = p2.subtract(p1)
 
-      const p1 = getCentroid(triangle)
-      const p2 = p1.subtract(vector)
-
-      vector.angle += 60
+      vector.angle += 120
 
       const p3 = p1.subtract(vector)
 
-      const cutout = new Path({
+      return new Path({
         closed: true,
+        fillColor: opening.color,
+        opacity: opening.on ? 1 : Terminus.#openingOffOpacity,
         segments: [p1, p2, p3]
       })
-
-      return triangle.subtract(cutout)
     })
 
     const group = new Group({
-      children: [terminus, ...openings],
+      children: [terminus, ...openings.filter((opening) => opening)],
       locked: true
     })
 

@@ -6,6 +6,7 @@ export class Beam extends Item {
   debug = false
   done = false
 
+  #connection
   #opening
   #path
   #steps = []
@@ -16,7 +17,7 @@ export class Beam extends Item {
     this.#opening = opening
 
     this.color = opening.color
-    this.on = opening.on
+    this.direction = opening.direction
     this.width = terminus.radius / 10
 
     this.#path = new Path({
@@ -30,6 +31,10 @@ export class Beam extends Item {
       children: [this.#path],
       locked: true
     })
+  }
+
+  isActive () {
+    return this.#opening.on && !this.done
   }
 
   onEvent (event) {
@@ -82,8 +87,8 @@ export class Beam extends Item {
         // Intersecting with the starting terminus
         if (!previous && item === this.parent) {
           // Update starting path to begin at the last intersection
-          shadowPath.removeSegment(0)
-          shadowPath.insert(0, intersection.intersections[intersection.intersections.length - 1].point)
+          //shadowPath.removeSegment(0)
+          //shadowPath.insert(0, intersection.intersections[intersection.intersections.length - 1].point)
           continue
         }
 
@@ -91,6 +96,10 @@ export class Beam extends Item {
 
         // Beam has connected to a matching opening!
         if (!opening.on && opening.color === this.color) {
+          const lastIndex = shadowPath.segments.length - 1
+          shadowPath.removeSegment(lastIndex)
+          shadowPath.insert(lastIndex, tile.center)
+
           this.done = true
           this.#onConnection(item, opening)
         }
@@ -98,14 +107,14 @@ export class Beam extends Item {
 
       // Unhandled
       if (!this.done) {
+        // Update end of path to end at first intersection
+        const lastIndex = shadowPath.segments.length - 1
+        shadowPath.removeSegment(lastIndex)
+        shadowPath.insert(lastIndex, intersection.intersections[0].point)
+
         this.done = true
         this.#onCollision(intersection)
       }
-
-      // Update end of path to end at first intersection
-      const lastIndex = shadowPath.segments.length - 1
-      shadowPath.removeSegment(lastIndex)
-      shadowPath.insert(lastIndex, intersection.intersections[0].point)
 
       // Stopping on first intersection for now
       break
@@ -124,11 +133,15 @@ export class Beam extends Item {
     this.#path.addSegments(shadowPath.segments)
   }
 
-  toggle () {
-    this.on = !this.on
-
+  update () {
+    console.log(this.#opening)
     // Handle 'off'. 'On' will be handled upstream in puzzle.
-    if (!this.on) {
+    if (!this.#opening.on) {
+      if (this.#connection) {
+        this.#connection.terminus.onDisconnection(this.#connection.opening.direction)
+        this.#connection = undefined
+      }
+
       this.#path.removeSegments()
       this.#steps = []
       this.done = false
@@ -140,6 +153,8 @@ export class Beam extends Item {
   }
 
   #onConnection (terminus, opening) {
+    this.#connection = { terminus, opening }
+    terminus.onConnection(opening.direction)
     emitEvent(Beam.Events.Connection, { beam: this, terminus, opening })
   }
 

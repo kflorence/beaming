@@ -118,7 +118,7 @@ export class Puzzle {
   onModifierInvoked (event) {
     this.#beams.forEach((beam) => beam.onEvent(event))
 
-    const activeBeams = this.#beams.filter((beam) => beam.on && !beam.done)
+    const activeBeams = this.#beams.filter((beam) => beam.isActive())
     if (activeBeams.length) {
       this.#updateBeams(activeBeams)
       this.#onUpdate()
@@ -159,7 +159,7 @@ export class Puzzle {
   #updateBeams (beams) {
     beams.forEach((beam) => beam.step(this.layout))
 
-    const beamsToUpdate = beams.filter((beam) => !beam.done)
+    const beamsToUpdate = beams.filter((beam) => beam.isActive())
     if (beamsToUpdate.length) {
       this.#updateBeams(beamsToUpdate)
     }
