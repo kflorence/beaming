@@ -52,7 +52,7 @@ export class Puzzle {
       this.layout.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
 
-    this.#updateBeams(this.#beams.filter((beam) => beam.on))
+    this.#updateBeams(this.#beams.filter((beam) => beam.isActive()))
   }
 
   #onClick (event) {
