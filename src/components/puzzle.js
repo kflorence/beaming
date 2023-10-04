@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import paper, { Layer } from 'paper'
-import { Events } from './util'
+import { emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -29,6 +29,7 @@ export class Puzzle {
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
 
     this.layers.mask = new Layer()
+    this.layers.collisions = new Layer()
 
     this.id = id
     this.title = title
@@ -47,12 +48,11 @@ export class Puzzle {
       this.layout.layers.beams,
       this.layout.layers.items,
       this.layers.mask,
+      this.layers.collisions,
       this.layout.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
 
     this.#updateBeams(this.#beams.filter((beam) => beam.on))
-
-    this.update()
   }
 
   #onClick (event) {
@@ -77,7 +77,7 @@ export class Puzzle {
       // An un-masked, not currently selected tile was clicked on
       if (tile && tile !== this.selectedTile) {
         switch (this.#mask.type) {
-          case Events.ModifierSelected: {
+          case Modifier.Events.Selected: {
             const modifier = this.#mask.detail.modifier
             modifier.remove()
             tile.addModifier(modifier.configuration)
@@ -107,21 +107,27 @@ export class Puzzle {
     this.layers.mask.addChildren(mask.map((mask) => mask.group))
   }
 
+  onBeamCollision (event) {
+
+  }
+
+  onBeamConnected (event) {
+
+  }
+
+  onModifierInvoked (event) {
+    this.#beams.forEach((beam) => beam.onEvent(event))
+
+    const activeBeams = this.#beams.filter((beam) => beam.on && !beam.done)
+    if (activeBeams.length) {
+      this.#updateBeams(activeBeams)
+      this.#onUpdate()
+    }
+  }
+
   unmask () {
     this.#mask = undefined
     this.layers.mask.removeChildren()
-  }
-
-  update (event) {
-    switch (event?.type) {
-      case Events.TileModified: {
-        this.#beams.forEach((beam) => beam.onEvent(event))
-        break
-      }
-    }
-
-    this.#updateBeams(this.#beams.filter((beam) => beam.on && !beam.done))
-    this.#onUpdate()
   }
 
   #onSolved () {
@@ -132,8 +138,7 @@ export class Puzzle {
       this.selectedTile = null
     }
 
-    const event = new CustomEvent(Events.Solved)
-    document.dispatchEvent(event)
+    emitEvent(Puzzle.Events.Solved)
   }
 
   #onUpdate () {
@@ -166,19 +171,19 @@ export class Puzzle {
     this.selectedTile = tile
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
-      previouslySelectedTile.onDeselected()
+      previouslySelectedTile.onDeselected(tile)
     }
 
     if (tile && tile !== previouslySelectedTile) {
-      tile.onSelected()
+      tile.onSelected(previouslySelectedTile)
     }
-
-    document.dispatchEvent(new CustomEvent(Events.TileSelected, {
-      detail: { selected: tile, deselected: previouslySelectedTile }
-    }))
 
     return previouslySelectedTile
   }
+
+  static Events = Object.freeze({
+    Solved: 'puzzle-solved'
+  })
 
   static States = Object.freeze({
     connected: 'power',

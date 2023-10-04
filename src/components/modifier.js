@@ -1,4 +1,4 @@
-import { capitalize, Events } from './util'
+import { capitalize, emitEvent } from './util'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -77,8 +77,7 @@ export class Modifier {
   }
 
   dispatchEvent (event, detail) {
-    detail = detail || { modifier: this }
-    document.dispatchEvent(new CustomEvent(event, { detail }))
+    emitEvent(event, Object.assign({}, detail || {}, { modifier: this }))
   }
 
   onClick () {
@@ -88,7 +87,7 @@ export class Modifier {
   onDeselected () {
     this.update({ selected: false })
     this.tile.onModifierDeselected()
-    this.dispatchEvent(Events.ModifierDeselected, { modifier: this })
+    this.dispatchEvent(Modifier.Events.Deselected)
   }
 
   onMouseDown () {
@@ -113,7 +112,7 @@ export class Modifier {
 
     this.update({ selected: true })
     this.tile.onModifierSelected()
-    this.dispatchEvent(Events.ModifierSelected, { modifier: this, filter: Modifier.selectedMask })
+    this.dispatchEvent(Modifier.Events.Selected, { filter: Modifier.selectedMask })
   }
 
   remove () {
@@ -145,9 +144,15 @@ export class Modifier {
   static deselect () {
     const selectedModifier = document.querySelector('.modifiers .selected')
     if (selectedModifier) {
-      selectedModifier.dispatchEvent(new Event('deselected'))
+      selectedModifier.dispatchEvent(new CustomEvent('deselected'))
     }
   }
+
+  static Events = Object.freeze({
+    Deselected: 'modifier-deselected',
+    Invoked: 'modifier-invoked',
+    Selected: 'modifier-selected'
+  })
 
   static Types = Object.freeze(Object.fromEntries([
     'immutable',

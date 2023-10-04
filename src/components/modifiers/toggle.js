@@ -1,5 +1,4 @@
 import { Modifier } from '../modifier'
-import { Events } from '../util'
 
 export class Toggle extends Modifier {
   items
@@ -27,13 +26,12 @@ export class Toggle extends Modifier {
     super.onClick(event)
 
     this.on = !this.on
-    this.#toggle()
-    this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
-    this.dispatchEvent(Events.TileModified)
-  }
 
-  #toggle () {
-    this.items.forEach((item) => item.toggle(this.on))
+    const items = this.items.filter((item) => item.toggleable)
+    items.forEach((item) => item.toggle(this.on))
+
+    this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
+    this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })

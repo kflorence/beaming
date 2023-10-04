@@ -8,6 +8,7 @@ import { Rotate } from '../modifiers/rotate'
 import { Toggle } from '../modifiers/toggle'
 import { Item } from '../item'
 import { Modifier } from '../modifier'
+import { emitEvent } from '../util'
 
 export class Tile extends Item {
   selected = false
@@ -44,10 +45,12 @@ export class Tile extends Item {
     this.items.forEach((item) => item.onClick(event))
   }
 
-  onDeselected () {
+  onDeselected (selectedTile) {
     this.#ui.hexagon.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
     this.modifiers.forEach((modifier) => modifier.detach())
+
+    emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
   }
 
   onModifierSelected () {
@@ -59,7 +62,7 @@ export class Tile extends Item {
     this.hexagon.dashArray = []
   }
 
-  onSelected () {
+  onSelected (deselectedTile) {
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
@@ -161,6 +164,11 @@ export class Tile extends Item {
 
     return { center, data, group, hexagon, styles }
   }
+
+  static Events = Object.freeze({
+    Deselected: 'tile-deselected',
+    Selected: 'tile-selected'
+  })
 
   static Styles = Object.freeze({
     default: {

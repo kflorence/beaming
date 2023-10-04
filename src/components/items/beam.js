@@ -1,6 +1,6 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
-import { getOppositeDirection } from '../util'
+import { emitEvent, getOppositeDirection } from '../util'
 
 export class Beam extends Item {
   debug = false
@@ -136,13 +136,11 @@ export class Beam extends Item {
   }
 
   #onCollision (intersection) {
-    console.log('beam collision detected', intersection)
-    document.dispatchEvent(new CustomEvent(Beam.Events.BeamCollision, { beam: this, intersection }))
+    emitEvent(Beam.Events.Collision, { beam: this, intersection })
   }
 
   #onConnection (terminus, opening) {
-    console.log('beam has connected to terminus', terminus, opening)
-    document.dispatchEvent(new CustomEvent(Beam.Events.BeamConnection, { beam: this, terminus, opening }))
+    emitEvent(Beam.Events.Connection, { beam: this, terminus, opening })
   }
 
   static #getIntersections (tile, path) {
@@ -177,7 +175,7 @@ export class Beam extends Item {
   }
 
   static Events = Object.freeze({
-    BeamCollision: 'puzzle-beam-collision',
-    BeamConnection: 'puzzle-beam-connection'
+    Collision: 'beam-collision',
+    Connection: 'beam-connection'
   })
 }

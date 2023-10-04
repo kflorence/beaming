@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { Buttons, Events } from '../util'
+import { Buttons } from '../util'
 
 export class Rotate extends Modifier {
   clockwise = true
@@ -16,8 +16,10 @@ export class Rotate extends Modifier {
   onClick (event) {
     super.onClick(event)
 
-    this.items.forEach((item) => item.rotate(this.clockwise))
-    this.dispatchEvent(Events.TileModified)
+    const items = this.items.filter((item) => item.rotatable)
+    items.forEach((item) => item.rotate(this.clockwise))
+
+    this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
   onMouseDown (event) {
@@ -37,14 +39,20 @@ export class Rotate extends Modifier {
  * A mixin for Item which provides rotate behaviors.
  *
  * @param SuperClass
- * @returns {{rotateDirection: number, new(): RotatableItem, prototype: RotatableItem}}
+ * @returns {{new(*, *): RotatableItem, rotatable: boolean, rotateDirection: number, prototype: RotatableItem}}
  */
 export const rotatable = (SuperClass) => class RotatableItem extends SuperClass {
-  rotatable = true
+  rotatable
 
   // Generally 30 (12 rotations) or 60 (6 rotations)
   rotateDegrees = 30
   rotateDirection = 0
+
+  constructor (parent, configuration) {
+    super(...arguments)
+
+    this.rotatable = configuration.rotatable !== false
+  }
 
   doRotate (direction) {
     this.group.rotate(direction * this.rotateDegrees, this.center)

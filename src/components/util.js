@@ -3,15 +3,6 @@ export const Buttons = Object.freeze({
   Right: 2
 })
 
-export const Events = Object.freeze({
-  Error: 'puzzle-error',
-  ModifierDeselected: 'puzzle-modifier-deselected',
-  ModifierSelected: 'puzzle-modifier-selected',
-  Solved: 'puzzle-solved',
-  TileModified: 'puzzle-tile-modified',
-  TileSelected: 'puzzle-tile-selected'
-})
-
 export const Messages = Object.freeze({
   ErrorInvalidId: 'Error: invalid puzzle ID'
 })
@@ -25,6 +16,10 @@ export function addDegrees (original, degrees) {
 
 export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function emitEvent (event, data = null) {
+  document.dispatchEvent(new CustomEvent(event, data))
 }
 
 export function getCentroid (triangle) {
