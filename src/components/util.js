@@ -18,8 +18,8 @@ export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export function emitEvent (event, data = null) {
-  document.dispatchEvent(new CustomEvent(event, data))
+export function emitEvent (event, detail = null) {
+  document.dispatchEvent(new CustomEvent(event, { detail }))
 }
 
 export function getCentroid (triangle) {

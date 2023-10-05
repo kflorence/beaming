@@ -60,15 +60,9 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
 
   rotate (clockwise) {
     const direction = clockwise === false ? -1 : 1
+    const directionMax = (360 / this.rotateDegrees)
 
-    // The reflector rotates like the hands on a clock. Zero and twelve are equal.
-    if (direction < 0 && this.rotateDirection === 0) {
-      this.rotateDirection = 11
-    } else if (direction > 0 && this.rotateDirection === 12) {
-      this.rotateDirection = 1
-    } else {
-      this.rotateDirection += direction
-    }
+    this.rotateDirection = (this.rotateDirection + direction) % directionMax
 
     this.doRotate(direction)
   }

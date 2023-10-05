@@ -38,9 +38,14 @@ export class Beam extends Item {
   }
 
   onEvent (event) {
-    // TODO update beam based on event, e.g. rotate
-    // const modifier = event.detail.modifier
-    // const tile = modifier.tile
+    if (!this.#opening.on) {
+      return
+    }
+
+    const tile = event.detail.modifier.tile
+    const stepIndex = this.#steps.findIndex((step) => step.tile === tile)
+
+    this.#updateState(stepIndex)
   }
 
   /**
@@ -49,13 +54,12 @@ export class Beam extends Item {
    * reaches a terminus opening.
    */
   step (layout) {
-    if (this.done) {
+    if (!this.isActive()) {
       return
     }
 
     const previous = this.#steps[this.#steps.length - 1]
-
-    const direction = previous ? previous.direction : this.#opening.direction
+    const direction = previous ? previous.direction : this.#startDirection()
     const tile = previous ? layout.getNeighboringTile(previous.tile.coordinates.axial, direction) : this.parent.parent
 
     // There is no tile in the direction we are headed
@@ -86,9 +90,7 @@ export class Beam extends Item {
       if (item.type === Item.Types.terminus) {
         // Intersecting with the starting terminus
         if (!previous && item === this.parent) {
-          // Update starting path to begin at the last intersection
-          //shadowPath.removeSegment(0)
-          //shadowPath.insert(0, intersection.intersections[intersection.intersections.length - 1].point)
+          console.log('starting terminus collision')
           continue
         }
 
@@ -121,7 +123,6 @@ export class Beam extends Item {
     }
 
     const segments = shadowPath.segments.map((segment) => segment.point)
-    this.#steps.push(new Beam.#Step(tile, segments, direction))
 
     if (this.debug) {
       segments.forEach((segment) => {
@@ -131,20 +132,13 @@ export class Beam extends Item {
     }
 
     this.#path.addSegments(shadowPath.segments)
+    this.#steps.push(new Beam.#Step(tile, segments, direction, this.#path.segments.length - 1))
   }
 
   update () {
-    console.log(this.#opening)
     // Handle 'off'. 'On' will be handled upstream in puzzle.
     if (!this.#opening.on) {
-      if (this.#connection) {
-        this.#connection.terminus.onDisconnection(this.#connection.opening.direction)
-        this.#connection = undefined
-      }
-
-      this.#path.removeSegments()
-      this.#steps = []
-      this.done = false
+      this.#updateState(0)
     }
   }
 
@@ -156,6 +150,30 @@ export class Beam extends Item {
     this.#connection = { terminus, opening }
     terminus.onConnection(opening.direction)
     emitEvent(Beam.Events.Connection, { beam: this, terminus, opening })
+  }
+
+  #startDirection () {
+    // Take rotation of the parent (terminus) into account
+    return (this.#opening.direction + this.parent.rotateDirection) % 6
+  }
+
+  #updateState (stepIndex) {
+    if (stepIndex < 0) {
+      return
+    }
+
+    if (this.#connection) {
+      this.#connection.terminus.onDisconnection(this.#connection.opening.direction)
+      this.#connection = undefined
+    }
+
+    const step = this.#steps[stepIndex]
+    if (step) {
+      this.#path.removeSegments(step.index)
+      this.#steps.splice(stepIndex)
+    }
+
+    this.done = false
   }
 
   static #getIntersections (tile, path) {
@@ -178,8 +196,9 @@ export class Beam extends Item {
   }
 
   static #Step = class {
-    constructor (tile, segment, direction) {
+    constructor (tile, segment, direction, index) {
       this.direction = direction
+      this.index = index
       this.tile = tile
       this.segment = segment
     }
