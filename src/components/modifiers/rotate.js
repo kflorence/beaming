@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { Buttons } from '../util'
+import { MouseButton } from '../util'
 
 export class Rotate extends Modifier {
   clockwise = true
@@ -24,7 +24,7 @@ export class Rotate extends Modifier {
 
   onMouseDown (event) {
     // Change rotation direction if user right-clicks on the modifier
-    if (event.button === Buttons.Right) {
+    if (event.button === MouseButton.Right) {
       this.clockwise = !this.clockwise
       this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
     } else {

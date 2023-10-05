@@ -64,6 +64,10 @@ export class Modifier {
    * Remove listeners and the modifier from the DOM.
    */
   detach () {
+    if (!this.#container) {
+      return
+    }
+
     Modifier.deselect()
 
     Object.entries(this.#eventListeners)

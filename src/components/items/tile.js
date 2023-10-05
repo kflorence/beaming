@@ -37,6 +37,10 @@ export class Tile extends Item {
       .map((configuration) => this.#modifierFactory(configuration))
   }
 
+  addItem (item) {
+    this.items.unshift(item)
+  }
+
   addModifier (configuration) {
     this.modifiers.unshift(this.#modifierFactory(configuration))
   }
@@ -69,8 +73,16 @@ export class Tile extends Item {
     this.modifiers.forEach((modifier) => modifier.attach())
   }
 
+  removeItem (item) {
+    this.items.splice(this.items.indexOf(item), 1)
+  }
+
   removeModifier (modifier) {
     this.modifiers.splice(this.modifiers.indexOf(modifier), 1)
+  }
+
+  teardown () {
+    this.modifiers.forEach((modifier) => modifier.detach())
   }
 
   #itemFactory (configuration) {

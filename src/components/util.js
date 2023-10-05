@@ -1,10 +1,6 @@
-export const Buttons = Object.freeze({
+export const MouseButton = Object.freeze({
   Left: 0,
   Right: 2
-})
-
-export const Messages = Object.freeze({
-  ErrorInvalidId: 'Error: invalid puzzle ID'
 })
 
 export function addDegrees (original, degrees) {

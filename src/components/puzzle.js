@@ -4,6 +4,7 @@ import { emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
+import { Beam } from './items/beam'
 
 const elements = Object.freeze({
   connectionsRequired: document.getElementById('connections-required'),
@@ -16,10 +17,12 @@ export class Puzzle {
   selectedTile
   solved = false
 
-  #beams
-  #mask
-  #tiles
-  #termini
+  #beams = []
+  #collisions
+  #eventListeners = {}
+  #maskEvent
+  #tiles = []
+  #termini = []
 
   constructor (id, { connections, layout, title }) {
     this.layout = new Layout(layout)
@@ -38,10 +41,67 @@ export class Puzzle {
 
     this.#setState(connections)
 
-    paper.view.onClick = (event) => {
-      this.#onClick(event)
-    }
+    this.#addEventListeners()
+    this.#addLayers()
 
+    this.#updateBeams(this.#beams.filter((beam) => beam.isActive()))
+  }
+
+  mask (event) {
+    this.#maskEvent = event
+    // TODO animation?
+    const mask = this.#tiles.filter(event.detail.filter).map((tile) => new Mask(tile, event.detail))
+    this.layers.mask.addChildren(mask.map((mask) => mask.group))
+  }
+
+  onBeamCollision (event) {
+    console.log('collision', event)
+  }
+
+  onBeamConnected (event) {
+    console.log('connection', event)
+  }
+
+  onModifierInvoked (event) {
+    this.#beams.forEach((beam) => beam.onEvent(event))
+
+    const activeBeams = this.#beams.filter((beam) => beam.isActive())
+    if (activeBeams.length) {
+      this.#updateBeams(activeBeams)
+      this.#onUpdate()
+    }
+  }
+
+  teardown () {
+    document.body.classList.remove(...Object.values(Puzzle.Events))
+    this.#tiles.map((tile) => tile.teardown())
+    this.#removeEventListeners()
+    this.#removeLayers()
+  }
+
+  unmask () {
+    this.#maskEvent = undefined
+    this.layers.mask.removeChildren()
+  }
+
+  #addEventListeners () {
+    paper.view.onClick = (event) => this.#onClick(event)
+
+    Object.entries({
+      [Beam.Events.Connection]: this.onBeamConnected,
+      [Beam.Events.Collision]: this.onBeamCollision,
+      [Modifier.Events.Deselected]: this.unmask,
+      [Modifier.Events.Invoked]: this.onModifierInvoked,
+      [Modifier.Events.Selected]: this.mask
+    }).forEach(([name, handler]) => {
+      // Ensure proper 'this' context inside of event handlers
+      handler = handler.bind(this)
+      this.#eventListeners[name] = handler
+      document.addEventListener(name, handler)
+    })
+  }
+
+  #addLayers () {
     // Add layers in the order we want them
     [
       this.layout.layers.tiles,
@@ -51,8 +111,6 @@ export class Puzzle {
       this.layers.collisions,
       this.layout.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
-
-    this.#updateBeams(this.#beams.filter((beam) => beam.isActive()))
   }
 
   #onClick (event) {
@@ -73,12 +131,12 @@ export class Puzzle {
     }
 
     // There is an active mask
-    if (this.#mask) {
+    if (this.#maskEvent) {
       // An un-masked, not currently selected tile was clicked on
       if (tile && tile !== this.selectedTile) {
-        switch (this.#mask.type) {
+        switch (this.#maskEvent.type) {
           case Modifier.Events.Selected: {
-            const modifier = this.#mask.detail.modifier
+            const modifier = this.#maskEvent.detail.modifier
             modifier.remove()
             tile.addModifier(modifier.configuration)
             this.unmask()
@@ -91,43 +149,13 @@ export class Puzzle {
       }
     }
 
-    if (!this.#mask) {
+    if (!this.#maskEvent) {
       const previouslySelectedTile = this.#updateSelectedTile(tile)
 
       if (tile && tile === previouslySelectedTile) {
         tile.onClick(event)
       }
     }
-  }
-
-  mask (event) {
-    this.#mask = event
-    // TODO animation?
-    const mask = this.#tiles.filter(event.detail.filter).map((tile) => new Mask(tile, event.detail))
-    this.layers.mask.addChildren(mask.map((mask) => mask.group))
-  }
-
-  onBeamCollision (event) {
-
-  }
-
-  onBeamConnected (event) {
-
-  }
-
-  onModifierInvoked (event) {
-    this.#beams.forEach((beam) => beam.onEvent(event))
-
-    const activeBeams = this.#beams.filter((beam) => beam.isActive())
-    if (activeBeams.length) {
-      this.#updateBeams(activeBeams)
-      this.#onUpdate()
-    }
-  }
-
-  unmask () {
-    this.#mask = undefined
-    this.layers.mask.removeChildren()
   }
 
   #onSolved () {
@@ -145,7 +173,18 @@ export class Puzzle {
     // TODO: check for solutions
   }
 
+  #removeEventListeners () {
+    Object.entries(this.#eventListeners)
+      .forEach(([event, listener]) => document.removeEventListener(event, listener))
+  }
+
+  #removeLayers () {
+    paper.project.clear()
+  }
+
   #setState (connections) {
+    elements.state.replaceChildren()
+
     connections.forEach((color) => {
       const span = document.createElement('span')
       span.classList.add('connection', 'material-symbols-outlined')
@@ -157,7 +196,7 @@ export class Puzzle {
   }
 
   #updateBeams (beams) {
-    beams.forEach((beam) => beam.step(this.layout))
+    beams.forEach((beam) => beam.step(this))
 
     const beamsToUpdate = beams.filter((beam) => beam.isActive())
     if (beamsToUpdate.length) {
@@ -182,6 +221,7 @@ export class Puzzle {
   }
 
   static Events = Object.freeze({
+    Error: 'puzzle-error',
     Solved: 'puzzle-solved'
   })
 

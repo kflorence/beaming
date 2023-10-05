@@ -1,9 +1,6 @@
 import paper from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
-import { Messages } from './components/util'
-import { Beam } from './components/items/beam'
-import { Modifier } from './components/modifier'
 
 const history = window.history
 const location = window.location
@@ -37,23 +34,26 @@ puzzleSelector.addEventListener('change', (event) => {
 
 let puzzle
 function selectPuzzle (id) {
-  const configuration = puzzles[id]
+  document.body.classList.remove(Events.Error)
 
-  document.body.classList.remove(...Object.values(Events))
+  try {
+    // Must be valid JSON
+    const configuration = JSON.parse(JSON.stringify(puzzles[id]))
 
-  if (puzzle) {
-    paper.project.clear()
-  }
+    if (puzzle) {
+      puzzle.teardown()
+    }
 
-  if (configuration) {
+    puzzle = new Puzzle(id, configuration)
+    puzzleSelector.value = id
+
+    // Store the puzzle selection in history
     const url = new URL(location)
     url.searchParams.set('id', id)
     history.pushState({ id }, '', url)
-
-    puzzleSelector.value = id
-    puzzle = new Puzzle(id, configuration)
-  } else {
-    message.textContent = Messages.ErrorInvalidId
+  } catch (e) {
+    console.error(e)
+    message.textContent = 'Puzzle is invalid'
     document.body.classList.add(Events.Error)
   }
 }
@@ -73,11 +73,6 @@ document.body.addEventListener('contextmenu', (event) => {
   return false
 })
 
-document.addEventListener(Beam.Events.Connection, (event) => puzzle.onBeamConnected(event))
-document.addEventListener(Beam.Events.Collision, (event) => puzzle.onBeamCollision(event))
-document.addEventListener(Modifier.Events.Deselected, () => puzzle.unmask())
-document.addEventListener(Modifier.Events.Invoked, (event) => puzzle.onModifierInvoked(event))
-document.addEventListener(Modifier.Events.Selected, (event) => puzzle.mask(event))
 document.addEventListener(Puzzle.Events.Solved, () => {
   document.body.classList.add(Puzzle.Events.Solved)
 })

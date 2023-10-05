@@ -5,6 +5,7 @@ import { emitEvent, getOppositeDirection } from '../util'
 export class Beam extends Item {
   debug = false
   done = false
+  type = Item.Types.beam
 
   #connection
   #opening
@@ -53,19 +54,19 @@ export class Beam extends Item {
    * intersects with something else. A beam will be considered 'done' when it either collides with something or it
    * reaches a terminus opening.
    */
-  step (layout) {
+  step (puzzle) {
     if (!this.isActive()) {
       return
     }
 
     const previous = this.#steps[this.#steps.length - 1]
     const direction = previous ? previous.direction : this.#startDirection()
-    const tile = previous ? layout.getNeighboringTile(previous.tile.coordinates.axial, direction) : this.parent.parent
+    const tile = previous ?
+      puzzle.layout.getNeighboringTile(previous.tile.coordinates.axial, direction) : this.parent.parent
 
     // There is no tile in the direction we are headed
     if (!tile) {
       console.log('beam is going off the grid')
-      this.done = true
       this.#onCollision()
       return
     }
@@ -83,7 +84,7 @@ export class Beam extends Item {
         console.log('intersection', intersection)
         intersection.intersections.forEach((curveLocation) => {
           const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: curveLocation.point })
-          layout.layers.debug.addChild(circle)
+          puzzle.layout.layers.debug.addChild(circle)
         })
       }
 
@@ -102,7 +103,6 @@ export class Beam extends Item {
           shadowPath.removeSegment(lastIndex)
           shadowPath.insert(lastIndex, tile.center)
 
-          this.done = true
           this.#onConnection(item, opening)
         }
       }
@@ -114,7 +114,6 @@ export class Beam extends Item {
         shadowPath.removeSegment(lastIndex)
         shadowPath.insert(lastIndex, intersection.intersections[0].point)
 
-        this.done = true
         this.#onCollision(intersection)
       }
 
@@ -127,12 +126,14 @@ export class Beam extends Item {
     if (this.debug) {
       segments.forEach((segment) => {
         const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: segment })
-        layout.layers.debug.addChild(circle)
+        puzzle.layout.layers.debug.addChild(circle)
       })
     }
 
     this.#path.addSegments(shadowPath.segments)
     this.#steps.push(new Beam.#Step(tile, segments, direction, this.#path.segments.length - 1))
+
+    tile.addItem(this)
   }
 
   update () {
@@ -143,10 +144,12 @@ export class Beam extends Item {
   }
 
   #onCollision (intersection) {
+    this.done = true
     emitEvent(Beam.Events.Collision, { beam: this, intersection })
   }
 
   #onConnection (terminus, opening) {
+    this.done = true
     this.#connection = { terminus, opening }
     terminus.onConnection(opening.direction)
     emitEvent(Beam.Events.Connection, { beam: this, terminus, opening })
@@ -170,7 +173,8 @@ export class Beam extends Item {
     const step = this.#steps[stepIndex]
     if (step) {
       this.#path.removeSegments(step.index)
-      this.#steps.splice(stepIndex)
+      const deletedSteps = this.#steps.splice(stepIndex)
+      deletedSteps.forEach((step) => step.tile.removeItem(this))
     }
 
     this.done = false
