@@ -3,7 +3,7 @@ import { Group, Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getCentroid, getNextDirection } from '../util'
+import { getNextDirection } from '../util'
 import { Beam } from './beam'
 
 export class Terminus extends rotatable(toggleable(Item)) {
@@ -59,7 +59,9 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   onToggle () {
-    this.openings.filter((opening) => opening).forEach((opening) => opening.on = !opening.on)
+    this.openings.filter((opening) => opening).forEach((opening) => {
+      opening.on = !opening.on
+    })
     this.update()
   }
 

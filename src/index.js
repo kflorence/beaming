@@ -44,7 +44,7 @@ function selectPuzzle (id) {
       puzzle.teardown()
     }
 
-    puzzle = new Puzzle(id, configuration)
+    window.puzzle = puzzle = new Puzzle(id, configuration)
     puzzleSelector.value = id
 
     // Store the puzzle selection in history

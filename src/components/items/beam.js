@@ -7,9 +7,14 @@ export class Beam extends Item {
   done = false
   type = Item.Types.beam
 
-  #connection
+  #collisionHandlers = {}
   #opening
   #path
+  #state = {
+    collision: undefined,
+    connection: undefined
+  }
+
   #steps = []
 
   constructor (terminus, opening) {
@@ -32,6 +37,9 @@ export class Beam extends Item {
       children: [this.#path],
       locked: true
     })
+
+    this.#collisionHandlers[Item.Types.beam] = this.#onBeamCollision.bind(this)
+    this.#collisionHandlers[Item.Types.terminus] = this.#onTerminusCollision.bind(this)
   }
 
   isActive () {
@@ -59,81 +67,79 @@ export class Beam extends Item {
       return
     }
 
-    const previous = this.#steps[this.#steps.length - 1]
-    const direction = previous ? previous.direction : this.#startDirection()
-    const tile = previous ?
-      puzzle.layout.getNeighboringTile(previous.tile.coordinates.axial, direction) : this.parent.parent
-
-    // There is no tile in the direction we are headed
+    const layout = puzzle.layout
+    const step = this.#steps[this.#steps.length - 1] || this.#firstStep()
+    const direction = step.direction
+    const tile = step.segmentIndex % 2 === 0
+      ? step.tile
+      : layout.getNeighboringTile(step.tile.coordinates.axial, direction)
+    console.log(step, tile)
+    // The next step would be off the grid
     if (!tile) {
       console.log('beam is going off the grid')
       this.#onCollision()
       return
     }
 
-    const fromPoint = previous ? previous.lastPoint() : tile.center
-    const length = previous ? tile.parameters.width : tile.parameters.inradius
+    // Entering a new tile
+    if (step.tile !== tile) {
+      console.log('entering a new tile')
+      // Add this beam to the tile item list so other beams can see it
+      tile.addItem(this)
+    }
 
-    // Create a shadow path to see if we can move to the edge of the current tile
-    const shadowPath = Beam.#shadowPath(fromPoint, length, direction)
+    const nextStep = new Beam.#Step(
+      tile,
+      direction,
+      Beam.#getNextPoint(step.point, tile.parameters.inradius, direction),
+      this.#path.segments.length
+    )
 
-    for (const intersection of Beam.#getIntersections(tile, shadowPath)) {
-      const item = intersection.item
+    let result
+    for (const collision of Beam.#getCollisions(tile, [step.point, nextStep.point])) {
+      const item = collision.item
+
+      console.log('collision', collision)
+
+      // By default, the beam will stop at the first collision point
+      result = new Beam.#Result(nextStep.withPoint(collision.intersections[0].point), { collision })
 
       if (this.debug) {
-        console.log('intersection', intersection)
-        intersection.intersections.forEach((curveLocation) => {
-          const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: curveLocation.point })
-          puzzle.layout.layers.debug.addChild(circle)
+        collision.intersections.forEach((curveLocation) => {
+          const circle = new Path.Circle({ radius: 3, fillColor: 'black', center: curveLocation.point })
+          layout.layers.debug.addChild(circle)
         })
       }
 
-      if (item.type === Item.Types.terminus) {
-        // Intersecting with the starting terminus
-        if (!previous && item === this.parent) {
-          console.log('starting terminus collision')
-          continue
-        }
-
-        const opening = item.openings[getOppositeDirection(direction)]
-
-        // Beam has connected to a matching opening!
-        if (!opening.on && opening.color === this.color) {
-          const lastIndex = shadowPath.segments.length - 1
-          shadowPath.removeSegment(lastIndex)
-          shadowPath.insert(lastIndex, tile.center)
-
-          this.#onConnection(item, opening)
-        }
+      // Let individual item handlers decide on a different result
+      const handler = this.#collisionHandlers[item.type]
+      if (handler) {
+        result = handler(item, collision, step, nextStep, result)
       }
 
-      // Unhandled
-      if (!this.done) {
-        // Update end of path to end at first intersection
-        const lastIndex = shadowPath.segments.length - 1
-        shadowPath.removeSegment(lastIndex)
-        shadowPath.insert(lastIndex, intersection.intersections[0].point)
-
-        this.#onCollision(intersection)
+      if (result instanceof Beam.#Result) {
+        break
       }
-
-      // Stopping on first intersection for now
-      break
     }
 
-    const segments = shadowPath.segments.map((segment) => segment.point)
+    if (!result) {
+      result = new Beam.#Result(nextStep)
+    }
+
+    this.#path.add(result.step.point)
+    this.#steps.push(result.step)
 
     if (this.debug) {
-      segments.forEach((segment) => {
-        const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: segment })
-        puzzle.layout.layers.debug.addChild(circle)
-      })
+      const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: result.step.point })
+      layout.layers.debug.addChild(circle)
     }
 
-    this.#path.addSegments(shadowPath.segments)
-    this.#steps.push(new Beam.#Step(tile, segments, direction, this.#path.segments.length - 1))
-
-    tile.addItem(this)
+    this.#state = result.state
+    if (this.#state.collision) {
+      this.#onCollision()
+    } else if (this.#state.connection) {
+      this.#onConnection()
+    }
   }
 
   update () {
@@ -143,16 +149,51 @@ export class Beam extends Item {
     }
   }
 
-  #onCollision (intersection) {
-    this.done = true
-    emitEvent(Beam.Events.Collision, { beam: this, intersection })
+  #firstStep () {
+    const tile = this.parent.parent
+    const point = tile.center
+    const step = new Beam.#Step(tile, this.#startDirection(), point, 0)
+
+    this.#path.add(point)
+    this.#steps.push(step)
+
+    return step
   }
 
-  #onConnection (terminus, opening) {
+  #onBeamCollision (beam, collision, step, nextStep, result) {
+    // Ignore own beam
+    return beam === this ? undefined : result
+  }
+
+  #onCollision () {
+    const collision = this.#state.collision
     this.done = true
-    this.#connection = { terminus, opening }
-    terminus.onConnection(opening.direction)
-    emitEvent(Beam.Events.Connection, { beam: this, terminus, opening })
+    emitEvent(Beam.Events.Collision, { beam: this, collision })
+  }
+
+  #onConnection () {
+    const connection = this.#state.connection
+    this.done = true
+    connection.terminus.onConnection(connection.opening.direction)
+    emitEvent(Beam.Events.Connection, { beam: this, connection })
+  }
+
+  #onTerminusCollision (terminus, collision, step, nextStep, result) {
+    // Colliding with the starting terminus on the first step, ignore
+    if (terminus === this.parent && step.segmentIndex === 0) {
+      return
+    }
+
+    const opening = terminus.openings[getOppositeDirection(step.direction)]
+
+    // Beam has connected to a valid opening
+    if (!opening.on && opening.color === this.color) {
+      const connection = { terminus, opening }
+      return new Beam.#Result(nextStep, { connection })
+    }
+    console.log('terminus collision')
+    // Otherwise, treat this as a collision
+    return result
   }
 
   #startDirection () {
@@ -165,22 +206,27 @@ export class Beam extends Item {
       return
     }
 
-    if (this.#connection) {
-      this.#connection.terminus.onDisconnection(this.#connection.opening.direction)
-      this.#connection = undefined
+    const connection = this.#state.connection
+    if (connection) {
+      connection.terminus.onDisconnection(connection.opening.direction)
+      this.#state.connection = undefined
     }
+
+    this.#state.collision = undefined
 
     const step = this.#steps[stepIndex]
     if (step) {
-      this.#path.removeSegments(step.index)
+      this.#path.removeSegments(step.segmentIndex)
       const deletedSteps = this.#steps.splice(stepIndex)
+      // FIXME this is not working
       deletedSteps.forEach((step) => step.tile.removeItem(this))
     }
 
     this.done = false
   }
 
-  static #getIntersections (tile, path) {
+  static #getCollisions (tile, segments) {
+    const path = new Path({ segments })
     return tile.items
       .map((item) => {
         const compoundPath = new CompoundPath({ children: item.group.clone().children })
@@ -190,25 +236,36 @@ export class Beam extends Item {
       .filter((result) => result.intersections.length)
   }
 
-  static #shadowPath (point, length, direction) {
+  static #getNextPoint (point, length, direction) {
     const vector = new Point(0, 0)
     vector.length = length
     // In PaperJS an angle of zero corresponds with the right hand side of the horizontal axis of a circle. The
     // direction we are given correspond with the segments of a hexagon, which start at an angle of 240 degrees.
     vector.angle = 240 + (60 * direction)
-    return new Path({ segments: [point, point.add(vector)] })
+    return point.add(vector)
+  }
+
+  static #Result = class {
+    constructor (step, state = {}) {
+      this.step = step
+      this.state = state
+    }
+
+    withState (state) {
+      return new Beam.#Result(this.step, state)
+    }
   }
 
   static #Step = class {
-    constructor (tile, segment, direction, index) {
+    constructor (tile, direction, point, segmentIndex) {
       this.direction = direction
-      this.index = index
+      this.point = point
+      this.segmentIndex = segmentIndex
       this.tile = tile
-      this.segment = segment
     }
 
-    lastPoint () {
-      return this.segment[this.segment.length - 1]
+    withPoint (point) {
+      return new Beam.#Step(this.tile, this.direction, point, this.segmentIndex)
     }
   }
 

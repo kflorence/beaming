@@ -74,11 +74,17 @@ export class Tile extends Item {
   }
 
   removeItem (item) {
-    this.items.splice(this.items.indexOf(item), 1)
+    const index = this.items.indexOf(item)
+    if (index > 0) {
+      this.items.splice(index, 1)
+    }
   }
 
   removeModifier (modifier) {
-    this.modifiers.splice(this.modifiers.indexOf(modifier), 1)
+    const index = this.modifiers.indexOf(modifier)
+    if (index > 0) {
+      this.modifiers.splice(index, 1)
+    }
   }
 
   teardown () {
