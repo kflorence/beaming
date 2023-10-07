@@ -46,6 +46,7 @@ export class Tile extends Item {
   }
 
   onClick (event) {
+    console.log(this.items)
     this.items.forEach((item) => item.onClick(event))
   }
 
@@ -75,14 +76,14 @@ export class Tile extends Item {
 
   removeItem (item) {
     const index = this.items.indexOf(item)
-    if (index > 0) {
+    if (index >= 0) {
       this.items.splice(index, 1)
     }
   }
 
   removeModifier (modifier) {
     const index = this.modifiers.indexOf(modifier)
-    if (index > 0) {
+    if (index >= 0) {
       this.modifiers.splice(index, 1)
     }
   }

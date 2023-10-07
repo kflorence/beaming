@@ -55,11 +55,11 @@ export class Puzzle {
   }
 
   onBeamCollision (event) {
-    console.log('collision', event)
+    //console.log('collision', event)
   }
 
   onBeamConnected (event) {
-    console.log('connection', event)
+    //console.log('connection', event)
   }
 
   onModifierInvoked (event) {

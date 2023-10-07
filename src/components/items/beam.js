@@ -1,6 +1,7 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
 import { emitEvent, getOppositeDirection } from '../util'
+import { Modifier } from '../modifier'
 
 export class Beam extends Item {
   debug = false
@@ -51,10 +52,22 @@ export class Beam extends Item {
       return
     }
 
-    const tile = event.detail.modifier.tile
-    const stepIndex = this.#steps.findIndex((step) => step.tile === tile)
+    const detail = event.detail
+    const modifier = detail.modifier
+    const stepIndex = this.#steps.findLastIndex((step) => step.tile === modifier.tile)
 
-    this.#updateState(stepIndex)
+    if (stepIndex > 0) {
+      // The beam occupies the modified tile
+      this.#updateState(stepIndex)
+      return
+    }
+
+    const items = detail.items
+    const terminus = items.find((item) => item.type === Item.Types.terminus)
+    if (modifier.type === Modifier.Types.toggle && terminus && terminus !== this.parent) {
+      // A terminus was toggled, which means this beam may be able to update
+      this.#updateState()
+    }
   }
 
   /**
@@ -73,7 +86,9 @@ export class Beam extends Item {
     const tile = step.segmentIndex % 2 === 0
       ? step.tile
       : layout.getNeighboringTile(step.tile.coordinates.axial, direction)
-    console.log(step, tile)
+
+    console.log('stepping', this.color, step, tile)
+
     // The next step would be off the grid
     if (!tile) {
       console.log('beam is going off the grid')
@@ -81,9 +96,8 @@ export class Beam extends Item {
       return
     }
 
-    // Entering a new tile
-    if (step.tile !== tile) {
-      console.log('entering a new tile')
+    // Add beam to tile
+    if (!tile.items.some((item) => item === this)) {
       // Add this beam to the tile item list so other beams can see it
       tile.addItem(this)
     }
@@ -96,20 +110,14 @@ export class Beam extends Item {
     )
 
     let result
-    for (const collision of Beam.#getCollisions(tile, [step.point, nextStep.point])) {
+    const collisions = Beam.#getCollisions(tile, [step.point, nextStep.point])
+    for (const collision of collisions) {
       const item = collision.item
 
-      console.log('collision', collision)
+      console.log('collision', this.color, collision)
 
       // By default, the beam will stop at the first collision point
       result = new Beam.#Result(nextStep.withPoint(collision.intersections[0].point), { collision })
-
-      if (this.debug) {
-        collision.intersections.forEach((curveLocation) => {
-          const circle = new Path.Circle({ radius: 3, fillColor: 'black', center: curveLocation.point })
-          layout.layers.debug.addChild(circle)
-        })
-      }
 
       // Let individual item handlers decide on a different result
       const handler = this.#collisionHandlers[item.type]
@@ -126,15 +134,24 @@ export class Beam extends Item {
       result = new Beam.#Result(nextStep)
     }
 
-    this.#path.add(result.step.point)
-    this.#steps.push(result.step)
-
     if (this.debug) {
-      const circle = new Path.Circle({ radius: 3, fillColor: 'red', center: result.step.point })
+      const circle = new Path.Circle({
+        radius: 3,
+        fillColor: this.color,
+        strokeColor: 'black',
+        strokeWidth: 1,
+        center: result.step.point
+      })
       layout.layers.debug.addChild(circle)
     }
 
+    this.#path.add(result.step.point)
+    this.#steps.push(result.step)
+
     this.#state = result.state
+
+    console.log('step result', this.color, result)
+
     if (this.#state.collision) {
       this.#onCollision()
     } else if (this.#state.connection) {
@@ -156,6 +173,8 @@ export class Beam extends Item {
 
     this.#path.add(point)
     this.#steps.push(step)
+
+    tile.addItem(this)
 
     return step
   }
@@ -191,7 +210,7 @@ export class Beam extends Item {
       const connection = { terminus, opening }
       return new Beam.#Result(nextStep, { connection })
     }
-    console.log('terminus collision')
+
     // Otherwise, treat this as a collision
     return result
   }
@@ -202,9 +221,8 @@ export class Beam extends Item {
   }
 
   #updateState (stepIndex) {
-    if (stepIndex < 0) {
-      return
-    }
+    console.log('updateState', this.color, stepIndex)
+    this.done = false
 
     const connection = this.#state.connection
     if (connection) {
@@ -218,11 +236,11 @@ export class Beam extends Item {
     if (step) {
       this.#path.removeSegments(step.segmentIndex)
       const deletedSteps = this.#steps.splice(stepIndex)
-      // FIXME this is not working
-      deletedSteps.forEach((step) => step.tile.removeItem(this))
-    }
 
-    this.done = false
+      // Get the unique set of tiles
+      const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
+      tiles.forEach((tile) => tile.removeItem(this))
+    }
   }
 
   static #getCollisions (tile, segments) {
