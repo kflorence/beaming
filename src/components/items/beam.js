@@ -16,6 +16,7 @@ export class Beam extends Item {
     connection: undefined
   }
 
+  #stepIndex = 0
   #steps = []
 
   constructor (terminus, opening) {
@@ -58,7 +59,7 @@ export class Beam extends Item {
 
     if (stepIndex > 0) {
       // The beam occupies the modified tile
-      this.#updateState(stepIndex)
+      this.#stepIndex = stepIndex
       return
     }
 
@@ -66,7 +67,7 @@ export class Beam extends Item {
     const terminus = items.find((item) => item.type === Item.Types.terminus)
     if (modifier.type === Modifier.Types.toggle && terminus && terminus !== this.parent) {
       // A terminus was toggled, which means this beam may be able to update
-      this.#updateState()
+      this.done = false
     }
   }
 
@@ -81,17 +82,17 @@ export class Beam extends Item {
     }
 
     const layout = puzzle.layout
-    const step = this.#steps[this.#steps.length - 1] || this.#firstStep()
-    const direction = step.direction
-    const tile = step.segmentIndex % 2 === 0
-      ? step.tile
-      : layout.getNeighboringTile(step.tile.coordinates.axial, direction)
+    const currentStep = this.#steps.length === 0 ? this.#firstStep() : this.#steps[this.#stepIndex]
+    const direction = currentStep.direction
+    const tile = currentStep.segmentIndex % 2 === 0
+      ? currentStep.tile
+      : layout.getNeighboringTile(currentStep.tile.coordinates.axial, direction)
 
-    console.log('stepping', this.color, step, tile)
+    console.log('step: ' + this.#stepIndex, this.color, currentStep, tile)
 
     // The next step would be off the grid
     if (!tile) {
-      console.log('beam is going off the grid')
+      console.log('beam is going off the grid', this.color)
       this.#onCollision()
       return
     }
@@ -105,33 +106,30 @@ export class Beam extends Item {
     const nextStep = new Beam.#Step(
       tile,
       direction,
-      Beam.#getNextPoint(step.point, tile.parameters.inradius, direction),
-      this.#path.segments.length
+      Beam.#getNextPoint(currentStep.point, tile.parameters.inradius, direction),
+      currentStep.segmentIndex + 1
     )
 
-    let result
-    const collisions = Beam.#getCollisions(tile, [step.point, nextStep.point])
+    let resolvedStep
+    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point])
     for (const collision of collisions) {
-      const item = collision.item
-
       console.log('collision', this.color, collision)
 
       // By default, the beam will stop at the first collision point
-      result = new Beam.#Result(nextStep.withPoint(collision.intersections[0].point), { collision })
+      resolvedStep = Beam.#Step.from(nextStep, { point: collision.intersections[0].point, state: { collision }})
 
-      // Let individual item handlers decide on a different result
-      const handler = this.#collisionHandlers[item.type]
+      const handler = this.#collisionHandlers[collision.item.type]
       if (handler) {
-        result = handler(item, collision, step, nextStep, result)
+        resolvedStep = handler(collision, currentStep, nextStep, resolvedStep)
       }
 
-      if (result instanceof Beam.#Result) {
+      if (resolvedStep instanceof Beam.#Step) {
         break
       }
     }
 
-    if (!result) {
-      result = new Beam.#Result(nextStep)
+    if (!resolvedStep) {
+      resolvedStep = nextStep
     }
 
     if (this.debug) {
@@ -140,22 +138,32 @@ export class Beam extends Item {
         fillColor: this.color,
         strokeColor: 'black',
         strokeWidth: 1,
-        center: result.step.point
+        center: resolvedStep.point
       })
       layout.layers.debug.addChild(circle)
     }
 
-    this.#path.add(result.step.point)
-    this.#steps.push(result.step)
+    const existingNextStep = this.#steps[this.#stepIndex + 1]
+    if (existingNextStep) {
+      if (existingNextStep === resolvedStep) {
+        // Nothing to do
+        return
+      } else {
+        // We are revising history.
+        this.#updateState(this.#stepIndex)
+      }
+    }
 
-    this.#state = result.state
+    this.#path.add(resolvedStep.point)
+    this.#steps.push(resolvedStep)
+    this.#stepIndex++
 
-    console.log('step result', this.color, result)
+    console.log('added step', this.color, resolvedStep)
 
-    if (this.#state.collision) {
-      this.#onCollision()
-    } else if (this.#state.connection) {
-      this.#onConnection()
+    if (resolvedStep.state.collision) {
+      this.#onCollision(resolvedStep)
+    } else if (resolvedStep.state.connection) {
+      this.#onConnection(resolvedStep)
     }
   }
 
@@ -179,40 +187,42 @@ export class Beam extends Item {
     return step
   }
 
-  #onBeamCollision (beam, collision, step, nextStep, result) {
+  #onBeamCollision (collision, currentStep, nextStep, resolvedStep) {
     // Ignore own beam
-    return beam === this ? undefined : result
+    return collision.item === this ? undefined : resolvedStep
   }
 
-  #onCollision () {
-    const collision = this.#state.collision
+  #onCollision (resolvedStep) {
+    const collision = resolvedStep.state.collision
     this.done = true
     emitEvent(Beam.Events.Collision, { beam: this, collision })
   }
 
-  #onConnection () {
-    const connection = this.#state.connection
+  #onConnection (resolvedStep) {
+    const connection = resolvedStep.state.collision
     this.done = true
     connection.terminus.onConnection(connection.opening.direction)
     emitEvent(Beam.Events.Connection, { beam: this, connection })
   }
 
-  #onTerminusCollision (terminus, collision, step, nextStep, result) {
+  #onTerminusCollision (collision, currentStep, nextStep, resolvedStep) {
+    const terminus = collision.item
+
     // Colliding with the starting terminus on the first step, ignore
-    if (terminus === this.parent && step.segmentIndex === 0) {
+    if (terminus === this.parent && currentStep.segmentIndex === 0) {
       return
     }
 
-    const opening = terminus.openings[getOppositeDirection(step.direction)]
+    const opening = terminus.openings[getOppositeDirection(currentStep.direction)]
 
     // Beam has connected to a valid opening
     if (!opening.on && opening.color === this.color) {
       const connection = { terminus, opening }
-      return new Beam.#Result(nextStep, { connection })
+      return Beam.#Step.from(nextStep, { connection })
     }
 
     // Otherwise, treat this as a collision
-    return result
+    return resolvedStep
   }
 
   #startDirection () {
@@ -221,26 +231,30 @@ export class Beam extends Item {
   }
 
   #updateState (stepIndex) {
-    console.log('updateState', this.color, stepIndex)
-    this.done = false
+    const oldLastStep = this.#steps[this.#stepIndex]
+    const newLastStep = this.#steps[stepIndex]
 
-    const connection = this.#state.connection
-    if (connection) {
-      connection.terminus.onDisconnection(connection.opening.direction)
-      this.#state.connection = undefined
-    }
+    console.log('updateState', this.color, 'current stepIndex: ' + this.#stepIndex, 'new stepIndex: ' + stepIndex)
 
-    this.#state.collision = undefined
-
-    const step = this.#steps[stepIndex]
-    if (step) {
-      this.#path.removeSegments(step.segmentIndex)
+    if (this.#stepIndex !== stepIndex && newLastStep) {
+      this.#path.removeSegments(newLastStep.segmentIndex)
       const deletedSteps = this.#steps.splice(stepIndex)
 
-      // Get the unique set of tiles
+      // Remove beam from tiles it is being removed from
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
       tiles.forEach((tile) => tile.removeItem(this))
+
+      if (oldLastStep) {
+        const connection = oldLastStep.state.connection
+        if (connection) {
+          connection.terminus.onDisconnection(connection.opening.direction)
+        }
+      }
+
+      this.#stepIndex = stepIndex
     }
+
+    this.done = false
   }
 
   static #getCollisions (tile, segments) {
@@ -263,27 +277,26 @@ export class Beam extends Item {
     return point.add(vector)
   }
 
-  static #Result = class {
-    constructor (step, state = {}) {
-      this.step = step
-      this.state = state
-    }
-
-    withState (state) {
-      return new Beam.#Result(this.step, state)
-    }
-  }
-
   static #Step = class {
-    constructor (tile, direction, point, segmentIndex) {
+    constructor (tile, direction, point, segmentIndex, state = {}) {
       this.direction = direction
       this.point = point
       this.segmentIndex = segmentIndex
       this.tile = tile
+      this.state = state
     }
 
-    withPoint (point) {
-      return new Beam.#Step(this.tile, this.direction, point, this.segmentIndex)
+    update (options) {
+      Object.entries(options).forEach(([key, value]) => {
+        if (Object.hasOwn(this, key)) {
+          this[key] = value
+        }
+      })
+      return this
+    }
+
+    static from (step, options) {
+      return new Beam.#Step(step.tile, step.direction, step.point, step.segmentIndex, step.state).update(options)
     }
   }
 
