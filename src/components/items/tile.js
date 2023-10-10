@@ -46,7 +46,7 @@ export class Tile extends Item {
   }
 
   onClick (event) {
-    console.log(this.items)
+    console.log(this.coordinates.offset.toString(), this.items)
     this.items.forEach((item) => item.onClick(event))
   }
 

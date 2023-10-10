@@ -1,4 +1,4 @@
-import paper from 'paper'
+import paper, { Path } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
 
@@ -76,3 +76,14 @@ document.body.addEventListener('contextmenu', (event) => {
 document.addEventListener(Puzzle.Events.Solved, () => {
   document.body.classList.add(Puzzle.Events.Solved)
 })
+
+window.drawDebugPoint = function (x, y) {
+  const circle = new Path.Circle({
+    radius: 3,
+    fillColor: 'white',
+    strokeColor: 'black',
+    strokeWidth: 1,
+    center: new paper.Point(x, y)
+  })
+  puzzle.layout.layers.debug.addChild(circle)
+}

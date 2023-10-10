@@ -55,11 +55,20 @@ export class Puzzle {
   }
 
   onBeamCollision (event) {
-    //console.log('collision', event)
+    // console.log('collision', event)
   }
 
   onBeamConnected (event) {
-    //console.log('connection', event)
+    // console.log('connection', event)
+  }
+
+  onBeamOutOfBounds (event) {
+    this.onBeamCollision(event)
+  }
+
+  onBeamUpdate (event) {
+    // TODO should break this logic out into a method that makes more sense
+    this.onModifierInvoked(event)
   }
 
   onModifierInvoked (event) {
@@ -90,6 +99,8 @@ export class Puzzle {
     Object.entries({
       [Beam.Events.Connection]: this.onBeamConnected,
       [Beam.Events.Collision]: this.onBeamCollision,
+      [Beam.Events.OutOfBounds]: this.onBeamCollision,
+      [Beam.Events.Update]: this.onBeamUpdate,
       [Modifier.Events.Deselected]: this.unmask,
       [Modifier.Events.Invoked]: this.onModifierInvoked,
       [Modifier.Events.Selected]: this.mask
