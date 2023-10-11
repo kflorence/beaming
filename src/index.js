@@ -62,6 +62,10 @@ function selectPuzzle (id) {
 // Don't automatically insert items into the scene graph, they must be explicitly inserted
 paper.settings.insertItems = false
 
+document.addEventListener(Puzzle.Events.Solved, () => {
+  document.body.classList.add(Puzzle.Events.Solved)
+})
+
 // noinspection JSCheckFunctionSignatures
 paper.setup(document.getElementById('puzzle'))
 const params = new URLSearchParams(window.location.search)
@@ -71,10 +75,6 @@ selectPuzzle(params.get('id') || '01')
 document.body.addEventListener('contextmenu', (event) => {
   event.preventDefault()
   return false
-})
-
-document.addEventListener(Puzzle.Events.Solved, () => {
-  document.body.classList.add(Puzzle.Events.Solved)
 })
 
 window.drawDebugPoint = function (x, y) {

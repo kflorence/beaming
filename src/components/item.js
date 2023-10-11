@@ -4,6 +4,7 @@ export class Item {
   center
   group
   parent
+  sortOrder = 100
   type
 
   constructor (parent) {

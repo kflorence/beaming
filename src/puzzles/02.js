@@ -69,8 +69,8 @@ export default {
           items: [
             {
               openings: [
-                { color: 'blue' },
-                { color: 'red' },
+                { color: 'blue', on: true },
+                { color: 'red', on: true },
                 null,
                 null,
                 null,
@@ -79,7 +79,7 @@ export default {
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
+          modifiers: [{ type: 'Lock' }, { on: true, type: 'Toggle' }]
         },
         null,
         null

@@ -293,8 +293,8 @@ export class Puzzle {
   })
 
   static solvedConfigurator (tile) {
-    const beam = tile.items.find((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
-    return { style: { fillColor: beam.color } }
+    const beams = tile.items.filter((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
+    return { style: { fillColor: chroma.average(beams.map((beam) => beam.color)).hex() } }
   }
 
   static solvedMask (tile) {

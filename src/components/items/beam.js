@@ -1,9 +1,8 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
-import { emitEvent } from '../util'
+import { emitEvent, getConvertedDirection } from '../util'
 
 export class Beam extends Item {
-  debug = false
   done = false
   type = Item.Types.beam
 
@@ -42,7 +41,11 @@ export class Beam extends Item {
   }
 
   getConnection () {
-    return this.#steps[this.#steps.length - 1]?.state.connection
+    return this.getLastStep()?.state.connection
+  }
+
+  getLastStep () {
+    return this.#steps[this.#steps.length - 1]
   }
 
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
@@ -61,7 +64,7 @@ export class Beam extends Item {
       return
     }
 
-    console.log(this.color, 'onEvent', event)
+    console.log(this.color, 'onModifierInvoked', event)
 
     // Mark as not done to trigger the processing of another step
     this.done = false
@@ -115,25 +118,22 @@ export class Beam extends Item {
       return
     }
 
-    if (!tile.items.some((item) => item === this)) {
-      // Add this beam to the tile item list so other beams can see it
-      tile.addItem(this)
-    }
-
     let nextStep = new Beam.Step(
       tile,
       this.color,
       direction,
-      Beam.#getNextPoint(currentStep.point, tile.parameters.inradius, direction),
+      Beam.getNextPoint(currentStep.point, tile.parameters.inradius, direction),
       currentStep.segmentIndex + 1
     )
 
     // See if there are any collisions along the path we plan to take
-    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point]).sort((collision) => {
-      // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
-      const previousFirstPoint = currentStep.state.collision?.intersections[0].point
-      return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
-    })
+    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point])
+      .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
+      .sort((collision) => {
+        // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
+        const previousFirstPoint = currentStep.state.collision?.intersections[0].point
+        return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
+      })
 
     let collisionStep
     for (const collision of collisions) {
@@ -154,17 +154,6 @@ export class Beam extends Item {
 
     if (collisionStep) {
       nextStep = collisionStep
-    }
-
-    if (this.debug) {
-      const circle = new Path.Circle({
-        radius: 3,
-        fillColor: this.color,
-        strokeColor: 'black',
-        strokeWidth: 1,
-        center: nextStep.point
-      })
-      layout.layers.debug.addChild(circle)
     }
 
     let stateUpdated = false
@@ -207,6 +196,11 @@ export class Beam extends Item {
   #addStep (step) {
     this.#path.add(step.point)
     this.#steps.push(step)
+
+    if (!step.tile.items.some((item) => item === this)) {
+      // Add this beam to the tile item list so other beams can see it
+      step.tile.addItem(this)
+    }
 
     // Step index does not have to correspond to steps length if we are re-evaluating history
     this.#stepIndex++
@@ -293,12 +287,10 @@ export class Beam extends Item {
       .filter((result) => result.intersections.length)
   }
 
-  static #getNextPoint (point, length, direction) {
+  static getNextPoint (point, length, direction) {
     const vector = new Point(0, 0)
     vector.length = length
-    // In PaperJS an angle of zero corresponds with the right hand side of the horizontal axis of a circle. The
-    // direction we are given correspond with the segments of a hexagon, which start at an angle of 240 degrees.
-    vector.angle = 240 + (60 * direction)
+    vector.angle = getConvertedDirection(direction) * 60
     return point.add(vector)
   }
 
