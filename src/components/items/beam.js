@@ -1,13 +1,12 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
-import { emitEvent, getOppositeDirection } from '../util'
+import { emitEvent } from '../util'
 
 export class Beam extends Item {
   debug = false
   done = false
   type = Item.Types.beam
 
-  #collisionHandlers = {}
   #opening
   #path
 
@@ -36,9 +35,6 @@ export class Beam extends Item {
       children: [this.#path],
       locked: true
     })
-
-    this.#collisionHandlers[Item.Types.beam] = this.#onBeamCollision.bind(this)
-    this.#collisionHandlers[Item.Types.terminus] = this.#onTerminusCollision.bind(this)
   }
 
   isActive () {
@@ -47,6 +43,16 @@ export class Beam extends Item {
 
   getConnection () {
     return this.#steps[this.#steps.length - 1]?.state.connection
+  }
+
+  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+    const lastStepIndex = this.#steps.length - 1
+    if (collision.item === this && this.#stepIndex < lastStepIndex) {
+      console.log(this.color, 'ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
+      return
+    }
+
+    return collisionStep
   }
 
   onModifierInvoked (event) {
@@ -84,7 +90,7 @@ export class Beam extends Item {
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.#addStep(new Beam.#Step(tile, this.color, this.#startDirection(), tile.center, 0))
+      this.#addStep(new Beam.Step(tile, this.color, this.#startDirection(), tile.center, 0))
     }
 
     const layout = puzzle.layout
@@ -105,7 +111,7 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.log(this.color, 'stopping due to out of bounds')
-      this.#onOutOfBounds(Beam.#Step.from(currentStep, { state: { outOfBounds: true } }))
+      this.#onOutOfBounds(Beam.Step.from(currentStep, { state: { outOfBounds: true } }))
       return
     }
 
@@ -114,7 +120,7 @@ export class Beam extends Item {
       tile.addItem(this)
     }
 
-    let nextStep = new Beam.#Step(
+    let nextStep = new Beam.Step(
       tile,
       this.color,
       direction,
@@ -133,15 +139,15 @@ export class Beam extends Item {
     for (const collision of collisions) {
       console.log(this.color, 'collision', collision)
 
-      // By default, the beam will stop at the first collision point
-      collisionStep = Beam.#Step.from(nextStep, { point: collision.intersections[0].point, state: { collision } })
+      // By default, the next step will be treated as a collision with the beam stopping at the first point of
+      // intersection with the item.
+      collisionStep = Beam.Step.from(nextStep, { point: collision.intersections[0].point, state: { collision } })
 
-      const handler = this.#collisionHandlers[collision.item.type]
-      if (handler) {
-        collisionStep = handler(collision, currentStep, nextStep, collisionStep)
-      }
+      // Allow the item to change the resulting step
+      collisionStep = collision.item.onCollision(this, collision, currentStep, nextStep, collisionStep)
 
-      if (collisionStep instanceof Beam.#Step) {
+      // An item can elect to continue processing further collisions by returning a non-step result
+      if (collisionStep instanceof Beam.Step) {
         break
       }
     }
@@ -217,16 +223,6 @@ export class Beam extends Item {
     }
   }
 
-  #onBeamCollision (collision, currentStep, nextStep, collisionStep) {
-    const lastStepIndex = this.#steps.length - 1
-    if (collision.item === this && this.#stepIndex < lastStepIndex) {
-      console.log(this.color, '- ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
-      return
-    }
-
-    return collisionStep
-  }
-
   #onCollision (step) {
     this.done = true
     emitEvent(Beam.Events.Collision, { beam: this, step, collision: step.state.collision })
@@ -242,28 +238,6 @@ export class Beam extends Item {
   #onOutOfBounds (step) {
     this.done = true
     emitEvent(Beam.Events.OutOfBounds, { beam: this, step })
-  }
-
-  #onTerminusCollision (collision, currentStep, nextStep, collisionStep) {
-    const terminus = collision.item
-
-    // Colliding with the starting terminus on the first step, ignore
-    if (terminus === this.parent && currentStep.segmentIndex === 0) {
-      console.log(this.color, '- ignoring starting terminus collision')
-      return
-    }
-
-    const opening = terminus.openings[getOppositeDirection(currentStep.direction)]
-
-    // Beam has connected to a valid opening
-    if (!opening.on && opening.color === this.color) {
-      const connection = { terminus, opening }
-      console.log(this.color, 'terminus connection', connection)
-      return Beam.#Step.from(nextStep, { state: { connection } })
-    }
-
-    // Otherwise, treat this as a collision
-    return collisionStep
   }
 
   #startDirection () {
@@ -328,7 +302,7 @@ export class Beam extends Item {
     return point.add(vector)
   }
 
-  static #Step = class {
+  static Step = class {
     constructor (tile, color, direction, point, segmentIndex, state = {}) {
       this.color = color
       this.direction = direction
@@ -370,7 +344,7 @@ export class Beam extends Item {
     }
 
     static from (step, options) {
-      return new Beam.#Step(
+      return new Beam.Step(
         step.tile,
         step.color,
         step.direction,

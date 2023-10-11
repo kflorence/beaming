@@ -3,7 +3,7 @@ import { Group, Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { emitEvent, getNextDirection } from '../util'
+import { emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
 
 export class Terminus extends rotatable(toggleable(Item)) {
@@ -49,6 +49,26 @@ export class Terminus extends rotatable(toggleable(Item)) {
     this.beams = openings.filter((opening) => opening).map((opening) => new Beam(this, opening))
 
     this.update()
+  }
+
+  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+    // Colliding with the starting terminus on the first step, ignore
+    if (beam.parent === this && currentStep.segmentIndex === 0) {
+      console.log(beam.color, '- ignoring starting terminus collision')
+      return
+    }
+
+    const opening = this.openings[getOppositeDirection(currentStep.direction)]
+
+    // Beam has connected to a valid opening
+    if (!opening.on && opening.color === beam.color) {
+      const connection = { terminus: this, opening }
+      console.log(beam.color, 'terminus connection', connection)
+      return Beam.Step.from(nextStep, { state: { connection } })
+    }
+
+    // Otherwise, treat this as a collision
+    return collisionStep
   }
 
   onConnection (direction) {

@@ -16,6 +16,10 @@ export class Item {
 
   onClick () {}
 
+  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+    return collisionStep
+  }
+
   onDeselected () { }
 
   onSelected () {}
