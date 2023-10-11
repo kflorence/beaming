@@ -1,11 +1,6 @@
-import { Terminus } from '../components/items/terminus'
-import { Lock } from '../components/modifiers/lock'
-import { Rotate } from '../components/modifiers/rotate'
-import { Reflector } from '../components/items/reflector'
-import { Toggle } from '../components/modifiers/toggle'
-
 export default {
-  connectionsRequired: 2,
+  // chroma.average(['blue', 'red']).hex()
+  connections: ['#b400b4'],
   layout: {
     tiles: [
       [
@@ -14,12 +9,18 @@ export default {
         {
           items: [
             {
-              color: 'blue',
-              openings: [{ direction: 3 }, { direction: 4 }],
-              type: Terminus.Type
+              openings: [
+                null,
+                null,
+                null,
+                { color: 'red' },
+                { color: 'blue' },
+                null
+              ],
+              type: 'Terminus'
             }
           ],
-          modifiers: [{ type: Lock.Type }]
+          modifiers: [{ type: 'Lock' }]
         },
         null,
         null
@@ -37,21 +38,20 @@ export default {
           items: [
             {
               direction: 3,
-              type: Reflector.Type
+              type: 'Reflector'
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }]
+          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
         },
         null,
         {
           items: [
             {
               direction: 3,
-
-              type: Reflector.Type
+              type: 'Reflector'
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Rotate.Type }]
+          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
         },
         null
       ],
@@ -68,11 +68,18 @@ export default {
         {
           items: [
             {
-              openings: [{ color: 'blue', direction: 0 }, { color: 'blue', direction: 1 }],
-              type: Terminus.Type
+              openings: [
+                { color: 'blue' },
+                { color: 'red' },
+                null,
+                null,
+                null,
+                null
+              ],
+              type: 'Terminus'
             }
           ],
-          modifiers: [{ type: Lock.Type }, { type: Toggle.Type }]
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
         },
         null,
         null
