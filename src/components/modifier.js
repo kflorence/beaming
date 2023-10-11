@@ -81,7 +81,7 @@ export class Modifier {
   }
 
   dispatchEvent (event, detail) {
-    emitEvent(event, Object.assign({}, detail || {}, { modifier: this }))
+    emitEvent(event, Object.assign({}, detail || {}, { modifier: this, tile: this.tile }))
   }
 
   onClick () {

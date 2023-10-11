@@ -3,7 +3,7 @@ import { Group, Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getNextDirection } from '../util'
+import { emitEvent, getNextDirection } from '../util'
 import { Beam } from './beam'
 
 export class Terminus extends rotatable(toggleable(Item)) {
@@ -20,12 +20,15 @@ export class Terminus extends rotatable(toggleable(Item)) {
     openings.forEach((opening, direction) => {
       if (opening) {
         opening.color = opening.color || color
+        opening.connected = false
         opening.direction = direction
         opening.on = !!opening.on
       }
     })
 
-    if (color === undefined) {
+    if (color) {
+      color = chroma(color).hex()
+    } else {
       const colors = openings.filter((opening) => opening?.color).map((opening) => opening.color)
 
       if (colors.length === 0) {
@@ -49,13 +52,17 @@ export class Terminus extends rotatable(toggleable(Item)) {
   }
 
   onConnection (direction) {
-    this.openings[direction].on = true
+    const opening = this.openings[direction]
+    opening.connected = opening.on = true
     this.update()
+    emitEvent(Terminus.Events.Connection, { terminus: this, opening })
   }
 
   onDisconnection (direction) {
-    this.openings[direction].on = false
+    const opening = this.openings[direction]
+    opening.connected = opening.on = false
     this.update()
+    emitEvent(Terminus.Events.Disconnection, { terminus: this, opening })
   }
 
   onToggle () {
@@ -103,6 +110,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
       return new Path({
         closed: true,
+        data: { collidable: false },
         fillColor: opening.color,
         opacity: opening.on ? 1 : Terminus.#openingOffOpacity,
         segments: [p1, p2, p3]
@@ -116,4 +124,9 @@ export class Terminus extends rotatable(toggleable(Item)) {
 
     return { group, openings, radius, terminus }
   }
+
+  static Events = Object.freeze({
+    Connection: 'terminus-connection',
+    Disconnection: 'terminus-disconnection'
+  })
 }

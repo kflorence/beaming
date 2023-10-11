@@ -1,13 +1,14 @@
 import { Layout } from './layout'
+import chroma from 'chroma-js'
 import paper, { Layer } from 'paper'
-import { emitEvent } from './util'
+import { capitalize, emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
 import { Beam } from './items/beam'
+import { Terminus } from './items/terminus'
 
 const elements = Object.freeze({
-  connectionsRequired: document.getElementById('connections-required'),
   message: document.getElementById('message'),
   state: document.getElementById('state')
 })
@@ -39,7 +40,9 @@ export class Puzzle {
 
     elements.message.textContent = title
 
-    this.#setState(connections)
+    this.connections = connections.map((color) => ({ color: chroma(color).hex(), connected: false }))
+
+    this.#setState(this.connections)
 
     this.#addEventListeners()
     this.#addLayers()
@@ -49,36 +52,14 @@ export class Puzzle {
 
   mask (event) {
     this.#maskEvent = event
+
     // TODO animation?
-    const mask = this.#tiles.filter(event.detail.filter).map((tile) => new Mask(tile, event.detail))
+    const mask = this.#tiles.filter(event.detail.filter)
+      .map((tile) => new Mask(
+        tile,
+        typeof event.detail.configurator === 'function' ? event.detail.configurator(tile) : event.detail
+      ))
     this.layers.mask.addChildren(mask.map((mask) => mask.group))
-  }
-
-  onBeamCollision (event) {
-    // console.log('collision', event)
-  }
-
-  onBeamConnected (event) {
-    // console.log('connection', event)
-  }
-
-  onBeamOutOfBounds (event) {
-    this.onBeamCollision(event)
-  }
-
-  onBeamUpdate (event) {
-    // TODO should break this logic out into a method that makes more sense
-    this.onModifierInvoked(event)
-  }
-
-  onModifierInvoked (event) {
-    this.#beams.forEach((beam) => beam.onEvent(event))
-
-    const activeBeams = this.#beams.filter((beam) => beam.isActive())
-    if (activeBeams.length) {
-      this.#updateBeams(activeBeams)
-      this.#onUpdate()
-    }
   }
 
   teardown () {
@@ -97,13 +78,14 @@ export class Puzzle {
     paper.view.onClick = (event) => this.#onClick(event)
 
     Object.entries({
-      [Beam.Events.Connection]: this.onBeamConnected,
-      [Beam.Events.Collision]: this.onBeamCollision,
-      [Beam.Events.OutOfBounds]: this.onBeamCollision,
-      [Beam.Events.Update]: this.onBeamUpdate,
+      [Beam.Events.Collision]: this.#onBeamCollision,
+      [Beam.Events.OutOfBounds]: this.#onBeamCollision,
       [Modifier.Events.Deselected]: this.unmask,
-      [Modifier.Events.Invoked]: this.onModifierInvoked,
-      [Modifier.Events.Selected]: this.mask
+      [Modifier.Events.Invoked]: this.#onModifierInvoked,
+      [Modifier.Events.Selected]: this.mask,
+      [Puzzle.Events.Solved]: this.mask,
+      [Terminus.Events.Connection]: this.#onTerminusConnection,
+      [Terminus.Events.Disconnection]: this.#onTerminusDisconnection
     }).forEach(([name, handler]) => {
       // Ensure proper 'this' context inside of event handlers
       handler = handler.bind(this)
@@ -122,6 +104,14 @@ export class Puzzle {
       this.layers.collisions,
       this.layout.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
+  }
+
+  #onBeamCollision (event) {
+    // console.log('collision', event)
+  }
+
+  #onBeamOutOfBounds (event) {
+    this.#onBeamCollision(event)
   }
 
   #onClick (event) {
@@ -169,15 +159,58 @@ export class Puzzle {
     }
   }
 
-  #onSolved () {
-    this.solved = true
+  #onModifierInvoked (event) {
+    this.#beams.forEach((beam) => beam.onModifierInvoked(event))
 
-    if (this.selectedTile) {
-      this.selectedTile.onDeselected()
-      this.selectedTile = null
+    const activeBeams = this.#beams.filter((beam) => beam.isActive())
+    const tile = event.detail.tile
+
+    if (tile) {
+      // Give precedence to beams in the tile being modified
+      activeBeams.sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
     }
 
-    emitEvent(Puzzle.Events.Solved)
+    this.#updateBeams(activeBeams)
+  }
+
+  #onSolved () {
+    console.log('puzzle solved')
+
+    this.solved = true
+
+    this.#updateSelectedTile(undefined)
+
+    // TODO: should probably refactor the mask method to allow easier calling from puzzle itself
+    emitEvent(Puzzle.Events.Solved, { configurator: Puzzle.solvedConfigurator, filter: Puzzle.solvedMask })
+  }
+
+  #onTerminusConnection (event) {
+    console.log('onTerminusConnection', event)
+    const terminus = event.detail.terminus
+    const openings = terminus.openings.filter((opening) => opening?.connected)
+    const color = chroma.average(openings.map((opening) => opening.color)).hex()
+
+    // Update connections
+    const connection = this.connections.find((connection) => connection.color === color)
+    if (connection) {
+      connection.connected = true
+      this.#updateState()
+    }
+
+    // Check for solution
+    if (this.connections.every((connection) => connection.connected)) {
+      this.#onSolved()
+    }
+  }
+
+  #onTerminusDisconnection (event) {
+    console.log('onTerminusDisconnection', event)
+    const terminus = event.detail.terminus
+    const connection = this.connections.find((connection) => connection.color === terminus.color)
+    if (connection) {
+      connection.connected = false
+      this.#updateState()
+    }
   }
 
   #onUpdate () {
@@ -196,23 +229,30 @@ export class Puzzle {
   #setState (connections) {
     elements.state.replaceChildren()
 
-    connections.forEach((color) => {
+    connections.forEach((connection) => {
       const span = document.createElement('span')
       span.classList.add('connection', 'material-symbols-outlined')
+      span.dataset.color = connection.color
       span.textContent = Puzzle.States.disconnected
-      span.style.backgroundColor = color
-      span.title = `Connection: ${color}`
+      span.style.backgroundColor = connection.color
+      span.title = 'Disconnected'
       elements.state.append(span)
     })
   }
 
   #updateBeams (beams) {
+    if (!beams.length) {
+      return
+    }
+
     beams.forEach((beam) => beam.step(this))
 
     const beamsToUpdate = beams.filter((beam) => beam.isActive())
     if (beamsToUpdate.length) {
       this.#updateBeams(beamsToUpdate)
     }
+
+    this.#onUpdate()
   }
 
   #updateSelectedTile (tile) {
@@ -231,6 +271,17 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
+  #updateState () {
+    this.connections.forEach((connection) => {
+      const element = elements.state.querySelector(`[data-color="${connection.color}"]`)
+      const state = connection.connected ? 'connected' : 'disconnected'
+      element.classList.remove(...Object.keys(Puzzle.States))
+      element.classList.add(state)
+      element.textContent = Puzzle.States[state]
+      element.title = capitalize(state)
+    })
+  }
+
   static Events = Object.freeze({
     Error: 'puzzle-error',
     Solved: 'puzzle-solved'
@@ -240,4 +291,14 @@ export class Puzzle {
     connected: 'power',
     disconnected: 'power_off'
   })
+
+  static solvedConfigurator (tile) {
+    const beam = tile.items.find((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
+    return { style: { fillColor: beam.color } }
+  }
+
+  static solvedMask (tile) {
+    return tile.items.some((item) =>
+      item.type === Item.Types.beam && item.getConnection() !== undefined)
+  }
 }

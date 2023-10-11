@@ -23,6 +23,8 @@ export class Beam extends Item {
     this.direction = opening.direction
     this.width = terminus.radius / 10
 
+    // TODO color should be applied per segment
+    // This will probably mean storing a bunch of paths instead of a single path
     this.#path = new Path({
       closed: false,
       strokeColor: this.color,
@@ -43,16 +45,22 @@ export class Beam extends Item {
     return this.#opening.on && !this.done
   }
 
-  onEvent (event) {
-    console.log(this.color, 'onEvent', event.detail)
-    if (!this.#opening.on || (event.type === Beam.Events.Update && event.detail.beam === this)) {
+  getConnection () {
+    return this.#steps[this.#steps.length - 1]?.state.connection
+  }
+
+  onModifierInvoked (event) {
+    if (!this.#opening.on) {
+      // Beam is not on
       return
     }
+
+    console.log(this.color, 'onEvent', event)
 
     // Mark as not done to trigger the processing of another step
     this.done = false
 
-    const tile = event.detail.modifier?.tile
+    const tile = event.detail.tile
     if (tile) {
       // We want the first step that contains the tile the event occurred on
       const stepIndex = this.#steps.findIndex((step) => step.tile === tile)
@@ -76,7 +84,7 @@ export class Beam extends Item {
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.#addStep(new Beam.#Step(tile, this.#startDirection(), tile.center, 0))
+      this.#addStep(new Beam.#Step(tile, this.color, this.#startDirection(), tile.center, 0))
     }
 
     const layout = puzzle.layout
@@ -108,6 +116,7 @@ export class Beam extends Item {
 
     let nextStep = new Beam.#Step(
       tile,
+      this.color,
       direction,
       Beam.#getNextPoint(currentStep.point, tile.parameters.inradius, direction),
       currentStep.segmentIndex + 1
@@ -152,8 +161,11 @@ export class Beam extends Item {
       layout.layers.debug.addChild(circle)
     }
 
+    let stateUpdated = false
+
     // Check to see if we are re-evaluating history (e.g. there is already a stored next step)
-    const existingNextStep = this.#steps[this.#stepIndex + 1]
+    const existingNextStepIndex = this.#stepIndex + 1
+    const existingNextStep = this.#steps[existingNextStepIndex]
     if (existingNextStep) {
       // The next step we would take is the same as the step that already exists in history
       if (nextStep.equals(existingNextStep)) {
@@ -164,20 +176,24 @@ export class Beam extends Item {
           // We have reached the end, nothing left to do
           this.done = true
         }
+
+        return
       } else {
         // We are revising history.
-        this.#updateState(this.#stepIndex)
+        this.#updateState(existingNextStepIndex)
+        stateUpdated = true
       }
-
-      return
     }
 
     this.#addStep(nextStep)
+    if (stateUpdated) {
+      emitEvent(Beam.Events.Update, { beam: this, tile })
+    }
   }
 
   update () {
     // Handle 'off'. 'On' will be handled upstream in puzzle.
-    if (!this.#opening.on) {
+    if (!this.#opening.on && this.#steps.length) {
       this.#updateState(0)
     }
   }
@@ -191,6 +207,7 @@ export class Beam extends Item {
 
     console.log(this.color, 'added step', this.#stepIndex, step)
 
+    // There's probably a better way to do this...
     if (step.state.collision) {
       this.#onCollision(step)
     } else if (step.state.connection) {
@@ -201,9 +218,9 @@ export class Beam extends Item {
   }
 
   #onBeamCollision (collision, currentStep, nextStep, collisionStep) {
-    console.log(this.#stepIndex, this.#steps.length - 1)
-    if (collision.item === this && this.#stepIndex < this.#steps.length - 1) {
-      console.log(this.color, 'ignoring collision with self when re-evaluating history')
+    const lastStepIndex = this.#steps.length - 1
+    if (collision.item === this && this.#stepIndex < lastStepIndex) {
+      console.log(this.color, '- ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
       return
     }
 
@@ -212,14 +229,14 @@ export class Beam extends Item {
 
   #onCollision (step) {
     this.done = true
-    emitEvent(Beam.Events.Collision, { beam: this, step })
+    emitEvent(Beam.Events.Collision, { beam: this, step, collision: step.state.collision })
   }
 
   #onConnection (step) {
-    const connection = step.state.collision
+    const connection = step.state.connection
     this.done = true
     connection.terminus.onConnection(connection.opening.direction)
-    emitEvent(Beam.Events.Connection, { beam: this, step })
+    emitEvent(Beam.Events.Connection, { beam: this, step, connection })
   }
 
   #onOutOfBounds (step) {
@@ -232,7 +249,7 @@ export class Beam extends Item {
 
     // Colliding with the starting terminus on the first step, ignore
     if (terminus === this.parent && currentStep.segmentIndex === 0) {
-      console.log(this.color, 'ignoring starting terminus collision')
+      console.log(this.color, '- ignoring starting terminus collision')
       return
     }
 
@@ -241,7 +258,8 @@ export class Beam extends Item {
     // Beam has connected to a valid opening
     if (!opening.on && opening.color === this.color) {
       const connection = { terminus, opening }
-      return Beam.#Step.from(nextStep, { connection })
+      console.log(this.color, 'terminus connection', connection)
+      return Beam.#Step.from(nextStep, { state: { connection } })
     }
 
     // Otherwise, treat this as a collision
@@ -255,13 +273,13 @@ export class Beam extends Item {
 
   #updateState (stepIndex) {
     const lastStepIndex = this.#steps.length - 1
-    const oldLastStep = this.#steps[lastStepIndex]
-    const newLastStep = this.#steps[stepIndex]
+    const lastStep = this.#steps[lastStepIndex]
+    const step = this.#steps[stepIndex]
 
-    console.log(this.color, 'updateState', 'old: ' + lastStepIndex, 'new: ' + stepIndex)
+    console.log(this.color, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
 
-    if (newLastStep && stepIndex !== lastStepIndex) {
-      this.#path.removeSegments(newLastStep.segmentIndex)
+    if (step) {
+      this.#path.removeSegments(step.segmentIndex)
       const deletedSteps = this.#steps.splice(stepIndex)
 
       console.log(this.color, 'removed steps: ', deletedSteps)
@@ -270,23 +288,29 @@ export class Beam extends Item {
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
       tiles.forEach((tile) => tile.removeItem(this))
 
-      // Handle any state changes
-      const connection = oldLastStep.state.connection
+      // Handle any state changes from the previous last step
+      const connection = lastStep.state.connection
       if (connection) {
         connection.terminus.onDisconnection(connection.opening.direction)
       }
 
       this.done = false
       this.#stepIndex = (stepIndex - 1)
-      emitEvent(Beam.Events.Update, { beam: this })
     }
+
+    return step
   }
 
   static #getCollisions (tile, segments) {
     const path = new Path({ segments })
     return tile.items
       .map((item) => {
-        const compoundPath = new CompoundPath({ children: item.group.clone().children })
+        const compoundPath = new CompoundPath({
+          // Must explicitly add insert: false for clone
+          // https://github.com/paperjs/paper.js/issues/1721
+          children: item.group.clone({ insert: false }).children
+            .filter((child) => child.data.collidable !== false)
+        })
         const intersections = path.getIntersections(compoundPath, (curveLocation) =>
           // Ignore the starting point since this will always collide with the beam itself
           item.type !== Item.Types.beam || !curveLocation.point.equals(segments[0]))
@@ -305,7 +329,8 @@ export class Beam extends Item {
   }
 
   static #Step = class {
-    constructor (tile, direction, point, segmentIndex, state = {}) {
+    constructor (tile, color, direction, point, segmentIndex, state = {}) {
+      this.color = color
       this.direction = direction
       this.point = point
       this.segmentIndex = segmentIndex
@@ -315,7 +340,8 @@ export class Beam extends Item {
 
     equals (other) {
       // We can't use === for some of the PaperJS objects
-      return this.direction === other.direction &&
+      return this.color === other.color &&
+        this.direction === other.direction &&
         this.point.equals(other.point) &&
         this.segmentIndex === other.segmentIndex &&
         this.tile === other.tile &&
@@ -344,7 +370,14 @@ export class Beam extends Item {
     }
 
     static from (step, options) {
-      return new Beam.#Step(step.tile, step.direction, step.point, step.segmentIndex, step.state).update(options)
+      return new Beam.#Step(
+        step.tile,
+        step.color,
+        step.direction,
+        step.point,
+        step.segmentIndex,
+        step.state
+      ).update(options)
     }
   }
 

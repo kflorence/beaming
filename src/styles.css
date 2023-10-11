@@ -108,6 +108,7 @@ main {
 .connection {
   color: white;
   cursor: default;
+  opacity: 0.3;
   padding: 0.25em;
 }
 
