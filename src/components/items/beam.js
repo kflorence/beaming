@@ -1,6 +1,7 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
 import { emitEvent, getConvertedDirection } from '../util'
+import { Modifier } from '../modifier'
 
 export class Beam extends Item {
   done = false
@@ -60,23 +61,34 @@ export class Beam extends Item {
 
   onModifierInvoked (event) {
     if (!this.#opening.on) {
-      // Beam is not on
+      // If the beam is off but has steps, we should get rid of them (toggled off).
+      if (this.#steps.length) {
+        this.#updateState(0)
+      }
       return
     }
 
     console.log(this.color, 'onModifierInvoked', event)
 
-    // Mark as not done to trigger the processing of another step
-    this.done = false
+    // We want the first step that contains the tile the event occurred on
+    const stepIndex = this.#steps.findIndex((step) => step.tile === event.detail.tile)
+    if (stepIndex >= 0) {
+      // Mark as not done to trigger the processing of another step
+      this.done = false
+      // Begin re-evaluating at this index
+      this.#stepIndex = stepIndex
+      return
+    }
 
-    const tile = event.detail.tile
-    if (tile) {
-      // We want the first step that contains the tile the event occurred on
-      const stepIndex = this.#steps.findIndex((step) => step.tile === tile)
-      if (stepIndex >= 0) {
-        // Begin re-evaluating at this index
-        this.#stepIndex = stepIndex
-      }
+    const modifier = event.detail.modifier
+    const terminus = event.detail.items.find((item) => item.type === Item.Types.terminus)
+    const collisionItem = this.getLastStep()?.state.collision?.item
+    if (
+      modifier.type === Modifier.Types.toggle &&
+      collisionItem?.type === Item.Types.beam &&
+      terminus?.beams.some((beam) => !beam.isActive() && beam === collisionItem)) {
+      // Re-evaluate since the beam we collided with has been turned off
+      this.done = false
     }
   }
 
@@ -127,13 +139,13 @@ export class Beam extends Item {
     )
 
     // See if there are any collisions along the path we plan to take
-    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point])
-      .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
-      .sort((collision) => {
-        // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
-        const previousFirstPoint = currentStep.state.collision?.intersections[0].point
-        return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
-      })
+    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point], puzzle)
+      // .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
+      // .sort((collision) => {
+      //   // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
+      //   const previousFirstPoint = currentStep.state.collision?.intersections[0].point
+      //   return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
+      // })
 
     let collisionStep
     for (const collision of collisions) {
@@ -183,13 +195,6 @@ export class Beam extends Item {
     this.#addStep(nextStep)
     if (stateUpdated) {
       emitEvent(Beam.Events.Update, { beam: this, tile })
-    }
-  }
-
-  update () {
-    // Handle 'off'. 'On' will be handled upstream in puzzle.
-    if (!this.#opening.on && this.#steps.length) {
-      this.#updateState(0)
     }
   }
 
@@ -269,7 +274,7 @@ export class Beam extends Item {
     return step
   }
 
-  static #getCollisions (tile, segments) {
+  static #getCollisions (tile, segments, puzzle) {
     const path = new Path({ segments })
     return tile.items
       .map((item) => {
@@ -282,9 +287,14 @@ export class Beam extends Item {
         const intersections = path.getIntersections(compoundPath, (curveLocation) =>
           // Ignore the starting point since this will always collide with the beam itself
           item.type !== Item.Types.beam || !curveLocation.point.equals(segments[0]))
+        if (puzzle.debug) {
+          intersections.forEach((intersection) => puzzle.drawDebugPoint(intersection.point))
+        }
         return { item, intersections }
       })
       .filter((result) => result.intersections.length)
+      // We want to evaluate the intersections in order of occurrence
+      .reverse()
   }
 
   static getNextPoint (point, length, direction) {

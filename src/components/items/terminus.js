@@ -96,7 +96,6 @@ export class Terminus extends rotatable(toggleable(Item)) {
   update () {
     this.beams.forEach((beam) => {
       this.#ui.openings[beam.direction].opacity = this.openings[beam.direction].on ? 1 : Terminus.#openingOffOpacity
-      beam.update()
     })
   }
 

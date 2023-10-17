@@ -77,13 +77,6 @@ document.body.addEventListener('contextmenu', (event) => {
   return false
 })
 
-window.drawDebugPoint = function (x, y) {
-  const circle = new Path.Circle({
-    radius: 3,
-    fillColor: 'white',
-    strokeColor: 'black',
-    strokeWidth: 1,
-    center: new paper.Point(x, y)
-  })
-  puzzle.layout.layers.debug.addChild(circle)
+window.drawDebugPoint = function(x, y) {
+  return puzzle.drawDebugPoint(new paper.Point(x, y))
 }

@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer } from 'paper'
+import paper, { Layer, Path } from 'paper'
 import { capitalize, emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -14,6 +14,8 @@ const elements = Object.freeze({
 })
 
 export class Puzzle {
+  debug = false
+  debugData = {}
   layers = {}
   selectedTile
   solved = false
@@ -50,6 +52,17 @@ export class Puzzle {
     this.#updateBeams(this.#beams.filter((beam) => beam.isActive()))
   }
 
+  drawDebugPoint (point) {
+    const circle = new Path.Circle({
+      radius: 3,
+      fillColor: 'white',
+      strokeColor: 'black',
+      strokeWidth: 1,
+      center: point
+    })
+    this.layout.layers.debug.addChild(circle)
+  }
+
   mask (event) {
     this.#maskEvent = event
 
@@ -78,6 +91,7 @@ export class Puzzle {
     paper.view.onClick = (event) => this.#onClick(event)
 
     Object.entries({
+      'keyup': this.#onKeyup,
       [Beam.Events.Collision]: this.#onBeamCollision,
       [Beam.Events.OutOfBounds]: this.#onBeamCollision,
       [Modifier.Events.Deselected]: this.unmask,
@@ -156,6 +170,12 @@ export class Puzzle {
       if (tile && tile === previouslySelectedTile) {
         tile.onClick(event)
       }
+    }
+  }
+
+  #onKeyup (event) {
+    if (this.debug && this.debugData.beamsToUpdate?.length && event.key === 's') {
+      this.#updateBeams(this.debugData.beamsToUpdate)
     }
   }
 
@@ -245,10 +265,18 @@ export class Puzzle {
       return
     }
 
+    if (this.debug) {
+      this.layout.layers.debug.clear()
+    }
+
     beams.forEach((beam) => beam.step(this))
 
     const beamsToUpdate = beams.filter((beam) => beam.isActive())
     if (beamsToUpdate.length) {
+      if (this.debug) {
+        this.debugData.beamsToUpdate = beamsToUpdate
+        return
+      }
       this.#updateBeams(beamsToUpdate)
     }
 
