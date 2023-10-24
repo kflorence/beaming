@@ -26,7 +26,7 @@ export class Reflector extends rotatable(Item) {
     // FIXME this is causing issues when re-evaluating history
     // The beam will collide with a reflector twice, on entry and exit, so ignore the first one
     if (!currentStep.state.reflected) {
-      return Beam.Step.from(nextStep, { state: { reflected: true }})
+      return Beam.Step.from(nextStep, { state: { reflected: true } })
     }
 
     const directionFrom = getOppositeDirection(currentStep.direction)

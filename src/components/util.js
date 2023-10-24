@@ -14,6 +14,22 @@ export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
+/**
+ * Calls the given function one time after a task has finished for the given amount of time.
+ * @param func the function to call
+ * @param delay the time to wait after the task has completed
+ * @returns {(function(...[*]): void)|*}
+ */
+export function debounce (func, delay = 500) {
+  let timeout
+  return (...args) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+}
+
 export function emitEvent (event, detail = null) {
   document.dispatchEvent(new CustomEvent(event, { detail }))
 }

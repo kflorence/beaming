@@ -140,12 +140,12 @@ export class Beam extends Item {
 
     // See if there are any collisions along the path we plan to take
     const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point], puzzle)
-      // .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
-      // .sort((collision) => {
-      //   // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
-      //   const previousFirstPoint = currentStep.state.collision?.intersections[0].point
-      //   return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
-      // })
+    // .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
+    // .sort((collision) => {
+    //   // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
+    //   const previousFirstPoint = currentStep.state.collision?.intersections[0].point
+    //   return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
+    // })
 
     let collisionStep
     for (const collision of collisions) {

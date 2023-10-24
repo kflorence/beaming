@@ -1,19 +1,29 @@
-import paper, { Path } from 'paper'
+import paper, { Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
+import { debounce } from './components/util'
 
 const history = window.history
 const location = window.location
 
-const message = document.getElementById('message')
-const reset = document.getElementById('reset')
+const elements = Object.freeze({
+  main: document.getElementById('main'),
+  message: document.getElementById('message'),
+  puzzle: document.getElementById('puzzle'),
+  reset: document.getElementById('reset')
+})
 
 const Events = Object.freeze({
   Error: 'puzzle-error'
 })
 
+// Handle puzzle solved
+document.addEventListener(Puzzle.Events.Solved, () => {
+  document.body.classList.add(Puzzle.Events.Solved)
+})
+
 // Handle puzzle reset
-reset.addEventListener('click', () => {
+elements.reset.addEventListener('click', () => {
   if (document.body.classList.contains(Puzzle.Events.Solved)) {
     selectPuzzle(puzzleSelector.value)
   }
@@ -31,6 +41,20 @@ for (const id of Object.keys(puzzles)) {
 puzzleSelector.addEventListener('change', (event) => {
   selectPuzzle(event.target.value)
 })
+
+function resize () {
+  const { width, height } = elements.main.getBoundingClientRect()
+  elements.puzzle.style.height = height + 'px'
+  elements.puzzle.style.width = width + 'px'
+
+  if (paper.view?.viewSize) {
+    paper.view.viewSize = new Size(width, height)
+  }
+}
+
+// Handle canvas resize
+window.addEventListener('resize', debounce(resize))
+resize()
 
 let puzzle
 function selectPuzzle (id) {
@@ -53,7 +77,7 @@ function selectPuzzle (id) {
     history.pushState({ id }, '', url)
   } catch (e) {
     console.error(e)
-    message.textContent = 'Puzzle is invalid'
+    elements.message.textContent = 'Puzzle is invalid'
     document.body.classList.add(Events.Error)
   }
 }
@@ -62,12 +86,8 @@ function selectPuzzle (id) {
 // Don't automatically insert items into the scene graph, they must be explicitly inserted
 paper.settings.insertItems = false
 
-document.addEventListener(Puzzle.Events.Solved, () => {
-  document.body.classList.add(Puzzle.Events.Solved)
-})
-
 // noinspection JSCheckFunctionSignatures
-paper.setup(document.getElementById('puzzle'))
+paper.setup(elements.puzzle)
 const params = new URLSearchParams(window.location.search)
 selectPuzzle(params.get('id') || '01')
 
@@ -77,6 +97,6 @@ document.body.addEventListener('contextmenu', (event) => {
   return false
 })
 
-window.drawDebugPoint = function(x, y) {
+window.drawDebugPoint = function (x, y) {
   return puzzle.drawDebugPoint(new paper.Point(x, y))
 }

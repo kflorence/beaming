@@ -7,29 +7,25 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="container-outer">
-      <div id="container-inner">
-        <header>
-          <label>
-            <select name="id" id="puzzle-selector"></select>
-          </label>
-          <div id="state">
-          </div>
-        </header>
-        <main>
-          <span id="error" class="material-symbols-outlined" title="Error">error</span>
-          <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
-        </main>
-        <footer id="footer">
-          <ul id="modifiers-immutable" class="modifiers"></ul>
-          <div id="info">
-            <div id="message">...</div>
-            <span id="reset" class="material-symbols-outlined" title="Reset">restart_alt</span>
-          </div>
-          <ul id="modifiers-mutable" class="modifiers"></ul>
-        </footer>
+    <header>
+      <label>
+        <select name="id" id="puzzle-selector"></select>
+      </label>
+      <div id="state">
       </div>
-    </div>
+    </header>
+    <main id="main">
+      <div id="error" class="material-symbols-outlined" title="Error">error</div>
+      <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
+    </main>
+    <footer id="footer">
+      <ul id="modifiers-immutable" class="modifiers"></ul>
+      <div id="info">
+        <div id="message">...</div>
+        <span id="reset" class="material-symbols-outlined" title="Reset">restart_alt</span>
+      </div>
+      <ul id="modifiers-mutable" class="modifiers"></ul>
+    </footer>
   </body>
   <script type="module" src="index.js"></script>
 </html>

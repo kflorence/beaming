@@ -91,7 +91,7 @@ export class Puzzle {
     paper.view.onClick = (event) => this.#onClick(event)
 
     Object.entries({
-      'keyup': this.#onKeyup,
+      keyup: this.#onKeyup,
       [Beam.Events.Collision]: this.#onBeamCollision,
       [Beam.Events.OutOfBounds]: this.#onBeamCollision,
       [Modifier.Events.Deselected]: this.unmask,
