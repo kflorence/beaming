@@ -49,11 +49,11 @@ export function getOppositeDirection (direction) {
   return direction + (direction >= 3 ? -3 : 3)
 }
 
-// The directions currently used in code for beam/terminus have zero equal to the upper left side of a hexagon.
-// PaperJS uses the right side of the hexagon as zero, which is equal to two in our directional system. So we have
-// to convert here for any functions that rely on PaperJS vector geometry.
+// Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
+// first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
+// point when standardizing directions across everything.
 // See: http://paperjs.org/tutorials/geometry/vector-geometry/
-// TODO: we may want to consider updating directions across this project to something more uniform
+// TODO: may want to consider updating directions across this project to something more uniform
 export function getConvertedDirection (direction, toPaperJs = true) {
   direction = direction + (toPaperJs ? -1 : 1) * 2
   if (direction < 0) return direction + 6

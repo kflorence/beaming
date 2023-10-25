@@ -23,12 +23,6 @@ export class Reflector extends rotatable(Item) {
   }
 
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
-    // FIXME this is causing issues when re-evaluating history
-    // The beam will collide with a reflector twice, on entry and exit, so ignore the first one
-    if (!currentStep.state.reflected) {
-      return Beam.Step.from(nextStep, { state: { reflected: true } })
-    }
-
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotateDirection)
 
@@ -40,6 +34,11 @@ export class Reflector extends rotatable(Item) {
     if (directionTo === directionFrom) {
       console.log(beam.color, 'stopping due to reflection back at self')
       return collisionStep
+    }
+
+    // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state
+    if (!currentStep.state.reflected) {
+      return Beam.Step.from(nextStep, { state: { reflected: true } })
     }
 
     const point = Beam.getNextPoint(currentStep.point, nextStep.tile.parameters.inradius, directionTo)

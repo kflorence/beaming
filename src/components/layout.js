@@ -3,6 +3,7 @@ import { OffsetCoordinates } from './coordinates/offset'
 import { Layer, Point, view } from 'paper'
 import { Tile } from './items/tile'
 import { Item } from './item'
+import { getConvertedDirection } from './util'
 
 export class Layout {
   beams = []
@@ -82,10 +83,6 @@ export class Layout {
   }
 
   getNeighboringTile (axial, direction) {
-    // Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
-    // first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
-    // point when standardizing directions across everything.
-    direction = direction >= 2 ? direction - 2 : direction + 4
-    return this.getTile(CubeCoordinates.neighbor(axial, direction))
+    return this.getTile(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
   }
 }
