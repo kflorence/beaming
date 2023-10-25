@@ -99,7 +99,9 @@ const params = new URLSearchParams(window.location.search)
 selectPuzzle(params.get('id') || '01')
 
 // Handle zoom
-elements.puzzle.addEventListener('mousewheel', (event) => {
+elements.puzzle.addEventListener('wheel', (event) => {
+  event.preventDefault()
+
   const zoom = paper.view.zoom * (event.deltaY > 0 ? 0.95 : 1.05)
 
   // Don't allow zooming too far in or out
@@ -118,7 +120,7 @@ elements.puzzle.addEventListener('mousewheel', (event) => {
 
   paper.view.zoom = zoom
   paper.view.center = paper.view.center.add(zoomOffset)
-})
+}, { passive: false })
 
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {

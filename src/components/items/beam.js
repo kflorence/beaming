@@ -52,7 +52,7 @@ export class Beam extends Item {
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
     const lastStepIndex = this.#steps.length - 1
     if (collision.item === this && this.#stepIndex < lastStepIndex) {
-      console.log(this.color, 'ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
+      console.debug(this.color, 'ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
       return
     }
 
@@ -68,7 +68,7 @@ export class Beam extends Item {
       return
     }
 
-    console.log(this.color, 'onModifierInvoked', event)
+    console.debug(this.color, 'onModifierInvoked', event)
 
     // We want the first step that contains the tile the event occurred on
     const stepIndex = this.#steps.findIndex((step) => step.tile === event.detail.tile)
@@ -121,11 +121,11 @@ export class Beam extends Item {
       ? currentStep.tile
       : layout.getNeighboringTile(currentStep.tile.coordinates.axial, direction)
 
-    console.log(this.color, 'step', this.#stepIndex, currentStep)
+    console.debug(this.color, 'step', this.#stepIndex, currentStep)
 
     // The next step would be off the grid
     if (!tile) {
-      console.log(this.color, 'stopping due to out of bounds')
+      console.debug(this.color, 'stopping due to out of bounds')
       this.#onOutOfBounds(Beam.Step.from(currentStep, { state: { outOfBounds: true } }))
       return
     }
@@ -149,7 +149,7 @@ export class Beam extends Item {
 
     let collisionStep
     for (const collision of collisions) {
-      console.log(this.color, 'collision', collision)
+      console.debug(this.color, 'collision', collision)
 
       // By default, the next step will be treated as a collision with the beam stopping at the first point of
       // intersection with the item.
@@ -210,7 +210,7 @@ export class Beam extends Item {
     // Step index does not have to correspond to steps length if we are re-evaluating history
     this.#stepIndex++
 
-    console.log(this.color, 'added step', this.#stepIndex, step)
+    console.debug(this.color, 'added step', this.#stepIndex, step)
 
     // There's probably a better way to do this...
     if (step.state.collision) {
@@ -249,13 +249,13 @@ export class Beam extends Item {
     const lastStep = this.#steps[lastStepIndex]
     const step = this.#steps[stepIndex]
 
-    console.log(this.color, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
+    console.debug(this.color, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
 
     if (step) {
       this.#path.removeSegments(step.segmentIndex)
       const deletedSteps = this.#steps.splice(stepIndex)
 
-      console.log(this.color, 'removed steps: ', deletedSteps)
+      console.debug(this.color, 'removed steps: ', deletedSteps)
 
       // Remove beam from tiles it is being removed from
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]

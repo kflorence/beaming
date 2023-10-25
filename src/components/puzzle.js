@@ -129,7 +129,7 @@ export class Puzzle {
   }
 
   #onBeamCollision (event) {
-    // console.log('collision', event)
+    console.log('collision', event)
   }
 
   #onBeamOutOfBounds (event) {

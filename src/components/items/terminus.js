@@ -55,7 +55,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
     // Colliding with the starting terminus on the first step, ignore
     if (beam.parent === this && currentStep.segmentIndex === 0) {
-      console.log(beam.color, '- ignoring starting terminus collision')
+      console.debug(beam.color, 'ignoring starting terminus collision')
       return
     }
 
@@ -64,7 +64,7 @@ export class Terminus extends rotatable(toggleable(Item)) {
     // Beam has connected to a valid opening
     if (!opening.on && opening.color === beam.color) {
       const connection = { terminus: this, opening }
-      console.log(beam.color, 'terminus connection', connection)
+      console.debug(beam.color, 'terminus connection', connection)
       return Beam.Step.from(nextStep, { state: { connection } })
     }
 
