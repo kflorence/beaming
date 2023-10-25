@@ -28,8 +28,9 @@ header {
 }
 
 header {
-  justify-content: space-between;
   border-bottom: 1px solid #999;
+  box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
+  justify-content: space-between;
 }
 
 header select {
@@ -43,6 +44,7 @@ header select {
 
 footer {
   border-top: 1px solid #999;
+  box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
   justify-content: center;
 }
 
