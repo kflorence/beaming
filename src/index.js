@@ -1,7 +1,9 @@
-import paper, { Size } from 'paper'
+import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
 import { debounce } from './components/util'
+
+let center, puzzle
 
 const history = window.history
 const location = window.location
@@ -49,6 +51,7 @@ function resize () {
 
   if (paper.view?.viewSize) {
     paper.view.viewSize = new Size(width, height)
+    center = paper.view.center
   }
 }
 
@@ -56,7 +59,6 @@ function resize () {
 window.addEventListener('resize', debounce(resize))
 resize()
 
-let puzzle
 function selectPuzzle (id) {
   document.body.classList.remove(Events.Error)
 
@@ -66,6 +68,10 @@ function selectPuzzle (id) {
 
     if (puzzle) {
       puzzle.teardown()
+
+      // Reset any changes from zoom/drag
+      paper.view.zoom = 1
+      paper.view.center = center
     }
 
     window.puzzle = puzzle = new Puzzle(id, configuration)
@@ -88,8 +94,31 @@ paper.settings.insertItems = false
 
 // noinspection JSCheckFunctionSignatures
 paper.setup(elements.puzzle)
+center = paper.view.center
 const params = new URLSearchParams(window.location.search)
 selectPuzzle(params.get('id') || '01')
+
+// Handle zoom
+elements.puzzle.addEventListener('mousewheel', (event) => {
+  const zoom = paper.view.zoom * (event.deltaY > 0 ? 0.95 : 1.05)
+
+  // Don't allow zooming too far in or out
+  if (zoom > 2 || zoom < 0.5) {
+    return
+  }
+
+  // Convert the mouse point from the view coordinate space to the project coordinate space
+  const mousePoint = paper.view.viewToProject(new Point(event.offsetX, event.offsetY))
+  const mouseOffset = mousePoint.subtract(paper.view.center)
+
+  // Adjust center towards cursor location
+  const zoomOffset = mousePoint
+    .subtract(mouseOffset.multiply(paper.view.zoom / zoom))
+    .subtract(paper.view.center)
+
+  paper.view.zoom = zoom
+  paper.view.center = paper.view.center.add(zoomOffset)
+})
 
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {

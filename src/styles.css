@@ -116,6 +116,10 @@ main {
   opacity: 1;
 }
 
+.grab #puzzle {
+  cursor: grabbing;
+}
+
 /* https://developers.google.com/fonts/docs/material_icons */
 .material-symbols-outlined {
   font-variation-settings:

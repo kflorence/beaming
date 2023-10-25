@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer, Path } from 'paper'
+import paper, { Layer, Path, Tool } from 'paper'
 import { capitalize, emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -23,9 +23,11 @@ export class Puzzle {
   #beams = []
   #collisions
   #eventListeners = {}
+  #isDragging = false
   #maskEvent
-  #tiles = []
   #termini = []
+  #tiles = []
+  #tool
 
   constructor (id, { connections, layout, title }) {
     this.layout = new Layout(layout)
@@ -33,6 +35,7 @@ export class Puzzle {
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
+    this.#tool = new Tool()
 
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
@@ -89,6 +92,8 @@ export class Puzzle {
 
   #addEventListeners () {
     paper.view.onClick = (event) => this.#onClick(event)
+    this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
+    this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
 
     Object.entries({
       keyup: this.#onKeyup,
@@ -131,7 +136,7 @@ export class Puzzle {
   #onClick (event) {
     let tile
 
-    if (this.solved) {
+    if (this.#isDragging || this.solved) {
       return
     }
 
@@ -193,6 +198,22 @@ export class Puzzle {
     this.#updateBeams(activeBeams)
   }
 
+  #onMouseDrag (event) {
+    if (!this.#isDragging) {
+      document.body.classList.add('grab')
+    }
+
+    this.#isDragging = true
+
+    // Center on the cursor
+    paper.view.center = event.downPoint.subtract(event.point).add(paper.view.center)
+  }
+
+  #onMouseUp () {
+    this.#isDragging = false
+    document.body.classList.remove('grab')
+  }
+
   #onSolved () {
     console.log('puzzle solved')
 
@@ -239,7 +260,10 @@ export class Puzzle {
 
   #removeEventListeners () {
     Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => document.removeEventListener(event, listener))
+      .forEach(([event, listener]) => {
+        // noinspection JSCheckFunctionSignatures
+        document.removeEventListener(event, listener)
+      })
   }
 
   #removeLayers () {
