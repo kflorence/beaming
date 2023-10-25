@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Tool } from 'paper'
-import { capitalize, emitEvent } from './util'
+import { emitEvent } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -9,11 +9,14 @@ import { Beam } from './items/beam'
 import { Terminus } from './items/terminus'
 
 const elements = Object.freeze({
-  message: document.getElementById('message'),
-  state: document.getElementById('state')
+  connections: document.getElementById('connections'),
+  connectionsRequired: document.getElementById('connections-required'),
+  message: document.getElementById('message')
 })
 
 export class Puzzle {
+  connections = []
+  connectionsRequired
   debug = false
   debugData = {}
   layers = {}
@@ -29,7 +32,7 @@ export class Puzzle {
   #tiles = []
   #tool
 
-  constructor (id, { connections, layout, title }) {
+  constructor (id, { connectionsRequired, layout, title }) {
     this.layout = new Layout(layout)
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
@@ -45,9 +48,9 @@ export class Puzzle {
 
     elements.message.textContent = title
 
-    this.connections = connections.map((color) => ({ color: chroma(color).hex(), connected: false }))
+    this.connectionsRequired = connectionsRequired
 
-    this.#setState(this.connections)
+    this.#setState()
 
     this.#addEventListeners()
     this.#addLayers()
@@ -104,7 +107,7 @@ export class Puzzle {
       [Modifier.Events.Selected]: this.mask,
       [Puzzle.Events.Solved]: this.mask,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
-      [Terminus.Events.Disconnection]: this.#onTerminusDisconnection
+      [Terminus.Events.Disconnection]: this.#onTerminusConnection
     }).forEach(([name, handler]) => {
       // Ensure proper 'this' context inside of event handlers
       handler = handler.bind(this)
@@ -228,34 +231,21 @@ export class Puzzle {
   #onTerminusConnection (event) {
     console.log('onTerminusConnection', event)
     const terminus = event.detail.terminus
+    const connectionIndex = this.connections.findIndex((connection) => connection === terminus)
     const openings = terminus.openings.filter((opening) => opening?.connected)
     const color = chroma.average(openings.map((opening) => opening.color)).hex()
 
-    // Update connections
-    const connection = this.connections.find((connection) => connection.color === color)
-    if (connection) {
-      connection.connected = true
-      this.#updateState()
+    if (connectionIndex >= 0) {
+      const connection = this.connections[connectionIndex]
+      // No longer connected
+      if (connection.color !== color) {
+        this.connections.splice(connectionIndex, 1)
+      }
+    } else if (terminus.color === color) {
+      this.connections.push(terminus)
     }
 
-    // Check for solution
-    if (this.connections.every((connection) => connection.connected)) {
-      this.#onSolved()
-    }
-  }
-
-  #onTerminusDisconnection (event) {
-    console.log('onTerminusDisconnection', event)
-    const terminus = event.detail.terminus
-    const connection = this.connections.find((connection) => connection.color === terminus.color)
-    if (connection) {
-      connection.connected = false
-      this.#updateState()
-    }
-  }
-
-  #onUpdate () {
-    // TODO: check for solutions
+    this.#updateState()
   }
 
   #removeEventListeners () {
@@ -270,18 +260,9 @@ export class Puzzle {
     paper.project.clear()
   }
 
-  #setState (connections) {
-    elements.state.replaceChildren()
-
-    connections.forEach((connection) => {
-      const span = document.createElement('span')
-      span.classList.add('connection', 'material-symbols-outlined')
-      span.dataset.color = connection.color
-      span.textContent = Puzzle.States.disconnected
-      span.style.backgroundColor = connection.color
-      span.title = 'Disconnected'
-      elements.state.append(span)
-    })
+  #setState () {
+    elements.connectionsRequired.textContent = this.connectionsRequired.toString()
+    this.#updateState()
   }
 
   #updateBeams (beams) {
@@ -303,8 +284,6 @@ export class Puzzle {
       }
       this.#updateBeams(beamsToUpdate)
     }
-
-    this.#onUpdate()
   }
 
   #updateSelectedTile (tile) {
@@ -324,14 +303,14 @@ export class Puzzle {
   }
 
   #updateState () {
-    this.connections.forEach((connection) => {
-      const element = elements.state.querySelector(`[data-color="${connection.color}"]`)
-      const state = connection.connected ? 'connected' : 'disconnected'
-      element.classList.remove(...Object.keys(Puzzle.States))
-      element.classList.add(state)
-      element.textContent = Puzzle.States[state]
-      element.title = capitalize(state)
-    })
+    const connections = this.connections.length
+
+    elements.connections.textContent = connections.toString()
+
+    // Check for solution
+    if (connections === this.connectionsRequired) {
+      this.#onSolved()
+    }
   }
 
   static Events = Object.freeze({

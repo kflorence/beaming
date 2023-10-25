@@ -1,5 +1,5 @@
 export default {
-  connections: ['blue'],
+  connectionsRequired: 1,
   title: 'Connect the dots',
   layout: {
     tiles: [

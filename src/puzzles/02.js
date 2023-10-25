@@ -1,6 +1,5 @@
 export default {
-  // chroma.average(['blue', 'red']).hex()
-  connections: ['#b400b4'],
+  connectionsRequired: 1,
   layout: {
     tiles: [
       [

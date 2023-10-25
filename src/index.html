@@ -8,11 +8,13 @@
   </head>
   <body>
     <header>
-      <label>
-        <select name="id" id="puzzle-selector"></select>
-      </label>
-      <div id="state">
-      </div>
+      <label><select name="id" id="puzzle-selector"></select></label>
+      <ul id="state">
+        <li id="connections">0</li>
+        <li>/</li>
+        <li id="connections-required">0</li>
+        <li><span class="material-symbols-outlined" title="Power level">bolt</span></li>
+      </ul>
     </header>
     <main id="main">
       <div id="error" class="material-symbols-outlined" title="Error">error</div>
