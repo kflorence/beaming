@@ -1,18 +1,26 @@
 import { capitalize } from './util'
 
+let uniqueId = 0
+
 export class Item {
   center
   group
+  id
   parent
-  sortOrder = 100
   type
 
   constructor (parent) {
+    this.id = uniqueId++
+
     if (parent) {
       this.center = parent.center
     }
 
     this.parent = parent
+  }
+
+  equals (otherItem) {
+    return otherItem instanceof Item && this.id === otherItem.id
   }
 
   onClick () {}
@@ -25,10 +33,15 @@ export class Item {
 
   onSelected () {}
 
+  remove () {
+    this.group.remove()
+  }
+
   update () {}
 
   static Types = Object.freeze(Object.fromEntries([
     'beam',
+    'collision',
     'mask',
     'reflector',
     'terminus',

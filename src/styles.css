@@ -62,6 +62,7 @@ main {
   color: #666;
   cursor: not-allowed;
   display: none;
+  height: 100%;
   font-size: 6em;
   justify-content: center;
 }

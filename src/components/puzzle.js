@@ -7,6 +7,7 @@ import { Mask } from './items/mask'
 import { Modifier } from './modifier'
 import { Beam } from './items/beam'
 import { Terminus } from './items/terminus'
+import { Collision } from './items/collision'
 
 const elements = Object.freeze({
   connections: document.getElementById('connections'),
@@ -24,7 +25,7 @@ export class Puzzle {
   solved = false
 
   #beams = []
-  #collisions
+  #collisions = {}
   #eventListeners = {}
   #isDragging = false
   #maskEvent
@@ -100,8 +101,7 @@ export class Puzzle {
 
     Object.entries({
       keyup: this.#onKeyup,
-      [Beam.Events.Collision]: this.#onBeamCollision,
-      [Beam.Events.OutOfBounds]: this.#onBeamCollision,
+      [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Deselected]: this.unmask,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
       [Modifier.Events.Selected]: this.mask,
@@ -128,12 +128,22 @@ export class Puzzle {
     ].forEach((layer) => paper.project.addLayer(layer))
   }
 
-  #onBeamCollision (event) {
-    console.log('collision', event)
-  }
+  #onBeamUpdate (event) {
+    if (event.detail.step?.state.collision) {
+      const point = event.detail.step.point
+      const collisionId = [Math.round(point.x), Math.round(point.y)].join(',')
+      const collision = this.#collisions[collisionId]
 
-  #onBeamOutOfBounds (event) {
-    this.#onBeamCollision(event)
+      if (collision) {
+        if (!collision.beams.some((beam) => beam === event.detail.beam)) {
+          collision.beams.push(event.detail.beam)
+        }
+      } else {
+        this.#collisions[collisionId] = { beams: [event.detail.beam], point }
+      }
+    }
+
+    this.#updateCollisions()
   }
 
   #onClick (event) {
@@ -218,8 +228,6 @@ export class Puzzle {
   }
 
   #onSolved () {
-    console.log('puzzle solved')
-
     this.solved = true
 
     this.#updateSelectedTile(undefined)
@@ -229,11 +237,10 @@ export class Puzzle {
   }
 
   #onTerminusConnection (event) {
-    console.log('onTerminusConnection', event)
     const terminus = event.detail.terminus
     const connectionIndex = this.connections.findIndex((connection) => connection === terminus)
     const openings = terminus.openings.filter((opening) => opening?.connected)
-    const color = chroma.average(openings.map((opening) => opening.color)).hex()
+    const color = openings.length ? chroma.average(openings.map((opening) => opening.color)).hex() : undefined
 
     if (connectionIndex >= 0) {
       const connection = this.connections[connectionIndex]
@@ -277,6 +284,7 @@ export class Puzzle {
     beams.forEach((beam) => beam.step(this))
 
     const beamsToUpdate = beams.filter((beam) => beam.isActive())
+
     if (beamsToUpdate.length) {
       if (this.debug) {
         this.debugData.beamsToUpdate = beamsToUpdate
@@ -284,6 +292,26 @@ export class Puzzle {
       }
       this.#updateBeams(beamsToUpdate)
     }
+  }
+
+  #updateCollisions () {
+    Object.values(this.#collisions).forEach((collision) => {
+      // Remove invalid beams
+      collision.beams = collision.beams.filter((beam) => beam.done)
+
+      const color = collision.beams.length ? chroma.average(collision.beams.map((beam) => beam.color)).hex() : undefined
+
+      // Handle removal of collision items
+      if (collision.item && (!collision.beams.length || collision.item.color !== color)) {
+        collision.item.remove()
+        collision.item = undefined
+      }
+
+      if (collision.beams.length && !collision.item) {
+        collision.item = new Collision({ center: collision.point, color })
+        this.layers.collisions.addChild(collision.item.group)
+      }
+    })
   }
 
   #updateSelectedTile (tile) {

@@ -8,7 +8,6 @@ import { Beam } from './beam'
 
 export class Terminus extends rotatable(toggleable(Item)) {
   rotateDegrees = 60
-  sortOrder = 1
   type = Item.Types.terminus
 
   #ui

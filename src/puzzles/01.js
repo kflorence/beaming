@@ -9,12 +9,12 @@ export default {
         {
           items: [
             {
-              color: 'blue',
-              openings: [null, null, null, null, {}, null],
+              color: 'red',
+              openings: [null, null, null, null, { on: true }, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Immutable' }]
+          modifiers: [{ type: 'Toggle', on: true }]
         },
         null
       ],
@@ -32,13 +32,13 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, {}, null, null, null, null],
+              openings: [null, { on: true }, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
             { type: 'Lock' },
-            { type: 'Toggle' }
+            { type: 'Toggle', on: true }
           ]
         },
         null,

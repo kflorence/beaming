@@ -1,7 +1,6 @@
 import { CompoundPath, Group, Path, Point } from 'paper'
 import { Item } from '../item'
-import { emitEvent, getConvertedDirection } from '../util'
-import { Modifier } from '../modifier'
+import { deepEqual, emitEvent, getConvertedDirection } from '../util'
 
 export class Beam extends Item {
   done = false
@@ -38,7 +37,7 @@ export class Beam extends Item {
   }
 
   isActive () {
-    return this.#opening.on && !this.done
+    return this.#opening.on && !this.#opening.connected && !this.done
   }
 
   getConnection () {
@@ -51,9 +50,22 @@ export class Beam extends Item {
 
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
     const lastStepIndex = this.#steps.length - 1
-    if (collision.item === this && this.#stepIndex < lastStepIndex) {
-      console.debug(this.color, 'ignoring collision with self when re-evaluating history', this.#stepIndex, lastStepIndex)
+    if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
+      console.debug(
+        this.color,
+        'ignoring collision with self while re-evaluating history',
+        'current index: ' + this.#stepIndex,
+        'last index: ' + lastStepIndex
+      )
       return
+    }
+
+    // We have collided with another beam, stop
+    if (this.isActive()) {
+      const lastStep = this.getLastStep()
+      lastStep.state = { collision: { point: collision.point, item: beam } }
+
+      this.#onUpdate(lastStep)
     }
 
     return collisionStep
@@ -63,30 +75,23 @@ export class Beam extends Item {
     if (!this.#opening.on) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
-        this.#updateState(0)
+        this.#updateHistory(0)
       }
       return
     }
-
-    console.debug(this.color, 'onModifierInvoked', event)
 
     // We want the first step that contains the tile the event occurred on
     const stepIndex = this.#steps.findIndex((step) => step.tile === event.detail.tile)
     if (stepIndex >= 0) {
       // Mark as not done to trigger the processing of another step
       this.done = false
-      // Begin re-evaluating at this index
-      this.#stepIndex = stepIndex
+      // Begin re-evaluating at the step prior to this
+      this.#stepIndex = Math.max(stepIndex - 1, 0)
       return
     }
 
-    const modifier = event.detail.modifier
-    const terminus = event.detail.items.find((item) => item.type === Item.Types.terminus)
     const collisionItem = this.getLastStep()?.state.collision?.item
-    if (
-      modifier.type === Modifier.Types.toggle &&
-      collisionItem?.type === Item.Types.beam &&
-      terminus?.beams.some((beam) => !beam.isActive() && beam === collisionItem)) {
+    if (collisionItem?.type === Item.Types.beam && !collisionItem.isActive()) {
       // Re-evaluate since the beam we collided with has been turned off
       this.done = false
     }
@@ -126,7 +131,8 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.debug(this.color, 'stopping due to out of bounds')
-      this.#onOutOfBounds(Beam.Step.from(currentStep, { state: { outOfBounds: true } }))
+      currentStep.state = { collision: { outOfBounds: true } }
+      this.#onUpdate(currentStep)
       return
     }
 
@@ -140,20 +146,23 @@ export class Beam extends Item {
 
     // See if there are any collisions along the path we plan to take
     const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point], puzzle)
-    // .sort((a, b) => a.item.sortOrder - b.item.sortOrder)
-    // .sort((collision) => {
-    //   // Ensure that if we are re-evaluating history that contained a collision, we re-evaluate that collision first
-    //   const previousFirstPoint = currentStep.state.collision?.intersections[0].point
-    //   return previousFirstPoint ? (collision.intersections[0].point.equals(previousFirstPoint) ? -1 : 0) : 0
-    // })
 
     let collisionStep
     for (const collision of collisions) {
-      console.debug(this.color, 'collision', collision)
+      console.debug(this.color, 'resolving step collision:', collision)
+
+      const item = collision.item
+      const point = collision.intersections[0].point
+      const state = {
+        collision: {
+          item,
+          point: { x: point.x, y: point.y }
+        }
+      }
 
       // By default, the next step will be treated as a collision with the beam stopping at the first point of
       // intersection with the item.
-      collisionStep = Beam.Step.from(nextStep, { point: collision.intersections[0].point, state: { collision } })
+      collisionStep = Beam.Step.from(nextStep, { point, state })
 
       // Allow the item to change the resulting step
       collisionStep = collision.item.onCollision(this, collision, currentStep, nextStep, collisionStep)
@@ -168,34 +177,28 @@ export class Beam extends Item {
       nextStep = collisionStep
     }
 
-    let stateUpdated = false
-
     // Check to see if we are re-evaluating history (e.g. there is already a stored next step)
     const existingNextStepIndex = this.#stepIndex + 1
     const existingNextStep = this.#steps[existingNextStepIndex]
     if (existingNextStep) {
       // The next step we would take is the same as the step that already exists in history
-      if (nextStep.equals(existingNextStep)) {
+      if (deepEqual(nextStep, existingNextStep)) {
         this.#stepIndex++
 
         const lastStepIndex = this.#steps.length - 1
         if (this.#stepIndex === lastStepIndex) {
-          // We have reached the end, nothing left to do
-          this.done = true
+          this.#onUpdate()
         }
 
         return
       } else {
+        console.debug(this.color, 'revising history. old:', existingNextStep, 'new:', nextStep)
         // We are revising history.
-        this.#updateState(existingNextStepIndex)
-        stateUpdated = true
+        this.#updateHistory(existingNextStepIndex)
       }
     }
 
     this.#addStep(nextStep)
-    if (stateUpdated) {
-      emitEvent(Beam.Events.Update, { beam: this, tile })
-    }
   }
 
   #addStep (step) {
@@ -212,14 +215,7 @@ export class Beam extends Item {
 
     console.debug(this.color, 'added step', this.#stepIndex, step)
 
-    // There's probably a better way to do this...
-    if (step.state.collision) {
-      this.#onCollision(step)
-    } else if (step.state.connection) {
-      this.#onConnection(step)
-    } else if (step.state.outOfBounds) {
-      this.#onOutOfBounds(step)
-    }
+    this.#onUpdate(step)
   }
 
   #onCollision (step) {
@@ -239,12 +235,27 @@ export class Beam extends Item {
     emitEvent(Beam.Events.OutOfBounds, { beam: this, step })
   }
 
+  #onUpdate (step) {
+    if (step) {
+      // There's probably a better way to do this...
+      if (step.state.collision) {
+        this.#onCollision(step)
+      } else if (step.state.connection) {
+        this.#onConnection(step)
+      } else if (step.state.outOfBounds) {
+        this.#onOutOfBounds(step)
+      }
+    }
+
+    emitEvent(Beam.Events.Update, { beam: this, step })
+  }
+
   #startDirection () {
     // Take rotation of the parent (terminus) into account
     return (this.#opening.direction + this.parent.rotateDirection) % 6
   }
 
-  #updateState (stepIndex) {
+  #updateHistory (stepIndex) {
     const lastStepIndex = this.#steps.length - 1
     const lastStep = this.#steps[lastStepIndex]
     const step = this.#steps[stepIndex]
@@ -269,6 +280,8 @@ export class Beam extends Item {
 
       this.done = false
       this.#stepIndex = (stepIndex - 1)
+
+      this.#onUpdate()
     }
 
     return step
@@ -314,34 +327,13 @@ export class Beam extends Item {
       this.state = state
     }
 
-    equals (other) {
-      // We can't use === for some of the PaperJS objects
-      return this.color === other.color &&
-        this.direction === other.direction &&
-        this.point.equals(other.point) &&
-        this.segmentIndex === other.segmentIndex &&
-        this.tile === other.tile &&
-        this.stateEquals(other.state)
-    }
-
-    stateEquals (otherState) {
-      if (otherState.collision) {
-        return this.state.collision.item === otherState.collision.item &&
-          this.state.collision.intersections.every((intersection, index) =>
-            // For some reason intersection.equals() is not working here, even though they look the same. Bug?
-            // The toString approximation seems good enough for our use case here
-            intersection.toString() === otherState.collision.intersections[index]?.toString())
-      }
-
-      return this.state === otherState
-    }
-
     update (options) {
       Object.entries(options).forEach(([key, value]) => {
         if (Object.hasOwn(this, key)) {
           this[key] = value
         }
       })
+
       return this
     }
 

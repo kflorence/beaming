@@ -30,6 +30,16 @@ export function debounce (func, delay = 500) {
   }
 }
 
+export function deepEqual (x, y) {
+  const tx = typeof x; const ty = typeof y
+  return x && y && tx === 'object' && tx === ty
+    ? (
+        Object.keys(x).length === Object.keys(y).length &&
+    (typeof x.equals === 'function' ? x.equals(y) : Object.keys(x).every(key => deepEqual(x[key], y[key])))
+      )
+    : (x === y)
+}
+
 export function emitEvent (event, detail = null) {
   document.dispatchEvent(new CustomEvent(event, { detail }))
 }
