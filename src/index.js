@@ -10,7 +10,10 @@ const location = window.location
 
 const elements = Object.freeze({
   main: document.getElementById('main'),
+  menu: document.getElementById('menu'),
   message: document.getElementById('message'),
+  next: document.getElementById('next'),
+  previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
   reset: document.getElementById('reset')
 })
@@ -19,21 +22,36 @@ const Events = Object.freeze({
   Error: 'puzzle-error'
 })
 
+const puzzleIds = Object.keys(puzzles)
+const lastPuzzleIndex = puzzleIds.length - 1
+
 // Handle puzzle solved
 document.addEventListener(Puzzle.Events.Solved, () => {
   document.body.classList.add(Puzzle.Events.Solved)
 })
 
-// Handle puzzle reset
-elements.reset.addEventListener('click', () => {
-  if (document.body.classList.contains(Puzzle.Events.Solved)) {
-    selectPuzzle(puzzleSelector.value)
+// Handle menu items
+elements.next.addEventListener('click', () => {
+  const index = puzzleIds.findIndex((id) => id === puzzleSelector.value)
+  if (index < lastPuzzleIndex) {
+    selectPuzzle(puzzleIds[index + 1])
   }
+})
+
+elements.previous.addEventListener('click', () => {
+  const index = puzzleIds.findIndex((id) => id === puzzleSelector.value)
+  if (index > 0) {
+    selectPuzzle(puzzleIds[index - 1])
+  }
+})
+
+elements.reset.addEventListener('click', () => {
+  selectPuzzle(puzzleSelector.value)
 })
 
 // Handle puzzle selector dropdown
 const puzzleSelector = document.getElementById('puzzle-selector')
-for (const id of Object.keys(puzzles)) {
+for (const id of puzzleIds) {
   const option = document.createElement('option')
   option.value = id
   option.innerText = id
@@ -61,6 +79,15 @@ resize()
 
 function selectPuzzle (id) {
   document.body.classList.remove(Events.Error)
+
+  const menuItems = Array.from(document.querySelectorAll('#menu .item'))
+  menuItems.forEach((element) => element.classList.remove('disabled'))
+
+  if (id === puzzleIds[0]) {
+    menuItems[0].classList.add('disabled')
+  } else if (id === puzzleIds[puzzleIds.length - 1]) {
+    menuItems[menuItems.length - 1].classList.add('disabled')
+  }
 
   try {
     // Must be valid JSON

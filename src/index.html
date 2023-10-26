@@ -21,12 +21,16 @@
       <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
     </main>
     <footer id="footer">
-      <ul id="modifiers-immutable" class="modifiers"></ul>
-      <div id="info">
-        <div id="message">...</div>
-        <span id="reset" class="material-symbols-outlined" title="Reset">restart_alt</span>
+      <div id="toolbar">
+        <ul id="modifiers-immutable" class="modifiers"></ul>
+        <div id="message"></div>
+        <ul id="modifiers-mutable" class="modifiers"></ul>
       </div>
-      <ul id="modifiers-mutable" class="modifiers"></ul>
+      <ul id="menu">
+        <li><span id="previous" class="item material-symbols-outlined" title="Previous">navigate_before</span></li>
+        <li><span id="reset" class="item material-symbols-outlined" title="Reset">restart_alt</span></li>
+        <li><span id="next" class="item material-symbols-outlined" title="Next">navigate_next</span></li>
+      </ul>
     </footer>
   </body>
   <script type="module" src="index.js"></script>

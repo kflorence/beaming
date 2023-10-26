@@ -1,5 +1,6 @@
 export default {
   connectionsRequired: 1,
+  title: 'Turn around',
   layout: {
     tiles: [
       [
@@ -8,26 +9,20 @@ export default {
         {
           items: [
             {
-              openings: [
-                null,
-                null,
-                null,
-                { color: 'red' },
-                { color: 'blue' },
-                null
-              ],
+              color: 'blue',
+              openings: [null, null, null, null, {}, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }]
+          modifiers: [{ type: 'Immutable' }]
         },
-        null,
         null
       ],
       [
         null,
-        {},
-        {},
+        {
+          modifiers: [{ type: 'Immutable' }]
+        },
         null,
         null
       ],
@@ -36,54 +31,19 @@ export default {
         {
           items: [
             {
-              direction: 3,
-              type: 'Reflector'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
-        },
-        null,
-        {
-          items: [
-            {
-              direction: 3,
-              type: 'Reflector'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
-        },
-        null
-      ],
-      [
-        null,
-        {},
-        {},
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        {
-          items: [
-            {
-              openings: [
-                { color: 'blue', on: true },
-                { color: 'red', on: true },
-                null,
-                null,
-                null,
-                null
-              ],
+              color: 'blue',
+              openings: [null, null, null, null, { on: true }, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { on: true, type: 'Toggle' }]
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Rotate' }
+          ]
         },
         null,
         null
       ]
     ]
-  },
-  title: 'Two'
+  }
 }
