@@ -28,7 +28,7 @@ export class Puzzle {
   #collisions = {}
   #eventListeners = {}
   #isDragging = false
-  #maskEvent
+  #mask
   #termini = []
   #tiles = []
   #tool
@@ -71,15 +71,8 @@ export class Puzzle {
   }
 
   mask (event) {
-    this.#maskEvent = event
-
-    // TODO animation?
-    const mask = this.#tiles.filter(event.detail.filter)
-      .map((tile) => new Mask(
-        tile,
-        typeof event.detail.configurator === 'function' ? event.detail.configurator(tile) : event.detail
-      ))
-    this.layers.mask.addChildren(mask.map((mask) => mask.group))
+    console.debug('Mask event', event)
+    this.#onMask(event.detail.mask)
   }
 
   teardown () {
@@ -90,7 +83,7 @@ export class Puzzle {
   }
 
   unmask () {
-    this.#maskEvent = undefined
+    this.#mask = undefined
     this.layers.mask.removeChildren()
   }
 
@@ -104,8 +97,7 @@ export class Puzzle {
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Deselected]: this.unmask,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
-      [Modifier.Events.Selected]: this.mask,
-      [Puzzle.Events.Solved]: this.mask,
+      [Puzzle.Events.Mask]: this.mask,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
       [Terminus.Events.Disconnection]: this.#onTerminusConnection
     }).forEach(([name, handler]) => {
@@ -164,25 +156,17 @@ export class Puzzle {
     }
 
     // There is an active mask
-    if (this.#maskEvent) {
+    if (this.#mask) {
       // An un-masked, not currently selected tile was clicked on
       if (tile && tile !== this.selectedTile) {
-        switch (this.#maskEvent.type) {
-          case Modifier.Events.Selected: {
-            const modifier = this.#maskEvent.detail.modifier
-            modifier.remove()
-            tile.addModifier(modifier.configuration)
-            this.unmask()
-            break
-          }
-        }
+        this.#mask.onClick(this, tile)
       } else {
         // The user clicked on the currently selected tile, or outside the tiled area
         Modifier.deselect()
       }
     }
 
-    if (!this.#maskEvent) {
+    if (!this.#mask) {
       const previouslySelectedTile = this.#updateSelectedTile(tile)
 
       if (tile && tile === previouslySelectedTile) {
@@ -195,6 +179,19 @@ export class Puzzle {
     if (this.debug && this.debugData.beamsToUpdate?.length && event.key === 's') {
       this.#updateBeams(this.debugData.beamsToUpdate)
     }
+  }
+
+  #onMask (mask) {
+    this.#mask = mask
+
+    // TODO animation?
+    const tiles = this.#tiles.filter(mask.filter)
+      .map((tile) => new Mask(
+        tile,
+        typeof mask.configuration === 'function' ? mask.configuration(tile) : mask.configuration
+      ))
+
+    this.layers.mask.addChildren(tiles.map((tile) => tile.group))
   }
 
   #onModifierInvoked (event) {
@@ -231,9 +228,9 @@ export class Puzzle {
     this.solved = true
 
     this.#updateSelectedTile(undefined)
+    this.#onMask(Puzzle.#solvedMask)
 
-    // TODO: should probably refactor the mask method to allow easier calling from puzzle itself
-    emitEvent(Puzzle.Events.Solved, { configurator: Puzzle.solvedConfigurator, filter: Puzzle.solvedMask })
+    emitEvent(Puzzle.Events.Solved)
   }
 
   #onTerminusConnection (event) {
@@ -343,21 +340,27 @@ export class Puzzle {
 
   static Events = Object.freeze({
     Error: 'puzzle-error',
+    Mask: 'puzzle-mask',
     Solved: 'puzzle-solved'
   })
 
-  static States = Object.freeze({
-    connected: 'power',
-    disconnected: 'power_off'
-  })
-
-  static solvedConfigurator (tile) {
-    const beams = tile.items.filter((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
-    return { style: { fillColor: chroma.average(beams.map((beam) => beam.color)).hex() } }
+  static Mask = class {
+    constructor (filter, onClick, configuration) {
+      this.configuration = configuration
+      this.filter = filter
+      this.onClick = onClick
+    }
   }
 
-  static solvedMask (tile) {
-    return tile.items.some((item) =>
-      item.type === Item.Types.beam && item.getConnection() !== undefined)
-  }
+  static #solvedMask = new Puzzle.Mask(
+    (tile) => {
+      return tile.items.some((item) =>
+        item.type === Item.Types.beam && item.getConnection() !== undefined)
+    },
+    undefined,
+    (tile) => {
+      const beams = tile.items.filter((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
+      return { style: { fillColor: chroma.average(beams.map((beam) => beam.color)).hex() } }
+    }
+  )
 }

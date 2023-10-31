@@ -1,4 +1,5 @@
 import { capitalize, emitEvent } from './util'
+import { Puzzle } from './puzzle'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -116,7 +117,17 @@ export class Modifier {
 
     this.update({ selected: true })
     this.tile.onModifierSelected()
-    this.dispatchEvent(Modifier.Events.Selected, { filter: Modifier.selectedMask })
+
+    const mask = new Puzzle.Mask(
+      (tile) => {
+        // Include any tiles that are not immutable or locked
+        return tile.modifiers.some((modifier) =>
+          [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+      },
+      this.#maskOnClick.bind(this)
+    )
+
+    this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
   remove () {
@@ -139,10 +150,10 @@ export class Modifier {
     this.element.title = this.title
   }
 
-  static selectedMask (tile) {
-    // Include any tiles that are not immutable or locked
-    return tile.modifiers.some((modifier) =>
-      [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+  #maskOnClick (puzzle, tile) {
+    this.remove()
+    tile.addModifier(this.configuration)
+    puzzle.unmask()
   }
 
   static deselect () {
