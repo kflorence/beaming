@@ -32,7 +32,7 @@ export default {
             { type: 'Move' }
           ]
         },
-        null,
+        { modifiers: [{ type: 'Lock' }] },
         null
       ],
       [

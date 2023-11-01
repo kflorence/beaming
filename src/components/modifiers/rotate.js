@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { addDegrees, MouseButton } from '../util'
+import { MouseButton } from '../util'
 
 export class Rotate extends Modifier {
   clockwise = true
@@ -52,12 +52,6 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     super(...arguments)
 
     this.rotatable = configuration.rotatable !== false
-  }
-
-  angle () {
-    // We need to subtract 90 degrees because a rotation direction of zero is -90 in PaperJs vector geometry
-    // See: http://paperjs.org/tutorials/geometry/vector-geometry/
-    return addDegrees(this.rotateDirection * this.rotateDegrees, -90)
   }
 
   doRotate (direction) {

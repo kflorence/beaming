@@ -2,8 +2,9 @@ import { Item } from '../item'
 import { Group, Path } from 'paper'
 import { getNextDirection } from '../util'
 import { rotatable } from '../modifiers/rotate'
+import { movable } from '../modifiers/move'
 
-export class Wall extends rotatable(Item) {
+export class Wall extends movable(rotatable(Item)) {
   #ui
 
   constructor (tile, configuration) {

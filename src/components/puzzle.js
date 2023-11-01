@@ -95,7 +95,6 @@ export class Puzzle {
     Object.entries({
       keyup: this.#onKeyup,
       [Beam.Events.Update]: this.#onBeamUpdate,
-      [Modifier.Events.Deselected]: this.unmask,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
       [Puzzle.Events.Mask]: this.mask,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
@@ -157,13 +156,7 @@ export class Puzzle {
 
     // There is an active mask
     if (this.#mask) {
-      // An un-masked, not currently selected tile was clicked on
-      if (tile && tile !== this.selectedTile) {
-        this.#mask.onClick(this, tile)
-      } else {
-        // The user clicked on the currently selected tile, or outside the tiled area
-        Modifier.deselect()
-      }
+      this.#mask.onClick(this, tile && tile !== this.selectedTile ? tile : undefined)
     }
 
     if (!this.#mask) {
@@ -182,6 +175,11 @@ export class Puzzle {
   }
 
   #onMask (mask) {
+    if (this.#mask) {
+      console.error('Ignoring mask request due to existing mask', mask, this.#mask)
+      return
+    }
+
     this.#mask = mask
 
     // TODO animation?

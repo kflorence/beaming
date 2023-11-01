@@ -9,6 +9,7 @@ import { Toggle } from '../modifiers/toggle'
 import { Item } from '../item'
 import { Modifier } from '../modifier'
 import { emitEvent } from '../util'
+import { Move } from '../modifiers/move'
 
 export class Tile extends Item {
   selected = false
@@ -28,13 +29,14 @@ export class Tile extends Item {
     this.parameters = parameters
     this.styles = this.#ui.styles
 
-    // This needs to be last, since it references this
+    // These need to be last, since they reference this
     this.items = (configuration.items || [])
       .map((configuration) => this.#itemFactory(configuration))
       .filter((item) => item !== undefined)
 
     this.modifiers = (configuration.modifiers || [])
       .map((configuration) => this.#modifierFactory(configuration))
+      .filter((modifier) => modifier !== undefined)
   }
 
   addItem (item) {
@@ -122,6 +124,9 @@ export class Tile extends Item {
         break
       case Modifier.Types.lock:
         modifier = new Lock(this, configuration)
+        break
+      case Modifier.Types.move:
+        modifier = new Move(this, configuration)
         break
       case Modifier.Types.rotate:
         modifier = new Rotate(this, configuration)
