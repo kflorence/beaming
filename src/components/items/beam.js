@@ -8,6 +8,7 @@ export class Beam extends Item {
 
   #opening
   #path
+  #style
 
   #stepIndex = -1
   #steps = []
@@ -15,23 +16,19 @@ export class Beam extends Item {
   constructor (terminus, opening) {
     super(...arguments)
 
-    this.#opening = opening
-
-    this.color = opening.color
     this.direction = opening.direction
-    this.width = terminus.radius / 10
+    this.width = terminus.radius / 12
 
-    // TODO color should be applied per segment
-    // This will probably mean storing a bunch of paths instead of a single path
-    this.#path = new Path({
+    this.#opening = opening
+    this.#style = {
       closed: false,
-      strokeColor: this.color,
+      strokeColor: opening.color,
       strokeJoin: 'round',
       strokeWidth: this.width
-    })
+    }
 
     this.group = new Group({
-      children: [this.#path],
+      children: [new Path(this.#style)],
       locked: true
     })
   }
@@ -48,11 +45,15 @@ export class Beam extends Item {
     return this.#steps[this.#steps.length - 1]
   }
 
+  getSteps (tile) {
+    return this.#steps.filter((step) => step.tile === tile)
+  }
+
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
     const lastStepIndex = this.#steps.length - 1
     if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
       console.debug(
-        this.color,
+        this.id,
         'ignoring collision with self while re-evaluating history',
         'current index: ' + this.#stepIndex,
         'last index: ' + lastStepIndex
@@ -110,7 +111,7 @@ export class Beam extends Item {
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.#addStep(new Beam.Step(tile, this.color, this.#startDirection(), tile.center, 0))
+      this.#addStep(new Beam.Step(tile, this.#opening.color, this.#startDirection(), tile.center, 0, 0))
     }
 
     const layout = puzzle.layout
@@ -126,11 +127,11 @@ export class Beam extends Item {
       ? currentStep.tile
       : layout.getNeighboringTile(currentStep.tile.coordinates.axial, direction)
 
-    console.debug(this.color, 'step', this.#stepIndex, currentStep)
+    console.debug(this.id, 'step', this.#stepIndex, currentStep)
 
     // The next step would be off the grid
     if (!tile) {
-      console.debug(this.color, 'stopping due to out of bounds')
+      console.debug(this.id, 'stopping due to out of bounds')
       currentStep.state = { collision: { outOfBounds: true } }
       this.#onUpdate(currentStep)
       return
@@ -138,9 +139,10 @@ export class Beam extends Item {
 
     let nextStep = new Beam.Step(
       tile,
-      this.color,
+      currentStep.color,
       direction,
       Beam.getNextPoint(currentStep.point, tile.parameters.inradius, direction),
+      currentStep.childIndex,
       currentStep.segmentIndex + 1
     )
 
@@ -149,7 +151,7 @@ export class Beam extends Item {
 
     let collisionStep
     for (const collision of collisions) {
-      console.debug(this.color, 'resolving step collision:', collision)
+      console.debug(this.id, 'resolving step collision:', collision)
 
       const item = collision.item
       const point = collision.intersections[0].point
@@ -192,7 +194,7 @@ export class Beam extends Item {
 
         return
       } else {
-        console.debug(this.color, 'revising history. old:', existingNextStep, 'new:', nextStep)
+        console.debug(this.id, 'revising history. old:', existingNextStep, 'new:', nextStep)
         // We are revising history.
         this.#updateHistory(existingNextStepIndex)
       }
@@ -202,7 +204,33 @@ export class Beam extends Item {
   }
 
   #addStep (step) {
-    this.#path.add(step.point)
+    const previousStep = this.#steps[this.#steps.length - 1]
+
+    // Handles cases that require adding a new path item
+    if (
+      previousStep && (
+        previousStep.color !== step.color ||
+        previousStep.state.insertAbove !== step.state.insertAbove ||
+        previousStep.state.insertBelow !== step.state.insertBelow
+      )
+    ) {
+      this.group.lastChild.set({ closed: true })
+      this.#style.strokeColor = step.color
+      const path = new Path(this.#style)
+      path.add(previousStep.point, step.point)
+      this.group.addChild(path)
+
+      if (step.state.insertAbove) {
+        path.insertAbove(step.state.insertAbove)
+      } else if (step.state.insertBelow) {
+        path.insertBelow(step.state.insertBelow)
+      }
+
+      step.childIndex++
+    } else {
+      this.group.lastChild.add(step.point)
+    }
+
     this.#steps.push(step)
 
     if (!step.tile.items.some((item) => item === this)) {
@@ -213,7 +241,7 @@ export class Beam extends Item {
     // Step index does not have to correspond to steps length if we are re-evaluating history
     this.#stepIndex++
 
-    console.debug(this.color, 'added step', this.#stepIndex, step)
+    console.debug(this.id, 'added step', this.#stepIndex, step)
 
     this.#onUpdate(step)
   }
@@ -260,13 +288,22 @@ export class Beam extends Item {
     const lastStep = this.#steps[lastStepIndex]
     const step = this.#steps[stepIndex]
 
-    console.debug(this.color, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
+    console.debug(this.id, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
 
     if (step) {
-      this.#path.removeSegments(step.segmentIndex)
+      const nextChildIndex = step.childIndex + 1
+
+      // Remove any path items after the current one
+      if (this.group.children[nextChildIndex]) {
+        this.group.removeChildren(nextChildIndex)
+      }
+
+      // Remove any segments from the current path item after the segment index
+      this.group.children[step.childIndex].removeSegments(step.segmentIndex)
+
       const deletedSteps = this.#steps.splice(stepIndex)
 
-      console.debug(this.color, 'removed steps: ', deletedSteps)
+      console.debug(this.id, 'removed steps: ', deletedSteps)
 
       // Remove beam from tiles it is being removed from
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
@@ -318,10 +355,11 @@ export class Beam extends Item {
   }
 
   static Step = class {
-    constructor (tile, color, direction, point, segmentIndex, state = {}) {
+    constructor (tile, color, direction, point, childIndex, segmentIndex, state = {}) {
       this.color = color
       this.direction = direction
       this.point = point
+      this.childIndex = childIndex
       this.segmentIndex = segmentIndex
       this.tile = tile
       this.state = state
@@ -343,6 +381,7 @@ export class Beam extends Item {
         step.color,
         step.direction,
         step.point,
+        step.childIndex,
         step.segmentIndex,
         step.state
       ).update(options)

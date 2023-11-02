@@ -20,6 +20,9 @@ export class Terminus extends rotatable(toggleable(Item)) {
     openings.forEach((opening, direction) => {
       if (opening) {
         opening.color = opening.color || color
+        if (Array.isArray(opening.color)) {
+          opening.color = chroma.average(opening.color).hex()
+        }
         opening.connected = false
         opening.direction = direction
         opening.on = !!opening.on
@@ -54,16 +57,16 @@ export class Terminus extends rotatable(toggleable(Item)) {
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {
     // Colliding with the starting terminus on the first step, ignore
     if (beam.parent === this && currentStep.segmentIndex === 0) {
-      console.debug(beam.color, 'ignoring starting terminus collision')
+      console.debug(beam.id, 'ignoring starting terminus collision')
       return
     }
 
     const opening = this.openings[getOppositeDirection(currentStep.direction)]
 
     // Beam has connected to a valid opening
-    if (!opening.on && opening.color === beam.color) {
+    if (opening && !opening.on && opening.color === nextStep.color) {
       const connection = { terminus: this, opening }
-      console.debug(beam.color, 'terminus connection', connection)
+      console.debug(beam.id, 'terminus connection', connection)
       return Beam.Step.from(nextStep, { state: { connection } })
     }
 

@@ -2,14 +2,16 @@ import { Modifier } from '../modifier'
 import { MouseButton } from '../util'
 
 export class Rotate extends Modifier {
-  clockwise = true
-  name = Rotate.Names.right
+  clockwise
+
   title = 'Items in this tile can be rotated.'
   type = Modifier.Types.rotate
 
-  constructor () {
+  constructor (tile, configuration) {
     super(...arguments)
 
+    this.clockwise = configuration.clockwise !== false
+    this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
     this.items = this.tile.items.filter((item) => item.rotatable === true)
   }
 

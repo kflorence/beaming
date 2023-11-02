@@ -42,6 +42,7 @@ export class Item {
   static Types = Object.freeze(Object.fromEntries([
     'beam',
     'collision',
+    'filter',
     'mask',
     'reflector',
     'terminus',

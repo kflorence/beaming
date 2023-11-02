@@ -294,7 +294,9 @@ export class Puzzle {
       // Remove invalid beams
       collision.beams = collision.beams.filter((beam) => beam.done)
 
-      const color = collision.beams.length ? chroma.average(collision.beams.map((beam) => beam.color)).hex() : undefined
+      const color = collision.beams.length
+        ? chroma.average(collision.beams.map((beam) => beam.getLastStep().color)).hex()
+        : undefined
 
       // Handle removal of collision items
       if (collision.item && (!collision.beams.length || collision.item.color !== color)) {
@@ -358,7 +360,8 @@ export class Puzzle {
     undefined,
     (tile) => {
       const beams = tile.items.filter((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
-      return { style: { fillColor: chroma.average(beams.map((beam) => beam.color)).hex() } }
+      const colors = beams.flatMap((beam) => beam.getSteps(tile).map((step) => step.color))
+      return { style: { fillColor: chroma.average(colors).hex() } }
     }
   )
 }

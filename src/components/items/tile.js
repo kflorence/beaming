@@ -10,6 +10,7 @@ import { Item } from '../item'
 import { Modifier } from '../modifier'
 import { emitEvent } from '../util'
 import { Move } from '../modifiers/move'
+import { Filter } from './filter'
 
 export class Tile extends Item {
   selected = false
@@ -98,6 +99,9 @@ export class Tile extends Item {
     let item
 
     switch (configuration.type) {
+      case Item.Types.filter:
+        item = new Filter(this, configuration)
+        break
       case Item.Types.terminus:
         item = new Terminus(this, configuration)
         break
