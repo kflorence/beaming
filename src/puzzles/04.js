@@ -1,5 +1,6 @@
 export default {
   connectionsRequired: 1,
+  title: 'Reflect',
   layout: {
     tiles: [
       [
@@ -8,27 +9,29 @@ export default {
         {
           items: [
             {
-              openings: [
-                null,
-                null,
-                null,
-                { color: 'red' },
-                { color: 'blue' },
-                null
-              ],
+              direction: 4,
+              type: 'Reflector'
+            }
+          ],
+          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
+        },
+        null
+      ],
+      [
+        null,
+        {
+          modifiers: [{ type: 'Immutable' }]
+        },
+        {
+          items: [
+            {
+              color: 'blue',
+              openings: [{}, null, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [{ type: 'Lock' }]
         },
-        null,
-        null
-      ],
-      [
-        null,
-        {},
-        {},
-        null,
         null
       ],
       [
@@ -36,54 +39,16 @@ export default {
         {
           items: [
             {
-              direction: 3,
-              type: 'Reflector'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
-        },
-        null,
-        {
-          items: [
-            {
-              direction: 3,
-              type: 'Reflector'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
-        },
-        null
-      ],
-      [
-        null,
-        {},
-        {},
-        null,
-        null
-      ],
-      [
-        null,
-        null,
-        {
-          items: [
-            {
-              openings: [
-                { color: 'blue', on: true },
-                { color: 'red', on: true },
-                null,
-                null,
-                null,
-                null
-              ],
+              color: 'blue',
+              openings: [null, { on: true }, null, null, null, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { on: true, type: 'Toggle' }]
+          modifiers: [{ type: 'Immutable' }]
         },
         null,
         null
       ]
     ]
-  },
-  title: 'Test'
+  }
 }

@@ -1,6 +1,6 @@
 export default {
   connectionsRequired: 1,
-  title: 'Turn around',
+  title: 'Rotate',
   layout: {
     tiles: [
       [

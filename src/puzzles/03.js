@@ -1,6 +1,6 @@
 export default {
   connectionsRequired: 1,
-  title: 'Blocked',
+  title: 'Move',
   layout: {
     tiles: [
       [

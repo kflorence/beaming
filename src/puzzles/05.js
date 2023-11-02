@@ -1,6 +1,6 @@
 export default {
   connectionsRequired: 1,
-  title: 'Toggle',
+  title: 'Color',
   layout: {
     tiles: [
       [
@@ -9,8 +9,7 @@ export default {
         {
           items: [
             {
-              color: 'blue',
-              openings: [null, null, null, null, {}, null],
+              openings: [null, null, null, { color: 'red' }, { color: 'blue' }, null],
               type: 'Terminus'
             }
           ],
@@ -23,7 +22,9 @@ export default {
         {
           modifiers: [{ type: 'Immutable' }]
         },
-        null,
+        {
+          modifiers: [{ type: 'Immutable' }]
+        },
         null
       ],
       [
@@ -36,13 +37,19 @@ export default {
               type: 'Terminus'
             }
           ],
-          modifiers: [
-            { type: 'Lock' },
-            { type: 'Toggle' }
-          ]
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
         },
         null,
-        null
+        {
+          items: [
+            {
+              color: 'red',
+              openings: [{}, null, null, null, null, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
+        }
       ]
     ]
   }
