@@ -142,8 +142,14 @@ export class Beam extends Item {
       currentStep.segmentIndex + 1
     )
 
+    const items = [tile.items]
+    if (!currentStep.tile.equals(nextStep.tile)) {
+      // Add items from the tile we are moving out of
+      items.unshift(currentStep.tile.items)
+    }
+
     // See if there are any collisions along the path we plan to take
-    const collisions = Beam.#getCollisions(tile, [currentStep.point, nextStep.point], puzzle)
+    const collisions = Beam.#getCollisions(items.flat(), [currentStep.point, nextStep.point], puzzle)
 
     let collisionStep
     for (const collision of collisions) {
@@ -334,9 +340,9 @@ export class Beam extends Item {
     return step
   }
 
-  static #getCollisions (tile, segments, puzzle) {
+  static #getCollisions (items, segments, puzzle) {
     const path = new Path({ segments })
-    return tile.items
+    return items
       .map((item) => {
         const compoundPath = new CompoundPath({
           // Must explicitly add insert: false for clone
