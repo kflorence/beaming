@@ -336,7 +336,6 @@ export class Beam extends Item {
 
   static #getCollisions (tile, segments, puzzle) {
     const path = new Path({ segments })
-    console.log('#getCollisions', tile.items, tile.coordinates.offset.toString())
     return tile.items
       .map((item) => {
         const compoundPath = new CompoundPath({
