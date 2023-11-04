@@ -76,7 +76,7 @@ export class Beam extends Item {
     if (!this.#opening.on) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
-        this.#updateHistory(0)
+        this.reset()
       }
       return
     }
@@ -96,6 +96,10 @@ export class Beam extends Item {
       // Re-evaluate since the beam we collided with has been turned off
       this.done = false
     }
+  }
+
+  reset () {
+    this.#updateHistory(0)
   }
 
   /**

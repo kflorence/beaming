@@ -3,8 +3,9 @@ import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 import { getOppositeDirection, getReflectedDirection } from '../util'
 import { Beam } from './beam'
+import { movable } from '../modifiers/move'
 
-export class Reflector extends rotatable(Item) {
+export class Reflector extends movable(rotatable(Item)) {
   type = Item.Types.reflector
 
   #ui

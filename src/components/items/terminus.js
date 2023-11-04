@@ -5,8 +5,9 @@ import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 import { emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
+import { movable } from '../modifiers/move'
 
-export class Terminus extends rotatable(toggleable(Item)) {
+export class Terminus extends movable(rotatable(toggleable(Item))) {
   rotateDegrees = 60
   type = Item.Types.terminus
 
@@ -52,6 +53,10 @@ export class Terminus extends rotatable(toggleable(Item)) {
     this.beams = openings.filter((opening) => opening).map((opening) => new Beam(this, opening))
 
     this.update()
+  }
+
+  onMove () {
+    this.beams.forEach((beam) => beam.reset())
   }
 
   onCollision (beam, collision, currentStep, nextStep, collisionStep) {

@@ -2,8 +2,9 @@ import chroma from 'chroma-js'
 import { Item } from '../item'
 import { Color, Group, Path } from 'paper'
 import { Beam } from './beam'
+import { movable } from '../modifiers/move'
 
-export class Filter extends Item {
+export class Filter extends movable(Item) {
   type = Item.Types.filter
 
   constructor (tile, { color }) {

@@ -6,32 +6,6 @@ export default {
       [
         null,
         null,
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [null, null, null, null, {}, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        null
-      ],
-      [
-        null,
-        {
-          items: [
-            {
-              openings: [0, 2, 3, 4, 5],
-              type: 'Wall'
-            }
-          ],
-          modifiers: [
-            { type: 'Lock' },
-            { type: 'Move' }
-          ]
-        },
         { modifiers: [{ type: 'Lock' }] },
         null
       ],
@@ -41,12 +15,28 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, { on: true }, null, null, null, null],
+              openings: [null, {}, null, null, null, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [{ type: 'Immutable' }]
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          items: [
+            {
+              color: 'blue',
+              openings: [null, null, null, null, { on: true }, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
-            { type: 'Immutable' }
+            { type: 'Lock' },
+            { type: 'Move' }
           ]
         },
         null,

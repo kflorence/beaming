@@ -7,23 +7,18 @@ export class Move extends Modifier {
   title = 'Items in this tile can be moved to an empty tile.'
   type = Modifier.Types.move
 
-  constructor () {
-    super(...arguments)
-
-    this.items = this.tile.items.filter((item) => item.movable === true)
-  }
-
   onClick (event) {
     super.onClick(event)
 
     this.tile.onModifierSelected()
 
     const mask = new Puzzle.Mask(
+      // TODO: should we instead just check for collisions with existing items in tile?
       (tile) => {
-        // Can be moved to any tile with no items in it
-        // TODO: should we instead just check for collisions with existing items in tile?
-        // That would allow wall pieces to be moved, for example.
-        return tile.items.length > 0 && !(tile === this.tile)
+        // Filter out tiles with items, except for the current tile
+        return (tile.items.length > 0 && !(tile === this.tile)) ||
+          // Filter out tiles with the immutable modifier
+          tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
       },
       this.#maskOnClick.bind(this)
     )
@@ -35,13 +30,13 @@ export class Move extends Modifier {
     this.tile.onModifierDeselected()
 
     if (tile) {
-      const items = this.items.filter((item) => item.movable)
+      const items = this.tile.items.filter((item) => item.movable)
       items.forEach((item) => item.move(tile))
 
       // Clear mask before dispatching event, since it could result in a solution
       puzzle.unmask()
 
-      this.dispatchEvent(Modifier.Events.Invoked, { items })
+      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile })
     } else {
       puzzle.unmask()
     }
@@ -69,6 +64,12 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
     const vector = this.parent.center.subtract(tile.center)
     this.group.position = this.group.position.subtract(vector)
 
-    tile.addItem(this)
+    // Update tile reference
+    this.parent = tile
+    this.parent.addItem(this)
+
+    this.onMove()
   }
+
+  onMove () {}
 }

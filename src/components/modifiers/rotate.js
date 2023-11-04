@@ -12,13 +12,12 @@ export class Rotate extends Modifier {
 
     this.clockwise = configuration.clockwise !== false
     this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
-    this.items = this.tile.items.filter((item) => item.rotatable === true)
   }
 
   onClick (event) {
     super.onClick(event)
 
-    const items = this.items.filter((item) => item.rotatable)
+    const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
 
     this.dispatchEvent(Modifier.Events.Invoked, { items })
