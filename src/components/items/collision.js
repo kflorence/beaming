@@ -23,8 +23,7 @@ export class Collision extends Item {
 
     this.group = new Group({
       children: [item],
-      // Allow this group to be clicked on
-      locked: false
+      locked: true
     })
   }
 }

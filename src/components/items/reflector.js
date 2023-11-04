@@ -22,7 +22,7 @@ export class Reflector extends movable(rotatable(Item)) {
     this.doRotate(this.rotateDirection)
   }
 
-  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotateDirection)
 

@@ -70,6 +70,15 @@ export class Puzzle {
     this.layout.layers.debug.addChild(circle)
   }
 
+  getItems (tile) {
+    return (tile ? this.#tiles.filter((t) => t === tile) : this.#tiles).flatMap((tile) => tile.items)
+  }
+
+  getTile (point) {
+    const hit = paper.project.hitTest(point)
+    return hit?.item.data.type === Item.Types.tile ? this.layout.getTile(hit.item.data.coordinates.axial) : undefined
+  }
+
   mask (event) {
     console.debug('Mask event', event)
     this.#onMask(event.detail.mask)

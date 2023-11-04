@@ -16,6 +16,14 @@ export class CubeCoordinates {
     return CubeCoordinates.add(this, other)
   }
 
+  equals (other) {
+    return this.q === other.q && this.r === other.r && this.s === other.s
+  }
+
+  isNeighbor (other) {
+    return CubeCoordinates.isNeighbor(this, other)
+  }
+
   neighbor (direction) {
     return CubeCoordinates.neighbor(this, direction)
   }
@@ -43,6 +51,12 @@ export class CubeCoordinates {
     new CubeCoordinates(-1, 1),
     new CubeCoordinates(0, 1)
   ]
+
+  static isNeighbor (a, b) {
+    return CubeCoordinates.directions
+      .map((direction) => CubeCoordinates.add(a, direction))
+      .some((neighbor) => neighbor.equals(b))
+  }
 
   static neighbor (start, direction) {
     return CubeCoordinates.add(start, CubeCoordinates.direction(direction))

@@ -49,7 +49,7 @@ export class Beam extends Item {
     return this.#steps.filter((step) => step.tile === tile)
   }
 
-  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
     const lastStepIndex = this.#steps.length - 1
     if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
       console.debug(
@@ -118,20 +118,12 @@ export class Beam extends Item {
       this.#addStep(new Beam.Step(tile, this.#opening.color, this.#startDirection(), tile.center, 0, 0))
     }
 
-    const layout = puzzle.layout
     const currentStep = this.#steps[this.#stepIndex]
 
     // On the first step, we have to take the rotation of the terminus into account
     const direction = this.#stepIndex === 0 ? this.#startDirection() : currentStep.direction
-
-    // Each step is equal to the width of half a tile, so every two steps we will be entering a new tile
-    const isNewTile = currentStep.segmentIndex % 2 === 0
-
-    const tile = isNewTile
-      ? currentStep.tile
-      : layout.getNeighboringTile(currentStep.tile.coordinates.axial, direction)
-
-    console.debug(this.id, 'step', this.#stepIndex, currentStep)
+    const nextPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction)
+    const tile = puzzle.getTile(nextPoint)
 
     // The next step would be off the grid
     if (!tile) {
@@ -145,7 +137,7 @@ export class Beam extends Item {
       tile,
       currentStep.color,
       direction,
-      Beam.getNextPoint(currentStep.point, tile.parameters.inradius, direction),
+      nextPoint,
       currentStep.childIndex,
       currentStep.segmentIndex + 1
     )
@@ -171,7 +163,7 @@ export class Beam extends Item {
       collisionStep = Beam.Step.from(nextStep, { point, state })
 
       // Allow the item to change the resulting step
-      collisionStep = collision.item.onCollision(this, collision, currentStep, nextStep, collisionStep)
+      collisionStep = collision.item.onCollision(this, puzzle, collision, currentStep, nextStep, collisionStep)
 
       // An item can elect to continue processing further collisions by returning a non-step result
       if (collisionStep instanceof Beam.Step) {
@@ -204,6 +196,12 @@ export class Beam extends Item {
       }
     }
 
+    if (currentStep.point.equals(nextStep.point)) {
+      console.error(this.id, 'loop detected, exiting')
+      this.done = true
+      return
+    }
+
     this.#addStep(nextStep)
   }
 
@@ -213,6 +211,7 @@ export class Beam extends Item {
     // Handles cases that require adding a new path item
     if (
       previousStep && (
+        step.state.disconnect ||
         previousStep.color !== step.color ||
         previousStep.state.insertAbove !== step.state.insertAbove ||
         previousStep.state.insertBelow !== step.state.insertBelow
@@ -221,7 +220,14 @@ export class Beam extends Item {
       this.group.lastChild.set({ closed: true })
       this.#style.strokeColor = step.color
       const path = new Path(this.#style)
-      path.add(previousStep.point, step.point)
+      const points = [step.point]
+
+      // If the next step is not disconnected, we will link it with the previous step
+      if (!step.state.disconnect) {
+        points.unshift(previousStep.point)
+      }
+
+      path.add(...points)
       this.group.addChild(path)
 
       if (step.state.insertAbove) {
@@ -330,6 +336,7 @@ export class Beam extends Item {
 
   static #getCollisions (tile, segments, puzzle) {
     const path = new Path({ segments })
+    console.log('#getCollisions', tile.items, tile.coordinates.offset.toString())
     return tile.items
       .map((item) => {
         const compoundPath = new CompoundPath({

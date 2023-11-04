@@ -30,12 +30,11 @@ export class Filter extends movable(Item) {
 
     this.group = new Group({
       children: [item],
-      // Allow this group to be clicked on
-      locked: false
+      locked: true
     })
   }
 
-  onCollision (beam, collision, currentStep, nextStep, collisionStep) {
+  onCollision (beam, puzzle, collision, currentStep, nextStep) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return Beam.Step.from(
       nextStep,
