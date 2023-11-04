@@ -44,6 +44,7 @@ export class Item {
     'collision',
     'filter',
     'mask',
+    'portal',
     'reflector',
     'terminus',
     'tile',
