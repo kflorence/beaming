@@ -32,7 +32,7 @@ export default {
               type: 'Reflector'
             }
           ],
-          modifiers: [{ type: 'Lock' }]
+          modifiers: [{ type: 'Immutable' }]
         },
         {
           items: [

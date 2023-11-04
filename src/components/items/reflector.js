@@ -11,7 +11,6 @@ export class Reflector extends movable(rotatable(Item)) {
   #ui
 
   constructor (tile, configuration) {
-    // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
     this.#ui = Reflector.ui(tile, configuration)

@@ -8,7 +8,7 @@ export class Filter extends movable(Item) {
   type = Item.Types.filter
 
   constructor (tile, { color }) {
-    super(tile)
+    super(...arguments)
 
     this.color = color
 

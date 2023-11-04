@@ -13,7 +13,7 @@ export default {
               type: 'Reflector'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }]
+          modifiers: [{ type: 'Lock' }, { clockwise: false, type: 'Rotate' }]
         },
         null
       ],
