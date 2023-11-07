@@ -24,6 +24,7 @@ export class Mask extends Item {
     this.center = tile.center
     this.group = new Group({
       children: [item],
+      data: { id: this.id, type: this.type },
       // Allow this group to be clicked on
       locked: false
     })

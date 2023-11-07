@@ -24,13 +24,13 @@ export class Puzzle {
   selectedTile
   solved = false
 
-  #beams = []
+  #beams
   #collisions = {}
   #eventListeners = {}
   #isDragging = false
   #mask
-  #termini = []
-  #tiles = []
+  #termini
+  #tiles
   #tool
 
   constructor (id, { connectionsRequired, layout, title }) {
@@ -43,6 +43,7 @@ export class Puzzle {
 
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
+    this.layers.debug = new Layer()
 
     this.id = id
     this.title = title
@@ -75,8 +76,14 @@ export class Puzzle {
   }
 
   getTile (point) {
-    const hit = paper.project.hitTest(point)
-    return hit?.item.data.type === Item.Types.tile ? this.layout.getTile(hit.item.data.coordinates.axial) : undefined
+    const result = paper.project.hitTest(point, {
+      fill: true,
+      match: (result) => result.item.data.type === Item.Types.tile,
+      segments: true,
+      stroke: true,
+      tolerance: 0
+    })
+    return result ? this.layout.getTile(result.item.data.coordinates.axial) : result
   }
 
   mask (event) {
@@ -120,11 +127,10 @@ export class Puzzle {
     // Add layers in the order we want them
     [
       this.layout.layers.tiles,
-      this.layout.layers.beams,
       this.layout.layers.items,
       this.layers.mask,
       this.layers.collisions,
-      this.layout.layers.debug
+      this.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
   }
 
@@ -153,13 +159,13 @@ export class Puzzle {
       return
     }
 
-    const hit = paper.project.hitTest(event.point)
+    const result = paper.project.hitTest(event.point)
 
-    switch (hit?.item.data.type) {
+    switch (result?.item.data.type) {
       case Item.Types.mask:
         return
       case Item.Types.tile:
-        tile = this.layout.getTile(hit.item.data.coordinates.axial)
+        tile = this.layout.getTile(result.item.data.coordinates.axial)
         break
     }
 

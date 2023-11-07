@@ -13,7 +13,8 @@ export class Reflector extends movable(rotatable(Item)) {
   constructor (tile, configuration) {
     super(...arguments)
 
-    this.#ui = Reflector.ui(tile, configuration)
+    const data = { id: this.id, type: this.type }
+    this.#ui = Reflector.ui(tile, configuration, data)
 
     this.color = this.#ui.item.fillColor
     this.group = this.#ui.group
@@ -45,7 +46,7 @@ export class Reflector extends movable(rotatable(Item)) {
     return Beam.Step.from(nextStep, { direction: directionTo, point })
   }
 
-  static ui (tile, { color }) {
+  static ui (tile, { color }, data) {
     const length = tile.parameters.circumradius
     const width = tile.parameters.circumradius / 12
     const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
@@ -58,6 +59,7 @@ export class Reflector extends movable(rotatable(Item)) {
 
     const group = new Group({
       children: [item],
+      data,
       locked: true
     })
 

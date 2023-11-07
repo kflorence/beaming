@@ -11,7 +11,8 @@ export class Wall extends movable(rotatable(Item)) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
-    this.#ui = Wall.ui(tile, configuration)
+    const data = { id: this.id, type: this.type }
+    this.#ui = Wall.ui(tile, configuration, data)
 
     this.group = this.#ui.group
   }
@@ -47,7 +48,7 @@ export class Wall extends movable(rotatable(Item)) {
     )
   }
 
-  static ui (tile, { openings }) {
+  static ui (tile, { openings }, data) {
     const radius = tile.parameters.circumradius
     const item = Wall.item(tile.center, radius, radius / 6, openings)
 
@@ -55,6 +56,7 @@ export class Wall extends movable(rotatable(Item)) {
 
     const group = new Group({
       children: [item],
+      data,
       locked: true
     })
 

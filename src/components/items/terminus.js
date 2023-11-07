@@ -42,7 +42,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       color = chroma.average(colors).hex()
     }
 
-    this.#ui = Terminus.ui(tile, { color, openings })
+    const data = { id: this.id, type: this.type }
+    this.#ui = Terminus.ui(tile, { color, openings, data })
 
     this.color = color
     this.group = this.#ui.group
@@ -56,7 +57,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   onMove () {
-    this.beams.forEach((beam) => beam.reset())
+    this.beams.forEach((beam) => beam.remove())
   }
 
   onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
@@ -108,7 +109,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   static #openingOffOpacity = 0.3
 
-  static ui (tile, { color, openings: configuration }) {
+  static ui (tile, { color, openings: configuration, data }) {
     const radius = tile.parameters.circumradius / 2
 
     const terminus = new Path.RegularPolygon({
@@ -146,6 +147,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
     const group = new Group({
       children: [terminus, ...openings.filter((opening) => opening)],
+      data,
       locked: true
     })
 

@@ -23,6 +23,7 @@ export class Collision extends Item {
 
     this.group = new Group({
       children: [item],
+      data: { id: this.id, type: this.type },
       locked: true
     })
   }

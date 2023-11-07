@@ -1,14 +1,14 @@
-import { CompoundPath, Group, Path, Point } from 'paper'
+import { CompoundPath, Path, Point } from 'paper'
 import { Item } from '../item'
 import { deepEqual, emitEvent, getConvertedDirection } from '../util'
 
 export class Beam extends Item {
   done = false
+  path = []
   type = Item.Types.beam
 
   #opening
   #path
-  #style
 
   #stepIndex = -1
   #steps = []
@@ -20,29 +20,38 @@ export class Beam extends Item {
     this.width = terminus.radius / 12
 
     this.#opening = opening
-    this.#style = {
+    this.#path = {
       closed: false,
+      data: { id: this.id, type: this.type },
+      locked: true,
       strokeColor: opening.color,
       strokeJoin: 'round',
       strokeWidth: this.width
     }
-
-    this.group = new Group({
-      children: [new Path(this.#style)],
-      locked: true
-    })
   }
 
   isActive () {
     return this.#opening.on && !this.#opening.connected && !this.done
   }
 
+  getCompoundPath () {
+    return new CompoundPath({ children: this.path.map((item) => item.clone({ insert: false })) })
+  }
+
   getConnection () {
     return this.getLastStep()?.state.connection
   }
 
+  getIndex () {
+    return this.path[this.path.length - 1].index
+  }
+
   getLastStep () {
     return this.#steps[this.#steps.length - 1]
+  }
+
+  getLayer () {
+    return this.parent.getLayer()
   }
 
   getSteps (tile) {
@@ -76,7 +85,7 @@ export class Beam extends Item {
     if (!this.#opening.on) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
-        this.reset()
+        this.remove()
       }
       return
     }
@@ -98,7 +107,7 @@ export class Beam extends Item {
     }
   }
 
-  reset () {
+  remove () {
     this.#updateHistory(0)
   }
 
@@ -138,7 +147,7 @@ export class Beam extends Item {
       currentStep.color,
       direction,
       nextPoint,
-      currentStep.childIndex,
+      currentStep.pathIndex,
       currentStep.segmentIndex + 1
     )
 
@@ -212,6 +221,13 @@ export class Beam extends Item {
   }
 
   #addStep (step) {
+    if (this.path.length === 0) {
+      const path = new Path(this.#path)
+      this.path.push(path)
+      this.getLayer().insertChild(0, path)
+    }
+
+    const currentPath = this.path[step.pathIndex]
     const previousStep = this.#steps[this.#steps.length - 1]
 
     // Handles cases that require adding a new path item
@@ -219,13 +235,14 @@ export class Beam extends Item {
       previousStep && (
         step.state.disconnect ||
         previousStep.color !== step.color ||
-        previousStep.state.insertAbove !== step.state.insertAbove ||
-        previousStep.state.insertBelow !== step.state.insertBelow
+        previousStep.state.index !== step.state.index
       )
     ) {
-      this.group.lastChild.set({ closed: true })
-      this.#style.strokeColor = step.color
-      const path = new Path(this.#style)
+      currentPath.set({ closed: true })
+
+      this.#path.strokeColor = step.color
+
+      const path = new Path(this.#path)
       const points = [step.point]
 
       // If the next step is not disconnected, we will link it with the previous step
@@ -234,17 +251,15 @@ export class Beam extends Item {
       }
 
       path.add(...points)
-      this.group.addChild(path)
 
-      if (step.state.insertAbove) {
-        path.insertAbove(step.state.insertAbove)
-      } else if (step.state.insertBelow) {
-        path.insertBelow(step.state.insertBelow)
-      }
+      const pathIndex = this.path.push(path) - 1
 
-      step.childIndex++
+      // Unless specified in the state, the path will be inserted beneath all items
+      this.getLayer().insertChild(step.state.index || 0, path)
+
+      step.pathIndex = pathIndex
     } else {
-      this.group.lastChild.add(step.point)
+      currentPath.add(step.point)
     }
 
     this.#steps.push(step)
@@ -307,15 +322,15 @@ export class Beam extends Item {
     console.debug(this.id, 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
 
     if (step) {
-      const nextChildIndex = step.childIndex + 1
+      const nextPathIndex = step.pathIndex + 1
 
       // Remove any path items after the current one
-      if (this.group.children[nextChildIndex]) {
-        this.group.removeChildren(nextChildIndex)
+      if (this.path[nextPathIndex]) {
+        this.path.splice(nextPathIndex).forEach((item) => item.remove())
       }
 
       // Remove any segments from the current path item after the segment index
-      this.group.children[step.childIndex].removeSegments(step.segmentIndex)
+      this.path[step.pathIndex].removeSegments(step.segmentIndex)
 
       const deletedSteps = this.#steps.splice(stepIndex)
 
@@ -344,13 +359,7 @@ export class Beam extends Item {
     const path = new Path({ segments })
     return items
       .map((item) => {
-        const compoundPath = new CompoundPath({
-          // Must explicitly add insert: false for clone
-          // https://github.com/paperjs/paper.js/issues/1721
-          children: item.group.clone({ insert: false }).children
-            .filter((child) => child.data.collidable !== false)
-        })
-        const intersections = path.getIntersections(compoundPath, (curveLocation) =>
+        const intersections = path.getIntersections(item.getCompoundPath(), (curveLocation) =>
           // Ignore the starting point since this will always collide with the beam itself
           item.type !== Item.Types.beam || !curveLocation.point.equals(segments[0]))
         if (puzzle.debug) {
@@ -371,11 +380,11 @@ export class Beam extends Item {
   }
 
   static Step = class {
-    constructor (tile, color, direction, point, childIndex, segmentIndex, state = {}) {
+    constructor (tile, color, direction, point, pathIndex, segmentIndex, state = {}) {
       this.color = color
       this.direction = direction
       this.point = point
-      this.childIndex = childIndex
+      this.pathIndex = pathIndex
       this.segmentIndex = segmentIndex
       this.tile = tile
       this.state = state
@@ -397,7 +406,7 @@ export class Beam extends Item {
         step.color,
         step.direction,
         step.point,
-        step.childIndex,
+        step.pathIndex,
         step.segmentIndex,
         step.state
       ).update(options)

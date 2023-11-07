@@ -30,6 +30,7 @@ export class Filter extends movable(Item) {
 
     this.group = new Group({
       children: [item],
+      data: { id: this.id, type: this.type },
       locked: true
     })
   }
@@ -40,7 +41,7 @@ export class Filter extends movable(Item) {
       nextStep,
       currentStep.state.filtered
         ? { color: chroma.average([nextStep.color, this.color]).hex() }
-        : { state: { filtered: true, insertAbove: this.group.firstChild } }
+        : { state: { filtered: true, index: this.getIndex() + 1 } }
     )
   }
 }

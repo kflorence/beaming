@@ -22,7 +22,8 @@ export class Tile extends Item {
   constructor ({ coordinates, layout, parameters, configuration }) {
     super(null)
 
-    this.#ui = Tile.ui(coordinates, layout, parameters, configuration, this.type)
+    const data = { coordinates, id: this.id, type: this.type }
+    this.#ui = Tile.ui(layout, parameters, configuration, data)
 
     this.center = this.#ui.center
     this.coordinates = coordinates
@@ -165,9 +166,7 @@ export class Tile extends Item {
     }
   }
 
-  static ui (coordinates, layout, parameters, configuration, type) {
-    const data = { coordinates, type }
-
+  static ui (layout, parameters, configuration, data) {
     const center = new Point(
       layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
       layout.startingOffsetY + parameters.circumradius + layout.row * parameters.offsetY
@@ -190,6 +189,7 @@ export class Tile extends Item {
 
     const group = new Group({
       children: [hexagon],
+      data,
       // Allow this group to be clicked on
       locked: false
     })

@@ -1,6 +1,6 @@
 export default {
   connectionsRequired: 1,
-  title: 'Portal',
+  title: 'Portals I',
   layout: {
     tiles: [
       [
