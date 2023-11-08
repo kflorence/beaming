@@ -35,7 +35,7 @@ export class Filter extends movable(Item) {
     })
   }
 
-  onCollision (beam, puzzle, collision, currentStep, nextStep) {
+  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return Beam.Step.from(
       nextStep,

@@ -60,7 +60,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.beams.forEach((beam) => beam.remove())
   }
 
-  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
+  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
     // Colliding with the starting terminus on the first step, ignore
     if (beam.parent === this && currentStep.segmentIndex === 0) {
       console.debug(beam.id, 'ignoring starting terminus collision')

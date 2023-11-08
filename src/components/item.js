@@ -43,7 +43,7 @@ export class Item {
 
   onClick () {}
 
-  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
+  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
     return collisionStep
   }
 

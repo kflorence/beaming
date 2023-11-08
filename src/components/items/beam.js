@@ -30,10 +30,6 @@ export class Beam extends Item {
     }
   }
 
-  isActive () {
-    return this.#opening.on && !this.#opening.connected && !this.done
-  }
-
   getCompoundPath () {
     return new CompoundPath({ children: this.path.map((item) => item.clone({ insert: false })) })
   }
@@ -58,7 +54,16 @@ export class Beam extends Item {
     return this.#steps.filter((step) => step.tile === tile)
   }
 
-  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
+  isActive () {
+    return this.isOn() && !this.done
+  }
+
+  isOn () {
+    // The opening will also be on if another beam connects with it
+    return this.#opening.on && !this.#opening.connected
+  }
+
+  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
     const lastStepIndex = this.#steps.length - 1
     if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
       console.debug(
@@ -70,18 +75,26 @@ export class Beam extends Item {
       return
     }
 
-    // We have collided with another beam, stop
-    if (this.isActive()) {
-      const lastStep = this.getLastStep()
-      lastStep.state = { collision: { point: collision.point, item: beam } }
+    // Another beam has collided with this one
+    if (this.isOn()) {
+      const stepIndex = this.#steps.findIndex((step) => step.point.equals(collisionStep.point))
+      const step = this.#steps[stepIndex]
+      const state = Object.assign(step.state, collisionStep.state)
+      state.collision.item = beam
 
-      this.#onUpdate(lastStep)
+      // Get rid of all steps after (and inclusive) of the matched one
+      this.#updateHistory(stepIndex)
+
+      // Add our new modified step
+      this.#addStep(Beam.Step.from(step, { state }))
     }
 
     return collisionStep
   }
 
   onModifierInvoked (event) {
+    console.debug(this.id, this.getLastStep()?.color, 'onModifierInvoked', event)
+
     if (!this.#opening.on) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
@@ -161,24 +174,29 @@ export class Beam extends Item {
     const collisions = Beam.#getCollisions(items.flat(), [currentStep.point, nextStep.point], puzzle)
 
     let collisionStep
-    for (const collision of collisions) {
-      console.debug(this.id, 'resolving step collision:', collision)
+    for (let collisionIndex = 0; collisionIndex < collisions.length; collisionIndex++) {
+      const collision = collisions[collisionIndex]
 
-      const item = collision.item
+      console.debug(this.id, 'resolving collision:', collision)
+
       const point = collision.intersections[0].point
-      const state = {
-        collision: {
-          item,
-          point: { x: point.x, y: point.y }
-        }
-      }
+      const state = Beam.getCollisionState(collision, point)
 
       // By default, the next step will be treated as a collision with the beam stopping at the first point of
       // intersection with the item.
       collisionStep = Beam.Step.from(nextStep, { point, state })
 
       // Allow the item to change the resulting step
-      collisionStep = collision.item.onCollision(this, puzzle, collision, currentStep, nextStep, collisionStep)
+      collisionStep = collision.item.onCollision(
+        this,
+        puzzle,
+        collision,
+        collisionIndex,
+        collisions,
+        currentStep,
+        nextStep,
+        collisionStep
+      )
 
       // An item can elect to continue processing further collisions by returning a non-step result
       if (collisionStep instanceof Beam.Step) {
@@ -370,6 +388,16 @@ export class Beam extends Item {
       .filter((result) => result.intersections.length)
       // We want to evaluate the intersections in order of occurrence
       .reverse()
+  }
+
+  static getCollisionState (collision, point) {
+    point = point || collision.intersections[0].point
+    return {
+      collision: {
+        item: collision.item,
+        point: { x: point.x, y: point.y }
+      }
+    }
   }
 
   static getNextPoint (point, length, direction) {

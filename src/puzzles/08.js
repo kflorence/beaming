@@ -32,7 +32,15 @@ export default {
           ],
           modifiers: [{ type: 'Immutable' }]
         },
-        null
+        {
+          items: [
+            {
+              openings: [null, null, null, null, { color: 'green' }, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
+        }
       ],
       [
         null,

@@ -42,7 +42,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     children.push(ring)
 
-    if (this.direction !== undefined) {
+    if (this.hasDirection()) {
       const pointer = new Path({
         closed: true,
         opacity: 0.25,
@@ -66,16 +66,45 @@ export class Portal extends movable(rotatable(Item)) {
     })
 
     // Align with the hexagonal directions (0 = 5)
-    if (this.direction !== undefined) {
+    if (this.hasDirection()) {
       this.doRotate(this.direction + 1)
     }
   }
 
-  onCollision (beam, puzzle, collision, currentStep, nextStep, collisionStep) {
+  hasDirection () {
+    return this.direction !== undefined
+  }
+
+  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
+    const hasDirection = this.hasDirection()
     const index = this.getIndex() + 1
 
-    // TODO handle the case where a beam already occupies the portal
     if (!currentStep.state.portal) {
+      if (hasDirection) {
+        // Check for an existing beam exiting the portal
+        const beamCollisionIndex = collisions.findIndex((collision) =>
+          collision.item.type === Item.Types.beam &&
+            collision.item.getSteps(nextStep.tile).some((step) => step.state.portal?.exit === this))
+
+        if (beamCollisionIndex >= 0) {
+          console.debug(this.id, 'beam attempting to enter portal exit')
+          const beamCollision = collisions[beamCollisionIndex]
+          return beamCollision.item.onCollision(
+            beam,
+            puzzle,
+            beamCollision,
+            beamCollisionIndex,
+            collisions,
+            currentStep,
+            nextStep,
+            Beam.Step.from(collisionStep, {
+              point: nextStep.point,
+              state: Object.assign(Beam.getCollisionState(beamCollision), { index })
+            })
+          )
+        }
+      }
+
       // Handle entry collision
       return Beam.Step.from(nextStep, { state: { index, portal: { entry: this } } })
     } else if (currentStep.state.portal.exit === this) {
@@ -83,25 +112,29 @@ export class Portal extends movable(rotatable(Item)) {
       return Beam.Step.from(nextStep, { state: { index } })
     }
 
-    const matchingDirection = this.direction === undefined ? this.direction : getOppositeDirection(this.direction)
+    const matchingDirection = hasDirection ? getOppositeDirection(this.direction) : this.direction
 
     // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
-    const destination = puzzle.getItems()
-      .filter((item) => item.type === Item.Types.portal && item.direction === matchingDirection && item !== this)
+    const destinations = puzzle.getItems()
+      .filter((item) => item.type === Item.Types.portal && !item.equals(this) && item.direction === matchingDirection)
 
-    // If there is more than one matching destination, the user will need to pick
-    if (destination.length > 1) {
-      console.log(destination)
+    if (destinations.length === 0) {
+      // No matching destinations
+      return collisionStep
+    } else if (destinations.length === 1) {
+      // A single matching destination
+      return this.#step(destinations[0], nextStep)
+    } else {
+      // If there is more than one matching destination, the user will need to pick one
+      console.log(destinations)
       // TODO implement mask
       return collisionStep
-    } else {
-      return this.#step(destination[0], nextStep)
     }
   }
 
   #step (portal, nextStep) {
     return Beam.Step.from(nextStep, {
-      direction: this.direction === undefined ? nextStep.direction : this.direction,
+      direction: this.hasDirection() ? this.direction : nextStep.direction,
       tile: portal.parent,
       point: portal.parent.center,
       state: { disconnect: true, portal: { exit: portal } }
