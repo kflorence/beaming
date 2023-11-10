@@ -57,7 +57,7 @@ export class Puzzle {
     this.#addEventListeners()
     this.#addLayers()
 
-    this.#updateBeams(this.#beams.filter((beam) => beam.isActive()))
+    this.update()
   }
 
   drawDebugPoint (point) {
@@ -68,7 +68,7 @@ export class Puzzle {
       strokeWidth: 1,
       center: point
     })
-    this.layout.layers.debug.addChild(circle)
+    this.layers.debug.addChild(circle)
   }
 
   getItems (tile) {
@@ -86,9 +86,22 @@ export class Puzzle {
     return result ? this.layout.getTile(result.item.data.coordinates.axial) : result
   }
 
-  mask (event) {
-    console.debug('Mask event', event)
-    this.#onMask(event.detail.mask)
+  mask (mask) {
+    if (this.#mask) {
+      console.error('Ignoring mask request due to existing mask', mask, this.#mask)
+      return
+    }
+
+    this.#mask = mask
+
+    // TODO animation?
+    const tiles = this.#tiles.filter(mask.filter)
+      .map((tile) => new Mask(
+        tile,
+        typeof mask.configuration === 'function' ? mask.configuration(tile) : mask.configuration
+      ))
+
+    this.layers.mask.addChildren(tiles.map((tile) => tile.group))
   }
 
   teardown () {
@@ -103,6 +116,26 @@ export class Puzzle {
     this.layers.mask.removeChildren()
   }
 
+  update () {
+    this.#updateBeams()
+  }
+
+  updateSelectedTile (tile) {
+    const previouslySelectedTile = this.selectedTile
+
+    this.selectedTile = tile
+
+    if (previouslySelectedTile && previouslySelectedTile !== tile) {
+      previouslySelectedTile.onDeselected(tile)
+    }
+
+    if (tile && tile !== previouslySelectedTile) {
+      tile.onSelected(previouslySelectedTile)
+    }
+
+    return previouslySelectedTile
+  }
+
   #addEventListeners () {
     paper.view.onClick = (event) => this.#onClick(event)
     this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
@@ -112,7 +145,7 @@ export class Puzzle {
       keyup: this.#onKeyup,
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
-      [Puzzle.Events.Mask]: this.mask,
+      [Puzzle.Events.Mask]: this.#onMask,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
       [Terminus.Events.Disconnection]: this.#onTerminusConnection
     }).forEach(([name, handler]) => {
@@ -172,10 +205,8 @@ export class Puzzle {
     // There is an active mask
     if (this.#mask) {
       this.#mask.onClick(this, tile && tile !== this.selectedTile ? tile : undefined)
-    }
-
-    if (!this.#mask) {
-      const previouslySelectedTile = this.#updateSelectedTile(tile)
+    } else {
+      const previouslySelectedTile = this.updateSelectedTile(tile)
 
       if (tile && tile === previouslySelectedTile) {
         tile.onClick(event)
@@ -184,41 +215,19 @@ export class Puzzle {
   }
 
   #onKeyup (event) {
-    if (this.debug && this.debugData.beamsToUpdate?.length && event.key === 's') {
-      this.#updateBeams(this.debugData.beamsToUpdate)
+    if (this.debug && event.key === 's') {
+      this.#updateBeams()
     }
   }
 
-  #onMask (mask) {
-    if (this.#mask) {
-      console.error('Ignoring mask request due to existing mask', mask, this.#mask)
-      return
-    }
-
-    this.#mask = mask
-
-    // TODO animation?
-    const tiles = this.#tiles.filter(mask.filter)
-      .map((tile) => new Mask(
-        tile,
-        typeof mask.configuration === 'function' ? mask.configuration(tile) : mask.configuration
-      ))
-
-    this.layers.mask.addChildren(tiles.map((tile) => tile.group))
+  #onMask (event) {
+    console.debug('Mask event', event)
+    this.mask(event.detail.mask)
   }
 
   #onModifierInvoked (event) {
     this.#beams.forEach((beam) => beam.onModifierInvoked(event))
-
-    const activeBeams = this.#beams.filter((beam) => beam.isActive())
-    const tile = event.detail.tile
-
-    if (tile) {
-      // Give precedence to beams in the tile being modified
-      activeBeams.sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
-    }
-
-    this.#updateBeams(activeBeams)
+    this.#updateBeams()
   }
 
   #onMouseDrag (event) {
@@ -240,8 +249,8 @@ export class Puzzle {
   #onSolved () {
     this.solved = true
 
-    this.#updateSelectedTile(undefined)
-    this.#onMask(Puzzle.#solvedMask)
+    this.updateSelectedTile(undefined)
+    this.mask(Puzzle.#solvedMask)
 
     emitEvent(Puzzle.Events.Solved)
   }
@@ -282,7 +291,9 @@ export class Puzzle {
     this.#updateState()
   }
 
-  #updateBeams (beams) {
+  #updateBeams () {
+    const beams = this.#beams.filter((beam) => beam.isActive())
+
     if (!beams.length) {
       return
     }
@@ -293,15 +304,7 @@ export class Puzzle {
 
     beams.forEach((beam) => beam.step(this))
 
-    const beamsToUpdate = beams.filter((beam) => beam.isActive())
-
-    if (beamsToUpdate.length) {
-      if (this.debug) {
-        this.debugData.beamsToUpdate = beamsToUpdate
-        return
-      }
-      this.#updateBeams(beamsToUpdate)
-    }
+    this.#updateBeams()
   }
 
   #updateCollisions () {
@@ -324,22 +327,6 @@ export class Puzzle {
         this.layers.collisions.addChild(collision.item.group)
       }
     })
-  }
-
-  #updateSelectedTile (tile) {
-    const previouslySelectedTile = this.selectedTile
-
-    this.selectedTile = tile
-
-    if (previouslySelectedTile && previouslySelectedTile !== tile) {
-      previouslySelectedTile.onDeselected(tile)
-    }
-
-    if (tile && tile !== previouslySelectedTile) {
-      tile.onSelected(previouslySelectedTile)
-    }
-
-    return previouslySelectedTile
   }
 
   #updateState () {

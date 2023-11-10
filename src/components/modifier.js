@@ -151,10 +151,10 @@ export class Modifier {
   }
 
   #maskOnClick (puzzle, tile) {
-    console.log('maskOnClick')
     if (tile) {
       this.remove()
       tile.addModifier(this.configuration)
+      puzzle.updateSelectedTile(tile)
       puzzle.unmask()
     } else {
       Modifier.deselect()
