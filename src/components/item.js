@@ -8,6 +8,7 @@ export class Item {
   group
   id
   parent
+  sortOrder = 100
   type
 
   constructor (parent) {

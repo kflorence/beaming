@@ -19,7 +19,6 @@ export class Puzzle {
   connections = []
   connectionsRequired
   debug = false
-  debugData = {}
   layers = {}
   selectedTile
   solved = false
@@ -204,7 +203,7 @@ export class Puzzle {
 
     // There is an active mask
     if (this.#mask) {
-      this.#mask.onClick(this, tile && tile !== this.selectedTile ? tile : undefined)
+      this.#mask.onClick(this, tile)
     } else {
       const previouslySelectedTile = this.updateSelectedTile(tile)
 
@@ -226,7 +225,13 @@ export class Puzzle {
   }
 
   #onModifierInvoked (event) {
-    this.#beams.forEach((beam) => beam.onModifierInvoked(event))
+    const tile = event.detail.tile
+
+    this.#beams
+      // Update beams in the tile being modified first
+      .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
+      .forEach((beam) => beam.onModifierInvoked(event, this))
+
     this.#updateBeams()
   }
 

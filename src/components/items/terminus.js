@@ -9,6 +9,7 @@ import { movable } from '../modifiers/move'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   rotateDegrees = 60
+  sortOrder = 1
   type = Item.Types.terminus
 
   #ui

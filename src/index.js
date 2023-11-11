@@ -158,3 +158,5 @@ document.body.addEventListener('contextmenu', (event) => {
 window.drawDebugPoint = function (x, y) {
   return puzzle.drawDebugPoint(new paper.Point(x, y))
 }
+
+window.paper = paper

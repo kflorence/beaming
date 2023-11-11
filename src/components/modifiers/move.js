@@ -10,7 +10,7 @@ export class Move extends Modifier {
   onClick (event) {
     super.onClick(event)
 
-    this.tile.onModifierSelected()
+    this.tile.beforeModify()
 
     const mask = new Puzzle.Mask(
       // TODO: should we instead just check for collisions with existing items in tile?
@@ -27,7 +27,7 @@ export class Move extends Modifier {
   }
 
   #maskOnClick (puzzle, tile) {
-    this.tile.onModifierDeselected()
+    this.tile.afterModify()
 
     if (tile) {
       const items = this.tile.items.filter((item) => item.movable)

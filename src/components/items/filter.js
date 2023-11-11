@@ -41,7 +41,7 @@ export class Filter extends movable(Item) {
       nextStep,
       currentStep.state.filtered
         ? { color: chroma.average([nextStep.color, this.color]).hex() }
-        : { state: { filtered: true, index: this.getIndex() + 1 } }
+        : { state: { filtered: true, insertAbove: this } }
     )
   }
 }

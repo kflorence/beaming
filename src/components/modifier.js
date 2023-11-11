@@ -91,7 +91,7 @@ export class Modifier {
 
   onDeselected () {
     this.update({ selected: false })
-    this.tile.onModifierDeselected()
+    this.tile.afterModify()
     this.dispatchEvent(Modifier.Events.Deselected)
   }
 
@@ -116,7 +116,7 @@ export class Modifier {
     Modifier.deselect()
 
     this.update({ selected: true })
-    this.tile.onModifierSelected()
+    this.tile.beforeModify()
 
     const mask = new Puzzle.Mask(
       (tile) => {
@@ -151,7 +151,7 @@ export class Modifier {
   }
 
   #maskOnClick (puzzle, tile) {
-    if (tile) {
+    if (tile && tile !== this.tile) {
       this.remove()
       tile.addModifier(this.configuration)
       puzzle.updateSelectedTile(tile)

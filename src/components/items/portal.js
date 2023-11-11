@@ -78,7 +78,6 @@ export class Portal extends movable(rotatable(Item)) {
 
   onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
     const hasDirection = this.hasDirection()
-    const index = this.getIndex() + 1
     const matchingDirection = hasDirection ? getOppositeDirection(this.direction) : this.direction
 
     // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
@@ -86,49 +85,19 @@ export class Portal extends movable(rotatable(Item)) {
       .filter((item) => item.type === Item.Types.portal && !item.equals(this) && item.direction === matchingDirection)
 
     if (destinations.length === 0) {
+      console.debug('portal has no destinations, stopping')
       // Nowhere to go
       return collisionStep
     }
 
     if (!currentStep.state.portal) {
-      // For directional portals, handle a beam trying to go into a portal that another beam is already coming out of.
-      if (hasDirection) {
-        const exitCollision = Portal.#getCollision(
-          collisions,
-          nextStep.tile,
-          (step) => step.state.portal?.exit === this
-        )
-
-        if (exitCollision) {
-          const otherBeam = exitCollision.item
-          console.debug('exit collision between beams', beam.id, otherBeam.id)
-          otherBeam.collide(exitCollision, beam)
-          const state = Object.assign(Beam.getCollisionState(exitCollision), { index })
-          return Beam.Step.from(collisionStep, { point: state.collision.point, state })
-        }
-      }
+      const state = { insertAbove: this, portal: { entry: this } }
 
       // Handle entry collision
-      return Beam.Step.from(nextStep, { state: { index, portal: { entry: this } } })
+      return Beam.Step.from(nextStep, { state })
     } else if (currentStep.state.portal.exit === this) {
-      // For directional portals, handle merging of multiple beams exiting the same portal.
-      if (hasDirection) {
-        const exitCollision = Portal.#getCollision(
-          collisions,
-          currentStep.tile,
-          (step) => step.state.portal?.exit === this
-        )
-
-        if (exitCollision) {
-          const otherBeam = exitCollision.item
-          console.debug('exit collision between beams', beam.id, otherBeam.id)
-          otherBeam.merge(exitCollision, beam)
-          return Beam.Stop
-        }
-      }
-
       // Handle exit collision
-      return Beam.Step.from(nextStep, { state: { index } })
+      return Beam.Step.from(nextStep, { state: { insertAbove: this } })
     }
 
     if (destinations.length === 1) {
@@ -137,15 +106,18 @@ export class Portal extends movable(rotatable(Item)) {
     } else {
       const destinationTiles = destinations.map((portal) => portal.parent)
 
+      currentStep.tile.beforeModify()
+
       // Multiple matching destinations. User will need to pick one manually.
       puzzle.mask(new Puzzle.Mask(
         (tile) => {
-          // Include tiles which contain a matching destination
-          return !destinationTiles.some((destinationTile) => destinationTile === tile)
+          // Include the portal tile and tiles which contain a matching destination
+          return !(this.parent === tile || destinationTiles.some((destinationTile) => destinationTile === tile))
         },
         (puzzle, tile) => {
           const destination = destinations.find((portal) => portal.parent === tile)
           if (destination) {
+            currentStep.tile.afterModify()
             beam.addStep(this.#step(destination, nextStep))
             puzzle.unmask()
             puzzle.update()
@@ -162,12 +134,15 @@ export class Portal extends movable(rotatable(Item)) {
       direction: this.hasDirection() ? this.direction : nextStep.direction,
       tile: portal.parent,
       point: portal.parent.center,
-      state: { disconnect: true, portal: { exit: portal } }
+      state: { disconnect: true, insertAbove: portal, portal: { exit: portal } }
     })
   }
 
-  static #getCollision (collisions, tile, predicate) {
-    return collisions.find((collision) =>
-      collision.item.type === Item.Types.beam && collision.item.getSteps(tile).some(predicate))
+  static #getCollision (beam, collisions, tile, predicate) {
+    return collisions.find(
+      (collision) =>
+        !collision.item.equals(beam) &&
+        collision.item.type === Item.Types.beam &&
+        collision.item.getSteps(tile).some(predicate))
   }
 }

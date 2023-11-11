@@ -50,8 +50,17 @@ export class Tile extends Item {
     this.modifiers.unshift(this.#modifierFactory(configuration))
   }
 
+  afterModify () {
+    this.setStyle('default')
+  }
+
+  beforeModify () {
+    this.group.bringToFront()
+    this.setStyle('edit')
+  }
+
   onClick (event) {
-    console.log(this.coordinates.offset.toString(), this.items)
+    console.debug(this.coordinates.offset.toString(), this.items)
     this.items.forEach((item) => item.onClick(event))
   }
 
@@ -61,15 +70,6 @@ export class Tile extends Item {
     this.modifiers.forEach((modifier) => modifier.detach())
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
-  }
-
-  onModifierSelected () {
-    const width = this.parameters.circumradius / 10
-    this.hexagon.dashArray = [width, width]
-  }
-
-  onModifierDeselected () {
-    this.hexagon.dashArray = []
   }
 
   onSelected (deselectedTile) {
@@ -91,6 +91,10 @@ export class Tile extends Item {
     if (index >= 0) {
       this.modifiers.splice(index, 1)
     }
+  }
+
+  setStyle (style) {
+    this.hexagon.set(this.styles[style])
   }
 
   teardown () {
@@ -172,9 +176,14 @@ export class Tile extends Item {
       layout.startingOffsetY + parameters.circumradius + layout.row * parameters.offsetY
     )
 
+    const dashWidth = parameters.circumradius / 10
+
     const styles = Object.assign(
       {},
       Tile.Styles,
+      {
+        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
+      },
       configuration.style || {}
     )
 
@@ -204,9 +213,14 @@ export class Tile extends Item {
 
   static Styles = Object.freeze({
     default: {
+      dashArray: [],
       fillColor: 'white',
       strokeColor: '#666',
       strokeWidth: 1
+    },
+    edit: {
+      strokeColor: 'black',
+      strokeWidth: 2
     },
     selected: {
       strokeColor: 'black',
