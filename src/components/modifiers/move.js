@@ -30,11 +30,11 @@ export class Move extends Modifier {
     this.tile.afterModify()
 
     if (tile) {
+      // Unmask before move, since moving can trigger beam updates
+      puzzle.unmask()
+
       const items = this.tile.items.filter((item) => item.movable)
       items.forEach((item) => item.move(tile))
-
-      // Clear mask before dispatching event, since it could result in a solution
-      puzzle.unmask()
 
       this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile })
     } else {

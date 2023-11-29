@@ -120,6 +120,10 @@ export class Beam extends Item {
     return this.parent.getLayer()
   }
 
+  getMergedInto () {
+    return this.getState()?.mergedInto
+  }
+
   getState () {
     return this.getLastStep()?.state
   }
@@ -128,8 +132,13 @@ export class Beam extends Item {
     return tile ? this.#steps.filter((step) => step.tile === tile) : this.#steps
   }
 
-  isActive () {
-    return this.isOn() && !this.done
+  isComplete () {
+    return this.isOn() && this.done
+  }
+
+  isConnected () {
+    // Consider beams which have merged into connected beams to also be connected
+    return this.getConnection() || this.getMergedInto()?.getConnection()
   }
 
   isOn () {
@@ -137,13 +146,16 @@ export class Beam extends Item {
     return this.#opening.on && !this.#opening.connected
   }
 
+  isPending () {
+    return this.isOn() && !this.done
+  }
+
   length () {
     return this.#steps.length
   }
 
   onBeamUpdated (event) {
-    // Ignore events if off or not done
-    if (!this.isOn() || !this.done) {
+    if (!this.isComplete()) {
       return
     }
 
@@ -151,10 +163,10 @@ export class Beam extends Item {
 
     const beam = event.detail.beam
     const state = this.getState()
-    if (!beam.isActive() && state?.collision?.item.equals(beam)) {
+    if (!beam.isPending() && state?.collision?.item.equals(beam)) {
       const otherState = beam.getState()
       if (!state.collision.point.equals(otherState?.collision?.point)) {
-        console.log(this.toString(), 'checking if collision can be resolved')
+        console.debug(this.toString(), 're-evaluating collision with beam', beam.toString())
         this.done = false
         this.#stepIndex = Math.min(this.#stepIndex - 1, 0)
       }
@@ -162,9 +174,25 @@ export class Beam extends Item {
   }
 
   onCollision (
-    beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, existingNextStep, collisionStep) {
-    if (!beam.isActive()) {
-      console.debug(this.toString(), 'ignoring collision with inactive beam', beam.id)
+    beam,
+    puzzle,
+    collision,
+    collisionIndex,
+    collisions,
+    currentStep,
+    nextStep,
+    existingNextStep,
+    collisionStep
+  ) {
+    console.debug(this.toString(), 'onCollision', beam.toString())
+
+    if (!beam.isPending()) {
+      console.debug(this.toString(), 'ignoring collision with inactive beam', beam.toString())
+      return
+    }
+
+    if (this.getMergedInto() === beam) {
+      console.debug(this.toString(), 'ignoring collision with merged beam', beam.toString())
       return
     }
 
@@ -227,7 +255,7 @@ export class Beam extends Item {
     return Beam.Step.from(nextStep, { state: { mergedInto: this } })
   }
 
-  onModifierInvoked (event, puzzle) {
+  onModifierInvoked (event) {
     console.debug(this.toString(), 'onModifierInvoked', event)
 
     if (!this.#opening.on) {
@@ -245,7 +273,6 @@ export class Beam extends Item {
       this.done = false
       // Begin re-evaluating at the step prior to this
       this.#stepIndex = Math.max(stepIndex - 1, 0)
-      return this.step(puzzle)
     }
   }
 
@@ -264,17 +291,17 @@ export class Beam extends Item {
    * reaches a terminus opening.
    */
   step (puzzle) {
-    if (!this.isActive()) {
+    if (!this.isPending()) {
       return
     }
+
+    console.debug(this.toString(), 'stepIndex = ', this.#stepIndex)
 
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
       this.addStep(new Beam.Step(tile, this.#opening.color, this.startDirection(), tile.center, 0, 0))
     }
-
-    console.debug(this.toString(), 'stepping', this.#stepIndex)
 
     const currentStep = this.#steps[this.#stepIndex]
 
@@ -488,7 +515,6 @@ export class Beam extends Item {
             ...item.getSteps().map((step) => step.point)
               .filter((point) => segments.some((segment) => fuzzyEquals(point, segment)))
           )
-          console.log('collision beam points', points)
         }
 
         // Sort collision points by distance from origin point (closest collision points first)

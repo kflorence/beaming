@@ -223,7 +223,7 @@ export class Puzzle {
 
   #onKeyup (event) {
     if (this.debug && event.key === 's') {
-      this.#updateBeams()
+      this.update()
     }
   }
 
@@ -240,7 +240,7 @@ export class Puzzle {
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
-    this.#updateBeams()
+    this.update()
   }
 
   #onMouseDrag (event) {
@@ -307,7 +307,7 @@ export class Puzzle {
   #updateBeams () {
     this.#isUpdatingBeams = true
 
-    const beams = this.#beams.filter((beam) => beam.isActive())
+    const beams = this.#beams.filter((beam) => beam.isPending())
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
@@ -403,14 +403,16 @@ export class Puzzle {
     }
   }
 
+  // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
+  static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
+
   static #solvedMask = new Puzzle.Mask(
     (tile) => {
-      return tile.items.some((item) =>
-        item.type === Item.Types.beam && item.getConnection() !== undefined)
+      return tile.items.some(Puzzle.#connectedBeams)
     },
     undefined,
     (tile) => {
-      const beams = tile.items.filter((item) => item.type === Item.Types.beam && item.getConnection() !== undefined)
+      const beams = tile.items.filter(Puzzle.#connectedBeams)
       const colors = beams.flatMap((beam) => beam.getSteps(tile).map((step) => step.color))
       return { style: { fillColor: chroma.average(colors).hex() } }
     }

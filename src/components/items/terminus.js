@@ -74,7 +74,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     // Beam has connected to a valid opening
     if (opening && !opening.on && opening.color === nextStep.color) {
       const connection = { terminus: this, opening }
-      console.debug(beam.id, 'terminus connection', connection)
+      console.debug(beam.toString(), 'terminus connection', connection)
       return Beam.Step.from(nextStep, { state: { connection } })
     }
 
