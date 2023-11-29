@@ -125,7 +125,7 @@ export class Beam extends Item {
   }
 
   getSteps (tile) {
-    return this.#steps.filter((step) => step.tile === tile)
+    return tile ? this.#steps.filter((step) => step.tile === tile) : this.#steps
   }
 
   isActive () {
@@ -472,17 +472,33 @@ export class Beam extends Item {
     const { 0: firstPoint, [segments.length - 1]: lastPoint } = segments
     return items
       .map((item) => {
-        const compoundPath = item.getCompoundPath()
-        console.log(item, compoundPath.contains(firstPoint), compoundPath.contains(lastPoint))
-        const intersections = path.getIntersections(compoundPath, (curveLocation) =>
-          // Ignore last point from self
-          !(item === this && curveLocation.point.equals(firstPoint)))
-        const points =
-          [...new Set(intersections.map((intersection) => intersection.point))].sort(sortByDistance(firstPoint))
+        const points = []
+        const intersections = path.getIntersections(
+          item.getCompoundPath(),
+          // Ignore first point from self which will always collide
+          (curveLocation) => !(item === this && curveLocation.point.equals(firstPoint))
+        )
+
+        points.push(...new Set(intersections.map((intersection) => intersection.point)))
+
+        // Handle the edge case of colliding with a beam with a single, isolated path item. This will happen in the
+        // case of a portal exit collision, for example.
+        if (!points.length && item.type === Item.Types.beam && item !== this) {
+          points.push(
+            ...item.getSteps().map((step) => step.point)
+              .filter((point) => segments.some((segment) => fuzzyEquals(point, segment)))
+          )
+          console.log('collision beam points', points)
+        }
+
+        // Sort collision points by distance from origin point (closest collision points first)
+        points.sort(sortByDistance(firstPoint))
+
         if (puzzle.debug) {
           puzzle.drawDebugPoint(firstPoint)
           points.forEach((point) => puzzle.drawDebugPoint(point, { fillColor: 'black' }))
         }
+
         return { item, points }
       })
       .filter((result) => result.points.length)

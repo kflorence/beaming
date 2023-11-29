@@ -1,7 +1,7 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
-import { debounce, sortByDistance } from './components/util'
+import { debounce } from './components/util'
 
 let center, puzzle
 
