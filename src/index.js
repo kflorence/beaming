@@ -1,7 +1,7 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
-import { debounce } from './components/util'
+import { debounce, sortByDistance } from './components/util'
 
 let center, puzzle
 
@@ -155,8 +155,8 @@ document.body.addEventListener('contextmenu', (event) => {
   return false
 })
 
-window.drawDebugPoint = function (x, y) {
-  return puzzle.drawDebugPoint(new paper.Point(x, y))
+window.drawDebugPoint = function (x, y, style) {
+  return puzzle.drawDebugPoint(new paper.Point(x, y), style)
 }
 
 window.paper = paper

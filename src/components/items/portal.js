@@ -76,7 +76,17 @@ export class Portal extends movable(rotatable(Item)) {
     return this.direction !== undefined
   }
 
-  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, collisionStep) {
+  onCollision (
+    beam,
+    puzzle,
+    collision,
+    collisionIndex,
+    collisions,
+    currentStep,
+    nextStep,
+    existingNextStep,
+    collisionStep
+  ) {
     const hasDirection = this.hasDirection()
     const matchingDirection = hasDirection ? getOppositeDirection(this.direction) : this.direction
 
@@ -103,6 +113,10 @@ export class Portal extends movable(rotatable(Item)) {
     if (destinations.length === 1) {
       // A single matching destination
       return this.#step(destinations[0], nextStep)
+    } else if (existingNextStep?.state.portal?.exit) {
+      // TODO this doesn't work currently
+      // Use existing choice when going back through history
+      return this.#step(existingNextStep.state.portal.exit, nextStep)
     } else {
       const destinationTiles = destinations.map((portal) => portal.parent)
 

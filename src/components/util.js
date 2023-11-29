@@ -43,6 +43,10 @@ export function emitEvent (event, detail = null) {
   document.dispatchEvent(new CustomEvent(event, { detail }))
 }
 
+export function fuzzyEquals (pointA, pointB, maxDiff = 2) {
+  return pointA && pointB && pointA.ceil().subtract(pointB.floor()).length <= maxDiff
+}
+
 export function getCentroid (triangle) {
   const segments = triangle.segments
   const vertex = segments[0].point
@@ -77,4 +81,8 @@ export function getReflectedDirection (beamDirection, reflectorDirection) {
   const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
   // And convert back to our normal directions on the way out
   return getConvertedDirection((addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6, false)
+}
+
+export function sortByDistance (point) {
+  return (a, b) => a.subtract(point).length - b.subtract(point).length
 }

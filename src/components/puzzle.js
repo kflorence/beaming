@@ -1,13 +1,13 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Tool } from 'paper'
-import { emitEvent } from './util'
+import { emitEvent, fuzzyEquals } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
 import { Beam } from './items/beam'
 import { Terminus } from './items/terminus'
-import { Collision } from './items/collision'
+import { Collision as CollisionItem } from './items/collision'
 
 const elements = Object.freeze({
   connections: document.getElementById('connections'),
@@ -27,6 +27,7 @@ export class Puzzle {
   #collisions = {}
   #eventListeners = {}
   #isDragging = false
+  #isUpdatingBeams = false
   #mask
   #termini
   #tiles
@@ -59,14 +60,14 @@ export class Puzzle {
     this.update()
   }
 
-  drawDebugPoint (point) {
-    const circle = new Path.Circle({
+  drawDebugPoint (point, style = {}) {
+    const circle = new Path.Circle(Object.assign({
       radius: 3,
-      fillColor: 'white',
-      strokeColor: 'black',
+      fillColor: 'red',
+      strokeColor: 'white',
       strokeWidth: 1,
       center: point
-    })
+    }, style))
     this.layers.debug.addChild(circle)
   }
 
@@ -116,7 +117,9 @@ export class Puzzle {
   }
 
   update () {
-    this.#updateBeams()
+    if (!this.#isUpdatingBeams) {
+      this.#updateBeams()
+    }
   }
 
   updateSelectedTile (tile) {
@@ -167,21 +170,26 @@ export class Puzzle {
   }
 
   #onBeamUpdate (event) {
-    if (event.detail.step?.state.collision) {
-      const point = event.detail.step.point
-      const collisionId = [Math.round(point.x), Math.round(point.y)].join(',')
+    const stepAdded = event.detail.stepAdded
+    if (stepAdded?.state.collision) {
+      const point = stepAdded.point
+      const collisionId = Puzzle.Collision.id(point)
       const collision = this.#collisions[collisionId]
 
       if (collision) {
-        if (!collision.beams.some((beam) => beam === event.detail.beam)) {
-          collision.beams.push(event.detail.beam)
-        }
+        collision.addBeam(event.detail.beam)
       } else {
-        this.#collisions[collisionId] = { beams: [event.detail.beam], point }
+        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [event.detail.beam], point)
       }
     }
 
-    this.#updateCollisions()
+    Object.values(this.#collisions).forEach((collision) => collision.update())
+
+    this.#beams
+      .filter((beam) => beam !== event.detail.beam)
+      .forEach((beam) => beam.onBeamUpdated(event, this))
+
+    this.update()
   }
 
   #onClick (event) {
@@ -297,41 +305,22 @@ export class Puzzle {
   }
 
   #updateBeams () {
+    this.#isUpdatingBeams = true
+
     const beams = this.#beams.filter((beam) => beam.isActive())
 
     if (!beams.length) {
+      this.#isUpdatingBeams = false
       return
     }
 
     if (this.debug) {
-      this.layout.layers.debug.clear()
+      this.layers.debug.clear()
     }
 
     beams.forEach((beam) => beam.step(this))
 
     this.#updateBeams()
-  }
-
-  #updateCollisions () {
-    Object.values(this.#collisions).forEach((collision) => {
-      // Remove invalid beams
-      collision.beams = collision.beams.filter((beam) => beam.done)
-
-      const color = collision.beams.length
-        ? chroma.average(collision.beams.map((beam) => beam.getLastStep().color)).hex()
-        : undefined
-
-      // Handle removal of collision items
-      if (collision.item && (!collision.beams.length || collision.item.color !== color)) {
-        collision.item.remove()
-        collision.item = undefined
-      }
-
-      if (collision.beams.length && !collision.item) {
-        collision.item = new Collision({ center: collision.point, color })
-        this.layers.collisions.addChild(collision.item.group)
-      }
-    })
   }
 
   #updateState () {
@@ -342,6 +331,61 @@ export class Puzzle {
     // Check for solution
     if (connections === this.connectionsRequired) {
       this.#onSolved()
+    }
+  }
+
+  static Collision = class {
+    constructor (layer, beams, point, item = undefined) {
+      this.id = Puzzle.Collision.id(point)
+      this.layer = layer
+      this.beams = beams
+      this.point = point
+      this.item = item
+    }
+
+    addBeam (beam) {
+      if (!this.beams.some((otherBeam) => otherBeam.id === beam.id)) {
+        this.beams.push(beam)
+      }
+
+      return this.beams
+    }
+
+    addItem (color) {
+      this.item = new CollisionItem({ center: this.point, color })
+      this.layer.addChild(this.item.group)
+    }
+
+    getColor () {
+      return this.beams.length
+        ? chroma.average(this.beams.map((beam) => beam.getColor())).hex()
+        : undefined
+    }
+
+    removeItem () {
+      this.item.remove()
+      this.item = undefined
+    }
+
+    update () {
+      // Remove any beam which no longer matches its collision point
+      this.beams = this.beams.filter((beam) => fuzzyEquals(beam.getCollision()?.point, this.point))
+
+      const color = this.getColor()
+
+      // Remove no longer valid collision items
+      if (this.item && (!this.beams.length || this.item.color !== color)) {
+        this.removeItem()
+      }
+
+      // Add missing collision items
+      if (this.beams.length && !this.item) {
+        this.addItem(color)
+      }
+    }
+
+    static id (point) {
+      return [Math.round(point.x), Math.round(point.y)].join(',')
     }
   }
 
