@@ -36,10 +36,20 @@ header {
 header select {
   appearance: none;
   background-color: white;
-  border: 1px solid #999;
+  border: none;
   cursor: pointer;
   font-size: 1em;
+  font-weight: bold;
   padding: 0.5em 1em;
+}
+
+header select:focus-visible {
+  background-color: #eee;
+  outline: 1px solid #ddd;
+}
+
+header select:hover {
+  background-color: #eee;
 }
 
 footer {
@@ -50,6 +60,41 @@ footer {
 
 main {
   flex: auto;
+}
+
+#actions {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#actions li {
+  align-items: center;
+  border-left: 1px solid #ddd;
+  cursor: pointer;
+  display: flex;
+  padding: 0 0.5em;
+  justify-content: center;
+  width: 100%;
+}
+
+#actions li:first-child {
+  border: none;
+  padding: 0;
+}
+
+#actions li:not(.disabled):hover {
+  background-color: #eee;
+}
+
+#actions li .material-symbols-outlined {
+  user-select: none;
+}
+
+#actions .disabled {
+  color: #ccc;
+  cursor: default;
 }
 
 #error,
@@ -67,30 +112,6 @@ main {
   justify-content: center;
 }
 
-#menu {
-  display: none;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-#menu li {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-#menu .item {
-  cursor: pointer;
-}
-
-#menu .item.disabled {
-  color: #ccc;
-  cursor: default;
-}
-
-#menu,
 #toolbar {
   width: 100%;
 }

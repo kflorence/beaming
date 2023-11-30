@@ -33,7 +33,9 @@ export class Puzzle {
   #tiles
   #tool
 
-  constructor (id, { connectionsRequired, layout, title }) {
+  constructor (id, configuration) {
+    const { connectionsRequired, layout, title } = configuration
+
     this.layout = new Layout(layout)
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
@@ -76,7 +78,7 @@ export class Puzzle {
   }
 
   getTile (point) {
-    const result = paper.project.hitTest(point, {
+    const result = paper.project.hitTest(point.ceil(), {
       fill: true,
       match: (result) => result.item.data.type === Item.Types.tile,
       segments: true,

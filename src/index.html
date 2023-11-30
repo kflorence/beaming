@@ -8,7 +8,14 @@
   </head>
   <body>
     <header>
-      <label><select name="id" id="puzzle-selector"></select></label>
+      <ul id="actions">
+        <li><label><select name="id" id="puzzle-selector"></select></label></li>
+        <li id="previous"><span class="material-symbols-outlined" title="Previous Puzzle">navigate_before</span></li>
+        <li id="undo"><span class="material-symbols-outlined" title="Undo">undo</span></li>
+        <li id="reset"><span class="material-symbols-outlined" title="Reset">device_reset</span></li>
+        <li id="redo"><span class="material-symbols-outlined" title="Redo">redo</span></li>
+        <li id="next"><span class="material-symbols-outlined" title="Next Puzzle">navigate_next</span></li>
+      </ul>
       <ul id="state">
         <li id="connections">0</li>
         <li>/</li>
@@ -26,11 +33,6 @@
         <div id="message"></div>
         <ul id="modifiers-mutable" class="modifiers"></ul>
       </div>
-      <ul id="menu">
-        <li><span id="previous" class="item material-symbols-outlined" title="Previous">navigate_before</span></li>
-        <li><span id="reset" class="item material-symbols-outlined" title="Reset">restart_alt</span></li>
-        <li><span id="next" class="item material-symbols-outlined" title="Next">navigate_next</span></li>
-      </ul>
     </footer>
   </body>
   <script type="module" src="index.js"></script>

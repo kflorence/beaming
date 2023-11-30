@@ -10,12 +10,13 @@ const location = window.location
 
 const elements = Object.freeze({
   main: document.getElementById('main'),
-  menu: document.getElementById('menu'),
   message: document.getElementById('message'),
   next: document.getElementById('next'),
   previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
-  reset: document.getElementById('reset')
+  redo: document.getElementById('redo'),
+  reset: document.getElementById('reset'),
+  undo: document.getElementById('undo')
 })
 
 const Events = Object.freeze({
@@ -80,13 +81,17 @@ resize()
 function selectPuzzle (id) {
   document.body.classList.remove(Events.Error)
 
-  const menuItems = Array.from(document.querySelectorAll('#menu .item'))
-  menuItems.forEach((element) => element.classList.remove('disabled'))
+  const actions = Array.from(document.querySelectorAll('#actions li'))
+  actions.forEach((element) => element.classList.remove('disabled'))
+
+  // TODO implement
+  elements.redo.classList.add('disabled')
+  elements.undo.classList.add('disabled')
 
   if (id === puzzleIds[0]) {
-    menuItems[0].classList.add('disabled')
+    elements.previous.classList.add('disabled')
   } else if (id === puzzleIds[puzzleIds.length - 1]) {
-    menuItems[menuItems.length - 1].classList.add('disabled')
+    elements.next.classList.add('disabled')
   }
 
   try {

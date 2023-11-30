@@ -54,6 +54,12 @@ export function getCentroid (triangle) {
   return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
 }
 
+export function getMidPoint (pointA, pointB) {
+  const vector = pointA.subtract(pointB)
+  vector.length = vector.length / 2
+  return pointA.subtract(vector)
+}
+
 export function getNextDirection (direction, max = 5) {
   return direction === max ? 0 : direction + 1
 }

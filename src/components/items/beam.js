@@ -1,7 +1,7 @@
 import chroma from 'chroma-js'
 import { CompoundPath, Path, Point } from 'paper'
 import { Item } from '../item'
-import { deepEqual, emitEvent, fuzzyEquals, getConvertedDirection, sortByDistance } from '../util'
+import { deepEqual, emitEvent, fuzzyEquals, getConvertedDirection, getMidPoint, sortByDistance } from '../util'
 
 export class Beam extends Item {
   done = false
@@ -307,8 +307,11 @@ export class Beam extends Item {
 
     // On the first step, we have to take the rotation of the terminus into account
     const direction = this.#stepIndex === 0 ? this.startDirection() : currentStep.direction
-    const nextPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction)
-    const tile = puzzle.getTile(nextPoint)
+    const nextStepPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction)
+
+    // Use the midpoint between the previous and next step points to calculate which tile we are in.
+    // This will ensure we consistently pick the same tile when the next step point is on the edge of two tiles.
+    const tile = puzzle.getTile(getMidPoint(currentStep.point, nextStepPoint))
 
     // The next step would be off the grid
     if (!tile) {
@@ -325,7 +328,7 @@ export class Beam extends Item {
       tile,
       existingNextStep?.color || currentStep.color,
       direction,
-      nextPoint,
+      nextStepPoint,
       existingNextStep?.pathIndex || currentStep.pathIndex + 1,
       existingNextStep?.segmentIndex || currentStep.segmentIndex + 1
     )
