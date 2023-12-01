@@ -1,7 +1,7 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import puzzles from './puzzles'
-import { debounce } from './components/util'
+import { addClass, base64decode, debounce, removeClass } from './components/util'
 
 let center, puzzle
 
@@ -47,7 +47,7 @@ elements.previous.addEventListener('click', () => {
 })
 
 elements.reset.addEventListener('click', () => {
-  selectPuzzle(puzzleSelector.value)
+  selectPuzzle(puzzleSelector.value, params.get('state'))
 })
 
 // Handle puzzle selector dropdown
@@ -78,25 +78,30 @@ function resize () {
 window.addEventListener('resize', debounce(resize))
 resize()
 
-function selectPuzzle (id) {
+function selectPuzzle (id, state) {
   document.body.classList.remove(Events.Error)
 
-  const actions = Array.from(document.querySelectorAll('#actions li'))
-  actions.forEach((element) => element.classList.remove('disabled'))
+  removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
 
-  // TODO implement
-  elements.redo.classList.add('disabled')
-  elements.undo.classList.add('disabled')
-
-  if (id === puzzleIds[0]) {
-    elements.previous.classList.add('disabled')
-  } else if (id === puzzleIds[puzzleIds.length - 1]) {
-    elements.next.classList.add('disabled')
-  }
+  // TODO implement these
+  addClass('disabled', elements.redo, elements.undo)
 
   try {
     // Must be valid JSON
-    const configuration = JSON.parse(JSON.stringify(puzzles[id]))
+    const configuration = JSON.parse(state ? base64decode(state) : JSON.stringify(puzzles[id]))
+
+    if (!id) {
+      // Try to load an ID from configuration
+      id = configuration.id || ''
+    }
+
+    if (!id) {
+      addClass('disabled', elements.previous, elements.next)
+    } if (id === puzzleIds[0]) {
+      addClass('disabled', elements.previous)
+    } else if (id === puzzleIds[puzzleIds.length - 1]) {
+      addClass('disabled', elements.next)
+    }
 
     if (puzzle) {
       puzzle.teardown()
@@ -128,7 +133,7 @@ paper.settings.insertItems = false
 paper.setup(elements.puzzle)
 center = paper.view.center
 const params = new URLSearchParams(window.location.search)
-selectPuzzle(params.get('id') || '01')
+selectPuzzle(params.get('id'), params.get('state'))
 
 // Handle zoom
 elements.puzzle.addEventListener('wheel', (event) => {

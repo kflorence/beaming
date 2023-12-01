@@ -1,7 +1,13 @@
+import pako from 'pako'
+
 export const MouseButton = Object.freeze({
   Left: 0,
   Right: 2
 })
+
+export function addClass (className, ...elements) {
+  elements.forEach((element) => element.classList.add(className))
+}
 
 export function addDegrees (original, degrees) {
   const result = original + degrees
@@ -28,6 +34,15 @@ export function debounce (func, delay = 500) {
       func(...args)
     }, delay)
   }
+}
+
+export function base64decode (string) {
+  // noinspection JSCheckFunctionSignatures
+  return new TextDecoder().decode(pako.inflate(Uint8Array.from(window.atob(string), (c) => c.codePointAt(0))))
+}
+
+export function base64encode (string) {
+  return window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string))))
 }
 
 export function deepEqual (x, y) {
@@ -87,6 +102,10 @@ export function getReflectedDirection (beamDirection, reflectorDirection) {
   const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
   // And convert back to our normal directions on the way out
   return getConvertedDirection((addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6, false)
+}
+
+export function removeClass (className, ...elements) {
+  elements.forEach((element) => element.classList.remove(className))
 }
 
 export function sortByDistance (point) {

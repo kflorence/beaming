@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "chroma-js": "^2.4.2",
+    "pako": "^2.1.0",
     "paper": "^0.12.17"
   }
 }
