@@ -1,6 +1,6 @@
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
-import { Layer, Point, view } from 'paper'
+import { Layer } from 'paper'
 import { Tile } from './items/tile'
 import { getConvertedDirection } from './util'
 
@@ -10,11 +10,10 @@ export class Layout {
   tiles = []
   tileSize = 100
 
-  constructor (configuration) {
+  constructor (center, configuration) {
     const tileParameters = Tile.parameters(this.tileSize)
     const tilesConfiguration = configuration.tiles
 
-    const center = new Point(view.size.width / 2, view.size.height / 2)
     const height = tilesConfiguration.length * tileParameters.height
     const startingOffsetY = center.y - height / 2
 

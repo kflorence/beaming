@@ -33,10 +33,11 @@ export class Puzzle {
   #tiles
   #tool
 
-  constructor (id, configuration) {
-    const { connectionsRequired, layout, title } = configuration
+  constructor (state) {
+    const { connectionsRequired, layout, title } = state.getConfiguration()
 
-    this.layout = new Layout(layout)
+    this.state = state
+    this.layout = new Layout(state.getCenter(), layout)
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
@@ -47,7 +48,6 @@ export class Puzzle {
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    this.id = id
     this.title = title
 
     elements.message.textContent = title
@@ -258,6 +258,7 @@ export class Puzzle {
 
   #onMouseUp () {
     this.#isDragging = false
+    this.state.setCenter(paper.view.center)
     document.body.classList.remove('grab')
   }
 

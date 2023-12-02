@@ -1,12 +1,10 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
-import puzzles from './puzzles'
-import { addClass, base64decode, debounce, removeClass } from './components/util'
+import { addClass, debounce, removeClass } from './components/util'
+import { StateManager } from './components/stateManager'
+import { Puzzles } from './puzzles'
 
-let center, puzzle
-
-const history = window.history
-const location = window.location
+let puzzle
 
 const elements = Object.freeze({
   main: document.getElementById('main'),
@@ -23,8 +21,7 @@ const Events = Object.freeze({
   Error: 'puzzle-error'
 })
 
-const puzzleIds = Object.keys(puzzles)
-const lastPuzzleIndex = puzzleIds.length - 1
+const state = new StateManager()
 
 // Handle puzzle solved
 document.addEventListener(Puzzle.Events.Solved, () => {
@@ -33,26 +30,26 @@ document.addEventListener(Puzzle.Events.Solved, () => {
 
 // Handle menu items
 elements.next.addEventListener('click', () => {
-  const index = puzzleIds.findIndex((id) => id === puzzleSelector.value)
-  if (index < lastPuzzleIndex) {
-    selectPuzzle(puzzleIds[index + 1])
+  const id = Puzzles.nextId(state.getId())
+  if (id) {
+    selectPuzzle(id)
   }
 })
 
 elements.previous.addEventListener('click', () => {
-  const index = puzzleIds.findIndex((id) => id === puzzleSelector.value)
-  if (index > 0) {
-    selectPuzzle(puzzleIds[index - 1])
+  const id = Puzzles.previousId(state.getId())
+  if (id) {
+    selectPuzzle(id)
   }
 })
 
 elements.reset.addEventListener('click', () => {
-  selectPuzzle(puzzleSelector.value, params.get('state'))
+  selectPuzzle(puzzleSelector.value)
 })
 
 // Handle puzzle selector dropdown
 const puzzleSelector = document.getElementById('puzzle-selector')
-for (const id of puzzleIds) {
+for (const id of Puzzles.ids) {
   const option = document.createElement('option')
   option.value = id
   option.innerText = id
@@ -70,15 +67,21 @@ function resize () {
 
   if (paper.view?.viewSize) {
     paper.view.viewSize = new Size(width, height)
-    center = paper.view.center
+    updateState()
   }
+}
+
+function updateState () {
+  state.setZoom(paper.view.zoom)
+  state.setCenter(paper.view.center)
+  console.log(state.getCenter())
 }
 
 // Handle canvas resize
 window.addEventListener('resize', debounce(resize))
 resize()
 
-function selectPuzzle (id, state) {
+function selectPuzzle (id) {
   document.body.classList.remove(Events.Error)
 
   removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
@@ -86,41 +89,29 @@ function selectPuzzle (id, state) {
   // TODO implement these
   addClass('disabled', elements.redo, elements.undo)
 
-  try {
-    // Must be valid JSON
-    const configuration = JSON.parse(state ? base64decode(state) : JSON.stringify(puzzles[id]))
+  if (puzzle) {
+    puzzle.teardown()
+  }
 
-    if (!id) {
-      // Try to load an ID from configuration
-      id = configuration.id || ''
-    }
+  try {
+    // Keep the puzzle selector in sync with the ID from state
+    id = puzzleSelector.value = state.setState(id)
 
     if (!id) {
       addClass('disabled', elements.previous, elements.next)
-    } if (id === puzzleIds[0]) {
+    } else if (id === Puzzles.firstId) {
       addClass('disabled', elements.previous)
-    } else if (id === puzzleIds[puzzleIds.length - 1]) {
+    } else if (id === Puzzles.lastId) {
       addClass('disabled', elements.next)
     }
 
-    if (puzzle) {
-      puzzle.teardown()
+    puzzle = new Puzzle(state)
 
-      // Reset any changes from zoom/drag
-      paper.view.zoom = 1
-      paper.view.center = center
-    }
-
-    window.puzzle = puzzle = new Puzzle(id, configuration)
-    puzzleSelector.value = id
-
-    // Store the puzzle selection in history
-    const url = new URL(location)
-    url.searchParams.set('id', id)
-    history.pushState({ id }, '', url)
+    paper.view.zoom = state.getZoom()
+    paper.view.center = state.getCenter()
   } catch (e) {
     console.error(e)
-    elements.message.textContent = 'Puzzle is invalid'
+    elements.message.textContent = 'Puzzle configuration is invalid'
     document.body.classList.add(Events.Error)
   }
 }
@@ -131,9 +122,7 @@ paper.settings.insertItems = false
 
 // noinspection JSCheckFunctionSignatures
 paper.setup(elements.puzzle)
-center = paper.view.center
-const params = new URLSearchParams(window.location.search)
-selectPuzzle(params.get('id'), params.get('state'))
+selectPuzzle()
 
 // Handle zoom
 elements.puzzle.addEventListener('wheel', (event) => {
@@ -159,6 +148,8 @@ elements.puzzle.addEventListener('wheel', (event) => {
   paper.view.center = paper.view.center.add(zoomOffset)
 }, { passive: false })
 
+elements.puzzle.addEventListener('wheel', debounce(updateState))
+
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {
   event.preventDefault()
@@ -170,3 +161,5 @@ window.drawDebugPoint = function (x, y, style) {
 }
 
 window.paper = paper
+window.puzzle = puzzle
+window.puzzles = Puzzles
