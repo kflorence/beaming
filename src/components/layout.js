@@ -1,6 +1,6 @@
+import paper, { Layer } from 'paper'
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
-import { Layer } from 'paper'
 import { Tile } from './items/tile'
 import { getConvertedDirection } from './util'
 
@@ -10,7 +10,8 @@ export class Layout {
   tiles = []
   tileSize = 100
 
-  constructor (center, configuration) {
+  constructor (configuration) {
+    const center = paper.view.center
     const tileParameters = Tile.parameters(this.tileSize)
     const tilesConfiguration = configuration.tiles
 

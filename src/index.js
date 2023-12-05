@@ -67,14 +67,7 @@ function resize () {
 
   if (paper.view?.viewSize) {
     paper.view.viewSize = new Size(width, height)
-    updateState()
   }
-}
-
-function updateState () {
-  state.setZoom(paper.view.zoom)
-  state.setCenter(paper.view.center)
-  console.log(state.getCenter())
 }
 
 // Handle canvas resize
@@ -106,9 +99,6 @@ function selectPuzzle (id) {
     }
 
     puzzle = new Puzzle(state)
-
-    paper.view.zoom = state.getZoom()
-    paper.view.center = state.getCenter()
   } catch (e) {
     console.error(e)
     elements.message.textContent = 'Puzzle configuration is invalid'
@@ -147,8 +137,6 @@ elements.puzzle.addEventListener('wheel', (event) => {
   paper.view.zoom = zoom
   paper.view.center = paper.view.center.add(zoomOffset)
 }, { passive: false })
-
-elements.puzzle.addEventListener('wheel', debounce(updateState))
 
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {

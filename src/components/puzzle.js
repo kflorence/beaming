@@ -34,10 +34,10 @@ export class Puzzle {
   #tool
 
   constructor (state) {
-    const { connectionsRequired, layout, title } = state.getConfiguration()
+    const { connectionsRequired, layout, title } = state.getPuzzle()
 
     this.state = state
-    this.layout = new Layout(state.getCenter(), layout)
+    this.layout = new Layout(layout)
 
     this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
@@ -258,7 +258,6 @@ export class Puzzle {
 
   #onMouseUp () {
     this.#isDragging = false
-    this.state.setCenter(paper.view.center)
     document.body.classList.remove('grab')
   }
 

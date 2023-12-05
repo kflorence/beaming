@@ -1,95 +1,123 @@
-import paper from 'paper'
 import { Puzzles } from '../puzzles'
 import { base64decode, base64encode } from './util'
 
+const crypto = window.crypto
 const history = window.history
 const location = window.location
+const localStorage = window.localStorage
+
 const params = new URLSearchParams(location.search)
+const url = new URL(location)
 
 export class StateManager {
   #state
 
-  getCenter () {
-    return this.#state.center
-  }
-
-  getConfiguration () {
-    return this.#state.configuration
+  clearCache () {
+    params.delete(StateManager.Keys.state)
+    localStorage.clear()
   }
 
   getId () {
     return this.#state.id
   }
 
-  getZoom () {
-    return this.#state.zoom
-  }
-
-  setCenter (center) {
-    this.#state.center = center
-    // TODO update localStorage
+  getPuzzle () {
+    return this.#state.current
   }
 
   setState (id) {
-    // State stored in the URL will always take precedence
-    if (params.has('state')) {
-      this.#state = StateManager.#State.fromEncoded(params.get('state'))
-    } else {
-      this.#state = StateManager.#State.fromId(id || params.get('id') || Puzzles.ids[0])
+    let state
+
+    // Allow cache to be cleared via URL param
+    if (params.has('clearCache')) {
+      this.clearCache()
     }
 
-    // TODO: load center/zoom from localStorage
+    if (!id) {
+      // Check for encoded state in URL if no explicit ID is given
+      state = params.get(StateManager.Keys.state)
+    }
+
+    if (!state) {
+      // Update ID before checking for state in localStorage.
+      id = id || params.get(StateManager.Keys.id) || localStorage.getItem(StateManager.Keys.id) || Puzzles.firstId
+      state = localStorage.getItem(StateManager.key(StateManager.Keys.state, id))
+    }
+
+    if (state) {
+      this.#state = StateManager.#State.fromEncoded(state)
+    } else {
+      this.#state = StateManager.#State.fromId(id)
+      state = this.#state.encode()
+    }
 
     id = this.getId()
 
-    // The ID may not be set if loading from a unique state that does not match any puzzle configuration
-    if (id) {
-      const url = new URL(location)
-      url.searchParams.set('id', id)
-      history.pushState({ id }, '', url)
-    }
+    url.searchParams.set(StateManager.Keys.id, id)
+    url.searchParams.set(StateManager.Keys.state, state)
+    url.searchParams.sort()
+
+    history.pushState({ id, state }, '', url)
+    localStorage.setItem(StateManager.Keys.id, id)
+    localStorage.setItem(this.#key(StateManager.Keys.state), state)
 
     return id
   }
 
-  setZoom (zoom) {
-    this.#state.zoom = zoom
-    // TODO update localStorage
-  }
+  updatePuzzle (move) {
+    this.#state.update(move)
 
-  updateState (command) {
-    // TODO: update state from command
     const state = this.#state.encode()
 
-    const url = new URL(location)
-    url.searchParams.set('state', state)
-
-    history.pushState({ state }, '', url)
+    url.searchParams.set(StateManager.Keys.state, state)
+    localStorage.setItem(this.#key(StateManager.Keys.state), state)
   }
 
+  #key (key) {
+    return StateManager.key(key, this.getId())
+  }
+
+  static key (key, id) {
+    return `${key}:${id}`
+  }
+
+  static Keys = Object.freeze({
+    center: 'center',
+    id: 'id',
+    state: 'state',
+    zoom: 'zoom'
+  })
+
   static #State = class {
-    constructor (id, configuration, moves, center, zoom) {
+    constructor (id, puzzle, moves) {
       this.id = id
-      this.configuration = configuration
+      this.current = this.puzzle = puzzle
 
       // Optional
       this.moves = moves || []
-      this.center = center || paper.view.center
-      this.zoom = zoom || 1
+
+      // Update current state
+      this.moves.forEach((move) => this.update(move))
     }
 
     encode () {
-      // TODO
       return base64encode(JSON.stringify({
         id: this.id,
         moves: this.moves,
-        configuration: this.configuration
+        puzzle: this.puzzle
       }))
+    }
+
+    update (move) {
+      // TODO update the state
+
+      this.moves.push(move)
     }
 
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
-      return new StateManager.#State(state.id, state.configuration, state.moves)
+      // If there's no ID stored in state, generate a unique one
+      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.moves)
     }
 
     static fromId (id) {
