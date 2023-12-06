@@ -41,9 +41,13 @@ export function base64decode (string) {
   return new TextDecoder().decode(pako.inflate(Uint8Array.from(window.atob(string), (c) => c.codePointAt(0))))
 }
 
+window.base64decode = base64decode
+
 export function base64encode (string) {
   return window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string))))
 }
+
+window.base64encode = base64encode
 
 export function deepEqual (x, y) {
   return typeof x === 'object' && typeof y === 'object'

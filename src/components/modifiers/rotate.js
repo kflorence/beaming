@@ -1,5 +1,6 @@
 import { Modifier } from '../modifier'
 import { MouseButton } from '../util'
+import { StateManager } from '../stateManager'
 
 export class Rotate extends Modifier {
   clockwise
@@ -20,7 +21,10 @@ export class Rotate extends Modifier {
     const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
 
-    this.dispatchEvent(Modifier.Events.Invoked, { items })
+    const updates = items.map((item) =>
+      StateManager.Update.item(this.tile, item, { direction: item.direction }))
+
+    this.dispatchEvent(Modifier.Events.Invoked, { items, updates })
   }
 
   onMouseDown (event) {
@@ -40,19 +44,18 @@ export class Rotate extends Modifier {
  * A mixin for Item which provides rotate behaviors.
  *
  * @param SuperClass
- * @returns {{new(*, *): RotatableItem, rotatable: boolean, rotateDirection: number, prototype: RotatableItem}}
+ * @returns {{new(*, *): RotatableItem, rotatable: boolean, direction: number, prototype: RotatableItem}}
  */
 export const rotatable = (SuperClass) => class RotatableItem extends SuperClass {
-  rotatable
-
-  // Generally 30 (12 rotations) or 60 (6 rotations)
-  rotateDegrees = 30
-  rotateDirection = 0
-
   constructor (parent, configuration) {
     super(...arguments)
 
+    this.direction = configuration.direction || 0
     this.rotatable = configuration.rotatable !== false
+    this.rotateDegrees = configuration.rotateDegrees || 60
+
+    // Initial item rotation
+    this.doRotate(this.direction)
   }
 
   doRotate (direction) {
@@ -63,7 +66,7 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     const direction = clockwise === false ? -1 : 1
     const directionMax = (360 / this.rotateDegrees)
 
-    this.rotateDirection = (this.rotateDirection + direction) % directionMax
+    this.direction = (this.direction + direction) % directionMax
 
     this.doRotate(direction)
   }

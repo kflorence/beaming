@@ -1,56 +1,59 @@
 export default {
   connectionsRequired: 1,
   title: 'Color',
-  layout: {
-    tiles: [
-      [
-        null,
-        null,
-        {
-          items: [
-            {
-              openings: [null, null, null, { color: 'red' }, { color: 'blue' }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        null
-      ],
-      [
-        null,
-        {
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          modifiers: [{ type: 'Immutable' }]
-        },
-        null
-      ],
-      [
-        null,
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [null, {}, null, null, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
-        },
-        null,
-        {
-          items: [
-            {
-              color: 'red',
-              openings: [{}, null, null, null, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
-        }
-      ]
+  layout: [
+    [
+      null,
+      null,
+      {
+        items: [
+          {
+            openings: [null, null, null, { color: 'red', type: 'Beam' }, { color: 'blue', type: 'Beam' }, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      null
+    ],
+    [
+      null,
+      {
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      null
+    ],
+    [
+      null,
+      {
+        items: [
+          {
+            color: 'blue',
+            openings: [null, { type: 'Beam' }, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
+        type: 'Tile'
+      },
+      null,
+      {
+        items: [
+          {
+            color: 'red',
+            openings: [{ type: 'Beam' }, null, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
+        type: 'Tile'
+      }
     ]
-  }
+  ]
 }

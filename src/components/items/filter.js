@@ -1,12 +1,10 @@
 import chroma from 'chroma-js'
 import { Item } from '../item'
-import { Color, Group, Path } from 'paper'
+import { Color, Path } from 'paper'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 
 export class Filter extends movable(Item) {
-  type = Item.Types.filter
-
   constructor (tile, { color }) {
     super(...arguments)
 
@@ -28,11 +26,7 @@ export class Filter extends movable(Item) {
       }
     })
 
-    this.group = new Group({
-      children: [item],
-      data: { id: this.id, type: this.type },
-      locked: true
-    })
+    this.group.addChild(item)
   }
 
   onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep) {

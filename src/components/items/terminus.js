@@ -1,5 +1,5 @@
 import chroma from 'chroma-js'
-import { Group, Path } from 'paper'
+import { Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
@@ -8,18 +8,18 @@ import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
-  rotateDegrees = 60
   sortOrder = 1
-  type = Item.Types.terminus
 
   #ui
 
-  constructor (tile, { color, openings, type, modifiers }) {
+  constructor (tile, configuration) {
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
+    let color = configuration.color
+
     // Normalize openings data
-    openings.forEach((opening, direction) => {
+    const openings = configuration.openings.map((opening, direction) => {
       if (opening) {
         opening.color = opening.color || color
         if (Array.isArray(opening.color)) {
@@ -29,6 +29,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
         opening.direction = direction
         opening.on = !!opening.on
       }
+
+      return opening
     })
 
     if (color) {
@@ -43,11 +45,11 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       color = chroma.average(colors).hex()
     }
 
-    const data = { id: this.id, type: this.type }
-    this.#ui = Terminus.ui(tile, { color, openings, data })
+    this.#ui = Terminus.ui(tile, { color, openings })
+
+    this.group.addChildren([this.#ui.terminus, ...this.#ui.openings.filter((opening) => opening)])
 
     this.color = color
-    this.group = this.#ui.group
     this.openings = openings
     this.radius = this.#ui.radius
 
@@ -55,6 +57,10 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.beams = openings.filter((opening) => opening).map((opening) => new Beam(this, opening))
 
     this.update()
+  }
+
+  getToggledState () {
+    return { openings: structuredClone(this.openings) }
   }
 
   onMove () {
@@ -111,7 +117,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   static #openingOffOpacity = 0.3
 
-  static ui (tile, { color, openings: configuration, data }) {
+  static ui (tile, { color, openings: configuration }) {
     const radius = tile.parameters.circumradius / 2
 
     const terminus = new Path.RegularPolygon({
@@ -147,13 +153,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       })
     })
 
-    const group = new Group({
-      children: [terminus, ...openings.filter((opening) => opening)],
-      data,
-      locked: true
-    })
-
-    return { group, openings, radius, terminus }
+    return { openings, radius, terminus }
   }
 
   static Events = Object.freeze({

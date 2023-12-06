@@ -1,11 +1,13 @@
 import { Item } from '../item'
-import { Group, Path } from 'paper'
+import { Path } from 'paper'
 
 export class Collision extends Item {
-  type = Item.Types.collision
+  constructor (configuration) {
+    configuration.type = Item.Types.collision
 
-  constructor ({ center, color }) {
-    super(null)
+    super(null, configuration)
+
+    const { center, color } = configuration
 
     this.center = center
     this.color = color
@@ -21,10 +23,6 @@ export class Collision extends Item {
       }
     })
 
-    this.group = new Group({
-      children: [item],
-      data: { id: this.id, type: this.type },
-      locked: true
-    })
+    this.group.addChild(item)
   }
 }

@@ -1,78 +1,83 @@
 export default {
   connectionsRequired: 1,
   title: 'Portals II',
-  layout: {
-    tiles: [
-      [
-        null,
-        {
-          items: [
-            {
-              direction: 0,
-              type: 'Portal'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          items: [
-            {
-              direction: 0,
-              type: 'Portal'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          items: [
-            {
-              openings: [null, null, null, { color: ['red', 'blue'] }, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          items: [
-            {
-              openings: [null, null, null, null, { color: 'green' }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
-        }
-      ],
-      [
-        null,
-        {
-          items: [
-            {
-              openings: [{ color: 'red' }, null, null, null, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Rotate' }, { type: 'Toggle' }]
-        },
-        {
-          items: [
-            {
-              openings: [{ color: 'blue' }, null, null, null, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }]
-        },
-        {
-          items: [
-            {
-              direction: 3,
-              type: 'Portal'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        null
-      ]
+  layout: [
+    [
+      null,
+      {
+        items: [
+          {
+            direction: 0,
+            type: 'Portal'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            direction: 0,
+            type: 'Portal'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            openings: [null, null, null, { color: ['red', 'blue'], type: 'Beam' }, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            openings: [null, null, null, null, { color: 'green', type: 'Beam' }, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
+        type: 'Tile'
+      }
+    ],
+    [
+      null,
+      {
+        items: [
+          {
+            openings: [{ color: 'red', type: 'Beam' }, null, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Rotate' }, { type: 'Toggle' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            openings: [{ color: 'blue', type: 'Beam' }, null, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            direction: 2,
+            type: 'Portal'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }, { type: 'Rotate' }],
+        type: 'Tile'
+      },
+      null
     ]
-  }
+  ]
 }

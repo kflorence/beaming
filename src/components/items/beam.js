@@ -7,7 +7,6 @@ export class Beam extends Item {
   done = false
   path = []
   sortOrder = 2
-  type = Item.Types.beam
 
   #opening
   #path
@@ -19,6 +18,7 @@ export class Beam extends Item {
     super(...arguments)
 
     this.direction = opening.direction
+    this.group = null
     this.width = terminus.radius / 12
 
     this.#opening = opening
@@ -67,7 +67,7 @@ export class Beam extends Item {
       path.add(...points)
 
       const pathIndex = this.path.push(path) - 1
-      const index = step.state.insertAbove ? step.state.insertAbove.getIndex() + 1 : 0
+      const index = step.state.insertAbove ? step.state.insertAbove.getLayerIndex() + 1 : 0
 
       // Unless specified in the state, the path will be inserted beneath all items
       this.getLayer().insertChild(index, path)
@@ -108,7 +108,7 @@ export class Beam extends Item {
     return this.getState()?.connection
   }
 
-  getIndex () {
+  getLayerIndex () {
     return this.path[this.path.length - 1].index
   }
 
@@ -282,7 +282,7 @@ export class Beam extends Item {
 
   startDirection () {
     // Take rotation of the parent (terminus) into account
-    return (this.#opening.direction + this.parent.rotateDirection) % 6
+    return (this.#opening.direction + this.parent.direction) % 6
   }
 
   /**

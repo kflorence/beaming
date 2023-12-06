@@ -1,4 +1,4 @@
-import { Group, Path, Point, Size } from 'paper'
+import { Path, Point, Size } from 'paper'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 import { getOppositeDirection, getReflectedDirection } from '../util'
@@ -6,27 +6,19 @@ import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 
 export class Reflector extends movable(rotatable(Item)) {
-  type = Item.Types.reflector
-
-  #ui
-
   constructor (tile, configuration) {
+    configuration.rotateDegrees = 30
+
     super(...arguments)
 
-    const data = { id: this.id, type: this.type }
-    this.#ui = Reflector.ui(tile, configuration, data)
-
-    this.color = this.#ui.item.fillColor
-    this.group = this.#ui.group
-    this.rotateDirection = configuration.direction || 0
-
-    this.doRotate(this.rotateDirection)
+    this.color = configuration.color || 'black'
+    this.group.addChild(Reflector.item(tile, this.color))
   }
 
   onCollision (
     beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, existingNextStep, collisionStep) {
     const directionFrom = getOppositeDirection(currentStep.direction)
-    const directionTo = getReflectedDirection(directionFrom, this.rotateDirection)
+    const directionTo = getReflectedDirection(directionFrom, this.direction)
 
     if (directionTo === currentStep.direction) {
       console.debug(beam.color, 'stopping due to collision with non-reflective side of reflector')
@@ -47,23 +39,15 @@ export class Reflector extends movable(rotatable(Item)) {
     return Beam.Step.from(nextStep, { direction: directionTo, point })
   }
 
-  static ui (tile, { color }, data) {
+  static item (tile, color) {
     const length = tile.parameters.circumradius
     const width = tile.parameters.circumradius / 12
     const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
 
-    const item = new Path.Rectangle({
-      fillColor: color || 'black',
+    return new Path.Rectangle({
+      fillColor: color,
       point: topLeft,
       size: new Size(width, length)
     })
-
-    const group = new Group({
-      children: [item],
-      data,
-      locked: true
-    })
-
-    return { item, group }
   }
 }

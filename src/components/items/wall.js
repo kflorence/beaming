@@ -1,23 +1,25 @@
 import { Item } from '../item'
-import { Group, Path } from 'paper'
+import { Path } from 'paper'
 import { getNextDirection } from '../util'
 import { rotatable } from '../modifiers/rotate'
 import { movable } from '../modifiers/move'
 
 export class Wall extends movable(rotatable(Item)) {
-  #ui
-
   constructor (tile, configuration) {
+    configuration.rotateDegrees = 30
+
     // noinspection JSCheckFunctionSignatures
     super(...arguments)
 
-    const data = { id: this.id, type: this.type }
-    this.#ui = Wall.ui(tile, configuration, data)
-
-    this.group = this.#ui.group
+    this.group.addChild(Wall.item(tile, configuration))
   }
 
-  static item (center, radius, cavityRadius, openings) {
+  static item (tile, { openings }) {
+    const center = tile.center
+    const radius = tile.parameters.circumradius
+    const cavityRadius = radius / 6
+    const fillColor = tile.styles.default.strokeColor
+
     const hexagon = new Path.RegularPolygon({
       center,
       radius,
@@ -33,6 +35,7 @@ export class Wall extends movable(rotatable(Item)) {
     const paths = openings.map((direction) => {
       return new Path({
         closed: true,
+        fillColor,
         segments: [
           center,
           hexagon.segments[direction].point,
@@ -46,20 +49,5 @@ export class Wall extends movable(rotatable(Item)) {
       (shape, path) => shape.subtract(path),
       hexagon.exclude(cavity)
     )
-  }
-
-  static ui (tile, { openings }, data) {
-    const radius = tile.parameters.circumradius
-    const item = Wall.item(tile.center, radius, radius / 6, openings)
-
-    item.fillColor = tile.styles.default.strokeColor
-
-    const group = new Group({
-      children: [item],
-      data,
-      locked: true
-    })
-
-    return { item, group }
   }
 }

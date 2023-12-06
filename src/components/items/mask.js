@@ -1,11 +1,13 @@
 import { Item } from '../item'
-import { Group, Path } from 'paper'
+import { Path } from 'paper'
 
 export class Mask extends Item {
-  type = Item.Types.mask
+  constructor (tile, configuration = {}) {
+    // Allow item to be clicked on
+    configuration.locked = false
+    configuration.type = Item.Types.mask
 
-  constructor (tile, configuration) {
-    super(null)
+    super(null, configuration)
 
     const data = { type: this.type }
     const item = new Path.RegularPolygon({
@@ -22,11 +24,6 @@ export class Mask extends Item {
     })
 
     this.center = tile.center
-    this.group = new Group({
-      children: [item],
-      data: { id: this.id, type: this.type },
-      // Allow this group to be clicked on
-      locked: false
-    })
+    this.group.addChild(item)
   }
 }

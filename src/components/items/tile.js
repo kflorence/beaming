@@ -1,4 +1,4 @@
-import { Group, Path, Point } from 'paper'
+import { Path, Point } from 'paper'
 import { Terminus } from './terminus'
 import { Reflector } from './reflector'
 import { Wall } from './wall'
@@ -15,30 +15,29 @@ import { Portal } from './portal'
 
 export class Tile extends Item {
   selected = false
-  type = Item.Types.tile
 
   #ui
 
   constructor ({ coordinates, layout, parameters, configuration }) {
-    super(null)
+    super(null, configuration)
 
-    const data = { coordinates, id: this.id, type: this.type }
-    this.#ui = Tile.ui(layout, parameters, configuration, data)
+    this.#ui = Tile.ui(layout, parameters, configuration, { coordinates, type: this.type })
 
     this.center = this.#ui.center
     this.coordinates = coordinates
-    this.group = this.#ui.group
     this.hexagon = this.#ui.hexagon
     this.parameters = parameters
     this.styles = this.#ui.styles
 
+    this.group.addChild(this.#ui.hexagon)
+
     // These need to be last, since they reference this
     this.items = (configuration.items || [])
-      .map((configuration) => this.#itemFactory(configuration))
+      .map((configuration, index) => this.#itemFactory(Object.assign(configuration, { index })))
       .filter((item) => item !== undefined)
 
     this.modifiers = (configuration.modifiers || [])
-      .map((configuration) => this.#modifierFactory(configuration))
+      .map((configuration, index) => this.#modifierFactory(Object.assign(configuration, { index })))
       .filter((modifier) => modifier !== undefined)
   }
 
@@ -60,7 +59,7 @@ export class Tile extends Item {
   }
 
   onClick (event) {
-    console.debug(this.coordinates.offset.toString(), this.items)
+    console.debug(this.id, this.items)
     this.items.forEach((item) => item.onClick(event))
   }
 
@@ -196,14 +195,7 @@ export class Tile extends Item {
       style: styles.default
     })
 
-    const group = new Group({
-      children: [hexagon],
-      data,
-      // Allow this group to be clicked on
-      locked: false
-    })
-
-    return { center, data, group, hexagon, styles }
+    return { center, hexagon, styles }
   }
 
   static Events = Object.freeze({

@@ -1,59 +1,65 @@
 export default {
   connectionsRequired: 1,
   title: 'Filter',
-  layout: {
-    tiles: [
-      [
-        null,
-        null,
-        {
-          items: [
-            {
-              openings: [null, null, null, null, { color: ['blue', 'red'] }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        null
-      ],
-      [
-        null,
-        {},
-        {},
-        null
-      ],
-      [
-        null,
-        {
-          items: [
-            {
-              direction: 5,
-              type: 'Reflector'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          items: [
-            {
-              color: 'red',
-              type: 'Filter'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }]
-        },
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [{ on: true }, null, null, null, null, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { clockwise: false, type: 'Rotate' }]
-        }
-      ]
+  layout: [
+    [
+      null,
+      null,
+      {
+        items: [
+          {
+            openings: [null, null, null, null, { color: ['blue', 'red'], type: 'Beam' }, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      null
+    ],
+    [
+      null,
+      {
+        type: 'Tile'
+      },
+      {
+        type: 'Tile'
+      },
+      null
+    ],
+    [
+      null,
+      {
+        items: [
+          {
+            direction: 5,
+            type: 'Reflector'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            color: 'red',
+            type: 'Filter'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
+      {
+        items: [
+          {
+            color: 'blue',
+            openings: [{ on: true, type: 'Beam' }, null, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { clockwise: false, type: 'Rotate' }],
+        type: 'Tile'
+      }
     ]
-  }
+  ]
 }

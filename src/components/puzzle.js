@@ -237,6 +237,8 @@ export class Puzzle {
   #onModifierInvoked (event) {
     const tile = event.detail.tile
 
+    this.state.updatePuzzle(...(event.detail.updates || []))
+
     this.#beams
       // Update beams in the tile being modified first
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)

@@ -12,25 +12,38 @@ const url = new URL(location)
 export class StateManager {
   #state
 
-  clearCache () {
+  clearCache (id) {
     params.delete(StateManager.Keys.state)
-    localStorage.clear()
+
+    if (!id) {
+      // Clear everything
+      Array.from(url.searchParams)
+        .filter(([key]) => key !== StateManager.Keys.clearCache)
+        .forEach(([key]) => url.searchParams.delete(key))
+      history.pushState({}, '', url)
+      localStorage.clear()
+    } else {
+      // Clear a single puzzle
+      url.searchParams.delete(StateManager.Keys.state)
+      history.pushState({ id }, '', url)
+      localStorage.removeItem(StateManager.key(StateManager.Keys.state, id))
+    }
   }
 
   getId () {
-    return this.#state.id
+    return this.#state?.id
   }
 
   getPuzzle () {
-    return this.#state.current
+    return this.#state?.current
   }
 
   setState (id) {
     let state
 
     // Allow cache to be cleared via URL param
-    if (params.has('clearCache')) {
-      this.clearCache()
+    if (params.has(StateManager.Keys.clearCache)) {
+      this.clearCache(params.get(StateManager.Keys.clearCache))
     }
 
     if (!id) {
@@ -64,12 +77,31 @@ export class StateManager {
     return id
   }
 
-  updatePuzzle (move) {
-    this.#state.update(move)
+  resetPuzzle () {
+    const id = this.getId()
+
+    this.clearCache(id)
+
+    this.#state.reset()
 
     const state = this.#state.encode()
 
     url.searchParams.set(StateManager.Keys.state, state)
+    history.pushState({ id, state }, '', url)
+    localStorage.setItem(this.#key(StateManager.Keys.state), state)
+  }
+
+  updatePuzzle (...updates) {
+    if (!updates.length) {
+      return
+    }
+
+    updates.forEach((update) => this.#state.update(update))
+
+    const state = this.#state.encode()
+
+    url.searchParams.set(StateManager.Keys.state, state)
+    history.pushState({ state }, '', url)
     localStorage.setItem(this.#key(StateManager.Keys.state), state)
   }
 
@@ -83,41 +115,73 @@ export class StateManager {
 
   static Keys = Object.freeze({
     center: 'center',
+    clearCache: 'clearCache',
     id: 'id',
     state: 'state',
     zoom: 'zoom'
   })
 
+  static Update = class {
+    constructor (row, column, key, index, data) {
+      this.row = row
+      this.column = column
+      this.key = key
+      this.index = index
+      this.data = data
+    }
+
+    static item (tile, item, data) {
+      const offset = tile.coordinates.offset
+      return new StateManager.Update(offset.r, offset.c, StateManager.Update.Keys.items, item.getStateIndex(), data)
+    }
+
+    static Keys = Object.freeze({
+      items: 'items',
+      modifiers: 'modifiers'
+    })
+  }
+
   static #State = class {
-    constructor (id, puzzle, moves) {
+    constructor (id, puzzle, updates) {
       this.id = id
-      this.current = this.puzzle = puzzle
+      this.puzzle = puzzle
 
       // Optional
-      this.moves = moves || []
+      this.updates = updates || []
 
       // Update current state
-      this.moves.forEach((move) => this.update(move))
+      this.current = structuredClone(puzzle)
+      this.updates.forEach((update) => this.apply(update))
+    }
+
+    apply (update) {
+      console.log('replaying update from state', update)
+      // TODO: use jsonpath instead
+      return Object.assign(this.current.layout[update.row][update.column][update.key][update.index], update.data)
     }
 
     encode () {
       return base64encode(JSON.stringify({
         id: this.id,
-        moves: this.moves,
+        updates: this.updates,
         puzzle: this.puzzle
       }))
     }
 
-    update (move) {
-      // TODO update the state
+    reset () {
+      this.current = structuredClone(this.puzzle)
+      this.updates = []
+    }
 
-      this.moves.push(move)
+    update (update) {
+      this.apply(update)
+      this.updates.push(update)
     }
 
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
       // If there's no ID stored in state, generate a unique one
-      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.moves)
+      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.updates)
     }
 
     static fromId (id) {

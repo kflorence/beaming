@@ -13,16 +13,15 @@ export class Layout {
   constructor (configuration) {
     const center = paper.view.center
     const tileParameters = Tile.parameters(this.tileSize)
-    const tilesConfiguration = configuration.tiles
 
-    const height = tilesConfiguration.length * tileParameters.height
+    const height = configuration.length * tileParameters.height
     const startingOffsetY = center.y - height / 2
 
     this.layers.tiles = new Layer()
     this.layers.items = new Layer()
 
-    for (let r = 0; r < tilesConfiguration.length; r++) {
-      const rowConfiguration = tilesConfiguration[r]
+    for (let r = 0; r < configuration.length; r++) {
+      const rowConfiguration = configuration[r]
       const rowOffset = Math.floor(r / 2)
       const rowWidth = rowConfiguration.length * tileParameters.width
       const startingOffsetX =
@@ -37,6 +36,11 @@ export class Layout {
         if (!tileConfiguration) {
           continue
         }
+
+        tileConfiguration.id = offsetCoordinates.toString()
+
+        // Allow tiles to be clicked on
+        tileConfiguration.locked = false
 
         const tile = new Tile({
           coordinates: {

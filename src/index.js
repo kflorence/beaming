@@ -44,7 +44,8 @@ elements.previous.addEventListener('click', () => {
 })
 
 elements.reset.addEventListener('click', () => {
-  selectPuzzle(puzzleSelector.value)
+  state.resetPuzzle()
+  selectPuzzle(state.getId())
 })
 
 // Handle puzzle selector dropdown
