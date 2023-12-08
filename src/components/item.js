@@ -1,5 +1,6 @@
 import { capitalize } from './util'
 import { CompoundPath, Group } from 'paper'
+import { StateManager } from './stateManager'
 
 let uniqueId = 0
 
@@ -7,8 +8,7 @@ export class Item {
   center
   data
   group
-  id
-  index
+  id = uniqueId++
   // Whether the item can be clicked on
   locked
   parent
@@ -16,12 +16,9 @@ export class Item {
   type
 
   constructor (parent, configuration) {
-    const id = configuration?.id || uniqueId++
     const type = configuration?.type
 
-    this.data = Object.assign({ id, type }, configuration?.data || {})
-    this.id = id
-    this.index = configuration?.index
+    this.data = Object.assign({ id: this.id, type }, configuration?.data || {})
     this.locked = configuration?.locked !== false
     this.type = type
 
@@ -54,8 +51,8 @@ export class Item {
     return this.group.parent
   }
 
-  getStateIndex () {
-    return this.index
+  getObjectPath () {
+    return this.parent?.getObjectPath().concat([StateManager.Paths.items, this.parent.getItemIndex(this)])
   }
 
   onClick () {}

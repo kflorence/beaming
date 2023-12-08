@@ -1,3 +1,4 @@
+import objectPath from 'object-path'
 import { Puzzles } from '../puzzles'
 import { base64decode, base64encode } from './util'
 
@@ -34,8 +35,8 @@ export class StateManager {
     return this.#state?.id
   }
 
-  getPuzzle () {
-    return this.#state?.current
+  get (path) {
+    return path ? objectPath.get(this.#state?.current, path) : this.#state?.current
   }
 
   setState (id) {
@@ -77,7 +78,7 @@ export class StateManager {
     return id
   }
 
-  resetPuzzle () {
+  reset () {
     const id = this.getId()
 
     this.clearCache(id)
@@ -91,12 +92,13 @@ export class StateManager {
     localStorage.setItem(this.#key(StateManager.Keys.state), state)
   }
 
-  updatePuzzle (...updates) {
-    if (!updates.length) {
+  update (move) {
+    if (!move.length) {
+      // Nothing to do
       return
     }
 
-    updates.forEach((update) => this.#state.update(update))
+    this.#state.update(move)
 
     const state = this.#state.encode()
 
@@ -121,67 +123,82 @@ export class StateManager {
     zoom: 'zoom'
   })
 
+  static Paths = Object.freeze({
+    items: 'items',
+    layout: 'layout',
+    modifiers: 'modifiers'
+  })
+
   static Update = class {
-    constructor (row, column, key, index, data) {
-      this.row = row
-      this.column = column
-      this.key = key
-      this.index = index
-      this.data = data
+    constructor (type, path, ...args) {
+      if (!Object.hasOwn(StateManager.Update.Types, type)) {
+        throw new Error(`Invalid type: ${type}`)
+      }
+
+      this.args = args || []
+      this.path = path
+      this.type = type
     }
 
-    static item (tile, item, data) {
-      const offset = tile.coordinates.offset
-      return new StateManager.Update(offset.r, offset.c, StateManager.Update.Keys.items, item.getStateIndex(), data)
-    }
-
-    static Keys = Object.freeze({
-      items: 'items',
-      modifiers: 'modifiers'
+    static Types = Object.freeze({
+      del: 'del',
+      move: 'move',
+      set: 'set'
     })
   }
 
   static #State = class {
-    constructor (id, puzzle, updates) {
+    constructor (id, puzzle, moves) {
       this.id = id
       this.puzzle = puzzle
 
       // Optional
-      this.updates = updates || []
+      this.moves = moves || []
 
       // Update current state
       this.current = structuredClone(puzzle)
-      this.updates.forEach((update) => this.apply(update))
+      this.moves.flat().forEach((update) => this.apply(update))
     }
 
     apply (update) {
-      console.log('replaying update from state', update)
-      // TODO: use jsonpath instead
-      return Object.assign(this.current.layout[update.row][update.column][update.key][update.index], update.data)
+      console.log('applying update', update)
+      switch (update.type) {
+        case StateManager.Update.Types.move: {
+          const state = objectPath.get(this.current, update.path)
+          objectPath.del(this.current, update.path)
+          objectPath.set(this.current, update.args[0], state)
+          break
+        }
+        default: {
+          objectPath[update.type](this.current, update.path, ...update.args)
+        }
+      }
+      return update
     }
 
     encode () {
       return base64encode(JSON.stringify({
         id: this.id,
-        updates: this.updates,
-        puzzle: this.puzzle
+        moves: this.moves,
+        // No need to cache puzzles which exist in code
+        puzzle: Puzzles.has(this.id) ? undefined : this.puzzle
       }))
     }
 
     reset () {
       this.current = structuredClone(this.puzzle)
-      this.updates = []
+      this.moves = []
     }
 
-    update (update) {
-      this.apply(update)
-      this.updates.push(update)
+    update (move) {
+      this.moves.push(move.map((update) => this.apply(update)))
     }
 
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
-      // If there's no ID stored in state, generate a unique one
-      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.updates)
+      state.id = state.id || crypto.randomUUID()
+      state.puzzle = state.puzzle || Puzzles.get(state.id)
+      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.moves)
     }
 
     static fromId (id) {

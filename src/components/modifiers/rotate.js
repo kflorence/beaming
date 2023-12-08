@@ -21,10 +21,13 @@ export class Rotate extends Modifier {
     const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
 
-    const updates = items.map((item) =>
-      StateManager.Update.item(this.tile, item, { direction: item.direction }))
+    const move = items.map((item) => new StateManager.Update(
+      StateManager.Update.Types.set,
+      item.getObjectPath().concat([Rotate.Paths.direction]),
+      item.direction
+    ))
 
-    this.dispatchEvent(Modifier.Events.Invoked, { items, updates })
+    this.dispatchEvent(Modifier.Events.Invoked, { items, move })
   }
 
   onMouseDown (event) {
@@ -38,6 +41,7 @@ export class Rotate extends Modifier {
   }
 
   static Names = Object.freeze({ left: 'rotate_left', right: 'rotate_right ' })
+  static Paths = Object.freeze({ direction: 'direction' })
 }
 
 /**
@@ -54,8 +58,9 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     this.rotatable = configuration.rotatable !== false
     this.rotateDegrees = configuration.rotateDegrees || 60
 
-    // Initial item rotation
-    this.doRotate(this.direction)
+    if (this.rotatable) {
+      this.doRotate(this.direction)
+    }
   }
 
   doRotate (direction) {

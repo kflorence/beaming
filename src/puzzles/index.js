@@ -35,6 +35,10 @@ export class Puzzles {
     return structuredClone(configuration[id])
   }
 
+  static has (id) {
+    return Object.hasOwn(configuration, id)
+  }
+
   static nextId (id) {
     return traverse(id, 1)
   }

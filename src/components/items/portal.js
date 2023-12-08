@@ -59,9 +59,10 @@ export class Portal extends movable(rotatable(Item)) {
 
     this.group.addChildren(children)
 
-    // Align with the hexagonal directions (0 = 5)
     if (this.rotatable) {
-      this.doRotate(this.direction + 1)
+      // Properly align the item visually with the hexagonal directions.
+      // As drawn, it is off by one rotation (e.g. 0 = 5).
+      this.doRotate(1)
     }
   }
 
@@ -101,10 +102,6 @@ export class Portal extends movable(rotatable(Item)) {
     if (destinations.length === 1) {
       // A single matching destination
       return this.#step(destinations[0], nextStep)
-    } else if (existingNextStep?.state.portal?.exit) {
-      // TODO this doesn't work currently
-      // Use existing choice when going back through history
-      return this.#step(existingNextStep.state.portal.exit, nextStep)
     } else {
       const destinationTiles = destinations.map((portal) => portal.parent)
 

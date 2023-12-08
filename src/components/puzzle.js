@@ -34,7 +34,7 @@ export class Puzzle {
   #tool
 
   constructor (state) {
-    const { connectionsRequired, layout, title } = state.getPuzzle()
+    const { connectionsRequired, layout, title } = state.get()
 
     this.state = state
     this.layout = new Layout(layout)
@@ -149,6 +149,7 @@ export class Puzzle {
       keyup: this.#onKeyup,
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
+      [Modifier.Events.Moved]: this.#onModifierMoved,
       [Puzzle.Events.Mask]: this.#onMask,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
       [Terminus.Events.Disconnection]: this.#onTerminusConnection
@@ -235,9 +236,10 @@ export class Puzzle {
   }
 
   #onModifierInvoked (event) {
+    console.log(event)
     const tile = event.detail.tile
 
-    this.state.updatePuzzle(...(event.detail.updates || []))
+    this.state.update(event.detail.move)
 
     this.#beams
       // Update beams in the tile being modified first
@@ -245,6 +247,11 @@ export class Puzzle {
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
     this.update()
+  }
+
+  #onModifierMoved (event) {
+    console.log(event)
+    this.state.update(event.detail.move)
   }
 
   #onMouseDrag (event) {

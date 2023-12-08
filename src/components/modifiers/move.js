@@ -1,14 +1,21 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
+import { StateManager } from '../stateManager'
 
 export class Move extends Modifier {
+  #mask
+
   name = 'drag_pan'
   title = 'Items in this tile can be moved to an empty tile.'
   type = Modifier.Types.move
 
   onClick (event) {
     super.onClick(event)
+
+    if (this.#mask) {
+      return
+    }
 
     this.tile.beforeModify()
 
@@ -23,6 +30,8 @@ export class Move extends Modifier {
       this.#maskOnClick.bind(this)
     )
 
+    this.#mask = mask
+
     emitEvent(Puzzle.Events.Mask, { mask })
   }
 
@@ -34,9 +43,14 @@ export class Move extends Modifier {
       puzzle.unmask()
 
       const items = this.tile.items.filter((item) => item.movable)
+      const fromObjectPaths = items.map((item) => item.getObjectPath())
       items.forEach((item) => item.move(tile))
 
-      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile })
+      const move = items.map((item, index) =>
+        new StateManager.Update(StateManager.Update.Types.move, fromObjectPaths[index], item.getObjectPath())
+      )
+
+      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile, move })
     } else {
       puzzle.unmask()
     }

@@ -44,7 +44,7 @@ elements.previous.addEventListener('click', () => {
 })
 
 elements.reset.addEventListener('click', () => {
-  state.resetPuzzle()
+  state.reset()
   selectPuzzle(state.getId())
 })
 

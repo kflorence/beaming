@@ -6,6 +6,7 @@ import { rotatable } from '../modifiers/rotate'
 import { emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
+import { StateManager } from '../stateManager'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   sortOrder = 1
@@ -59,8 +60,19 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.update()
   }
 
-  getToggledState () {
-    return { openings: structuredClone(this.openings) }
+  getToggledStateUpdates () {
+    const openingsObjectPath = this.getObjectPath().concat([Terminus.Paths.openings])
+    return this.openings.map((opening, index) => {
+      if (!opening) {
+        return opening
+      }
+
+      return new StateManager.Update(
+        StateManager.Update.Types.set,
+        openingsObjectPath.concat([index, Terminus.Paths.on]),
+        opening.on
+      )
+    }).filter((update) => update)
   }
 
   onMove () {
@@ -159,5 +171,10 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   static Events = Object.freeze({
     Connection: 'terminus-connection',
     Disconnection: 'terminus-disconnection'
+  })
+
+  static Paths = Object.freeze({
+    openings: 'openings',
+    on: 'on'
   })
 }

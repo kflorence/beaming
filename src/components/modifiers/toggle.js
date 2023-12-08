@@ -1,5 +1,4 @@
 import { Modifier } from '../modifier'
-import { StateManager } from '../stateManager'
 
 export class Toggle extends Modifier {
   items
@@ -33,10 +32,9 @@ export class Toggle extends Modifier {
 
     this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
 
-    const updates = items.map((item) =>
-      StateManager.Update.item(this.tile, item, item.getToggledState()))
+    const move = items.flatMap((item) => item.getToggledStateUpdates())
 
-    this.dispatchEvent(Modifier.Events.Invoked, { items, updates })
+    this.dispatchEvent(Modifier.Events.Invoked, { items, move })
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
@@ -59,8 +57,8 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     this.toggleable = configuration.toggleable !== false
   }
 
-  // Items should define what state data toggle represents
-  getToggledState () {}
+  // Different items will have different toggled state changes
+  getToggledStateUpdates () {}
 
   onToggle () {}
 

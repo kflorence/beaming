@@ -1,17 +1,9 @@
 import { Path, Point } from 'paper'
-import { Terminus } from './terminus'
-import { Reflector } from './reflector'
-import { Wall } from './wall'
-import { Immutable } from '../modifiers/immutable'
-import { Lock } from '../modifiers/lock'
-import { Rotate } from '../modifiers/rotate'
-import { Toggle } from '../modifiers/toggle'
 import { Item } from '../item'
-import { Modifier } from '../modifier'
+import { itemFactory } from '../itemFactory'
 import { emitEvent } from '../util'
-import { Move } from '../modifiers/move'
-import { Filter } from './filter'
-import { Portal } from './portal'
+import { StateManager } from '../stateManager'
+import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
   selected = false
@@ -33,11 +25,11 @@ export class Tile extends Item {
 
     // These need to be last, since they reference this
     this.items = (configuration.items || [])
-      .map((configuration, index) => this.#itemFactory(Object.assign(configuration, { index })))
+      .map((configuration) => itemFactory(this, configuration))
       .filter((item) => item !== undefined)
 
     this.modifiers = (configuration.modifiers || [])
-      .map((configuration, index) => this.#modifierFactory(Object.assign(configuration, { index })))
+      .map((configuration) => modifierFactory(this, configuration))
       .filter((modifier) => modifier !== undefined)
   }
 
@@ -45,8 +37,8 @@ export class Tile extends Item {
     this.items.unshift(item)
   }
 
-  addModifier (configuration) {
-    this.modifiers.unshift(this.#modifierFactory(configuration))
+  addModifier (modifier) {
+    this.modifiers.unshift(modifier)
   }
 
   afterModify () {
@@ -58,8 +50,22 @@ export class Tile extends Item {
     this.setStyle('edit')
   }
 
+  getItemIndex (item) {
+    // Filter out beams, which are not stored in state
+    return this.items.filter((item) => item.type !== Item.Types.beam).findIndex((other) => other.equals(item))
+  }
+
+  getModifierIndex (modifier) {
+    return this.modifiers.findIndex((other) => other.equals(modifier))
+  }
+
+  getObjectPath () {
+    const offset = this.coordinates.offset
+    return [StateManager.Paths.layout, offset.r, offset.c]
+  }
+
   onClick (event) {
-    console.debug(this.id, this.items)
+    console.debug(this.toString(), this)
     this.items.forEach((item) => item.onClick(event))
   }
 
@@ -100,58 +106,8 @@ export class Tile extends Item {
     this.modifiers.forEach((modifier) => modifier.detach())
   }
 
-  #itemFactory (configuration) {
-    let item
-
-    switch (configuration.type) {
-      case Item.Types.filter:
-        item = new Filter(this, configuration)
-        break
-      case Item.Types.portal:
-        item = new Portal(this, configuration)
-        break
-      case Item.Types.terminus:
-        item = new Terminus(this, configuration)
-        break
-      case Item.Types.reflector:
-        item = new Reflector(this, configuration)
-        break
-      case Item.Types.wall:
-        item = new Wall(this, configuration)
-        break
-      default:
-        console.error('Ignoring item with unknown type: ' + configuration.type)
-        break
-    }
-
-    return item
-  }
-
-  #modifierFactory (configuration) {
-    let modifier
-
-    switch (configuration.type) {
-      case Modifier.Types.immutable:
-        modifier = new Immutable(this, configuration)
-        break
-      case Modifier.Types.lock:
-        modifier = new Lock(this, configuration)
-        break
-      case Modifier.Types.move:
-        modifier = new Move(this, configuration)
-        break
-      case Modifier.Types.rotate:
-        modifier = new Rotate(this, configuration)
-        break
-      case Modifier.Types.toggle:
-        modifier = new Toggle(this, configuration)
-        break
-      default:
-        console.error('Ignoring modifier with unknown type: ' + configuration.type)
-        break
-    }
-
-    return modifier
+  toString () {
+    return this.coordinates.offset.toString()
   }
 
   static parameters (height) {

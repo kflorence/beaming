@@ -70,11 +70,11 @@ export default {
       {
         items: [
           {
-            direction: 2,
+            direction: 3,
             type: 'Portal'
           }
         ],
-        modifiers: [{ type: 'Immutable' }, { type: 'Rotate' }],
+        modifiers: [{ type: 'Immutable' }],
         type: 'Tile'
       },
       null

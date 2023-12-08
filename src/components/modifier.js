@@ -1,8 +1,11 @@
 import { capitalize, emitEvent } from './util'
 import { Puzzle } from './puzzle'
+import { StateManager } from './stateManager'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
+
+let uniqueId = 0
 
 export class Modifier {
   #container
@@ -12,6 +15,7 @@ export class Modifier {
 
   configuration
   element
+  id = uniqueId++
   immutable = false
   name
   selected = false
@@ -85,6 +89,20 @@ export class Modifier {
     emitEvent(event, Object.assign({}, detail || {}, { modifier: this, tile: this.tile }))
   }
 
+  equals (other) {
+    return other instanceof Modifier && this.id === other.id
+  }
+
+  getObjectPath () {
+    return this.tile.getObjectPath().concat([StateManager.Paths.modifiers, this.tile.getModifierIndex(this)])
+  }
+
+  move (tile) {
+    this.remove()
+    tile.addModifier(this)
+    this.tile = tile
+  }
+
   onClick () {
     this.selected = false
   }
@@ -133,6 +151,7 @@ export class Modifier {
   remove () {
     this.detach()
     this.tile.removeModifier(this)
+    this.tile = null
   }
 
   update (options) {
@@ -152,8 +171,14 @@ export class Modifier {
 
   #maskOnClick (puzzle, tile) {
     if (tile && tile !== this.tile) {
-      this.remove()
-      tile.addModifier(this.configuration)
+      const fromObjectPath = this.getObjectPath()
+      const fromTile = this.tile
+
+      this.move(tile)
+
+      const move = [new StateManager.Update(StateManager.Update.Types.move, fromObjectPath, this.getObjectPath())]
+      this.dispatchEvent(Modifier.Events.Moved, { fromTile, move })
+
       puzzle.updateSelectedTile(tile)
       puzzle.unmask()
     } else {
@@ -172,7 +197,7 @@ export class Modifier {
   static Events = Object.freeze({
     Deselected: 'modifier-deselected',
     Invoked: 'modifier-invoked',
-    Selected: 'modifier-selected'
+    Moved: 'modifier-moved'
   })
 
   static Types = Object.freeze(Object.fromEntries([
