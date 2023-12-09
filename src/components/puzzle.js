@@ -8,6 +8,7 @@ import { Modifier } from './modifier'
 import { Beam } from './items/beam'
 import { Terminus } from './items/terminus'
 import { Collision as CollisionItem } from './items/collision'
+import { Stateful } from './stateful'
 
 const elements = Object.freeze({
   connections: document.getElementById('connections'),
@@ -29,17 +30,20 @@ export class Puzzle {
   #isDragging = false
   #isUpdatingBeams = false
   #mask
+  #state
   #termini
   #tiles
   #tool
 
-  constructor (state) {
-    const { connectionsRequired, layout, title } = state.get()
+  constructor (stateManager) {
+    const state = stateManager.get()
+    const { connectionsRequired, layout, title } = state
 
-    this.state = state
     this.layout = new Layout(layout)
+    this.stateManager = stateManager
 
-    this.#tiles = this.layout.tiles.flat().filter((tile) => tile)
+    this.#state = state
+    this.#tiles = this.layout.tiles
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
     this.#tool = new Tool()
@@ -85,7 +89,7 @@ export class Puzzle {
       stroke: true,
       tolerance: 0
     })
-    return result ? this.layout.getTile(result.item.data.coordinates.axial) : result
+    return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result
   }
 
   mask (mask) {
@@ -140,6 +144,11 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
+  updateState () {
+    this.#state.layout = this.layout.getState()
+    this.stateManager.update(this.#state)
+  }
+
   #addEventListeners () {
     paper.view.onClick = (event) => this.#onClick(event)
     this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
@@ -149,8 +158,8 @@ export class Puzzle {
       keyup: this.#onKeyup,
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
-      [Modifier.Events.Moved]: this.#onModifierMoved,
       [Puzzle.Events.Mask]: this.#onMask,
+      [Stateful.Events.Update]: this.#onStateUpdate,
       [Terminus.Events.Connection]: this.#onTerminusConnection,
       [Terminus.Events.Disconnection]: this.#onTerminusConnection
     }).forEach(([name, handler]) => {
@@ -175,6 +184,7 @@ export class Puzzle {
   #onBeamUpdate (event) {
     const stepAdded = event.detail.stepAdded
     if (stepAdded?.state.collision) {
+      console.log(stepAdded)
       const point = stepAdded.point
       const collisionId = Puzzle.Collision.id(point)
       const collision = this.#collisions[collisionId]
@@ -208,7 +218,7 @@ export class Puzzle {
       case Item.Types.mask:
         return
       case Item.Types.tile:
-        tile = this.layout.getTile(result.item.data.coordinates.axial)
+        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
         break
     }
 
@@ -236,10 +246,7 @@ export class Puzzle {
   }
 
   #onModifierInvoked (event) {
-    console.log(event)
     const tile = event.detail.tile
-
-    this.state.update(event.detail.move)
 
     this.#beams
       // Update beams in the tile being modified first
@@ -247,11 +254,6 @@ export class Puzzle {
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
     this.update()
-  }
-
-  #onModifierMoved (event) {
-    console.log(event)
-    this.state.update(event.detail.move)
   }
 
   #onMouseDrag (event) {
@@ -279,10 +281,14 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Solved)
   }
 
+  #onStateUpdate () {
+    this.updateState()
+  }
+
   #onTerminusConnection (event) {
     const terminus = event.detail.terminus
     const connectionIndex = this.connections.findIndex((connection) => connection === terminus)
-    const openings = terminus.openings.filter((opening) => opening?.connected)
+    const openings = terminus.openings.filter((opening) => opening.connected)
     const color = openings.length ? chroma.average(openings.map((opening) => opening.color)).hex() : undefined
 
     if (connectionIndex >= 0) {
@@ -380,7 +386,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) => fuzzyEquals(beam.getCollision()?.point, this.point))
+      this.beams = this.beams.filter((beam) => fuzzyEquals(beam.getStep()?.getCollision()?.point, this.point))
 
       const color = this.getColor()
 

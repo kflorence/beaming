@@ -6,6 +6,7 @@ import five from './05'
 import six from './06'
 import seven from './07'
 import eight from './08'
+import test from './test'
 
 // Ensure puzzle configuration is valid JSON
 const configuration = Object.fromEntries(Object.entries({
@@ -16,7 +17,8 @@ const configuration = Object.fromEntries(Object.entries({
   '05': five,
   '06': six,
   '07': seven,
-  '08': eight
+  '08': eight,
+  test
 }).map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]))
 
 function traverse (id, amount) {

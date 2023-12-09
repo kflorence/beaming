@@ -7,11 +7,9 @@ import { Beam } from './beam'
 import { Puzzle } from '../puzzle'
 
 export class Portal extends movable(rotatable(Item)) {
-  constructor (tile, configuration, layout) {
+  constructor (tile, state) {
     // Only allow rotation if direction is defined
-    configuration.rotatable = configuration.direction !== undefined
-
-    super(...arguments)
+    super(tile, state, { rotatable: state.direction !== undefined })
 
     const height = tile.parameters.circumradius / 3
     const width = tile.parameters.circumradius / 5
@@ -117,6 +115,7 @@ export class Portal extends movable(rotatable(Item)) {
           const destination = destinations.find((portal) => portal.parent === tile)
           if (destination) {
             currentStep.tile.afterModify()
+            // TODO: store this decision in beam state
             beam.addStep(this.#step(destination, nextStep))
             puzzle.unmask()
             puzzle.update()

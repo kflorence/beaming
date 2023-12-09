@@ -1,13 +1,13 @@
 import { capitalize, emitEvent } from './util'
 import { Puzzle } from './puzzle'
-import { StateManager } from './stateManager'
+import { Stateful } from './stateful'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
 
 let uniqueId = 0
 
-export class Modifier {
+export class Modifier extends Stateful {
   #container
   #eventListeners = {}
   #selectionTime = 500
@@ -23,7 +23,9 @@ export class Modifier {
   title
   type
 
-  constructor (tile, configuration) {
+  constructor (tile, state) {
+    super(state)
+
     Object.entries({
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
@@ -41,7 +43,6 @@ export class Modifier {
       this.#eventListeners[name] = handler.bind(this)
     })
 
-    this.configuration = configuration
     this.tile = tile
   }
 
@@ -91,10 +92,6 @@ export class Modifier {
 
   equals (other) {
     return other instanceof Modifier && this.id === other.id
-  }
-
-  getObjectPath () {
-    return this.tile.getObjectPath().concat([StateManager.Paths.modifiers, this.tile.getModifierIndex(this)])
   }
 
   move (tile) {
@@ -171,14 +168,13 @@ export class Modifier {
 
   #maskOnClick (puzzle, tile) {
     if (tile && tile !== this.tile) {
-      const fromObjectPath = this.getObjectPath()
       const fromTile = this.tile
 
       this.move(tile)
 
-      const move = [new StateManager.Update(StateManager.Update.Types.move, fromObjectPath, this.getObjectPath())]
-      this.dispatchEvent(Modifier.Events.Moved, { fromTile, move })
+      this.dispatchEvent(Modifier.Events.Moved, { fromTile })
 
+      puzzle.updateState()
       puzzle.updateSelectedTile(tile)
       puzzle.unmask()
     } else {

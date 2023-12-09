@@ -1,6 +1,5 @@
 import { Modifier } from '../modifier'
-import { MouseButton } from '../util'
-import { StateManager } from '../stateManager'
+import { coalesce, MouseButton } from '../util'
 
 export class Rotate extends Modifier {
   clockwise
@@ -8,10 +7,10 @@ export class Rotate extends Modifier {
   title = 'Items in this tile can be rotated.'
   type = Modifier.Types.rotate
 
-  constructor (tile, configuration) {
+  constructor (tile, state, configuration = {}) {
     super(...arguments)
 
-    this.clockwise = configuration.clockwise !== false
+    this.clockwise = coalesce(true, state.clockwise, configuration.clockwise)
     this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
   }
 
@@ -21,19 +20,14 @@ export class Rotate extends Modifier {
     const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
 
-    const move = items.map((item) => new StateManager.Update(
-      StateManager.Update.Types.set,
-      item.getObjectPath().concat([Rotate.Paths.direction]),
-      item.direction
-    ))
-
-    this.dispatchEvent(Modifier.Events.Invoked, { items, move })
+    this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
   onMouseDown (event) {
     // Change rotation direction if user right-clicks on the modifier
     if (event.button === MouseButton.Right) {
       this.clockwise = !this.clockwise
+      this.updateState((state) => { state.clockwise = this.clockwise })
       this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
     } else {
       super.onMouseDown(event)
@@ -41,22 +35,18 @@ export class Rotate extends Modifier {
   }
 
   static Names = Object.freeze({ left: 'rotate_left', right: 'rotate_right ' })
-  static Paths = Object.freeze({ direction: 'direction' })
 }
 
 /**
  * A mixin for Item which provides rotate behaviors.
- *
- * @param SuperClass
- * @returns {{new(*, *): RotatableItem, rotatable: boolean, direction: number, prototype: RotatableItem}}
  */
 export const rotatable = (SuperClass) => class RotatableItem extends SuperClass {
-  constructor (parent, configuration) {
+  constructor (parent, state, configuration = {}) {
     super(...arguments)
 
-    this.direction = configuration.direction || 0
-    this.rotatable = configuration.rotatable !== false
-    this.rotateDegrees = configuration.rotateDegrees || 60
+    this.direction = coalesce(0, state.direction, configuration.direction)
+    this.rotatable = coalesce(true, state.rotatable, configuration.rotatable)
+    this.rotateDegrees = coalesce(60, state.rotateDegrees, configuration.rotateDegrees)
 
     if (this.rotatable) {
       this.doRotate(this.direction)
@@ -71,7 +61,9 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     const direction = clockwise === false ? -1 : 1
     const directionMax = (360 / this.rotateDegrees)
 
-    this.direction = (this.direction + direction) % directionMax
+    // noinspection JSValidateTypes
+    this.direction = (direction + this.direction) % directionMax
+    this.updateState((state) => { state.direction = this.direction })
 
     this.doRotate(direction)
   }

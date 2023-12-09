@@ -3,59 +3,57 @@ import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
 import { getConvertedDirection } from './util'
+import { Stateful } from './stateful'
 
-export class Layout {
+export class Layout extends Stateful {
+  #tilesByAxial = []
+  #tilesByOffset = []
+
   items = []
   layers = {}
   tiles = []
   tileSize = 100
 
-  constructor (configuration) {
-    const center = paper.view.center
-    const tileParameters = Tile.parameters(this.tileSize)
+  constructor (state) {
+    super(state)
 
-    const height = configuration.length * tileParameters.height
+    const center = paper.view.center
+    const parameters = Tile.parameters(this.tileSize)
+
+    const height = state.length * parameters.height
     const startingOffsetY = center.y - height / 2
 
     this.layers.tiles = new Layer()
     this.layers.items = new Layer()
 
-    for (let r = 0; r < configuration.length; r++) {
-      const rowConfiguration = configuration[r]
+    for (let r = 0; r < state.length; r++) {
+      const row = state[r]
+      const rowByAxial = new Array(row.length).fill(null)
+      const rowByOffset = new Array(row.length).fill(null)
       const rowOffset = Math.floor(r / 2)
-      const rowWidth = rowConfiguration.length * tileParameters.width
+      const rowWidth = row.length * parameters.width
+
+      // Using the "odd-r" offset system. Each odd row moves to the right by 1/2 column width
       const startingOffsetX =
-        center.x - rowWidth / 2 + (r % 2 === 0 ? 0 : tileParameters.inradius)
+        center.x - rowWidth / 2 + (r % 2 === 0 ? 0 : parameters.inradius)
 
-      const row = new Array(rowConfiguration.length)
-      for (let c = 0; c < rowConfiguration.length; c++) {
-        const axialCoordinates = new CubeCoordinates(c - rowOffset, r)
-        const offsetCoordinates = new OffsetCoordinates(r, c)
+      for (let c = 0; c < row.length; c++) {
+        const axial = new CubeCoordinates(c - rowOffset, r)
+        const offset = new OffsetCoordinates(r, c)
 
-        const tileConfiguration = rowConfiguration[c]
-        if (!tileConfiguration) {
+        const layout = {
+          row: r,
+          column: c,
+          startingOffsetX,
+          startingOffsetY
+        }
+
+        const state = row[c]
+        if (!state) {
           continue
         }
 
-        tileConfiguration.id = offsetCoordinates.toString()
-
-        // Allow tiles to be clicked on
-        tileConfiguration.locked = false
-
-        const tile = new Tile({
-          coordinates: {
-            axial: axialCoordinates,
-            offset: offsetCoordinates
-          },
-          layout: {
-            row: r,
-            column: c,
-            startingOffsetX,
-            startingOffsetY
-          },
-          parameters: tileParameters,
-          configuration: tileConfiguration
-        })
+        const tile = new Tile({ axial, offset }, layout, parameters, state)
 
         this.layers.tiles.addChild(tile.group)
 
@@ -64,18 +62,27 @@ export class Layout {
           this.layers.items.addChildren(tile.items.map((item) => item.group))
         }
 
-        row[axialCoordinates.q] = tile
+        this.tiles.push(tile)
+
+        rowByAxial[axial.q] = tile
+        rowByOffset[offset.c] = tile
       }
 
-      this.tiles.push(row)
+      this.#tilesByAxial.push(rowByAxial)
+      this.#tilesByOffset.push(rowByOffset)
     }
   }
 
-  getTile (axial) {
-    return (this.tiles[axial.r] || [])[axial.q]
+  getTileByAxial (axial) {
+    return (this.#tilesByAxial[axial.r] || [])[axial.q]
+  }
+
+  getState () {
+    // Tiles are defined by offset in the puzzle state
+    return this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
   }
 
   getNeighboringTile (axial, direction) {
-    return this.getTile(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
+    return this.getTileByAxial(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
   }
 }

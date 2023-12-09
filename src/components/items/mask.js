@@ -2,12 +2,8 @@ import { Item } from '../item'
 import { Path } from 'paper'
 
 export class Mask extends Item {
-  constructor (tile, configuration = {}) {
-    // Allow item to be clicked on
-    configuration.locked = false
-    configuration.type = Item.Types.mask
-
-    super(null, configuration)
+  constructor (tile, state) {
+    super(null, state, { locked: false, type: Item.Types.mask })
 
     const data = { type: this.type }
     const item = new Path.RegularPolygon({
@@ -19,7 +15,7 @@ export class Mask extends Item {
       sides: 6,
       style: Object.assign(
         { fillColor: 'black' },
-        configuration?.style || {}
+        state?.style || {}
       )
     })
 

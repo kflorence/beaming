@@ -2,12 +2,10 @@ import { Item } from '../item'
 import { Path } from 'paper'
 
 export class Collision extends Item {
-  constructor (configuration) {
-    configuration.type = Item.Types.collision
+  constructor (state) {
+    super(null, state, { type: Item.Types.collision })
 
-    super(null, configuration)
-
-    const { center, color } = configuration
+    const { center, color } = state
 
     this.center = center
     this.color = color

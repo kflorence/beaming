@@ -1,6 +1,5 @@
-import objectPath from 'object-path'
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode } from './util'
+import { base64decode, base64encode, jsonDiffPatch } from './util'
 
 const crypto = window.crypto
 const history = window.history
@@ -35,8 +34,8 @@ export class StateManager {
     return this.#state?.id
   }
 
-  get (path) {
-    return path ? objectPath.get(this.#state?.current, path) : this.#state?.current
+  get () {
+    return structuredClone(this.#state?.current)
   }
 
   setState (id) {
@@ -92,19 +91,24 @@ export class StateManager {
     localStorage.setItem(this.#key(StateManager.Keys.state), state)
   }
 
-  update (move) {
-    if (!move.length) {
+  update (newState) {
+    const delta = jsonDiffPatch.diff(this.#state.current, newState)
+
+    console.log('StateManager.update', delta)
+    if (delta === undefined) {
       // Nothing to do
       return
     }
 
-    this.#state.update(move)
+    this.#state.update(delta)
 
     const state = this.#state.encode()
 
     url.searchParams.set(StateManager.Keys.state, state)
     history.pushState({ state }, '', url)
     localStorage.setItem(this.#key(StateManager.Keys.state), state)
+
+    return this.get()
   }
 
   #key (key) {
@@ -123,63 +127,26 @@ export class StateManager {
     zoom: 'zoom'
   })
 
-  static Paths = Object.freeze({
-    items: 'items',
-    layout: 'layout',
-    modifiers: 'modifiers'
-  })
-
-  static Update = class {
-    constructor (type, path, ...args) {
-      if (!Object.hasOwn(StateManager.Update.Types, type)) {
-        throw new Error(`Invalid type: ${type}`)
-      }
-
-      this.args = args || []
-      this.path = path
-      this.type = type
-    }
-
-    static Types = Object.freeze({
-      del: 'del',
-      move: 'move',
-      set: 'set'
-    })
-  }
-
   static #State = class {
-    constructor (id, puzzle, moves) {
+    constructor (id, puzzle, deltas) {
       this.id = id
       this.puzzle = puzzle
-
-      // Optional
-      this.moves = moves || []
+      this.deltas = deltas || []
 
       // Update current state
       this.current = structuredClone(puzzle)
-      this.moves.flat().forEach((update) => this.apply(update))
+      this.deltas.forEach((delta) => this.apply(delta))
     }
 
-    apply (update) {
-      console.log('applying update', update)
-      switch (update.type) {
-        case StateManager.Update.Types.move: {
-          const state = objectPath.get(this.current, update.path)
-          objectPath.del(this.current, update.path)
-          objectPath.set(this.current, update.args[0], state)
-          break
-        }
-        default: {
-          objectPath[update.type](this.current, update.path, ...update.args)
-        }
-      }
-      return update
+    apply (delta) {
+      console.debug('StateManager: applying delta', delta)
+      return jsonDiffPatch.patch(this.current, delta)
     }
 
     encode () {
       return base64encode(JSON.stringify({
         id: this.id,
-        moves: this.moves,
+        deltas: this.deltas,
         // No need to cache puzzles which exist in code
         puzzle: Puzzles.has(this.id) ? undefined : this.puzzle
       }))
@@ -187,18 +154,19 @@ export class StateManager {
 
     reset () {
       this.current = structuredClone(this.puzzle)
-      this.moves = []
+      this.deltas = []
     }
 
-    update (move) {
-      this.moves.push(move.map((update) => this.apply(update)))
+    update (delta) {
+      this.apply(delta)
+      this.deltas.push(delta)
     }
 
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
       state.id = state.id || crypto.randomUUID()
       state.puzzle = state.puzzle || Puzzles.get(state.id)
-      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.moves)
+      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.deltas)
     }
 
     static fromId (id) {

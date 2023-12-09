@@ -1,4 +1,9 @@
+import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import pako from 'pako'
+
+export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
+
+window.jsonDiffPatch = jsonDiffPatch
 
 export const MouseButton = Object.freeze({
   Left: 0,
@@ -20,6 +25,10 @@ export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
+export function coalesce (...args) {
+  return args.findLast((arg) => arg !== undefined)
+}
+
 /**
  * Calls the given function one time after a task has finished for the given amount of time.
  * @param func the function to call
@@ -37,17 +46,28 @@ export function debounce (func, delay = 500) {
 }
 
 export function base64decode (string) {
+  const binString = window.atob(base64unescape(string))
   // noinspection JSCheckFunctionSignatures
-  return new TextDecoder().decode(pako.inflate(Uint8Array.from(window.atob(string), (c) => c.codePointAt(0))))
+  return new TextDecoder().decode(pako.inflate(Uint8Array.from(binString, (c) => c.codePointAt(0))))
 }
 
 window.base64decode = base64decode
 
 export function base64encode (string) {
-  return window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string))))
+  return base64escape(window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string)))))
 }
 
 window.base64encode = base64encode
+
+function base64escape (string) {
+  // https://en.wikipedia.org/wiki/Base64#URL_applications
+  return string.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
+
+function base64unescape (string) {
+  return (string + '==='.slice((string.length + 3) % 4))
+    .replace(/-/g, '+').replace(/_/g, '/')
+}
 
 export function deepEqual (x, y) {
   return typeof x === 'object' && typeof y === 'object'

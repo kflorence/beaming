@@ -2,7 +2,6 @@ import { Path, Point } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
 import { emitEvent } from '../util'
-import { StateManager } from '../stateManager'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
@@ -10,10 +9,10 @@ export class Tile extends Item {
 
   #ui
 
-  constructor ({ coordinates, layout, parameters, configuration }) {
-    super(null, configuration)
+  constructor (coordinates, layout, parameters, state) {
+    super(null, state, { locked: false })
 
-    this.#ui = Tile.ui(layout, parameters, configuration, { coordinates, type: this.type })
+    this.#ui = Tile.ui(layout, parameters, state, { coordinates, type: this.type })
 
     this.center = this.#ui.center
     this.coordinates = coordinates
@@ -24,12 +23,12 @@ export class Tile extends Item {
     this.group.addChild(this.#ui.hexagon)
 
     // These need to be last, since they reference this
-    this.items = (configuration.items || [])
-      .map((configuration) => itemFactory(this, configuration))
+    this.items = (state.items || [])
+      .map((state) => itemFactory(this, state))
       .filter((item) => item !== undefined)
 
-    this.modifiers = (configuration.modifiers || [])
-      .map((configuration) => modifierFactory(this, configuration))
+    this.modifiers = (state.modifiers || [])
+      .map((state) => modifierFactory(this, state))
       .filter((modifier) => modifier !== undefined)
   }
 
@@ -50,22 +49,25 @@ export class Tile extends Item {
     this.setStyle('edit')
   }
 
-  getItemIndex (item) {
+  getState () {
+    const state = { type: this.type }
+
     // Filter out beams, which are not stored in state
-    return this.items.filter((item) => item.type !== Item.Types.beam).findIndex((other) => other.equals(item))
-  }
+    const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())
+    if (items.length) {
+      state.items = items
+    }
 
-  getModifierIndex (modifier) {
-    return this.modifiers.findIndex((other) => other.equals(modifier))
-  }
+    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    if (modifiers.length) {
+      state.modifiers = modifiers
+    }
 
-  getObjectPath () {
-    const offset = this.coordinates.offset
-    return [StateManager.Paths.layout, offset.r, offset.c]
+    return state
   }
 
   onClick (event) {
-    console.debug(this.toString(), this)
+    console.debug(this.coordinates.axial.toString(), this)
     this.items.forEach((item) => item.onClick(event))
   }
 

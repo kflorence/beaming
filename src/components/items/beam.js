@@ -8,25 +8,24 @@ export class Beam extends Item {
   path = []
   sortOrder = 2
 
-  #opening
+  #direction
   #path
 
   #stepIndex = -1
   #steps = []
 
-  constructor (terminus, opening) {
+  constructor (terminus, state, configuration) {
     super(...arguments)
 
-    this.direction = opening.direction
     this.group = null
     this.width = terminus.radius / 12
 
-    this.#opening = opening
+    this.#direction = configuration.direction
     this.#path = {
       closed: false,
       data: { id: this.id, type: this.type },
       locked: true,
-      strokeColor: opening.color,
+      strokeColor: configuration.color,
       strokeJoin: 'round',
       strokeWidth: this.width
     }
@@ -67,7 +66,7 @@ export class Beam extends Item {
       path.add(...points)
 
       const pathIndex = this.path.push(path) - 1
-      const index = step.state.insertAbove ? step.state.insertAbove.getLayerIndex() + 1 : 0
+      const index = step.state.insertAbove ? step.state.insertAbove.getIndex() + 1 : 0
 
       // Unless specified in the state, the path will be inserted beneath all items
       this.getLayer().insertChild(index, path)
@@ -93,39 +92,27 @@ export class Beam extends Item {
   }
 
   getColor () {
-    return this.getState()?.color || this.#opening.color
-  }
-
-  getCollision () {
-    return this.getState()?.collision
+    return this.getStep()?.color || this.getOpening().color
   }
 
   getCompoundPath () {
     return new CompoundPath({ children: this.path.map((item) => item.clone({ insert: false })) })
   }
 
-  getConnection () {
-    return this.getState()?.connection
-  }
-
-  getLayerIndex () {
+  getIndex () {
     return this.path[this.path.length - 1].index
   }
 
-  getLastStep () {
-    return this.#steps[this.#steps.length - 1]
+  getStep (stepIndex) {
+    return this.#steps[stepIndex || this.#steps.length - 1]
   }
 
   getLayer () {
     return this.parent.getLayer()
   }
 
-  getMergedInto () {
-    return this.getState()?.mergedInto
-  }
-
-  getState () {
-    return this.getLastStep()?.state
+  getOpening () {
+    return this.parent.getOpening(this.#direction)
   }
 
   getSteps (tile) {
@@ -138,12 +125,13 @@ export class Beam extends Item {
 
   isConnected () {
     // Consider beams which have merged into connected beams to also be connected
-    return this.getConnection() || this.getMergedInto()?.getConnection()
+    return this.getStep()?.getConnection() || this.getStep()?.getMergedInto()?.getConnection()
   }
 
   isOn () {
+    const opening = this.getOpening()
     // The opening will also be on if another beam connects with it
-    return this.#opening.on && !this.#opening.connected
+    return opening.on && !opening.connected
   }
 
   isPending () {
@@ -162,9 +150,9 @@ export class Beam extends Item {
     console.debug(this.toString(), 'onBeamUpdated', event)
 
     const beam = event.detail.beam
-    const state = this.getState()
+    const state = this.getStep()?.state
     if (!beam.isPending() && state?.collision?.item.equals(beam)) {
-      const otherState = beam.getState()
+      const otherState = beam.getStep()?.state
       if (!state.collision.point.equals(otherState?.collision?.point)) {
         console.debug(this.toString(), 're-evaluating collision with beam', beam.toString())
         this.done = false
@@ -191,7 +179,7 @@ export class Beam extends Item {
       return
     }
 
-    if (this.getMergedInto() === beam) {
+    if (this.getStep()?.getMergedInto() === beam) {
       console.debug(this.toString(), 'ignoring collision with merged beam', beam.toString())
       return
     }
@@ -258,7 +246,7 @@ export class Beam extends Item {
   onModifierInvoked (event) {
     console.debug(this.toString(), 'onModifierInvoked', event)
 
-    if (!this.#opening.on) {
+    if (!this.isOn()) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
         this.remove()
@@ -282,7 +270,7 @@ export class Beam extends Item {
 
   startDirection () {
     // Take rotation of the parent (terminus) into account
-    return (this.#opening.direction + this.parent.direction) % 6
+    return (this.getOpening().direction + this.parent.direction) % 6
   }
 
   /**
@@ -300,7 +288,7 @@ export class Beam extends Item {
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.addStep(new Beam.Step(tile, this.#opening.color, this.startDirection(), tile.center, 0, 0))
+      this.addStep(new Beam.Step(tile, this.getColor(), this.startDirection(), tile.center, 0, 0))
     }
 
     const currentStep = this.#steps[this.#stepIndex]
@@ -316,7 +304,7 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.debug(this.toString(), 'stopping due to out of bounds')
-      currentStep.state = { collision: { outOfBounds: true } }
+      currentStep.state = { collision: { outOfBounds: true, point: currentStep.point } }
       this.#onUpdate(currentStep)
       return
     }
@@ -568,6 +556,18 @@ export class Beam extends Item {
       this.segmentIndex = segmentIndex
       this.tile = tile
       this.state = state
+    }
+
+    getCollision () {
+      return this.state.collision
+    }
+
+    getConnection () {
+      return this.state.connection
+    }
+
+    getMergedInto () {
+      return this.state.mergedInto
     }
 
     update (options) {

@@ -5,13 +5,9 @@ import { rotatable } from '../modifiers/rotate'
 import { movable } from '../modifiers/move'
 
 export class Wall extends movable(rotatable(Item)) {
-  constructor (tile, configuration) {
-    configuration.rotateDegrees = 30
-
-    // noinspection JSCheckFunctionSignatures
-    super(...arguments)
-
-    this.group.addChild(Wall.item(tile, configuration))
+  constructor (tile, state) {
+    super(tile, state, { rotateDegrees: 30 })
+    this.group.addChild(Wall.item(tile, state))
   }
 
   static item (tile, { openings }) {

@@ -6,12 +6,10 @@ import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 
 export class Reflector extends movable(rotatable(Item)) {
-  constructor (tile, configuration) {
-    configuration.rotateDegrees = 30
+  constructor (tile, state) {
+    super(tile, state, { rotateDegrees: 30 })
 
-    super(...arguments)
-
-    this.color = configuration.color || 'black'
+    this.color = state.color || 'black'
     this.group.addChild(Reflector.item(tile, this.color))
   }
 

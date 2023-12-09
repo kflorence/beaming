@@ -1,7 +1,6 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
-import { StateManager } from '../stateManager'
 
 export class Move extends Modifier {
   #mask
@@ -43,14 +42,11 @@ export class Move extends Modifier {
       puzzle.unmask()
 
       const items = this.tile.items.filter((item) => item.movable)
-      const fromObjectPaths = items.map((item) => item.getObjectPath())
       items.forEach((item) => item.move(tile))
 
-      const move = items.map((item, index) =>
-        new StateManager.Update(StateManager.Update.Types.move, fromObjectPaths[index], item.getObjectPath())
-      )
+      puzzle.updateState()
 
-      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile, move })
+      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile })
     } else {
       puzzle.unmask()
     }

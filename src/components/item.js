@@ -1,10 +1,10 @@
 import { capitalize } from './util'
 import { CompoundPath, Group } from 'paper'
-import { StateManager } from './stateManager'
+import { Stateful } from './stateful'
 
 let uniqueId = 0
 
-export class Item {
+export class Item extends Stateful {
   center
   data
   group
@@ -15,12 +15,12 @@ export class Item {
   sortOrder = 100
   type
 
-  constructor (parent, configuration) {
-    const type = configuration?.type
+  constructor (parent, state, configuration) {
+    super(state)
 
-    this.data = Object.assign({ id: this.id, type }, configuration?.data || {})
+    this.type = state?.type || configuration?.type
+    this.data = Object.assign({ id: this.id, type: this.type }, configuration?.data || {})
     this.locked = configuration?.locked !== false
-    this.type = type
 
     if (parent) {
       this.center = parent.center
@@ -43,16 +43,12 @@ export class Item {
     })
   }
 
-  getLayerIndex () {
+  getIndex () {
     return this.group.index
   }
 
   getLayer () {
     return this.group.parent
-  }
-
-  getObjectPath () {
-    return this.parent?.getObjectPath().concat([StateManager.Paths.items, this.parent.getItemIndex(this)])
   }
 
   onClick () {}

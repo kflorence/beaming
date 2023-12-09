@@ -21,7 +21,7 @@ const Events = Object.freeze({
   Error: 'puzzle-error'
 })
 
-const state = new StateManager()
+const stateManager = new StateManager()
 
 // Handle puzzle solved
 document.addEventListener(Puzzle.Events.Solved, () => {
@@ -30,22 +30,22 @@ document.addEventListener(Puzzle.Events.Solved, () => {
 
 // Handle menu items
 elements.next.addEventListener('click', () => {
-  const id = Puzzles.nextId(state.getId())
+  const id = Puzzles.nextId(stateManager.getId())
   if (id) {
     selectPuzzle(id)
   }
 })
 
 elements.previous.addEventListener('click', () => {
-  const id = Puzzles.previousId(state.getId())
+  const id = Puzzles.previousId(stateManager.getId())
   if (id) {
     selectPuzzle(id)
   }
 })
 
 elements.reset.addEventListener('click', () => {
-  state.reset()
-  selectPuzzle(state.getId())
+  stateManager.reset()
+  selectPuzzle(stateManager.getId())
 })
 
 // Handle puzzle selector dropdown
@@ -89,7 +89,7 @@ function selectPuzzle (id) {
 
   try {
     // Keep the puzzle selector in sync with the ID from state
-    id = puzzleSelector.value = state.setState(id)
+    id = puzzleSelector.value = stateManager.setState(id)
 
     if (!id) {
       addClass('disabled', elements.previous, elements.next)
@@ -99,7 +99,7 @@ function selectPuzzle (id) {
       addClass('disabled', elements.next)
     }
 
-    puzzle = new Puzzle(state)
+    puzzle = new Puzzle(stateManager)
   } catch (e) {
     console.error(e)
     elements.message.textContent = 'Puzzle configuration is invalid'

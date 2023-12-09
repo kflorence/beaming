@@ -32,9 +32,7 @@ export class Toggle extends Modifier {
 
     this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
 
-    const move = items.flatMap((item) => item.getToggledStateUpdates())
-
-    this.dispatchEvent(Modifier.Events.Invoked, { items, move })
+    this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
   static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
@@ -56,9 +54,6 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
 
     this.toggleable = configuration.toggleable !== false
   }
-
-  // Different items will have different toggled state changes
-  getToggledStateUpdates () {}
 
   onToggle () {}
 

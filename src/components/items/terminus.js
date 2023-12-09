@@ -6,38 +6,32 @@ import { rotatable } from '../modifiers/rotate'
 import { emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
-import { StateManager } from '../stateManager'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   sortOrder = 1
 
   #ui
 
-  constructor (tile, configuration) {
-    // noinspection JSCheckFunctionSignatures
+  constructor (tile, state) {
     super(...arguments)
 
-    let color = configuration.color
+    let color = state.color
 
-    // Normalize openings data
-    const openings = configuration.openings.map((opening, direction) => {
-      if (opening) {
-        opening.color = opening.color || color
-        if (Array.isArray(opening.color)) {
-          opening.color = chroma.average(opening.color).hex()
-        }
-        opening.connected = false
-        opening.direction = direction
-        opening.on = !!opening.on
-      }
-
-      return opening
-    })
+    const openings = state.openings.map((state, direction) =>
+      state
+        ? new Terminus.#Opening(
+          state.color || color,
+          direction,
+          state.connected,
+          state.on
+        )
+        : state
+    ).filter((opening) => opening)
 
     if (color) {
       color = chroma(color).hex()
     } else {
-      const colors = openings.filter((opening) => opening?.color).map((opening) => opening.color)
+      const colors = openings.map((opening) => opening.color)
 
       if (colors.length === 0) {
         throw new Error('Terminus has no color defined.')
@@ -46,33 +40,22 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       color = chroma.average(colors).hex()
     }
 
-    this.#ui = Terminus.ui(tile, { color, openings })
+    this.#ui = Terminus.ui(tile, color, openings)
 
-    this.group.addChildren([this.#ui.terminus, ...this.#ui.openings.filter((opening) => opening)])
+    this.group.addChildren([this.#ui.terminus, ...this.#ui.openings])
 
     this.color = color
     this.openings = openings
     this.radius = this.#ui.radius
 
     // Needs to be last since it references 'this'
-    this.beams = openings.filter((opening) => opening).map((opening) => new Beam(this, opening))
+    this.beams = openings.map((opening) => new Beam(this, state.openings[opening.direction], opening))
 
     this.update()
   }
 
-  getToggledStateUpdates () {
-    const openingsObjectPath = this.getObjectPath().concat([Terminus.Paths.openings])
-    return this.openings.map((opening, index) => {
-      if (!opening) {
-        return opening
-      }
-
-      return new StateManager.Update(
-        StateManager.Update.Types.set,
-        openingsObjectPath.concat([index, Terminus.Paths.on]),
-        opening.on
-      )
-    }).filter((update) => update)
+  getOpening (direction) {
+    return this.openings.find((opening) => opening.direction === direction)
   }
 
   onMove () {
@@ -87,7 +70,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       return
     }
 
-    const opening = this.openings[getOppositeDirection(currentStep.direction)]
+    const opening = this.getOpening(getOppositeDirection(currentStep.direction))
 
     // Beam has connected to a valid opening
     if (opening && !opening.on && opening.color === nextStep.color) {
@@ -101,35 +84,40 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   onConnection (direction) {
-    const opening = this.openings[direction]
-    opening.connected = opening.on = true
+    const opening = this.getOpening(direction)
+    opening.connect()
     this.update()
     emitEvent(Terminus.Events.Connection, { terminus: this, opening })
   }
 
   onDisconnection (direction) {
-    const opening = this.openings[direction]
-    opening.connected = opening.on = false
+    const opening = this.getOpening(direction)
+    opening.disconnect()
     this.update()
     emitEvent(Terminus.Events.Disconnection, { terminus: this, opening })
   }
 
   onToggle () {
-    this.openings.filter((opening) => opening).forEach((opening) => {
-      opening.on = !opening.on
+    this.updateState((state) => {
+      this.openings.forEach((opening) => {
+        opening.toggle()
+        state.openings[opening.direction].on = opening.on
+      })
     })
     this.update()
   }
 
   update () {
     this.beams.forEach((beam) => {
-      this.#ui.openings[beam.direction].opacity = this.openings[beam.direction].on ? 1 : Terminus.#openingOffOpacity
+      const opening = beam.getOpening()
+      const item = this.#ui.openings.find((item) => item.data.direction === opening.direction)
+      item.opacity = opening.on ? 1 : Terminus.#openingOffOpacity
     })
   }
 
   static #openingOffOpacity = 0.3
 
-  static ui (tile, { color, openings: configuration }) {
+  static ui (tile, color, configuration) {
     const radius = tile.parameters.circumradius / 2
 
     const terminus = new Path.RegularPolygon({
@@ -141,10 +129,6 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     })
 
     const openings = configuration.map((opening) => {
-      if (!opening) {
-        return opening
-      }
-
       const direction = opening.direction
 
       const p1 = terminus.segments[direction].point
@@ -158,7 +142,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
       return new Path({
         closed: true,
-        data: { collidable: false },
+        data: { collidable: false, direction },
         fillColor: opening.color,
         opacity: opening.on ? 1 : Terminus.#openingOffOpacity,
         segments: [p1, p2, p3]
@@ -166,6 +150,27 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     })
 
     return { openings, radius, terminus }
+  }
+
+  static #Opening = class {
+    constructor (color, direction, connected, on) {
+      this.color = Array.isArray(color) ? chroma.average(color).hex() : color
+      this.direction = direction
+      this.connected = connected === true
+      this.on = on === true
+    }
+
+    connect () {
+      this.connected = this.on = true
+    }
+
+    disconnect () {
+      this.connected = this.on = false
+    }
+
+    toggle () {
+      this.on = !this.on
+    }
   }
 
   static Events = Object.freeze({
