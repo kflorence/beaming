@@ -26,6 +26,8 @@ export class Modifier extends Stateful {
   constructor (tile, state) {
     super(state)
 
+    this.type = state.type
+
     Object.entries({
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
@@ -172,11 +174,11 @@ export class Modifier extends Stateful {
 
       this.move(tile)
 
-      this.dispatchEvent(Modifier.Events.Moved, { fromTile })
-
       puzzle.updateState()
       puzzle.updateSelectedTile(tile)
       puzzle.unmask()
+
+      this.dispatchEvent(Modifier.Events.Moved, { fromTile })
     } else {
       Modifier.deselect()
       puzzle.unmask()
@@ -188,6 +190,10 @@ export class Modifier extends Stateful {
     if (selectedModifier) {
       selectedModifier.dispatchEvent(new CustomEvent('deselected'))
     }
+  }
+
+  static immutable (modifier) {
+    return modifier.type === Modifier.Types.immutable
   }
 
   static Events = Object.freeze({

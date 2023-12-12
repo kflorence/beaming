@@ -8,5 +8,4 @@ export class Lock extends Modifier {
   immutable = true
   name = 'lock'
   title = 'The items in this tile are locked. They can be updated but they cannot be modified.'
-  type = Modifier.Types.lock
 }

@@ -27,7 +27,7 @@ export class Item extends Stateful {
     }
 
     this.parent = parent
-    this.group = new Group({ applyMatrix: false, data: this.data, locked: this.locked })
+    this.group = new Group({ data: this.data, locked: this.locked })
   }
 
   equals (otherItem) {
@@ -69,10 +69,16 @@ export class Item extends Stateful {
 
   onDeselected () { }
 
+  onInitialization () {}
+
   onSelected () {}
 
   remove () {
     this.group.remove()
+  }
+
+  toString () {
+    return `[${this.type}:${this.id}]`
   }
 
   update () {}

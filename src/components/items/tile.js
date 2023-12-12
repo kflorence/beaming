@@ -41,7 +41,7 @@ export class Tile extends Item {
   }
 
   afterModify () {
-    this.setStyle('default')
+    this.setStyle(this.selected ? 'selected' : 'default')
   }
 
   beforeModify () {
@@ -67,11 +67,12 @@ export class Tile extends Item {
   }
 
   onClick (event) {
-    console.debug(this.coordinates.axial.toString(), this)
+    console.debug(this.coordinates.offset.toString(), this)
     this.items.forEach((item) => item.onClick(event))
   }
 
   onDeselected (selectedTile) {
+    this.selected = false
     this.#ui.hexagon.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
     this.modifiers.forEach((modifier) => modifier.detach())
@@ -80,6 +81,7 @@ export class Tile extends Item {
   }
 
   onSelected (deselectedTile) {
+    this.selected = true
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
@@ -173,6 +175,7 @@ export class Tile extends Item {
       strokeWidth: 2
     },
     selected: {
+      dashArray: [],
       strokeColor: 'black',
       strokeWidth: 2
     }

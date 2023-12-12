@@ -63,14 +63,28 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   onCollision (
-    beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, existingNextStep, collisionStep) {
+    beam,
+    puzzle,
+    collision,
+    collisionIndex,
+    collisions,
+    currentStep,
+    nextStep,
+    existingNextStep,
+    collisionStep
+  ) {
+    console.debug(this.toString(), 'collision', beam.toString())
+
     // Colliding with the starting terminus, ignore
     if (beam.parent === this && beam.startDirection() === nextStep.direction) {
-      console.debug(beam.id, 'ignoring starting terminus collision')
+      console.debug(beam.toString(), 'ignoring starting terminus collision')
       return
     }
 
-    const opening = this.getOpening(getOppositeDirection(currentStep.direction))
+    const directionFrom = getOppositeDirection(currentStep.direction)
+    const opening = this.openings.find((opening) =>
+      // Take rotation of terminus into account
+      (opening.direction + this.rotation) % 6 === directionFrom)
 
     // Beam has connected to a valid opening
     if (opening && !opening.on && opening.color === nextStep.color) {

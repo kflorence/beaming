@@ -29,5 +29,9 @@ export function itemFactory (parent, configuration) {
       break
   }
 
+  if (item) {
+    item.onInitialization()
+  }
+
   return item
 }

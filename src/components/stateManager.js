@@ -94,7 +94,7 @@ export class StateManager {
   update (newState) {
     const delta = jsonDiffPatch.diff(this.#state.current, newState)
 
-    console.log('StateManager.update', delta)
+    console.debug('StateManager.update', delta)
     if (delta === undefined) {
       // Nothing to do
       return

@@ -6,7 +6,7 @@ import { movable } from '../modifiers/move'
 
 export class Wall extends movable(rotatable(Item)) {
   constructor (tile, state) {
-    super(tile, state, { rotateDegrees: 30 })
+    super(tile, state, { rotationDegrees: 30 })
     this.group.addChild(Wall.item(tile, state))
   }
 

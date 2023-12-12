@@ -4,6 +4,7 @@ import { Move } from './modifiers/move'
 import { Rotate } from './modifiers/rotate'
 import { Toggle } from './modifiers/toggle'
 import { Modifier } from './modifier'
+import { Swap } from './modifiers/swap'
 
 export function modifierFactory (tile, configuration) {
   let modifier
@@ -20,6 +21,9 @@ export function modifierFactory (tile, configuration) {
       break
     case Modifier.Types.rotate:
       modifier = new Rotate(tile, configuration)
+      break
+    case Modifier.Types.swap:
+      modifier = new Swap(tile, configuration)
       break
     case Modifier.Types.toggle:
       modifier = new Toggle(tile, configuration)

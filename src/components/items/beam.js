@@ -103,6 +103,10 @@ export class Beam extends Item {
     return this.path[this.path.length - 1].index
   }
 
+  getState () {
+    return this.parent.getState().openings[this.#direction]
+  }
+
   getStep (stepIndex) {
     return this.#steps[stepIndex || this.#steps.length - 1]
   }
@@ -125,7 +129,7 @@ export class Beam extends Item {
 
   isConnected () {
     // Consider beams which have merged into connected beams to also be connected
-    return this.getStep()?.getConnection() || this.getStep()?.getMergedInto()?.getConnection()
+    return this.getStep()?.getConnection() || this.getStep()?.getMergedInto()?.getStep()?.getConnection()
   }
 
   isOn () {
@@ -249,6 +253,8 @@ export class Beam extends Item {
     if (!this.isOn()) {
       // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
+        // Also reset any state changes from collision resolution
+        this.updateState((state) => { delete state.collisions })
         this.remove()
       }
       return
@@ -270,7 +276,7 @@ export class Beam extends Item {
 
   startDirection () {
     // Take rotation of the parent (terminus) into account
-    return (this.getOpening().direction + this.parent.direction) % 6
+    return (this.getOpening().direction + this.parent.rotation) % 6
   }
 
   /**
@@ -402,7 +408,11 @@ export class Beam extends Item {
   }
 
   toString () {
-    return `[${this.getColor()}:${this.id}]`
+    return `[${this.type}:${this.id}:${this.getColor()}]`
+  }
+
+  updateState (updater, dispatchEvent = true) {
+    return this.parent.updateState((state) => updater(state.openings[this.#direction]), dispatchEvent)
   }
 
   #onCollision (step) {

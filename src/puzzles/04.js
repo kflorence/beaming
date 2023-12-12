@@ -8,7 +8,7 @@ export default {
       {
         items: [
           {
-            direction: 4,
+            rotation: 4,
             type: 'Reflector'
           }
         ],

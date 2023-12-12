@@ -120,10 +120,11 @@ export class Puzzle {
   unmask () {
     this.#mask = undefined
     this.layers.mask.removeChildren()
+    this.update()
   }
 
   update () {
-    if (!this.#isUpdatingBeams) {
+    if (!this.#mask && !this.#isUpdatingBeams) {
       this.#updateBeams()
     }
   }
@@ -184,7 +185,6 @@ export class Puzzle {
   #onBeamUpdate (event) {
     const stepAdded = event.detail.stepAdded
     if (stepAdded?.state.collision) {
-      console.log(stepAdded)
       const point = stepAdded.point
       const collisionId = Puzzle.Collision.id(point)
       const collision = this.#collisions[collisionId]

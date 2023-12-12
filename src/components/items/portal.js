@@ -11,6 +11,8 @@ export class Portal extends movable(rotatable(Item)) {
     // Only allow rotation if direction is defined
     super(tile, state, { rotatable: state.direction !== undefined })
 
+    this.direction = state.direction
+
     const height = tile.parameters.circumradius / 3
     const width = tile.parameters.circumradius / 5
 
@@ -58,9 +60,8 @@ export class Portal extends movable(rotatable(Item)) {
     this.group.addChildren(children)
 
     if (this.rotatable) {
-      // Properly align the item visually with the hexagonal directions.
-      // As drawn, it is off by one rotation (e.g. 0 = 5).
-      this.doRotate(1)
+      // Properly align items with hexagonal rotation
+      this.rotateGroup(1)
     }
   }
 
@@ -75,18 +76,6 @@ export class Portal extends movable(rotatable(Item)) {
     existingNextStep,
     collisionStep
   ) {
-    const matchingDirection = this.rotatable ? getOppositeDirection(this.direction) : this.direction
-
-    // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
-    const destinations = puzzle.getItems().filter((item) =>
-      item.type === Item.Types.portal && !item.equals(this) && item.direction === matchingDirection)
-
-    if (destinations.length === 0) {
-      console.debug('portal has no destinations, stopping')
-      // Nowhere to go
-      return collisionStep
-    }
-
     if (!currentStep.state.portal) {
       const state = { insertAbove: this, portal: { entry: this } }
 
@@ -95,6 +84,25 @@ export class Portal extends movable(rotatable(Item)) {
     } else if (currentStep.state.portal.exit === this) {
       // Handle exit collision
       return Beam.Step.from(nextStep, { state: { insertAbove: this } })
+    }
+
+    const direction = this.getDirection()
+    const matchingDirection = direction === undefined ? direction : getOppositeDirection(this.getDirection())
+
+    // Check for destination in beam state
+    const destinationId = beam.getState().collisions?.[this.id]
+    console.log(beam.getState())
+    // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
+    const destinations = puzzle.getItems().filter((item) =>
+      item.type === Item.Types.portal &&
+      !item.equals(this) && item.getDirection() === matchingDirection &&
+      (!destinationId || item.id === destinationId)
+    )
+
+    if (destinations.length === 0) {
+      console.debug('portal has no destinations, stopping')
+      // Nowhere to go
+      return collisionStep
     }
 
     if (destinations.length === 1) {
@@ -115,10 +123,15 @@ export class Portal extends movable(rotatable(Item)) {
           const destination = destinations.find((portal) => portal.parent === tile)
           if (destination) {
             currentStep.tile.afterModify()
-            // TODO: store this decision in beam state
             beam.addStep(this.#step(destination, nextStep))
+            beam.updateState((state) => {
+              if (!state.collisions) {
+                state.collisions = {}
+              }
+              // Store this decision in beam state
+              state.collisions[this.id] = destination.id
+            })
             puzzle.unmask()
-            puzzle.update()
           }
         }
       ))
@@ -129,7 +142,7 @@ export class Portal extends movable(rotatable(Item)) {
 
   #step (portal, nextStep) {
     return Beam.Step.from(nextStep, {
-      direction: this.rotatable ? this.direction : nextStep.direction,
+      direction: this.rotatable ? this.getDirection() : nextStep.direction,
       tile: portal.parent,
       point: portal.parent.center,
       state: { disconnect: true, insertAbove: portal, portal: { exit: portal } }

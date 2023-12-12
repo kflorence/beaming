@@ -7,7 +7,6 @@ export class Move extends Modifier {
 
   name = 'drag_pan'
   title = 'Items in this tile can be moved to an empty tile.'
-  type = Modifier.Types.move
 
   onClick (event) {
     super.onClick(event)
@@ -18,38 +17,48 @@ export class Move extends Modifier {
 
     this.tile.beforeModify()
 
-    const mask = new Puzzle.Mask(
-      // TODO: should we instead just check for collisions with existing items in tile?
-      (tile) => {
-        // Filter out tiles with items, except for the current tile
-        return (tile.items.length > 0 && !(tile === this.tile)) ||
-          // Filter out tiles with the immutable modifier
-          tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
-      },
-      this.#maskOnClick.bind(this)
-    )
+    const mask = new Puzzle.Mask(this.tileFilter.bind(this), this.#maskOnClick.bind(this))
 
     this.#mask = mask
 
     emitEvent(Puzzle.Events.Mask, { mask })
   }
 
+  moveItems (tile) {
+    const items = this.tile.items.filter(Move.movable)
+    items.forEach((item) => item.move(tile))
+    return { moved: Move.data(this.tile, tile, items) }
+  }
+
+  tileFilter (tile) {
+    // Filter out immutable tiles and tiles with items, except for the current tile
+    return tile.modifiers.some(Modifier.immutable) || (tile.items.length > 0 && !(tile === this.tile))
+  }
+
   #maskOnClick (puzzle, tile) {
     this.tile.afterModify()
 
     if (tile) {
-      // Unmask before move, since moving can trigger beam updates
-      puzzle.unmask()
-
-      const items = this.tile.items.filter((item) => item.movable)
-      items.forEach((item) => item.move(tile))
+      const data = this.moveItems(tile)
 
       puzzle.updateState()
+      puzzle.updateSelectedTile(tile)
+      puzzle.unmask()
 
-      this.dispatchEvent(Modifier.Events.Invoked, { items, destination: tile })
+      this.dispatchEvent(Modifier.Events.Invoked, data)
     } else {
       puzzle.unmask()
     }
+
+    this.#mask = undefined
+  }
+
+  static data (fromTile, toTile, items) {
+    return { fromTile, toTile, items }
+  }
+
+  static movable (item) {
+    return item.movable
   }
 }
 
@@ -77,6 +86,7 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
     // Update tile reference
     this.parent = tile
     this.parent.addItem(this)
+    this.center = this.parent.center
 
     this.onMove()
   }

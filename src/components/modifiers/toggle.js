@@ -1,18 +1,15 @@
 import { Modifier } from '../modifier'
 
 export class Toggle extends Modifier {
-  items
   on
   title = 'Items in this tile can be toggled between states.'
-  type = Modifier.Types.toggle
 
   constructor (tile, { on }) {
     super(...arguments)
 
-    this.items = this.tile.items.filter((item) => item.toggleable === true)
     this.on = on || false
 
-    this.items.forEach((item) => {
+    this.tile.items.forEach((item) => {
       item.toggled = this.on
     })
   }
@@ -27,7 +24,7 @@ export class Toggle extends Modifier {
 
     this.on = !this.on
 
-    const items = this.items.filter((item) => item.toggleable)
+    const items = this.tile.items.filter((item) => item.toggleable)
     items.forEach((item) => item.toggle(this.on))
 
     this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })

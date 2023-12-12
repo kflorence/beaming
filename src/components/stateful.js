@@ -8,7 +8,7 @@ export class Stateful {
   }
 
   getState () {
-    return this.#state
+    return structuredClone(this.#state)
   }
 
   updateState (updater, dispatchEvent = true) {

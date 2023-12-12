@@ -7,7 +7,7 @@ import { movable } from '../modifiers/move'
 
 export class Reflector extends movable(rotatable(Item)) {
   constructor (tile, state) {
-    super(tile, state, { rotateDegrees: 30 })
+    super(tile, state, { rotationDegrees: 30 })
 
     this.color = state.color || 'black'
     this.group.addChild(Reflector.item(tile, this.color))
@@ -16,7 +16,7 @@ export class Reflector extends movable(rotatable(Item)) {
   onCollision (
     beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep, existingNextStep, collisionStep) {
     const directionFrom = getOppositeDirection(currentStep.direction)
-    const directionTo = getReflectedDirection(directionFrom, this.direction)
+    const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
     if (directionTo === currentStep.direction) {
       console.debug(beam.color, 'stopping due to collision with non-reflective side of reflector')

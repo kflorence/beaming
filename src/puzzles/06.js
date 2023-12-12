@@ -32,7 +32,7 @@ export default {
       {
         items: [
           {
-            direction: 5,
+            rotation: 5,
             type: 'Reflector'
           }
         ],
