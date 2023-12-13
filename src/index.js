@@ -12,6 +12,7 @@ const elements = Object.freeze({
   next: document.getElementById('next'),
   previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
+  puzzleId: document.getElementById('puzzle-id'),
   redo: document.getElementById('redo'),
   reset: document.getElementById('reset'),
   undo: document.getElementById('undo')
@@ -48,16 +49,15 @@ elements.reset.addEventListener('click', () => {
   selectPuzzle(stateManager.getId())
 })
 
-// Handle puzzle selector dropdown
-const puzzleSelector = document.getElementById('puzzle-selector')
+// Generate puzzle ID dropdown
 for (const id of Puzzles.ids) {
   const option = document.createElement('option')
   option.value = id
-  option.innerText = id
-  puzzleSelector.appendChild(option)
+  option.innerText = Puzzles.titles[id]
+  elements.puzzleId.append(option)
 }
 
-puzzleSelector.addEventListener('change', (event) => {
+elements.puzzleId.addEventListener('change', (event) => {
   selectPuzzle(event.target.value)
 })
 
@@ -88,21 +88,30 @@ function selectPuzzle (id) {
   }
 
   try {
-    // Keep the puzzle selector in sync with the ID from state
-    id = puzzleSelector.value = stateManager.setState(id)
+    id = stateManager.setState(id)
 
-    if (!id) {
+    if (!Puzzles.has(id)) {
+      // Custom puzzle
+      const option = document.createElement('option')
+      option.value = id
+      option.innerText = [stateManager.getTitle(), '(User-defined)'].join(' ')
+      elements.puzzleId.prepend(option)
+      elements.puzzleId.value = id
       addClass('disabled', elements.previous, elements.next)
-    } else if (id === Puzzles.firstId) {
-      addClass('disabled', elements.previous)
-    } else if (id === Puzzles.lastId) {
-      addClass('disabled', elements.next)
+    } else {
+      elements.puzzleId.value = id
+
+      if (id === Puzzles.firstId) {
+        addClass('disabled', elements.previous)
+      } else if (id === Puzzles.lastId) {
+        addClass('disabled', elements.next)
+      }
     }
 
     puzzle = new Puzzle(stateManager)
   } catch (e) {
     console.error(e)
-    elements.message.textContent = 'Puzzle configuration is invalid'
+    elements.message.textContent = 'Invalid puzzle configuration.'
     document.body.classList.add(Events.Error)
   }
 }
@@ -152,3 +161,4 @@ window.drawDebugPoint = function (x, y, style) {
 window.paper = paper
 window.puzzle = puzzle
 window.puzzles = Puzzles
+window.stateManager = stateManager

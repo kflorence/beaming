@@ -13,66 +13,75 @@ export class StateManager {
   #state
 
   clearCache (id) {
-    params.delete(StateManager.Keys.state)
-
     if (!id) {
       // Clear everything
-      Array.from(url.searchParams)
-        .filter(([key]) => key !== StateManager.Keys.clearCache)
-        .forEach(([key]) => url.searchParams.delete(key))
+      url.pathname = ''
       history.pushState({}, '', url)
       localStorage.clear()
     } else {
       // Clear a single puzzle
-      url.searchParams.delete(StateManager.Keys.state)
+      url.pathname = `/${id}`
       history.pushState({ id }, '', url)
       localStorage.removeItem(StateManager.key(StateManager.Keys.state, id))
     }
-  }
-
-  getId () {
-    return this.#state?.id
   }
 
   get () {
     return structuredClone(this.#state?.current)
   }
 
+  getId () {
+    return this.#state?.id
+  }
+
+  getTitle () {
+    return this.#state?.current.title
+  }
+
   setState (id) {
-    let state
+    this.#state = undefined
 
     // Allow cache to be cleared via URL param
     if (params.has(StateManager.Keys.clearCache)) {
       this.clearCache(params.get(StateManager.Keys.clearCache))
     }
 
+    const pathSegments = url.pathname.split('/').filter((path) => path !== '')
+
     if (!id) {
-      // Check for encoded state in URL if no explicit ID is given
-      state = params.get(StateManager.Keys.state)
+      // If no explicit ID is given, try to load state from URL
+      pathSegments.filter((path) => !Puzzles.has(path)).some((segment, index) => {
+        try {
+          this.#state = StateManager.#State.fromEncoded(segment)
+          id = this.getId()
+        } catch (e) {
+          console.debug(`Path segment ${index} is not valid state`, e)
+        }
+
+        return this.#state !== undefined
+      })
     }
 
-    if (!state) {
+    if (!this.#state) {
       // Update ID before checking for state in localStorage.
-      id = id || params.get(StateManager.Keys.id) || localStorage.getItem(StateManager.Keys.id) || Puzzles.firstId
-      state = localStorage.getItem(StateManager.key(StateManager.Keys.state, id))
+      id = id || pathSegments[0] || localStorage.getItem(StateManager.Keys.id) || Puzzles.firstId
+
+      const state = localStorage.getItem(StateManager.key(StateManager.Keys.state, id))
+      if (state) {
+        try {
+          this.#state = StateManager.#State.fromEncoded(state)
+        } catch (e) {
+          console.debug(`Unable to load state for id ${id} from localStorage`, e)
+        }
+      }
     }
 
-    if (state) {
-      this.#state = StateManager.#State.fromEncoded(state)
-    } else {
+    if (!this.#state) {
+      // Fall back to loading state from Puzzles cache by ID
       this.#state = StateManager.#State.fromId(id)
-      state = this.#state.encode()
     }
 
-    id = this.getId()
-
-    url.searchParams.set(StateManager.Keys.id, id)
-    url.searchParams.set(StateManager.Keys.state, state)
-    url.searchParams.sort()
-
-    history.pushState({ id, state }, '', url)
-    localStorage.setItem(StateManager.Keys.id, id)
-    localStorage.setItem(this.#key(StateManager.Keys.state), state)
+    this.#updateHistory(id)
 
     return id
   }
@@ -81,14 +90,8 @@ export class StateManager {
     const id = this.getId()
 
     this.clearCache(id)
-
     this.#state.reset()
-
-    const state = this.#state.encode()
-
-    url.searchParams.set(StateManager.Keys.state, state)
-    history.pushState({ id, state }, '', url)
-    localStorage.setItem(this.#key(StateManager.Keys.state), state)
+    this.#updateHistory(id)
   }
 
   update (newState) {
@@ -101,18 +104,23 @@ export class StateManager {
     }
 
     this.#state.update(delta)
-
-    const state = this.#state.encode()
-
-    url.searchParams.set(StateManager.Keys.state, state)
-    history.pushState({ state }, '', url)
-    localStorage.setItem(this.#key(StateManager.Keys.state), state)
+    this.#updateHistory()
 
     return this.get()
   }
 
   #key (key) {
     return StateManager.key(key, this.getId())
+  }
+
+  #updateHistory (id) {
+    id = id || this.getId()
+    const state = this.#state.encode()
+
+    url.pathname = [id, state].join('/')
+    history.pushState({ id, state }, '', url)
+    localStorage.setItem(StateManager.Keys.id, id)
+    localStorage.setItem(this.#key(StateManager.Keys.state), state)
   }
 
   static key (key, id) {

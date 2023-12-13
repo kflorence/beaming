@@ -9,24 +9,18 @@
   <body>
     <header>
       <ul id="actions">
-        <li>
-          <label>
-            <select name="id" id="puzzle-selector">
-              <option value="">?</option>
-            </select>
-          </label>
-        </li>
         <li id="previous"><span class="material-symbols-outlined" title="Previous Puzzle">navigate_before</span></li>
         <li id="undo"><span class="material-symbols-outlined" title="Undo">undo</span></li>
         <li id="reset"><span class="material-symbols-outlined" title="Reset">device_reset</span></li>
         <li id="redo"><span class="material-symbols-outlined" title="Redo">redo</span></li>
         <li id="next"><span class="material-symbols-outlined" title="Next Puzzle">navigate_next</span></li>
       </ul>
+      <div id="selector"><label><select id="puzzle-id" name="id"></select></label></div>
       <ul id="state">
-        <li id="connections">0</li>
+        <li id="connections" title="Connections">0</li>
         <li>/</li>
-        <li id="connections-required">0</li>
-        <li><span class="material-symbols-outlined" title="Power level">bolt</span></li>
+        <li id="connections-required" title="Connections required">0</li>
+        <li><span class="material-symbols-outlined">link</span></li>
       </ul>
     </header>
     <main id="main">
@@ -34,11 +28,9 @@
       <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
     </main>
     <footer id="footer">
-      <div id="toolbar">
-        <ul id="modifiers-immutable" class="modifiers"></ul>
-        <div id="message"></div>
-        <ul id="modifiers-mutable" class="modifiers"></ul>
-      </div>
+      <ul id="modifiers-immutable" class="modifiers"></ul>
+      <div id="message"></div>
+      <ul id="modifiers-mutable" class="modifiers"></ul>
     </footer>
   </body>
   <script type="module" src="index.js"></script>

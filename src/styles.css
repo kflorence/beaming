@@ -30,27 +30,6 @@ header {
 header {
   border-bottom: 1px solid #999;
   box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
-  justify-content: space-between;
-}
-
-header select {
-  appearance: none;
-  background-color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 1em;
-  font-weight: bold;
-  padding: 0.5em 1em;
-  text-align: center;
-}
-
-header select:focus-visible {
-  background-color: #eee;
-  outline: 1px solid #ddd;
-}
-
-header select:hover {
-  background-color: #eee;
 }
 
 footer {
@@ -65,24 +44,27 @@ main {
 
 #actions {
   display: flex;
+  flex: 1;
   list-style: none;
+  justify-content: flex-start;
   margin: 0;
   padding: 0;
 }
 
 #actions li {
-  align-items: center;
   border-left: 1px solid #ddd;
   cursor: pointer;
   display: flex;
   padding: 0 0.5em;
-  justify-content: center;
-  width: 100%;
 }
 
 #actions li:first-child {
   border: none;
-  padding: 0;
+  padding-left: 0;
+}
+
+#actions li:last-child {
+  padding-right: 0;
 }
 
 #actions li:not(.disabled):hover {
@@ -113,17 +95,16 @@ main {
   justify-content: center;
 }
 
-#toolbar {
-  width: 100%;
-}
-
 #message {
   align-items: center;
   color: #999;
   display: flex;
+  flex: 1;
   justify-content: center;
-  padding: 0.5em;
-  width: 100%;
+}
+
+#modifiers-immutable {
+  justify-content: flex-start;
 }
 
 #modifiers-immutable button {
@@ -149,10 +130,40 @@ main {
   border: 1px dashed #000;
 }
 
+#puzzle-id {
+  appearance: none;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  padding: 0.5em 1em;
+  text-align: center;
+  text-align-last: center;
+}
+
+#puzzle-id:focus-visible {
+  background-color: #eee;
+  outline: 1px solid #ddd;
+}
+
+#puzzle-id:hover {
+  background-color: #eee;
+}
+
+#selector {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+
 #state {
   cursor: default;
   display: flex;
+  flex: 1;
+  line-height: 24px;
   list-style: none;
+  justify-content: flex-end;
   margin: 0;
   padding: 0;
 }
@@ -160,11 +171,26 @@ main {
 #state li {
   align-items: center;
   display: flex;
+  margin-left: 0.25em;
+}
+
+#state li:last-child {
   margin-left: 0.5em;
 }
 
 #toolbar {
   display: flex;
+  width: 100%;
+}
+
+.beam {
+  color: white;
+  padding: 0.25em;
+}
+
+.beam::selection {
+  color: white;
+  background-color: black;
 }
 
 .grab #puzzle {
@@ -181,12 +207,13 @@ main {
 }
 
 .modifiers {
+  align-items: center;
   display: flex;
+  flex: 1;
   gap: 0.5em;
   list-style: none;
   margin: 0;
   padding: 0;
-  width: 100%;
 }
 
 .modifiers button {
@@ -221,4 +248,9 @@ main {
 
 .puzzle-solved #puzzle {
   cursor: not-allowed;
+}
+
+.text {
+  color: black;
+  padding: 0 0.25em;
 }

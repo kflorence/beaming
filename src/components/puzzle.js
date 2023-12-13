@@ -11,6 +11,7 @@ import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 
 const elements = Object.freeze({
+  beams: document.getElementById('beams'),
   connections: document.getElementById('connections'),
   connectionsRequired: document.getElementById('connections-required'),
   message: document.getElementById('message')
@@ -21,6 +22,7 @@ export class Puzzle {
   connectionsRequired
   debug = false
   layers = {}
+  message
   selectedTile
   solved = false
 
@@ -37,7 +39,7 @@ export class Puzzle {
 
   constructor (stateManager) {
     const state = stateManager.get()
-    const { connectionsRequired, layout, title } = state
+    const { connectionsRequired, layout, message } = state
 
     this.layout = new Layout(layout)
     this.stateManager = stateManager
@@ -52,13 +54,11 @@ export class Puzzle {
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    this.title = title
-
-    elements.message.textContent = title
-
     this.connectionsRequired = connectionsRequired
+    this.message = message
 
     this.#setState()
+    this.#updateMessage()
 
     this.#addEventListeners()
     this.#addLayers()
@@ -108,6 +108,10 @@ export class Puzzle {
       ))
 
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
+
+    if (mask.message) {
+      elements.message.textContent = mask.message
+    }
   }
 
   teardown () {
@@ -120,6 +124,7 @@ export class Puzzle {
   unmask () {
     this.#mask = undefined
     this.layers.mask.removeChildren()
+    this.#updateMessage(this.selectedTile)
     this.update()
   }
 
@@ -227,6 +232,8 @@ export class Puzzle {
       this.#mask.onClick(this, tile)
     } else {
       const previouslySelectedTile = this.updateSelectedTile(tile)
+
+      this.#updateMessage(tile)
 
       if (tile && tile === previouslySelectedTile) {
         tile.onClick(event)
@@ -340,6 +347,19 @@ export class Puzzle {
     this.#updateBeams()
   }
 
+  #updateMessage (tile) {
+    console.log('updateMessage', tile)
+    if (tile) {
+      const terminus = tile.items.find((item) => item.type === Item.Types.terminus)
+      if (terminus) {
+        elements.message.replaceChildren(...terminus.getColorElements())
+        return
+      }
+    }
+
+    elements.message.textContent = this.message
+  }
+
   #updateState () {
     const connections = this.connections.length
 
@@ -413,10 +433,11 @@ export class Puzzle {
   })
 
   static Mask = class {
-    constructor (filter, onClick, configuration) {
+    constructor (filter, onClick, configuration, message) {
       this.configuration = configuration
       this.filter = filter
       this.onClick = onClick
+      this.message = message
     }
   }
 

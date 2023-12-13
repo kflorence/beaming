@@ -30,6 +30,7 @@ export class Puzzles {
   static ids = Object.keys(configuration)
   static firstId = Puzzles.ids[0]
   static lastId = Puzzles.ids[Puzzles.ids.length - 1]
+  static titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title]))
 
   static get (id) {
     // Ensure we return a deep clone of the configuration to ensure any mutations downstream will not end up in

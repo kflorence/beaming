@@ -16,22 +16,10 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     super(...arguments)
 
     let color = state.color
-
-    const openings = state.openings.map((state, direction) =>
-      state
-        ? new Terminus.#Opening(
-          state.color || color,
-          direction,
-          state.connected,
-          state.on
-        )
-        : state
-    ).filter((opening) => opening)
-
     if (color) {
       color = chroma(color).hex()
     } else {
-      const colors = openings.map((opening) => opening.color)
+      const colors = state.openings.filter((opening) => opening).map((opening) => opening.color)
 
       if (colors.length === 0) {
         throw new Error('Terminus has no color defined.')
@@ -39,6 +27,17 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
       color = chroma.average(colors).hex()
     }
+
+    const openings = state.openings.map((state, direction) =>
+      state
+        ? new Terminus.#Opening(
+          state.color ? chroma(state.color).hex() : color,
+          direction,
+          state.connected,
+          state.on
+        )
+        : state
+    ).filter((opening) => opening)
 
     this.#ui = Terminus.ui(tile, color, openings)
 
@@ -52,6 +51,34 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.beams = openings.map((opening) => new Beam(this, state.openings[opening.direction], opening))
 
     this.update()
+  }
+
+  getColorElements () {
+    const colors = this.openings.map((opening) => opening.color)
+    const elements = []
+
+    if (colors.some((color) => color !== this.color)) {
+      const maxColorIndex = colors.length - 1
+
+      colors.forEach((color, index) => {
+        elements.push(Terminus.#beamElement(color))
+        if (index < maxColorIndex) {
+          const plus = document.createElement('span')
+          plus.classList.add('text')
+          plus.textContent = '+'
+          elements.push(plus)
+        }
+      })
+
+      const equals = document.createElement('span')
+      equals.classList.add('text')
+      equals.textContent = '='
+      elements.push(equals)
+    }
+
+    elements.push(Terminus.#beamElement(this.color))
+
+    return elements
   }
 
   getOpening (direction) {
@@ -129,6 +156,14 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     })
   }
 
+  static #beamElement (color) {
+    const span = document.createElement('span')
+    span.classList.add('beam')
+    span.style.backgroundColor = color
+    span.textContent = color
+    return span
+  }
+
   static #openingOffOpacity = 0.3
 
   static ui (tile, color, configuration) {
@@ -190,10 +225,5 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   static Events = Object.freeze({
     Connection: 'terminus-connection',
     Disconnection: 'terminus-disconnection'
-  })
-
-  static Paths = Object.freeze({
-    openings: 'openings',
-    on: 'on'
   })
 }
