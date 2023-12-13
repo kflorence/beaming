@@ -95,6 +95,11 @@ export class Beam extends Item {
     return this.getStep()?.color || this.getOpening().color
   }
 
+  getColorElements (tile) {
+    // TODO: returned merged colors in tile
+    return []
+  }
+
   getCompoundPath () {
     return new CompoundPath({ children: this.path.map((item) => item.clone({ insert: false })) })
   }
@@ -121,6 +126,10 @@ export class Beam extends Item {
 
   getSteps (tile) {
     return tile ? this.#steps.filter((step) => step.tile === tile) : this.#steps
+  }
+
+  hasColorElements (tile) {
+    return this.getSteps(tile).find((step) => step.getMergedInto())
   }
 
   isComplete () {

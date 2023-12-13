@@ -34,6 +34,10 @@ export class Item extends Stateful {
     return otherItem instanceof Item && this.id === otherItem.id
   }
 
+  getColorElements () {
+    return []
+  }
+
   getCompoundPath () {
     return new CompoundPath({
       // Must explicitly add insert: false for clone
@@ -49,6 +53,10 @@ export class Item extends Stateful {
 
   getLayer () {
     return this.group.parent
+  }
+
+  hasColorElements () {
+    return this.color !== undefined
   }
 
   onClick () {}

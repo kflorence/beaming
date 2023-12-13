@@ -29,6 +29,14 @@ export function coalesce (...args) {
   return args.findLast((arg) => arg !== undefined)
 }
 
+export function colorElement (color) {
+  const span = document.createElement('span')
+  span.classList.add('beam')
+  span.style.backgroundColor = color
+  span.textContent = color
+  return span
+}
+
 /**
  * Calls the given function one time after a task has finished for the given amount of time.
  * @param func the function to call

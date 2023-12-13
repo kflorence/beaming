@@ -225,6 +225,10 @@ main {
   padding: 0.25em 0.5em;
 }
 
+.puzzle-error #actions {
+  display: none;
+}
+
 .puzzle-error #puzzle,
 .puzzle-error .modifiers {
   display: none;
@@ -240,10 +244,6 @@ main {
 
 .puzzle-solved #menu {
   display: flex;
-}
-
-.puzzle-solved #toolbar {
-  display: none;
 }
 
 .puzzle-solved #puzzle {

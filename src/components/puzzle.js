@@ -348,11 +348,11 @@ export class Puzzle {
   }
 
   #updateMessage (tile) {
-    console.log('updateMessage', tile)
     if (tile) {
-      const terminus = tile.items.find((item) => item.type === Item.Types.terminus)
-      if (terminus) {
-        elements.message.replaceChildren(...terminus.getColorElements())
+      const item = tile.items.find((item) => item.hasColorElements(tile))
+      if (item) {
+        console.log(item)
+        elements.message.replaceChildren(...item.getColorElements())
         return
       }
     }
