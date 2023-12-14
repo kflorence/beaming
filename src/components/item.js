@@ -55,10 +55,6 @@ export class Item extends Stateful {
     return this.group.parent
   }
 
-  hasColorElements () {
-    return this.color !== undefined
-  }
-
   onClick () {}
 
   onCollision (

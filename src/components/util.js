@@ -1,5 +1,6 @@
 import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import pako from 'pako'
+import chroma from 'chroma-js'
 
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
 
@@ -29,12 +30,44 @@ export function coalesce (...args) {
   return args.findLast((arg) => arg !== undefined)
 }
 
-export function colorElement (color) {
+export function getColorElement (color) {
   const span = document.createElement('span')
   span.classList.add('beam')
   span.style.backgroundColor = color
-  span.textContent = color
+  span.title = color
   return span
+}
+
+export function getColorElements (colors) {
+  if (!colors.length) {
+    return []
+  }
+
+  const color = chroma.average(colors).hex()
+  const elements = []
+
+  if (colors.some((other) => other !== color)) {
+    const maxColorIndex = colors.length - 1
+
+    colors.forEach((color, index) => {
+      elements.push(getColorElement(color))
+      if (index < maxColorIndex) {
+        const plus = document.createElement('span')
+        plus.classList.add('text')
+        plus.textContent = '+'
+        elements.push(plus)
+      }
+    })
+
+    const equals = document.createElement('span')
+    equals.classList.add('text')
+    equals.textContent = '='
+    elements.push(equals)
+  }
+
+  elements.push(getColorElement(color))
+
+  return elements
 }
 
 /**

@@ -108,6 +108,7 @@ function selectPuzzle (id) {
       }
     }
 
+    // TODO Puzzle should be a singleton that internally handles updating state
     puzzle = new Puzzle(stateManager)
   } catch (e) {
     console.error(e)

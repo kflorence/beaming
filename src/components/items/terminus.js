@@ -3,7 +3,7 @@ import { Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { colorElement, emitEvent, getNextDirection, getOppositeDirection } from '../util'
+import { getColorElements, emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 
@@ -55,31 +55,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   getColorElements () {
-    const colors = this.openings.map((opening) => opening.color)
-    const elements = []
-
-    if (colors.some((color) => color !== this.color)) {
-      const maxColorIndex = colors.length - 1
-
-      colors.forEach((color, index) => {
-        elements.push(colorElement(color))
-        if (index < maxColorIndex) {
-          const plus = document.createElement('span')
-          plus.classList.add('text')
-          plus.textContent = '+'
-          elements.push(plus)
-        }
-      })
-
-      const equals = document.createElement('span')
-      equals.classList.add('text')
-      equals.textContent = '='
-      elements.push(equals)
-    }
-
-    elements.push(colorElement(this.color))
-
-    return elements
+    return getColorElements(this.openings.map((opening) => opening.color))
   }
 
   getOpening (direction) {
@@ -115,7 +91,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       (opening.direction + this.rotation) % 6 === directionFrom)
 
     // Beam has connected to a valid opening
-    if (opening && !opening.on && opening.color === nextStep.color) {
+    if (opening && !opening.on && opening.color === nextStep.getColor()) {
       const connection = { terminus: this, opening }
       console.debug(beam.toString(), 'terminus connection', connection)
       return Beam.Step.from(nextStep, { state: { connection } })

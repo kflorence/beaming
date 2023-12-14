@@ -1,7 +1,15 @@
 import chroma from 'chroma-js'
 import { CompoundPath, Path, Point } from 'paper'
 import { Item } from '../item'
-import { deepEqual, emitEvent, fuzzyEquals, getConvertedDirection, getMidPoint, sortByDistance } from '../util'
+import {
+  getColorElements,
+  deepEqual,
+  emitEvent,
+  fuzzyEquals,
+  getConvertedDirection,
+  getMidPoint,
+  sortByDistance
+} from '../util'
 
 export class Beam extends Item {
   done = false
@@ -25,7 +33,6 @@ export class Beam extends Item {
       closed: false,
       data: { id: this.id, type: this.type },
       locked: true,
-      strokeColor: configuration.color,
       strokeJoin: 'round',
       strokeWidth: this.width
     }
@@ -33,6 +40,7 @@ export class Beam extends Item {
 
   addStep (step) {
     this.done = false
+    this.#path.strokeColor = step.getColor()
 
     if (this.path.length === 0) {
       const path = new Path(this.#path)
@@ -46,14 +54,12 @@ export class Beam extends Item {
     // Handles cases that require adding a new path item
     if (
       previousStep && (
-        step.color !== previousStep.state.color ||
+        step.getColor() !== previousStep.getColor() ||
         step.state.disconnect ||
         (step.state.insertAbove && !step.state.insertAbove.equals(previousStep.state.insertAbove))
       )
     ) {
       currentPath.set({ closed: true })
-
-      this.#path.strokeColor = step.color
 
       const path = new Path(this.#path)
       const points = [step.point]
@@ -92,12 +98,13 @@ export class Beam extends Item {
   }
 
   getColor () {
-    return this.getStep()?.color || this.getOpening().color
+    return this.getStep()?.getColor() || this.getOpening().color
   }
 
   getColorElements (tile) {
-    // TODO: returned merged colors in tile
-    return []
+    // Show color elements for merged beams
+    const step = this.getSteps(tile).find((step) => step.getMergedWith())
+    return step ? getColorElements(step.color) : []
   }
 
   getCompoundPath () {
@@ -108,6 +115,18 @@ export class Beam extends Item {
     return this.path[this.path.length - 1].index
   }
 
+  getLayer () {
+    return this.parent.getLayer()
+  }
+
+  getMergedWithStepIndex (beam) {
+    return this.getSteps().findIndex((step) => step.getMergedWith()?.some((mergedBeam) => mergedBeam.equals(beam)))
+  }
+
+  getOpening () {
+    return this.parent.getOpening(this.#direction)
+  }
+
   getState () {
     return this.parent.getState().openings[this.#direction]
   }
@@ -116,20 +135,8 @@ export class Beam extends Item {
     return this.#steps[stepIndex || this.#steps.length - 1]
   }
 
-  getLayer () {
-    return this.parent.getLayer()
-  }
-
-  getOpening () {
-    return this.parent.getOpening(this.#direction)
-  }
-
   getSteps (tile) {
     return tile ? this.#steps.filter((step) => step.tile === tile) : this.#steps
-  }
-
-  hasColorElements (tile) {
-    return this.getSteps(tile).find((step) => step.getMergedInto())
   }
 
   isComplete () {
@@ -156,21 +163,45 @@ export class Beam extends Item {
   }
 
   onBeamUpdated (event) {
-    if (!this.isComplete()) {
+    const beam = event.detail.beam
+
+    if (beam.isPending()) {
+      // Wait for beam to finish before evaluating
       return
     }
 
     console.debug(this.toString(), 'onBeamUpdated', event)
 
-    const beam = event.detail.beam
-    const state = this.getStep()?.state
-    if (!beam.isPending() && state?.collision?.item.equals(beam)) {
-      const otherState = beam.getStep()?.state
-      if (!state.collision.point.equals(otherState?.collision?.point)) {
-        console.debug(this.toString(), 're-evaluating collision with beam', beam.toString())
+    const beamLastStep = beam.getStep()
+
+    if (this.isComplete()) {
+      const lastStep = this.getStep()
+
+      // Check for invalid collisions
+      const collision = lastStep.getCollision()
+      if (collision?.item?.equals(beam) && !collision.point.equals(beamLastStep?.getCollision()?.point)) {
+        console.debug(this.toString(), 're-evaluating collision with', beam.toString())
         this.done = false
-        this.#stepIndex = Math.min(this.#stepIndex - 1, 0)
+        this.#stepIndex = Math.max(this.#stepIndex - 1, 0)
+        return
       }
+
+      // Check for invalid mergedInto
+      const mergedInto = lastStep.getMergedInto()
+      if (mergedInto?.equals(beam) && beam.getMergedWithStepIndex(this) < 0) {
+        console.debug(this.toString(), 're-evaluating merge into', beam.toString())
+        this.done = false
+        this.#stepIndex = Math.max(this.#stepIndex - 1, 0)
+        return
+      }
+    }
+
+    // Check for invalid mergedWith
+    const mergedWithStepIndex = this.getMergedWithStepIndex(beam)
+    if (mergedWithStepIndex >= 0 && !beamLastStep?.getMergedInto()?.equals(this)) {
+      console.debug(this.toString(), 're-evaluating merged with', beam.toString())
+      this.done = false
+      this.#stepIndex = Math.max(mergedWithStepIndex - 1, 0)
     }
   }
 
@@ -210,22 +241,26 @@ export class Beam extends Item {
 
     // Find the step with matching collision point
     const stepIndex = this.#steps
-      .findLastIndex((step) => collision.points.some((point) => fuzzyEquals(point, step.point)))
+      .findIndex((step) => collision.points.some((point) => fuzzyEquals(point, step.point)))
     const step = this.#steps[stepIndex]
+    const isLastStep = stepIndex === lastStepIndex
 
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
       console.debug(this.toString(), 'collision with beam', beam.id)
 
       if (!step.state.collision) {
-        // Merge collision into step state
-        Object.assign(step.state, Beam.getCollisionState(collision, beam))
+        if (!isLastStep) {
+          // If matched step is not last step, update history
+          this.#updateHistory(stepIndex)
+        }
 
-        if (stepIndex === lastStepIndex) {
-          // If the matched step is the last step, no need to update history
+        // Merge collision into step state
+        step.update({ state: Object.assign(step.state, Beam.getCollisionState(collision, beam)) })
+
+        if (isLastStep) {
           this.#onUpdate(step)
         } else {
-          this.#updateHistory(stepIndex)
           this.addStep(step)
         }
       }
@@ -239,10 +274,14 @@ export class Beam extends Item {
     }
 
     // The beams are traveling in the same direction
-    console.debug(this.toString(), 'merging with beam', beam.id)
+    console.debug(this.toString(), 'merging with', beam.toString())
+
+    // Since the path color is changing, we always have to update history here
+    // TODO: update path only if current step is last step
+    this.#updateHistory(stepIndex)
 
     // Merge the color from the other beam into this one
-    step.color = chroma.average([step.color, beam.getColor()]).hex()
+    step.update({ color: step.color.concat([beam.getColor()]) })
 
     if (!step.state.mergedWith) {
       step.state.mergedWith = [beam]
@@ -250,10 +289,9 @@ export class Beam extends Item {
       step.state.mergedWith.push(beam)
     }
 
-    this.#updateHistory(stepIndex)
     this.addStep(step)
 
-    return Beam.Step.from(nextStep, { state: { mergedInto: this } })
+    return Beam.Step.from(currentStep, { state: { mergedInto: this } })
   }
 
   onModifierInvoked (event) {
@@ -329,7 +367,7 @@ export class Beam extends Item {
 
     let nextStep = new Beam.Step(
       tile,
-      existingNextStep?.color || currentStep.color,
+      currentStep.color,
       direction,
       nextStepPoint,
       existingNextStep?.pathIndex || currentStep.pathIndex + 1,
@@ -469,7 +507,7 @@ export class Beam extends Item {
     const lastStep = this.#steps[lastStepIndex]
     const step = this.#steps[stepIndex]
 
-    console.debug(this.toString(), 'updateState', 'new: ' + stepIndex, 'old: ' + lastStepIndex)
+    console.debug(this.toString(), 'updateHistory', 'stepIndex: ' + stepIndex, 'lastStepIndex: ' + lastStepIndex)
 
     if (step) {
       // Remove now invalid path items
@@ -567,18 +605,26 @@ export class Beam extends Item {
   }
 
   static Step = class {
+    #color
+
     constructor (tile, color, direction, point, pathIndex, segmentIndex, state = {}) {
-      this.color = color
+      this.color = color ? Array.isArray(color) ? Array.from(color) : [color] : color
       this.direction = direction
       this.point = point
       this.pathIndex = pathIndex
       this.segmentIndex = segmentIndex
       this.tile = tile
       this.state = state
+
+      this.update()
     }
 
     getCollision () {
       return this.state.collision
+    }
+
+    getColor () {
+      return this.#color
     }
 
     getConnection () {
@@ -589,12 +635,22 @@ export class Beam extends Item {
       return this.state.mergedInto
     }
 
+    getMergedWith () {
+      return this.state.mergedWith
+    }
+
     update (options) {
-      Object.entries(options).forEach(([key, value]) => {
-        if (Object.hasOwn(this, key)) {
-          this[key] = value
-        }
-      })
+      if (options) {
+        Object.entries(options).forEach(([key, value]) => {
+          if (Object.hasOwn(this, key)) {
+            this[key] = value
+          }
+        })
+      }
+
+      if (this.color) {
+        this.#color = chroma.average(this.color).hex()
+      }
 
       return this
     }

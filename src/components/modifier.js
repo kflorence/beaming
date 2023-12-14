@@ -10,6 +10,7 @@ let uniqueId = 0
 export class Modifier extends Stateful {
   #container
   #eventListeners = {}
+  #mask
   #selectionTime = 500
   #timeoutId
 
@@ -53,17 +54,22 @@ export class Modifier extends Stateful {
    */
   attach () {
     const li = this.#container = document.createElement('li')
-    const button = this.element = document.createElement('button')
 
-    button.classList.add('material-symbols-outlined')
+    if (this.immutable) {
+      li.classList.add('disabled')
+    }
+
+    const span = this.element = document.createElement('span')
+
+    span.classList.add('material-symbols-outlined', 'fill')
+
+    li.append(span)
 
     this.update()
 
     // noinspection JSCheckFunctionSignatures
     Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => button.addEventListener(event, listener))
-
-    li.append(button)
+      .forEach(([event, listener]) => li.addEventListener(event, listener))
 
     this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li)
   }
@@ -79,7 +85,7 @@ export class Modifier extends Stateful {
     Modifier.deselect()
 
     Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => this.element.removeEventListener(event, listener))
+      .forEach(([event, listener]) => this.#container.removeEventListener(event, listener))
 
     this.#container.remove()
 
@@ -114,7 +120,7 @@ export class Modifier extends Stateful {
 
   onMouseDown () {
     // Locked tiles cannot have their modifiers selected
-    if (!this.tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)) {
+    if (!this.#mask && !this.tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)) {
       this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
     }
   }
@@ -144,6 +150,8 @@ export class Modifier extends Stateful {
       this.#maskOnClick.bind(this)
     )
 
+    this.#mask = mask
+
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
@@ -163,7 +171,7 @@ export class Modifier extends Stateful {
     this.title = options.title
     this.selected = options.selected
 
-    this.element.classList.toggle('selected', this.selected)
+    this.#container.classList.toggle('selected', this.selected)
     this.element.textContent = this.name
     this.element.title = this.title
   }
@@ -183,6 +191,8 @@ export class Modifier extends Stateful {
       Modifier.deselect()
       puzzle.unmask()
     }
+
+    this.#mask = undefined
   }
 
   static deselect () {
@@ -211,10 +221,3 @@ export class Modifier extends Stateful {
     'toggle'
   ].map((type) => [type, capitalize(type)])))
 }
-
-// De-select any selected modifiers if user clicks on anything else in the footer
-document.getElementById('footer').addEventListener('click', (event) => {
-  if (!event.target.classList.contains('selected')) {
-    Modifier.deselect()
-  }
-})

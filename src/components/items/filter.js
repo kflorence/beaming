@@ -3,7 +3,7 @@ import { Item } from '../item'
 import { Color, Path } from 'paper'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
-import { colorElement } from '../util'
+import { getColorElement } from '../util'
 
 export class Filter extends movable(Item) {
   constructor (tile, { color }) {
@@ -31,7 +31,7 @@ export class Filter extends movable(Item) {
   }
 
   getColorElements () {
-    return [colorElement(this.color)]
+    return [getColorElement(this.color)]
   }
 
   onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep) {

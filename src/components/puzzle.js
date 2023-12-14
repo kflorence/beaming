@@ -349,10 +349,12 @@ export class Puzzle {
 
   #updateMessage (tile) {
     if (tile) {
-      const item = tile.items.find((item) => item.hasColorElements(tile))
-      if (item) {
-        console.log(item)
-        elements.message.replaceChildren(...item.getColorElements())
+      // Check to see if tile has any color elements that need to be displayed
+      const colorElements = tile.items
+        .map((item) => item.getColorElements(tile))
+        .find((colorElements) => colorElements.length > 0)
+      if (colorElements) {
+        elements.message.replaceChildren(...colorElements)
         return
       }
     }
@@ -451,7 +453,7 @@ export class Puzzle {
     undefined,
     (tile) => {
       const beams = tile.items.filter(Puzzle.#connectedBeams)
-      const colors = beams.flatMap((beam) => beam.getSteps(tile).map((step) => step.color))
+      const colors = beams.flatMap((beam) => beam.getSteps(tile).flatMap((step) => step.color))
       return { style: { fillColor: chroma.average(colors).hex() } }
     }
   )

@@ -31,7 +31,7 @@ export default {
             type: 'Terminus'
           }
         ],
-        modifiers: [{ type: 'Immutable' }],
+        modifiers: [{ type: 'Rotate' }],
         type: 'Tile'
       },
       {
