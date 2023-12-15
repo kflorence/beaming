@@ -1,6 +1,4 @@
 export default {
-  connectionsRequired: 1,
-  title: 'Portals II',
   layout: [
     [
       null,
@@ -79,5 +77,8 @@ export default {
       },
       null
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

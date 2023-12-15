@@ -77,6 +77,10 @@ export class Layout extends Stateful {
     return (this.#tilesByAxial[axial.r] || [])[axial.q]
   }
 
+  getTileByOffset (offset) {
+    return this.#tilesByOffset[offset.r][offset.c]
+  }
+
   getState () {
     // Tiles are defined by offset in the puzzle state
     return this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))

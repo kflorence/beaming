@@ -9,6 +9,7 @@ import { Beam } from './items/beam'
 import { Terminus } from './items/terminus'
 import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
+import { OffsetCoordinates } from './coordinates/offset'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -17,13 +18,13 @@ const elements = Object.freeze({
   message: document.getElementById('message')
 })
 
-export class Puzzle {
+export class Puzzle extends Stateful {
   connections = []
-  connectionsRequired
   debug = false
   layers = {}
   message
   selectedTile
+  solution
   solved = false
 
   #beams
@@ -32,19 +33,20 @@ export class Puzzle {
   #isDragging = false
   #isUpdatingBeams = false
   #mask
-  #state
   #termini
   #tiles
   #tool
 
   constructor (stateManager) {
-    const state = stateManager.get()
-    const { connectionsRequired, layout, message } = state
+    const state = stateManager.getCurrentState()
+
+    super(state)
+
+    const { solution, layout, message } = state
 
     this.layout = new Layout(layout)
     this.stateManager = stateManager
 
-    this.#state = state
     this.#tiles = this.layout.tiles
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
@@ -54,14 +56,19 @@ export class Puzzle {
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    this.connectionsRequired = connectionsRequired
     this.message = message
-
-    this.#setState()
-    this.#updateMessage()
+    this.solution = solution
 
     this.#addEventListeners()
     this.#addLayers()
+    this.#setSolution()
+
+    const selected = stateManager.getSelectedTile()
+    const selectedTile = selected
+      ? this.layout.getTileByOffset(new OffsetCoordinates(...selected.split(',')))
+      : undefined
+
+    this.updateSelectedTile(selectedTile)
 
     this.update()
   }
@@ -138,6 +145,8 @@ export class Puzzle {
     const previouslySelectedTile = this.selectedTile
 
     this.selectedTile = tile
+    this.stateManager.setSelectedTile(tile)
+    this.#updateMessage(tile)
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -150,9 +159,10 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
+  // noinspection JSCheckFunctionSignatures
   updateState () {
-    this.#state.layout = this.layout.getState()
-    this.stateManager.update(this.#state)
+    this.stateManager.updateState(
+      super.updateState((state) => { state.layout = this.layout.getState() }, false))
   }
 
   #addEventListeners () {
@@ -233,8 +243,6 @@ export class Puzzle {
     } else {
       const previouslySelectedTile = this.updateSelectedTile(tile)
 
-      this.#updateMessage(tile)
-
       if (tile && tile === previouslySelectedTile) {
         tile.onClick(event)
       }
@@ -308,7 +316,7 @@ export class Puzzle {
       this.connections.push(terminus)
     }
 
-    this.#updateState()
+    this.#updateSolution()
   }
 
   #removeEventListeners () {
@@ -323,9 +331,15 @@ export class Puzzle {
     paper.project.clear()
   }
 
-  #setState () {
-    elements.connectionsRequired.textContent = this.connectionsRequired.toString()
-    this.#updateState()
+  #setSolution () {
+    if (this.solution.connections) {
+      elements.connectionsRequired.textContent = this.solution.connections.toString()
+    } else {
+      console.error('Invalid puzzle solution', this.solution)
+      throw Error('Invalid puzzle solution')
+    }
+
+    this.#updateSolution()
   }
 
   #updateBeams () {
@@ -347,6 +361,17 @@ export class Puzzle {
     this.#updateBeams()
   }
 
+  #updateSolution () {
+    const connections = this.connections.length
+
+    elements.connections.textContent = connections.toString()
+
+    // Check for solution
+    if (connections === this.solution.connections) {
+      this.#onSolved()
+    }
+  }
+
   #updateMessage (tile) {
     if (tile) {
       // Check to see if tile has any color elements that need to be displayed
@@ -360,17 +385,6 @@ export class Puzzle {
     }
 
     elements.message.textContent = this.message
-  }
-
-  #updateState () {
-    const connections = this.connections.length
-
-    elements.connections.textContent = connections.toString()
-
-    // Check for solution
-    if (connections === this.connectionsRequired) {
-      this.#onSolved()
-    }
   }
 
   static Collision = class {

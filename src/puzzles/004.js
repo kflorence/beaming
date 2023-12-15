@@ -1,6 +1,4 @@
 export default {
-  connectionsRequired: 1,
-  title: 'Reflect',
   layout: [
     [
       null,
@@ -52,5 +50,8 @@ export default {
       null,
       null
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

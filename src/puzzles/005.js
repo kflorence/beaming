@@ -1,6 +1,4 @@
 export default {
-  title: 'Toggle',
-  connectionsRequired: 1,
   layout: [
     [
       null,
@@ -8,8 +6,7 @@ export default {
       {
         items: [
           {
-            color: 'blue',
-            openings: [null, null, null, null, { type: 'Beam' }, null],
+            openings: [null, null, null, { color: 'red', type: 'Beam' }, { color: 'blue', type: 'Beam' }, null],
             type: 'Terminus'
           }
         ],
@@ -24,7 +21,10 @@ export default {
         modifiers: [{ type: 'Immutable' }],
         type: 'Tile'
       },
-      null,
+      {
+        modifiers: [{ type: 'Immutable' }],
+        type: 'Tile'
+      },
       null
     ],
     [
@@ -37,14 +37,24 @@ export default {
             type: 'Terminus'
           }
         ],
-        modifiers: [
-          { type: 'Lock' },
-          { type: 'Toggle' }
-        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
         type: 'Tile'
       },
       null,
-      null
+      {
+        items: [
+          {
+            color: 'red',
+            openings: [{ type: 'Beam' }, null, null, null, null, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
+        type: 'Tile'
+      }
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

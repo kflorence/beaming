@@ -196,24 +196,14 @@ main {
   color: white;
 }
 
-.puzzle-error #actions {
-  display: none;
-}
-
+.puzzle-error #actions,
 .puzzle-error #puzzle,
+.puzzle-error #state,
 .puzzle-error .modifiers {
   display: none;
 }
 
 .puzzle-error #error {
-  display: flex;
-}
-
-.puzzle-error #state {
-  display: none;
-}
-
-.puzzle-solved #menu {
   display: flex;
 }
 

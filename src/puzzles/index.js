@@ -1,24 +1,24 @@
-import one from './01'
-import two from './02'
-import three from './03'
-import four from './04'
-import five from './05'
-import six from './06'
-import seven from './07'
-import eight from './08'
-import test from './test'
+import _001 from './001'
+import _002 from './002'
+import _003 from './003'
+import _004 from './004'
+import _005 from './005'
+import _006 from './006'
+import _007 from './007'
+import _008 from './008'
+import _999 from './999'
 
 // Ensure puzzle configuration is valid JSON
 const configuration = Object.fromEntries(Object.entries({
-  '01': one,
-  '02': two,
-  '03': three,
-  '04': four,
-  '05': five,
-  '06': six,
-  '07': seven,
-  '08': eight,
-  test
+  '001': _001,
+  '002': _002,
+  '003': _003,
+  '004': _004,
+  '005': _005,
+  '006': _006,
+  '007': _007,
+  '008': _008,
+  999: _999
 }).map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]))
 
 function traverse (id, amount) {
@@ -27,10 +27,10 @@ function traverse (id, amount) {
 }
 
 export class Puzzles {
-  static ids = Object.keys(configuration)
+  static ids = Object.keys(configuration).sort()
   static firstId = Puzzles.ids[0]
   static lastId = Puzzles.ids[Puzzles.ids.length - 1]
-  static titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title]))
+  static titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title || id]))
 
   static get (id) {
     // Ensure we return a deep clone of the configuration to ensure any mutations downstream will not end up in

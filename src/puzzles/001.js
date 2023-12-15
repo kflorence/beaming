@@ -1,12 +1,17 @@
 export default {
-  connectionsRequired: 1,
-  title: 'Move',
   layout: [
     [
       null,
       null,
       {
-        modifiers: [{ type: 'Lock' }],
+        items: [
+          {
+            color: 'blue',
+            openings: [null, null, null, null, { type: 'Beam' }, null],
+            type: 'Terminus'
+          }
+        ],
+        modifiers: [{ type: 'Immutable' }],
         type: 'Tile'
       },
       null
@@ -14,13 +19,6 @@ export default {
     [
       null,
       {
-        items: [
-          {
-            color: 'blue',
-            openings: [null, { type: 'Beam' }, null, null, null, null],
-            type: 'Terminus'
-          }
-        ],
         modifiers: [{ type: 'Immutable' }],
         type: 'Tile'
       },
@@ -33,18 +31,21 @@ export default {
         items: [
           {
             color: 'blue',
-            openings: [null, null, null, null, { on: true, type: 'Beam' }, null],
+            openings: [null, { type: 'Beam' }, null, null, null, null],
             type: 'Terminus'
           }
         ],
         modifiers: [
           { type: 'Lock' },
-          { type: 'Move' }
+          { type: 'Toggle' }
         ],
         type: 'Tile'
       },
       null,
       null
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

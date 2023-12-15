@@ -1,6 +1,4 @@
 export default {
-  connectionsRequired: 1,
-  title: 'Filter',
   layout: [
     [
       null,
@@ -61,5 +59,8 @@ export default {
         type: 'Tile'
       }
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

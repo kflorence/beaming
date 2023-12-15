@@ -1,7 +1,7 @@
 import { emitEvent } from './util'
 
 export class Stateful {
-  #state = {}
+  #state
 
   constructor (state) {
     this.#state = structuredClone(state)

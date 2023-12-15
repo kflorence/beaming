@@ -1,6 +1,4 @@
 export default {
-  connectionsRequired: 1,
-  title: 'Rotate',
   layout: [
     [
       null,
@@ -46,5 +44,8 @@ export default {
       null,
       null
     ]
-  ]
+  ],
+  solution: {
+    connections: 1
+  }
 }

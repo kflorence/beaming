@@ -1,7 +1,6 @@
 import { Puzzles } from '../puzzles'
 import { base64decode, base64encode, jsonDiffPatch } from './util'
 
-const crypto = window.crypto
 const history = window.history
 const location = window.location
 const localStorage = window.localStorage
@@ -26,16 +25,38 @@ export class StateManager {
     }
   }
 
-  get () {
-    return structuredClone(this.#state?.current)
+  getCurrentState () {
+    return this.#state?.getCurrent()
   }
 
   getId () {
-    return this.#state?.id
+    return this.#state?.getId()
   }
 
   getTitle () {
-    return this.#state?.current.title
+    return this.#state?.getTitle()
+  }
+
+  getSelectedTile () {
+    return this.#state?.getSelectedTile()
+  }
+
+  getState () {
+    return this.#state
+  }
+
+  resetState () {
+    const id = this.getId()
+
+    this.clearCache(id)
+    this.#state.reset()
+    this.#updateHistory(id)
+  }
+
+  setSelectedTile (tile) {
+    if (this.#state.setSelectedTile(tile)) {
+      this.#updateHistory()
+    }
   }
 
   setState (id) {
@@ -55,7 +76,7 @@ export class StateManager {
           this.#state = StateManager.#State.fromEncoded(segment)
           id = this.getId()
         } catch (e) {
-          console.debug(`Path segment ${index} is not valid state`, e)
+          console.debug(`Could not parse state from path segment '${index}'`, e)
         }
 
         return this.#state !== undefined
@@ -71,7 +92,7 @@ export class StateManager {
         try {
           this.#state = StateManager.#State.fromEncoded(state)
         } catch (e) {
-          console.debug(`Unable to load state for id ${id} from localStorage`, e)
+          console.debug(`Could not parse state with ID '${id}' from localStorage`, e)
         }
       }
     }
@@ -81,32 +102,19 @@ export class StateManager {
       this.#state = StateManager.#State.fromId(id)
     }
 
-    this.#updateHistory(id)
-
-    return id
-  }
-
-  reset () {
-    const id = this.getId()
-
-    this.clearCache(id)
-    this.#state.reset()
-    this.#updateHistory(id)
-  }
-
-  update (newState) {
-    const delta = jsonDiffPatch.diff(this.#state.current, newState)
-
-    console.debug('StateManager.update', delta)
-    if (delta === undefined) {
-      // Nothing to do
-      return
+    if (!this.getCurrentState()) {
+      throw new Error(`Unable to resolve state for ID '${id}'`)
     }
 
-    this.#state.update(delta)
-    this.#updateHistory()
+    this.#updateHistory(id)
 
-    return this.get()
+    return this.#state
+  }
+
+  updateState (state) {
+    if (this.#state.update(state)) {
+      this.#updateHistory()
+    }
   }
 
   #key (key) {
@@ -136,45 +144,89 @@ export class StateManager {
   })
 
   static #State = class {
-    constructor (id, puzzle, deltas) {
-      this.id = id
-      this.puzzle = puzzle
-      this.deltas = deltas || []
+    #current
+    #deltas
+    #id
+    #original
+    #selectedTile
+
+    constructor (id, original, deltas, selectedTile) {
+      this.#id = id
+      this.#original = original
+      this.#deltas = deltas || []
+      this.#selectedTile = selectedTile
 
       // Update current state
-      this.current = structuredClone(puzzle)
-      this.deltas.forEach((delta) => this.apply(delta))
+      this.#current = structuredClone(original)
+      this.#deltas.forEach((delta) => this.apply(delta))
     }
 
     apply (delta) {
       console.debug('StateManager: applying delta', delta)
-      return jsonDiffPatch.patch(this.current, delta)
+      return jsonDiffPatch.patch(this.#current, delta)
     }
 
     encode () {
       return base64encode(JSON.stringify({
-        id: this.id,
-        deltas: this.deltas,
+        id: this.#id,
         // No need to cache puzzles which exist in code
-        puzzle: Puzzles.has(this.id) ? undefined : this.puzzle
+        original: Puzzles.has(this.#id) ? undefined : this.#original,
+        deltas: this.#deltas,
+        selectedTile: this.selectedTile
       }))
     }
 
-    reset () {
-      this.current = structuredClone(this.puzzle)
-      this.deltas = []
+    getCurrent () {
+      return structuredClone(this.#current)
     }
 
-    update (delta) {
+    getId () {
+      return this.#id
+    }
+
+    getTitle () {
+      return this.#current.title || this.getId()
+    }
+
+    getSelectedTile () {
+      return this.#selectedTile
+    }
+
+    reset () {
+      this.#current = structuredClone(this.#original)
+      this.#deltas = []
+    }
+
+    update (newState) {
+      const delta = jsonDiffPatch.diff(this.#current, newState)
+      console.debug('State.update', delta)
+
+      if (delta === undefined) {
+        // Nothing to do
+        return false
+      }
+
       this.apply(delta)
-      this.deltas.push(delta)
+      this.#deltas.push(delta)
+
+      return true
+    }
+
+    setSelectedTile (tile) {
+      const id = tile?.coordinates.offset.toString()
+      if (this.selectedTile === id) {
+        return false
+      }
+
+      this.selectedTile = id
+
+      return true
     }
 
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
-      state.id = state.id || crypto.randomUUID()
-      state.puzzle = state.puzzle || Puzzles.get(state.id)
-      return new StateManager.#State(state.id || crypto.randomUUID(), state.puzzle, state.deltas)
+      state.original = state.original || Puzzles.get(state.id)
+      return new StateManager.#State(state.id, state.original, state.deltas, state.selectedTile)
     }
 
     static fromId (id) {

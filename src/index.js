@@ -45,7 +45,7 @@ elements.previous.addEventListener('click', () => {
 })
 
 elements.reset.addEventListener('click', () => {
-  stateManager.reset()
+  stateManager.resetState()
   selectPuzzle(stateManager.getId())
 })
 
@@ -88,7 +88,8 @@ function selectPuzzle (id) {
   }
 
   try {
-    id = stateManager.setState(id)
+    const state = stateManager.setState(id)
+    id = state.getId()
 
     if (!Puzzles.has(id)) {
       // Custom puzzle
@@ -112,7 +113,7 @@ function selectPuzzle (id) {
     puzzle = new Puzzle(stateManager)
   } catch (e) {
     console.error(e)
-    elements.message.textContent = 'Invalid puzzle configuration.'
+    elements.message.textContent = 'Invalid puzzle.'
     document.body.classList.add(Events.Error)
   }
 }
