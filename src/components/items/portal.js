@@ -91,7 +91,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     // Check for destination in beam state
     const destinationId = beam.getState().collisions?.[this.id]
-    console.log(beam.getState())
+
     // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
     const destinations = puzzle.getItems().filter((item) =>
       item.type === Item.Types.portal &&

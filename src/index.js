@@ -1,10 +1,7 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { addClass, debounce, removeClass } from './components/util'
-import { StateManager } from './components/stateManager'
 import { Puzzles } from './puzzles'
-
-let puzzle
 
 const elements = Object.freeze({
   dialog: document.getElementById('dialog'),
@@ -20,11 +17,7 @@ const elements = Object.freeze({
   undo: document.getElementById('undo')
 })
 
-const Events = Object.freeze({
-  Error: 'puzzle-error'
-})
-
-const stateManager = new StateManager()
+const puzzle = new Puzzle(elements.puzzle)
 
 document.addEventListener(Puzzle.Events.Solved, () => {
   document.body.classList.add(Puzzle.Events.Solved)
@@ -36,24 +29,9 @@ elements.info.addEventListener('click', () => {
   }
 })
 
-elements.next.addEventListener('click', () => {
-  const id = Puzzles.nextId(stateManager.getId())
-  if (id) {
-    selectPuzzle(id)
-  }
-})
-
-elements.previous.addEventListener('click', () => {
-  const id = Puzzles.previousId(stateManager.getId())
-  if (id) {
-    selectPuzzle(id)
-  }
-})
-
-elements.reset.addEventListener('click', () => {
-  stateManager.resetState()
-  selectPuzzle(stateManager.getId())
-})
+elements.next.addEventListener('click', puzzle.next.bind(puzzle))
+elements.previous.addEventListener('click', puzzle.previous.bind(puzzle))
+elements.reset.addEventListener('click', puzzle.reset.bind(puzzle))
 
 // Generate puzzle ID dropdown
 for (const id of Puzzles.ids) {
@@ -63,8 +41,30 @@ for (const id of Puzzles.ids) {
   elements.puzzleId.append(option)
 }
 
-elements.puzzleId.addEventListener('change', (event) => {
-  selectPuzzle(event.target.value)
+elements.puzzleId.addEventListener('change', (event) => puzzle.select(event.target.value))
+
+document.addEventListener(Puzzle.Events.Selected, (event) => {
+  const state = event.detail.state
+  const id = state.getId()
+
+  removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
+
+  // TODO implement these
+  addClass('disabled', elements.redo, elements.undo)
+
+  if (!Puzzles.has(id)) {
+    // Custom puzzle
+    elements.puzzleId.value = ''
+    addClass('disabled', elements.previous, elements.next)
+  } else {
+    elements.puzzleId.value = id
+
+    if (id === Puzzles.firstId) {
+      addClass('disabled', elements.previous)
+    } else if (id === Puzzles.lastId) {
+      addClass('disabled', elements.next)
+    }
+  }
 })
 
 function resize () {
@@ -80,57 +80,6 @@ function resize () {
 // Handle canvas resize
 window.addEventListener('resize', debounce(resize))
 resize()
-
-function selectPuzzle (id) {
-  document.body.classList.remove(Events.Error)
-
-  removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
-
-  // TODO implement these
-  addClass('disabled', elements.redo, elements.undo)
-
-  if (puzzle) {
-    puzzle.teardown()
-  }
-
-  try {
-    const state = stateManager.setState(id)
-    id = state.getId()
-
-    if (!Puzzles.has(id)) {
-      // Custom puzzle
-      const option = document.createElement('option')
-      option.value = id
-      option.innerText = [stateManager.getTitle(), '(User-defined)'].join(' ')
-      elements.puzzleId.prepend(option)
-      elements.puzzleId.value = id
-      addClass('disabled', elements.previous, elements.next)
-    } else {
-      elements.puzzleId.value = id
-
-      if (id === Puzzles.firstId) {
-        addClass('disabled', elements.previous)
-      } else if (id === Puzzles.lastId) {
-        addClass('disabled', elements.next)
-      }
-    }
-
-    // TODO Puzzle should be a singleton that internally handles updating state
-    puzzle = new Puzzle(stateManager)
-  } catch (e) {
-    console.error(e)
-    elements.message.textContent = 'Invalid puzzle.'
-    document.body.classList.add(Events.Error)
-  }
-}
-
-// Initiate
-// Don't automatically insert items into the scene graph, they must be explicitly inserted
-paper.settings.insertItems = false
-
-// noinspection JSCheckFunctionSignatures
-paper.setup(elements.puzzle)
-selectPuzzle()
 
 // Handle zoom
 elements.puzzle.addEventListener('wheel', (event) => {
@@ -166,7 +115,9 @@ window.drawDebugPoint = function (x, y, style) {
   return puzzle.drawDebugPoint(new paper.Point(x, y), style)
 }
 
+// Initialize
+puzzle.select()
+
 window.paper = paper
 window.puzzle = puzzle
 window.puzzles = Puzzles
-window.stateManager = stateManager

@@ -2,13 +2,11 @@ import { capitalize } from './util'
 import { CompoundPath, Group } from 'paper'
 import { Stateful } from './stateful'
 
-let uniqueId = 0
-
 export class Item extends Stateful {
   center
   data
   group
-  id = uniqueId++
+  id = Item.uniqueId++
   // Whether the item can be clicked on
   locked
   parent
@@ -98,4 +96,8 @@ export class Item extends Stateful {
     'tile',
     'wall'
   ].map((type) => [type, capitalize(type)])))
+
+  // This should be stable per puzzle as state refers to it
+  // Note that IDs will change if the puzzle configuration changes
+  static uniqueId = 0
 }

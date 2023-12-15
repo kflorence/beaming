@@ -25,28 +25,16 @@ export class StateManager {
     }
   }
 
-  getCurrentState () {
-    return this.#state?.getCurrent()
-  }
-
-  getId () {
-    return this.#state?.getId()
-  }
-
-  getTitle () {
-    return this.#state?.getTitle()
-  }
-
-  getSelectedTile () {
-    return this.#state?.getSelectedTile()
-  }
-
   getState () {
     return this.#state
   }
 
   resetState () {
-    const id = this.getId()
+    if (!this.#state) {
+      return
+    }
+
+    const id = this.#state.getId()
 
     this.clearCache(id)
     this.#state.reset()
@@ -74,7 +62,7 @@ export class StateManager {
       pathSegments.filter((path) => !Puzzles.has(path)).some((segment, index) => {
         try {
           this.#state = StateManager.#State.fromEncoded(segment)
-          id = this.getId()
+          id = this.#state.getId()
         } catch (e) {
           console.debug(`Could not parse state from path segment '${index}'`, e)
         }
@@ -102,7 +90,7 @@ export class StateManager {
       this.#state = StateManager.#State.fromId(id)
     }
 
-    if (!this.getCurrentState()) {
+    if (!this.#state) {
       throw new Error(`Unable to resolve state for ID '${id}'`)
     }
 
@@ -118,11 +106,11 @@ export class StateManager {
   }
 
   #key (key) {
-    return StateManager.key(key, this.getId())
+    return StateManager.key(key, this.#state.getId())
   }
 
   #updateHistory (id) {
-    id = id || this.getId()
+    id = id || this.#state.getId()
     const state = this.#state.encode()
 
     url.pathname = [id, state].join('/')

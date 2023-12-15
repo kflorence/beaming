@@ -39,7 +39,7 @@ export class Filter extends movable(Item) {
     return Beam.Step.from(
       nextStep,
       currentStep.state.filtered
-        ? { color: chroma.average([nextStep.color, this.color]).hex() }
+        ? { color: nextStep.color.concat([this.color]) }
         : { state: { filtered: true, insertAbove: this } }
     )
   }

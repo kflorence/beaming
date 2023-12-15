@@ -10,6 +10,8 @@ import { Terminus } from './items/terminus'
 import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
+import { StateManager } from './stateManager'
+import { Puzzles } from '../puzzles'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -34,43 +36,26 @@ export class Puzzle extends Stateful {
   #isUpdatingBeams = false
   #mask
   #termini
-  #tiles
+  #tiles = []
   #tool
 
-  constructor (stateManager) {
-    const state = stateManager.getCurrentState()
+  constructor (canvas) {
+    super(null)
 
-    super(state)
-
-    const { solution, layout, message } = state
-
-    this.layout = new Layout(layout)
-    this.stateManager = stateManager
-
-    this.#tiles = this.layout.tiles
-    this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
-    this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
-    this.#tool = new Tool()
+    // Don't automatically insert items into the scene graph, they must be explicitly inserted
+    paper.settings.insertItems = false
+    paper.setup(canvas)
+    paper.view.onClick = (event) => this.#onClick(event)
 
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    this.message = message
-    this.solution = solution
+    this.stateManager = new StateManager()
 
-    this.#addEventListeners()
-    this.#addLayers()
-    this.#setSolution()
-
-    const selected = stateManager.getSelectedTile()
-    const selectedTile = selected
-      ? this.layout.getTileByOffset(new OffsetCoordinates(...selected.split(',')))
-      : undefined
-
-    this.updateSelectedTile(selectedTile)
-
-    this.update()
+    this.#tool = new Tool()
+    this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
+    this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
   }
 
   drawDebugPoint (point, style = {}) {
@@ -121,11 +106,45 @@ export class Puzzle extends Stateful {
     }
   }
 
-  teardown () {
-    document.body.classList.remove(...Object.values(Puzzle.Events))
-    this.#tiles.map((tile) => tile.teardown())
-    this.#removeEventListeners()
-    this.#removeLayers()
+  next () {
+    const id = Puzzles.nextId(this.stateManager.getState().getId())
+    if (id) {
+      this.select(id)
+    }
+  }
+
+  previous () {
+    const id = Puzzles.previousId(this.stateManager.getState().getId())
+    if (id) {
+      this.select(id)
+    }
+  }
+
+  reset () {
+    this.stateManager.resetState()
+    this.select(this.stateManager.getState().getId())
+  }
+
+  select (id) {
+    if (this.stateManager.getState()) {
+      this.#teardown()
+    }
+
+    document.body.classList.remove(Puzzle.Events.Error)
+
+    try {
+      const state = this.stateManager.setState(id)
+      const current = state.getCurrent()
+
+      this.setState(current)
+      this.#setup(current)
+
+      emitEvent(Puzzle.Events.Selected, { state })
+    } catch (e) {
+      console.error(e)
+      elements.message.textContent = 'Invalid puzzle.'
+      document.body.classList.add(Puzzle.Events.Error)
+    }
   }
 
   unmask () {
@@ -162,14 +181,13 @@ export class Puzzle extends Stateful {
   // noinspection JSCheckFunctionSignatures
   updateState () {
     this.stateManager.updateState(
-      super.updateState((state) => { state.layout = this.layout.getState() }, false))
+      super.updateState((state) => {
+        console.log('state', state)
+        state.layout = this.layout.getState()
+      }, false))
   }
 
   #addEventListeners () {
-    paper.view.onClick = (event) => this.#onClick(event)
-    this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
-    this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
-
     Object.entries({
       keyup: this.#onKeyup,
       [Beam.Events.Update]: this.#onBeamUpdate,
@@ -335,6 +353,7 @@ export class Puzzle extends Stateful {
   }
 
   #removeLayers () {
+    Object.values(this.layers).forEach((layer) => layer.removeChildren())
     paper.project.clear()
   }
 
@@ -347,6 +366,62 @@ export class Puzzle extends Stateful {
     }
 
     this.#updateSolution()
+  }
+
+  #setup (state) {
+    if (!state) {
+      return
+    }
+
+    // Reset the item IDs, so they are unique per-puzzle
+    Item.uniqueId = 0
+
+    const { solution, layout, message } = state
+
+    this.layout = new Layout(layout)
+
+    this.message = message
+    this.solution = solution
+
+    this.#tiles = this.layout.tiles
+    this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
+    this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
+
+    this.#addEventListeners()
+    this.#addLayers()
+    this.#setSolution()
+
+    const selected = this.stateManager.getState().getSelectedTile()
+    const selectedTile = selected
+      ? this.layout.getTileByOffset(new OffsetCoordinates(...selected.split(',')))
+      : undefined
+
+    this.updateSelectedTile(selectedTile)
+    this.update()
+  }
+
+  #teardown () {
+    document.body.classList.remove(...Object.values(Puzzle.Events))
+
+    this.#tiles.forEach((tile) => tile.teardown())
+    this.#tiles = []
+
+    this.#removeEventListeners()
+    this.#removeLayers()
+
+    this.connections = []
+    this.layout.teardown()
+    this.layout = undefined
+    this.selectedTile = undefined
+    this.solution = undefined
+    this.solved = false
+
+    this.#beams = []
+    this.#collisions = {}
+    this.#isDragging = false
+    this.#isUpdatingBeams = false
+    this.#mask = undefined
+    this.#termini = []
   }
 
   #updateBeams () {
@@ -420,8 +495,10 @@ export class Puzzle extends Stateful {
     }
 
     removeItem () {
-      this.item.remove()
-      this.item = undefined
+      if (this.item) {
+        this.item.remove()
+        this.item = undefined
+      }
     }
 
     update () {
@@ -449,6 +526,7 @@ export class Puzzle extends Stateful {
   static Events = Object.freeze({
     Error: 'puzzle-error',
     Mask: 'puzzle-mask',
+    Selected: 'puzzle-selected',
     Solved: 'puzzle-solved'
   })
 

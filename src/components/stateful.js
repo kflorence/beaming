@@ -4,19 +4,25 @@ export class Stateful {
   #state
 
   constructor (state) {
-    this.#state = structuredClone(state)
+    this.setState(state)
   }
 
   getState () {
     return structuredClone(this.#state)
   }
 
+  setState (state) {
+    this.#state = structuredClone(state)
+  }
+
   updateState (updater, dispatchEvent = true) {
-    const state = updater(this.#state) || this.#state
+    updater(this.#state)
+
     if (dispatchEvent) {
-      emitEvent(Stateful.Events.Update, { object: this, state })
+      emitEvent(Stateful.Events.Update, { object: this })
     }
-    return state
+
+    return this.getState()
   }
 
   static Events = Object.freeze({

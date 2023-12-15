@@ -89,4 +89,8 @@ export class Layout extends Stateful {
   getNeighboringTile (axial, direction) {
     return this.getTileByAxial(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
   }
+
+  teardown () {
+    Object.values(this.layers).forEach((layer) => layer.removeChildren())
+  }
 }
