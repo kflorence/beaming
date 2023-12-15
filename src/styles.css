@@ -1,8 +1,13 @@
+::backdrop {
+  background-color: white;
+  opacity: 0.75;
+}
+
 html,
 body {
   background-color: #ccc;
   color: #333;
-  font-family: Menlo, Consolas, "Vera Mono", monospace;
+  font-family: 'Noto Sons Mono', monospace;
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -19,8 +24,56 @@ canvas {
   display: block;
 }
 
-footer,
-header {
+dialog {
+  background-color: white;
+  box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
+  border: 1px solid #999;
+  padding: 0;
+  width: 50%;
+}
+
+dialog h1 {
+  background-color: #333;
+  color: white;
+  margin: 0;
+  padding: 1rem 0;
+  text-align: center;
+}
+
+dialog p {
+  margin: 1em;
+}
+
+dialog footer {
+  align-items: center;
+  background-color: #eee;
+  border-top: 1px solid #ddd;
+  display: flex;
+  padding: 0.5em 1em;
+}
+
+dialog ul {
+  align-items: center;
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+dialog ul li {
+  border-left: 1px solid #ddd;
+  margin-left: 0.5em;
+  padding-left: 0.5em;
+}
+
+dialog ul li:first-child {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+body > footer,
+body > header {
   align-items: center;
   background-color: white;
   box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
@@ -28,11 +81,11 @@ header {
   height: 3.5em;
 }
 
-header {
+body > header {
   border-bottom: 1px solid #999;
 }
 
-footer {
+body > footer {
   border-top: 1px solid #999;
 }
 
@@ -99,6 +152,10 @@ main {
 #toolbar {
   display: flex;
   width: 100%;
+}
+
+#version {
+  color: #999;
 }
 
 /** Classes */

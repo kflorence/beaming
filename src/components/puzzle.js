@@ -293,6 +293,13 @@ export class Puzzle extends Stateful {
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
 
+    const span = document.createElement('span')
+    span.classList.add('material-symbols-outlined')
+    span.textContent = 'celebration'
+    span.title = 'Solved!'
+
+    elements.message.replaceChildren(span)
+
     emitEvent(Puzzle.Events.Solved)
   }
 
@@ -377,14 +384,11 @@ export class Puzzle extends Stateful {
       // Check to see if tile has any color elements that need to be displayed
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
-        .find((colorElements) => colorElements.length > 0)
-      if (colorElements) {
-        elements.message.replaceChildren(...colorElements)
-        return
-      }
+        .find((colorElements) => colorElements.length > 0) || []
+      elements.message.replaceChildren(...colorElements)
+    } else {
+      elements.message.textContent = this.message || 'Select a tile'
     }
-
-    elements.message.textContent = this.message
   }
 
   static Collision = class {

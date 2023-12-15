@@ -7,6 +7,8 @@ import { Puzzles } from './puzzles'
 let puzzle
 
 const elements = Object.freeze({
+  dialog: document.getElementById('dialog'),
+  info: document.getElementById('info'),
   main: document.getElementById('main'),
   message: document.getElementById('message'),
   next: document.getElementById('next'),
@@ -24,12 +26,16 @@ const Events = Object.freeze({
 
 const stateManager = new StateManager()
 
-// Handle puzzle solved
 document.addEventListener(Puzzle.Events.Solved, () => {
   document.body.classList.add(Puzzle.Events.Solved)
 })
 
-// Handle menu items
+elements.info.addEventListener('click', () => {
+  if (!elements.dialog.open) {
+    elements.dialog.showModal()
+  }
+})
+
 elements.next.addEventListener('click', () => {
   const id = Puzzles.nextId(stateManager.getId())
   if (id) {
