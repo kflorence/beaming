@@ -205,6 +205,8 @@ export class Beam extends Item {
     }
   }
 
+  // TODO: there is an edge case where a beam has a mask open waiting for user input and another beam collides with it
+  // this scenario should result in the mask being closed.
   onCollision (
     beam,
     puzzle,
@@ -247,7 +249,7 @@ export class Beam extends Item {
 
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
-      console.debug(this.toString(), 'collision with beam', beam.id)
+      console.debug(this.toString(), 'collision with beam', beam.toString())
 
       if (!step.state.collision) {
         if (!isLastStep) {
@@ -455,7 +457,7 @@ export class Beam extends Item {
   }
 
   toString () {
-    return `[${this.type}:${this.id}:${this.getColor()}]`
+    return `[${this.type}:${this.id}:${chroma(this.getColor()).name()}]`
   }
 
   updateState (updater, dispatchEvent = true) {
