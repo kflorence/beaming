@@ -29,6 +29,12 @@ export class StateManager {
     return this.#state
   }
 
+  redo () {
+    if (this.#state.redo()) {
+      this.#updateHistory()
+    }
+  }
+
   resetState () {
     if (!this.#state) {
       return
@@ -99,6 +105,12 @@ export class StateManager {
     return this.#state
   }
 
+  undo () {
+    if (this.#state.undo()) {
+      this.#updateHistory()
+    }
+  }
+
   updateState (state) {
     if (this.#state.update(state)) {
       this.#updateHistory()
@@ -134,24 +146,34 @@ export class StateManager {
   static #State = class {
     #current
     #deltas
+    #deltasIndex
     #id
     #original
     #selectedTile
 
-    constructor (id, original, deltas, selectedTile) {
+    constructor (id, original, deltas, deltasIndex, selectedTile) {
       this.#id = id
       this.#original = original
       this.#deltas = deltas || []
+      this.#deltasIndex = deltasIndex || this.#lastDeltasIndex()
       this.#selectedTile = selectedTile
 
       // Update current state
       this.#current = structuredClone(original)
-      this.#deltas.forEach((delta) => this.apply(delta))
+      this.#deltas.filter((delta, index) => index <= this.#deltasIndex).forEach((delta) => this.apply(delta))
     }
 
     apply (delta) {
       console.debug('StateManager: applying delta', delta)
       return jsonDiffPatch.patch(this.#current, delta)
+    }
+
+    canRedo () {
+      return this.#deltasIndex < this.#lastDeltasIndex()
+    }
+
+    canUndo () {
+      return this.#deltasIndex >= 0
     }
 
     encode () {
@@ -160,6 +182,7 @@ export class StateManager {
         // No need to cache puzzles which exist in code
         original: Puzzles.has(this.#id) ? undefined : this.#original,
         deltas: this.#deltas,
+        deltasIndex: this.#deltasIndex,
         selectedTile: this.selectedTile
       }))
     }
@@ -180,9 +203,34 @@ export class StateManager {
       return this.#selectedTile
     }
 
+    redo () {
+      const nextIndex = this.#deltasIndex + 1
+      if (nextIndex <= this.#lastDeltasIndex()) {
+        this.#current = structuredClone(this.#original)
+        this.#deltas.filter((delta, index) => index <= nextIndex).forEach((delta) => this.apply(delta))
+        this.#deltasIndex = nextIndex
+        return true
+      }
+
+      return false
+    }
+
     reset () {
       this.#current = structuredClone(this.#original)
       this.#deltas = []
+      this.#deltasIndex = this.#lastDeltasIndex()
+    }
+
+    undo () {
+      const previousIndex = this.#deltasIndex - 1
+      if (previousIndex >= -1) {
+        this.#current = structuredClone(this.#original)
+        this.#deltas.filter((delta, index) => index <= previousIndex).forEach((delta) => this.apply(delta))
+        this.#deltasIndex = previousIndex
+        return true
+      }
+
+      return false
     }
 
     update (newState) {
@@ -194,8 +242,15 @@ export class StateManager {
         return false
       }
 
+      // Handle updating after undoing
+      if (this.#deltasIndex < this.#lastDeltasIndex()) {
+        // Remove all deltas after the current one
+        this.#deltas.splice(this.#deltasIndex + 1)
+      }
+
       this.apply(delta)
       this.#deltas.push(delta)
+      this.#deltasIndex = this.#lastDeltasIndex()
 
       return true
     }
@@ -211,10 +266,14 @@ export class StateManager {
       return true
     }
 
+    #lastDeltasIndex () {
+      return this.#deltas.length - 1
+    }
+
     static fromEncoded (state) {
       state = JSON.parse(base64decode(state))
       state.original = state.original || Puzzles.get(state.id)
-      return new StateManager.#State(state.id, state.original, state.deltas, state.selectedTile)
+      return new StateManager.#State(state.id, state.original, state.deltas, state.deltasIndex, state.selectedTile)
     }
 
     static fromId (id) {

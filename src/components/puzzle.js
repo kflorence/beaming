@@ -119,31 +119,32 @@ export class Puzzle extends Stateful {
     }
   }
 
+  redo () {
+    this.stateManager.redo()
+    this.#reload()
+  }
+
   reset () {
     this.stateManager.resetState()
-    this.select(this.stateManager.getState().getId())
+    this.#reload()
   }
 
   select (id) {
-    if (this.stateManager.getState()) {
-      this.#teardown()
-    }
-
     document.body.classList.remove(Puzzle.Events.Error)
 
     try {
-      const state = this.stateManager.setState(id)
-      const current = state.getCurrent()
-
-      this.setState(current)
-      this.#setup(current)
-
-      emitEvent(Puzzle.Events.Selected, { state })
+      this.stateManager.setState(id)
+      this.#reload()
     } catch (e) {
       console.error(e)
       elements.message.textContent = 'Invalid puzzle.'
       document.body.classList.add(Puzzle.Events.Error)
     }
+  }
+
+  undo () {
+    this.stateManager.undo()
+    this.#reload()
   }
 
   unmask () {
@@ -180,10 +181,10 @@ export class Puzzle extends Stateful {
   // noinspection JSCheckFunctionSignatures
   updateState () {
     this.stateManager.updateState(
-      super.updateState((state) => {
-        console.log('state', state)
-        state.layout = this.layout.getState()
-      }, false))
+      super.updateState((state) => { state.layout = this.layout.getState() }, false))
+
+    const state = this.stateManager.getState()
+    emitEvent(Puzzle.Events.Updated, { state })
   }
 
   #addEventListeners () {
@@ -289,8 +290,6 @@ export class Puzzle extends Stateful {
   }
 
   #onMouseDrag (event) {
-    console.log('onMouseDrag', event)
-
     const center = event.downPoint.subtract(event.point).add(paper.view.center)
 
     // Allow a little wiggle room
@@ -354,6 +353,22 @@ export class Puzzle extends Stateful {
     }
 
     this.#updateSolution()
+  }
+
+  #reload () {
+    if (this.stateManager.getState()) {
+      this.#teardown()
+    }
+
+    const state = this.stateManager.getState()
+    const current = state.getCurrent()
+
+    this.setState(current)
+    this.#setup(current)
+
+    emitEvent(Puzzle.Events.Updated, { state })
+
+    return state
   }
 
   #removeEventListeners () {
@@ -422,8 +437,12 @@ export class Puzzle extends Stateful {
     this.#removeLayers()
 
     this.connections = []
-    this.layout.teardown()
-    this.layout = undefined
+
+    if (this.layout) {
+      this.layout.teardown()
+      this.layout = undefined
+    }
+
     this.selectedTile = undefined
     this.solution = undefined
     this.solved = false
@@ -538,8 +557,8 @@ export class Puzzle extends Stateful {
   static Events = Object.freeze({
     Error: 'puzzle-error',
     Mask: 'puzzle-mask',
-    Selected: 'puzzle-selected',
-    Solved: 'puzzle-solved'
+    Solved: 'puzzle-solved',
+    Updated: 'puzzle-updated'
   })
 
   static Mask = class {

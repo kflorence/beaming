@@ -31,7 +31,9 @@ elements.info.addEventListener('click', () => {
 
 elements.next.addEventListener('click', puzzle.next.bind(puzzle))
 elements.previous.addEventListener('click', puzzle.previous.bind(puzzle))
+elements.redo.addEventListener('click', puzzle.redo.bind(puzzle))
 elements.reset.addEventListener('click', puzzle.reset.bind(puzzle))
+elements.undo.addEventListener('click', puzzle.undo.bind(puzzle))
 
 // Generate puzzle ID dropdown
 for (const id of Puzzles.ids) {
@@ -43,28 +45,37 @@ for (const id of Puzzles.ids) {
 
 elements.puzzleId.addEventListener('change', (event) => puzzle.select(event.target.value))
 
-document.addEventListener(Puzzle.Events.Selected, (event) => {
+document.addEventListener(Puzzle.Events.Updated, (event) => {
   const state = event.detail.state
   const id = state.getId()
 
   removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
 
-  // TODO implement these
-  addClass('disabled', elements.redo, elements.undo)
+  const disable = []
+
+  if (!state.canUndo()) {
+    disable.push(elements.undo)
+  }
+
+  if (!state.canRedo()) {
+    disable.push(elements.redo)
+  }
 
   if (!Puzzles.has(id)) {
     // Custom puzzle
     elements.puzzleId.value = ''
-    addClass('disabled', elements.previous, elements.next)
+    disable.push(elements.previous, elements.next)
   } else {
     elements.puzzleId.value = id
 
     if (id === Puzzles.firstId) {
-      addClass('disabled', elements.previous)
+      disable.push(elements.previous)
     } else if (id === Puzzles.lastId) {
-      addClass('disabled', elements.next)
+      disable.push(elements.next)
     }
   }
+
+  addClass('disabled', ...disable)
 })
 
 function resize () {
