@@ -17,7 +17,10 @@ export class Move extends Modifier {
 
     this.tile.beforeModify()
 
-    const mask = new Puzzle.Mask(this.tileFilter.bind(this), this.#maskOnClick.bind(this))
+    const mask = new Puzzle.Mask(this.tileFilter.bind(this), {
+      onClick: this.#maskOnClick.bind(this),
+      onUnmask: () => this.tile.afterModify()
+    })
 
     this.#mask = mask
 
@@ -36,8 +39,6 @@ export class Move extends Modifier {
   }
 
   #maskOnClick (puzzle, tile) {
-    this.tile.afterModify()
-
     if (tile) {
       const data = this.moveItems(tile)
 

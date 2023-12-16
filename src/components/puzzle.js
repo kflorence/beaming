@@ -95,13 +95,15 @@ export class Puzzle extends Stateful {
     const tiles = this.#tiles.filter(mask.filter)
       .map((tile) => new Mask(
         tile,
-        typeof mask.configuration === 'function' ? mask.configuration(tile) : mask.configuration
+        typeof mask.configuration.style === 'function'
+          ? mask.configuration.style(tile)
+          : mask.configuration.style
       ))
 
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
 
-    if (mask.message) {
-      elements.message.textContent = mask.message
+    if (mask.configuration.message) {
+      elements.message.textContent = mask.configuration.message
     }
   }
 
@@ -148,6 +150,10 @@ export class Puzzle extends Stateful {
   }
 
   unmask () {
+    if (typeof this.#mask.onUnmask === 'function') {
+      this.#mask.onUnmask(this)
+    }
+
     this.#mask = undefined
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
@@ -218,14 +224,21 @@ export class Puzzle extends Stateful {
   #onBeamUpdate (event) {
     const stepAdded = event.detail.stepAdded
     if (stepAdded?.state.collision) {
+      const beam = event.detail.beam
       const point = stepAdded.point
       const collisionId = Puzzle.Collision.id(point)
       const collision = this.#collisions[collisionId]
 
       if (collision) {
-        collision.addBeam(event.detail.beam)
+        collision.addBeam(beam)
       } else {
-        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [event.detail.beam], point)
+        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [beam], point)
+      }
+
+      // Beam with collision has an active mask
+      const mask = this.#mask?.configuration
+      if (mask?.beam.equals(beam)) {
+        this.unmask()
       }
     }
 
@@ -562,11 +575,14 @@ export class Puzzle extends Stateful {
   })
 
   static Mask = class {
-    constructor (filter, onClick, configuration, message) {
+    constructor (filter, configuration = {}) {
+      configuration.style = configuration.style || {}
+
       this.configuration = configuration
       this.filter = filter
-      this.onClick = onClick
-      this.message = message
+
+      this.onClick = configuration.onClick
+      this.onUnmask = configuration.onUnmask
     }
   }
 
@@ -574,14 +590,13 @@ export class Puzzle extends Stateful {
   static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
 
   static #solvedMask = new Puzzle.Mask(
-    (tile) => {
-      return tile.items.some(Puzzle.#connectedBeams)
-    },
-    undefined,
-    (tile) => {
-      const beams = tile.items.filter(Puzzle.#connectedBeams)
-      const colors = beams.flatMap((beam) => beam.getSteps(tile).flatMap((step) => step.color))
-      return { style: { fillColor: chroma.average(colors).hex() } }
+    (tile) => tile.items.some(Puzzle.#connectedBeams),
+    {
+      style: (tile) => {
+        const beams = tile.items.filter(Puzzle.#connectedBeams)
+        const colors = beams.flatMap((beam) => beam.getSteps(tile).flatMap((step) => step.color))
+        return { fillColor: chroma.average(colors).hex() }
+      }
     }
   )
 }

@@ -205,8 +205,6 @@ export class Beam extends Item {
     }
   }
 
-  // TODO: there is an edge case where a beam has a mask open waiting for user input and another beam collides with it
-  // this scenario should result in the mask being closed.
   onCollision (
     beam,
     puzzle,

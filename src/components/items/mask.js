@@ -2,8 +2,8 @@ import { Item } from '../item'
 import { Path } from 'paper'
 
 export class Mask extends Item {
-  constructor (tile, state) {
-    super(null, state, { locked: false, type: Item.Types.mask })
+  constructor (tile, style) {
+    super(null, style, { locked: false, type: Item.Types.mask })
 
     const data = { type: this.type }
     const item = new Path.RegularPolygon({
@@ -13,10 +13,7 @@ export class Mask extends Item {
       opacity: 0.25,
       radius: tile.parameters.circumradius + 1,
       sides: 6,
-      style: Object.assign(
-        { fillColor: 'black' },
-        state?.style || {}
-      )
+      style: Object.assign({ fillColor: 'black' }, style)
     })
 
     this.center = tile.center

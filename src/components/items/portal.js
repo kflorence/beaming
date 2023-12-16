@@ -119,19 +119,24 @@ export class Portal extends movable(rotatable(Item)) {
           // Include the portal tile and tiles which contain a matching destination
           return !(this.parent === tile || destinationTiles.some((destinationTile) => destinationTile === tile))
         },
-        (puzzle, tile) => {
-          const destination = destinations.find((portal) => portal.parent === tile)
-          if (destination) {
+        {
+          beam,
+          onClick: (puzzle, tile) => {
+            const destination = destinations.find((portal) => portal.parent === tile)
+            if (destination) {
+              beam.addStep(this.#step(destination, nextStep))
+              beam.updateState((state) => {
+                if (!state.collisions) {
+                  state.collisions = {}
+                }
+                // Store this decision in beam state
+                state.collisions[this.id] = destination.id
+              })
+              puzzle.unmask()
+            }
+          },
+          onUnmask: () => {
             currentStep.tile.afterModify()
-            beam.addStep(this.#step(destination, nextStep))
-            beam.updateState((state) => {
-              if (!state.collisions) {
-                state.collisions = {}
-              }
-              // Store this decision in beam state
-              state.collisions[this.id] = destination.id
-            })
-            puzzle.unmask()
           }
         }
       ))

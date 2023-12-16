@@ -147,7 +147,7 @@ export class Modifier extends Stateful {
         return tile.modifiers.some((modifier) =>
           [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
       },
-      this.#maskOnClick.bind(this)
+      { onClick: this.#maskOnClick.bind(this) }
     )
 
     this.#mask = mask
