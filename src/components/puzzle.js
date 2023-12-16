@@ -45,7 +45,6 @@ export class Puzzle extends Stateful {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
     paper.settings.insertItems = false
     paper.setup(canvas)
-    paper.view.onClick = (event) => this.#onClick(event)
 
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
@@ -290,17 +289,30 @@ export class Puzzle extends Stateful {
   }
 
   #onMouseDrag (event) {
-    if (!this.#isDragging) {
-      document.body.classList.add('grab')
+    console.log('onMouseDrag', event)
+
+    const center = event.downPoint.subtract(event.point).add(paper.view.center)
+
+    // Allow a little wiggle room
+    if (paper.view.center.subtract(center).length > 1) {
+      if (!this.#isDragging) {
+        document.body.classList.add('grab')
+      }
+
+      // Note: MouseDrag is always called on mobile even when tapping, so only consider it actually dragging if
+      // the cursor has moved the center
+      this.#isDragging = true
+
+      // Center on the cursor
+      paper.view.center = center
     }
-
-    this.#isDragging = true
-
-    // Center on the cursor
-    paper.view.center = event.downPoint.subtract(event.point).add(paper.view.center)
   }
 
-  #onMouseUp () {
+  #onMouseUp (event) {
+    if (!this.#isDragging) {
+      this.#onClick(event)
+    }
+
     this.#isDragging = false
     document.body.classList.remove('grab')
   }

@@ -12,7 +12,7 @@ export class Layout extends Stateful {
   items = []
   layers = {}
   tiles = []
-  tileSize = 100
+  tileSize = 120
 
   constructor (state) {
     super(state)

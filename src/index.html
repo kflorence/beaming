@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Untitled</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+    <title>Beams</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Mono&display=swap">
@@ -10,22 +11,22 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <dialog id="dialog">
+      <h1>Beams</h1>
+      <p>Info about game</p>
+      <footer>
+        <div class="flex-left">
+          <ul>
+            <li><a href="#">source</a></li>
+            <li><a href="https://buymeacoffee.com/kflorence">buy me a coffee</a></li>
+          </ul>
+        </div>
+        <div class="flex-right">
+          <form><button autofocus formmethod="dialog">close</button></form>
+        </div>
+      </footer>
+    </dialog>
     <header>
-      <dialog id="dialog">
-        <h1>Untitled</h1>
-        <p>Info about game</p>
-        <footer>
-          <div class="flex-left">
-            <ul>
-              <li><span id="version">v1.0.0-beta</span></li>
-              <li><a href="#">source</a></li>
-            </ul>
-          </div>
-          <div class="flex-right">
-            <form><button autofocus formmethod="dialog">close</button></form>
-          </div>
-        </footer>
-      </dialog>
       <div class="flex-left">
         <ul class="menu">
           <li id="info"><span class="material-symbols-outlined" title="Information">info</span></li>
