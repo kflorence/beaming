@@ -14,6 +14,7 @@ const elements = Object.freeze({
   puzzleId: document.getElementById('puzzle-id'),
   redo: document.getElementById('redo'),
   reset: document.getElementById('reset'),
+  title: document.querySelector('title'),
   undo: document.getElementById('undo')
 })
 
@@ -48,6 +49,9 @@ elements.puzzleId.addEventListener('change', (event) => puzzle.select(event.targ
 document.addEventListener(Puzzle.Events.Updated, (event) => {
   const state = event.detail.state
   const id = state.getId()
+  const title = state.getTitle()
+
+  elements.title.textContent = `Beaming: Puzzle ${title}`
 
   removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
 

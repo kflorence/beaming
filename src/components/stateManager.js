@@ -196,7 +196,7 @@ export class StateManager {
     }
 
     getTitle () {
-      return this.#current.title || this.getId()
+      return this.getId() + (this.#current.title ? ` - ${this.#current.title}` : '')
     }
 
     getSelectedTile () {
