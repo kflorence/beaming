@@ -17,25 +17,39 @@ export class Layout extends Stateful {
   constructor (state) {
     super(state)
 
+    this.type = state.type || Layout.Types.oddR
+
     const center = paper.view.center
     const parameters = Tile.parameters(this.tileSize)
+    const tiles = state.tiles
 
-    const height = state.length * parameters.height
-    const startingOffsetY = center.y - height / 2
+    // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
+    const height = tiles.length * parameters.width
+    const startingOffsetY = center.y - (height / 2)
 
     this.layers.tiles = new Layer()
     this.layers.items = new Layer()
 
-    for (let r = 0; r < state.length; r++) {
-      const row = state[r]
+    // Find the widest row
+    const widestRow = tiles.reduce((current, row, index) => {
+      const length = row.length
+
+      // Favor offset rows, since they will be wider
+      if (length > current.length || (length === current.length && this.#isOffsetRow(index))) {
+        return { index, length }
+      }
+
+      return current
+    }, { index: 0, length: 0 })
+
+    const width = (widestRow.length * parameters.width) + (this.#isOffsetRow(widestRow.index) ? parameters.inradius : 0)
+    const startingOffsetX = center.x - (width / 2)
+
+    for (let r = 0; r < tiles.length; r++) {
+      const row = tiles[r]
       const rowByAxial = new Array(row.length).fill(null)
       const rowByOffset = new Array(row.length).fill(null)
       const rowOffset = Math.floor(r / 2)
-      const rowWidth = row.length * parameters.width
-
-      // Using the "odd-r" offset system. Each odd row moves to the right by 1/2 column width
-      const startingOffsetX =
-        center.x - rowWidth / 2 + (r % 2 === 0 ? 0 : parameters.inradius)
 
       for (let c = 0; c < row.length; c++) {
         const axial = new CubeCoordinates(c - rowOffset, r)
@@ -44,7 +58,8 @@ export class Layout extends Stateful {
         const layout = {
           row: r,
           column: c,
-          startingOffsetX,
+          // Shift row to the right if it is an offset row
+          startingOffsetX: startingOffsetX + (this.#isOffsetRow(r) ? parameters.inradius : 0),
           startingOffsetY
         }
 
@@ -83,7 +98,10 @@ export class Layout extends Stateful {
 
   getState () {
     // Tiles are defined by offset in the puzzle state
-    return this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
+    return {
+      tiles: this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null)),
+      type: this.type
+    }
   }
 
   getNeighboringTile (axial, direction) {
@@ -93,4 +111,13 @@ export class Layout extends Stateful {
   teardown () {
     Object.values(this.layers).forEach((layer) => layer.removeChildren())
   }
+
+  #isOffsetRow (index) {
+    return index % 2 === 0 ? this.type === Layout.Types.evenR : this.type === Layout.Types.oddR
+  }
+
+  static Types = Object.freeze({
+    evenR: 'even-r',
+    oddR: 'odd-r'
+  })
 }

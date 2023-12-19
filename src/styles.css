@@ -24,6 +24,10 @@ canvas {
   display: block;
 }
 
+code {
+  background-color: #f4f4f4;
+}
+
 dialog {
   background-color: white;
   box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
@@ -44,6 +48,10 @@ dialog h1 {
   text-align: center;
 }
 
+dialog h3 {
+  padding: 0.25rem 1rem;
+}
+
 dialog p {
   margin: 1em;
 }
@@ -60,7 +68,7 @@ dialog footer {
   padding: 0.5em 1em;
 }
 
-dialog ul {
+dialog footer ul {
   align-items: center;
   display: flex;
   list-style: none;
@@ -68,13 +76,13 @@ dialog ul {
   padding: 0;
 }
 
-dialog ul li {
+dialog footer ul li {
   border-left: 1px solid #ddd;
   margin-left: 0.5em;
   padding-left: 0.5em;
 }
 
-dialog ul li:first-child {
+dialog footer ul li:first-child {
   border: none;
   margin: 0;
   padding: 0;

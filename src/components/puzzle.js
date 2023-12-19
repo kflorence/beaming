@@ -10,7 +10,7 @@ import { Terminus } from './items/terminus'
 import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
-import { StateManager } from './stateManager'
+import { State } from './state'
 import { Puzzles } from '../puzzles'
 
 const elements = Object.freeze({
@@ -20,7 +20,7 @@ const elements = Object.freeze({
   message: document.getElementById('message')
 })
 
-export class Puzzle extends Stateful {
+export class Puzzle {
   connections = []
   debug = false
   layers = {}
@@ -35,13 +35,12 @@ export class Puzzle extends Stateful {
   #isDragging = false
   #isUpdatingBeams = false
   #mask
+  #state
   #termini
   #tiles = []
   #tool
 
   constructor (canvas) {
-    super(null)
-
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
     paper.settings.insertItems = false
     paper.setup(canvas)
@@ -49,8 +48,6 @@ export class Puzzle extends Stateful {
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
-
-    this.stateManager = new StateManager()
 
     this.#tool = new Tool()
     this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
@@ -108,26 +105,26 @@ export class Puzzle extends Stateful {
   }
 
   next () {
-    const id = Puzzles.nextId(this.stateManager.getState().getId())
+    const id = Puzzles.nextId(this.#state.getId())
     if (id) {
       this.select(id)
     }
   }
 
   previous () {
-    const id = Puzzles.previousId(this.stateManager.getState().getId())
+    const id = Puzzles.previousId(this.#state.getId())
     if (id) {
       this.select(id)
     }
   }
 
   redo () {
-    this.stateManager.redo()
+    this.#state.redo()
     this.#reload()
   }
 
   reset () {
-    this.stateManager.resetState()
+    this.#state.reset()
     this.#reload()
   }
 
@@ -135,7 +132,7 @@ export class Puzzle extends Stateful {
     document.body.classList.remove(Puzzle.Events.Error)
 
     try {
-      this.stateManager.setState(id)
+      this.#state = State.resolve(id)
       this.#reload()
     } catch (e) {
       console.error(e)
@@ -145,7 +142,7 @@ export class Puzzle extends Stateful {
   }
 
   undo () {
-    this.stateManager.undo()
+    this.#state.undo()
     this.#reload()
   }
 
@@ -170,7 +167,7 @@ export class Puzzle extends Stateful {
     const previouslySelectedTile = this.selectedTile
 
     this.selectedTile = tile
-    this.stateManager.setSelectedTile(tile)
+    this.#state.setSelectedTile(tile)
     this.#updateMessage(tile)
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
@@ -184,13 +181,9 @@ export class Puzzle extends Stateful {
     return previouslySelectedTile
   }
 
-  // noinspection JSCheckFunctionSignatures
   updateState () {
-    this.stateManager.updateState(
-      super.updateState((state) => { state.layout = this.layout.getState() }, false))
-
-    const state = this.stateManager.getState()
-    emitEvent(Puzzle.Events.Updated, { state })
+    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+    emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
   #addEventListeners () {
@@ -369,19 +362,13 @@ export class Puzzle extends Stateful {
   }
 
   #reload () {
-    if (this.stateManager.getState()) {
+    if (this.#state) {
       this.#teardown()
     }
 
-    const state = this.stateManager.getState()
-    const current = state.getCurrent()
+    this.#setup()
 
-    this.setState(current)
-    this.#setup(current)
-
-    emitEvent(Puzzle.Events.Updated, { state })
-
-    return state
+    emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
   #removeEventListeners () {
@@ -408,17 +395,13 @@ export class Puzzle extends Stateful {
     this.#updateSolution()
   }
 
-  #setup (state) {
-    if (!state) {
-      return
-    }
-
+  #setup () {
     // Reset the item IDs, so they are unique per-puzzle
     Item.uniqueId = 0
 
-    const { solution, layout, message } = state
+    const { solution, layout, message } = this.#state.getCurrent()
 
-    this.layout = new Layout(layout)
+    this.layout = new Layout(layout, this)
 
     this.message = message
     this.solution = solution
@@ -431,9 +414,9 @@ export class Puzzle extends Stateful {
     this.#addLayers()
     this.#setSolution()
 
-    const selected = this.stateManager.getState().getSelectedTile()
-    const selectedTile = selected
-      ? this.layout.getTileByOffset(new OffsetCoordinates(...selected.split(',')))
+    const selectedTileId = this.#state.getSelectedTile()
+    const selectedTile = selectedTileId
+      ? this.layout.getTileByOffset(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
     this.updateSelectedTile(selectedTile)
