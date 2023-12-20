@@ -113,8 +113,11 @@ function base64unescape (string) {
 export function deepEqual (x, y) {
   return typeof x === 'object' && typeof y === 'object'
     ? (
-        Object.keys(x).length === Object.keys(y).length && (
-          typeof x.equals === 'function' ? x.equals(y) : Object.keys(x).every(key => deepEqual(x[key], y[key])))
+        Object.keys(x).length === Object.keys(y).length &&
+        Object.keys(x).every(key => {
+          const xv = x[key], yv = y[key]
+          typeof xv.equals === 'function' ? xv.equals(yv) : deepEqual(xv, yv)
+        })
       )
     : (x === y)
 }

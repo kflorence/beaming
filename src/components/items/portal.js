@@ -3,8 +3,9 @@ import { Item } from '../item'
 import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { getOppositeDirection } from '../util'
-import { Beam } from './beam'
+import { BeamStop } from './beam'
 import { Puzzle } from '../puzzle'
+import { BeamState, BeamStatePortal } from '../beamState'
 
 export class Portal extends movable(rotatable(Item)) {
   constructor (tile, state) {
@@ -78,14 +79,12 @@ export class Portal extends movable(rotatable(Item)) {
     existingNextStep,
     collisionStep
   ) {
-    if (!currentStep.state.portal) {
-      const state = { insertAbove: this, portal: { entry: this } }
-
+    if (!currentStep.state.is(BeamStatePortal)) {
       // Handle entry collision
-      return Beam.Step.from(nextStep, { state })
-    } else if (currentStep.state.portal.exit === this) {
+      return nextStep.copy({ state: new BeamStatePortal(nextStep.state, { insertAbove: this, entry: this }) })
+    } else if (currentStep.state.exit === this) {
       // Handle exit collision
-      return Beam.Step.from(nextStep, { state: { insertAbove: this } })
+      return nextStep.copy({ state: new BeamState(nextStep.state, { insertAbove: this }) })
     }
 
     const direction = this.getDirection()
@@ -143,16 +142,20 @@ export class Portal extends movable(rotatable(Item)) {
         }
       ))
 
-      return Beam.Stop
+      return new BeamStop()
     }
   }
 
   #step (portal, nextStep) {
-    return Beam.Step.from(nextStep, {
+    return nextStep.copy({
       direction: this.rotatable ? this.getDirection() : nextStep.direction,
       tile: portal.parent,
       point: portal.parent.center,
-      state: { disconnect: true, insertAbove: portal, portal: { exit: portal } }
+      state: new BeamStatePortal(nextStep.state, {
+        disconnect: true,
+        insertAbove: portal,
+        exit: portal
+      })
     })
   }
 }

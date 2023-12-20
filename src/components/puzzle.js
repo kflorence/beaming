@@ -12,6 +12,7 @@ import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
 import { Puzzles } from '../puzzles'
+import { BeamStateCollision } from './beamState'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -215,17 +216,17 @@ export class Puzzle {
   }
 
   #onBeamUpdate (event) {
-    const stepAdded = event.detail.stepAdded
-    if (stepAdded?.state.collision) {
-      const beam = event.detail.beam
-      const point = stepAdded.point
-      const collisionId = Puzzle.Collision.id(point)
+    const beam = event.detail.beam
+    const state = event.detail.state
+
+    if (state?.is(BeamStateCollision)) {
+      const collisionId = Puzzle.Collision.id(state.point)
       const collision = this.#collisions[collisionId]
 
       if (collision) {
         collision.addBeam(beam)
       } else {
-        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [beam], point)
+        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [beam], state.point)
       }
 
       // Beam with collision has an active mask
@@ -238,7 +239,7 @@ export class Puzzle {
     Object.values(this.#collisions).forEach((collision) => collision.update())
 
     this.#beams
-      .filter((beam) => beam !== event.detail.beam)
+      .filter((otherBeam) => otherBeam !== beam)
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
     this.update()
@@ -357,8 +358,6 @@ export class Puzzle {
     } else if (terminus.color === color) {
       this.connections.push(terminus)
     }
-
-    this.#updateSolution()
   }
 
   #reload () {
@@ -458,6 +457,7 @@ export class Puzzle {
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
+      this.#updateSolution()
       return
     }
 
@@ -530,7 +530,8 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) => fuzzyEquals(beam.getStep()?.getCollision()?.point, this.point))
+      this.beams = this.beams.filter((beam) =>
+        fuzzyEquals(beam.getStep()?.state.get(BeamStateCollision)?.point, this.point))
 
       const color = this.getColor()
 
