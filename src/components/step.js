@@ -4,7 +4,10 @@ import { deepEqual } from './util'
 export class Step {
   color
   colors
+  connected
   direction
+  done
+  insertAbove
   onAdd
   onRemove
   point
@@ -13,34 +16,53 @@ export class Step {
   state
   tile
 
-  constructor (tile, colors, direction, point, pathIndex, segmentIndex, state, onAdd, onRemove) {
+  constructor (
+    tile,
+    colors,
+    direction,
+    point,
+    pathIndex,
+    segmentIndex,
+    connected,
+    insertAbove,
+    done,
+    state,
+    onAdd,
+    onRemove
+  ) {
     this.colors = Array.isArray(colors) ? Array.from(colors) : [colors]
 
     if (this.colors.length) {
       this.color = chroma.average(this.colors).hex()
     }
 
+    this.connected = connected ?? true
     this.direction = direction
+    this.done = done ?? false
+    this.insertAbove = insertAbove
     this.onAdd = onAdd
     this.onRemove = onRemove
     this.point = point
     this.pathIndex = pathIndex
     this.segmentIndex = segmentIndex
-    this.state = state || new StepState()
+    this.state = state ?? new StepState()
     this.tile = tile
   }
 
   copy (settings) {
     return new Step(
-      settings.tile || this.tile,
-      settings.colors || settings.color || this.colors,
-      settings.direction || this.direction,
-      settings.point || this.point,
-      settings.pathIndex || this.pathIndex,
-      settings.segmentIndex || this.segmentIndex,
-      settings.state,
-      settings.onAdd,
-      settings.onRemove
+      settings.tile ?? this.tile,
+      settings.colors ?? settings.color ?? this.colors,
+      settings.direction ?? this.direction,
+      settings.point ?? this.point,
+      settings.pathIndex ?? this.pathIndex,
+      settings.segmentIndex ?? this.segmentIndex,
+      settings.connected ?? this.connected,
+      settings.insertAbove ?? this.insertAbove,
+      settings.done ?? this.done,
+      settings.state ?? new StepState(this.state),
+      settings.onAdd ?? this.onAdd,
+      settings.onRemove ?? this.onRemove
     )
   }
 
@@ -49,6 +71,7 @@ export class Step {
   }
 
   static Stop = class StepStop extends Step {
+    done = true
     constructor () {
       super(null, [], null, null, null, null)
     }
@@ -56,96 +79,79 @@ export class Step {
 }
 
 export class StepState {
-  #settings = []
-
-  // TODO: move these to step
-  disconnectPath = false
-  done = false
-  insertAbove
+  #cache = {}
 
   constructor () {
-    this.#settings = Array.from(arguments)
-    this.#settings.map((settings) => Object.assign({}, settings)).forEach((settings) => {
-      if (settings.namespace) {
-        this[settings.namespace] = settings
-      } else {
-        Object.keys(settings).forEach((key) => {
-          this[key] = settings[key]
-        })
-      }
-    })
+    const settings = Object.assign({}, ...arguments)
+    Object.keys(settings).forEach((key) => { this[key] = settings[key] })
   }
 
   copy (...settings) {
-    return new StepState(...(this.#settings.concat(settings)))
+    return new StepState(...([this].concat(settings)))
   }
 
   get (Class) {
-    const settings = this.#settings.filter((state) => state instanceof Class)
-    if (settings.length) {
-      return Object.assign({}, ...settings)
+    const values = this.#keys(Class).map((key) => this[key]).filter((value) => value)
+    if (values.length) {
+      return Object.assign({}, ...values)
     }
   }
 
   has (Class) {
-    return this.#settings.some((settings) => settings instanceof Class)
+    return this.#keys(Class).some((key) => this[key])
+  }
+
+  #keys (Class) {
+    return (this.#cache[Class.name] ??= Object.keys(Reflect.construct(Class, [])))
   }
 
   static Collision = class StepCollision {
-    item
-    namespace = 'collision'
-    point
+    collision
 
     // Item is optional, in the case of an out-of-bounds collision for example
     constructor (point, item) {
-      this.point = point
-      this.item = item
-    }
-
-    static from (collision) {
-      return new StepCollision(collision.points[0], collision.item)
+      this.collision = { point, item }
     }
   }
 
-  static Filter = class StepFilter {}
+  static Filter = class StepFilter {
+    filter = {}
+  }
 
   static MergeInto = class StepMergeInto {
-    beam
-    namespace = 'mergeInto'
+    mergeInto
 
     constructor (beam) {
-      this.beam = beam
+      this.mergeInto = { beam }
     }
   }
 
   static MergeWith = class StepMergeWith {
-    beams
-    namespace = 'mergeWith'
+    mergeWith
 
     constructor (beams) {
-      this.beams = Array.isArray(beams) ? Array.from(beams) : [beams]
+      beams = Array.isArray(beams) ? Array.from(beams) : [beams]
+      this.mergeWith = { beams }
     }
   }
 
   static Portal = class StepPortal {
-    entryPortal
-    exitPortal
-    namespace = 'portal'
+    portal
 
     constructor (entryPortal, exitPortal) {
-      this.entryPortal = entryPortal
-      this.exitPortal = exitPortal
+      this.portal = { entryPortal, exitPortal }
     }
   }
 
-  static Reflector = class StepReflector {}
+  static Reflector = class StepReflector {
+    reflector = {}
+  }
 
   static TerminusConnection = class StepTerminusConnection {
-    namespace = 'terminusConnection'
+    terminusConnection
 
     constructor (terminus, opening) {
-      this.terminus = terminus
-      this.opening = opening
+      this.terminusConnection = { terminus, opening }
     }
   }
 }

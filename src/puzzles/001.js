@@ -75,7 +75,7 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, { color: 'red', type: 'Beam' }, null, null, null, { color: 'green', type: 'Beam' }],
+              openings: [null, { type: 'Beam' }, null, null, null, { type: 'Beam' }],
               type: 'Terminus'
             }
           ],

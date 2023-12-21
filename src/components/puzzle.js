@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Tool } from 'paper'
-import { emitEvent, fuzzyEquals } from './util'
+import { deepEqual, emitEvent, fuzzyEquals } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -35,6 +35,7 @@ export class Puzzle {
   #eventListeners = {}
   #isDragging = false
   #isUpdatingBeams = false
+  #lastUpdateBeams
   #mask
   #state
   #termini
@@ -160,7 +161,6 @@ export class Puzzle {
 
   update () {
     if (!this.#mask && !this.#isUpdatingBeams) {
-      Puzzle.#counter = 0
       this.#updateBeams()
     }
   }
@@ -452,15 +452,12 @@ export class Puzzle {
     this.#termini = []
   }
 
-  static #counter = 0
-
   #updateBeams () {
     this.#isUpdatingBeams = true
 
     const beams = this.#beams.filter((beam) => beam.isPending())
 
-    if (!beams.length || Puzzle.#counter > 100) {
-      console.log('counter', Puzzle.#counter)
+    if (!beams.length) {
       this.#isUpdatingBeams = false
       this.#updateSolution()
       return
@@ -470,10 +467,14 @@ export class Puzzle {
       this.layers.debug.clear()
     }
 
-    beams.forEach((beam) => beam.step(this))
+    // Prevent infinite looping when something is bugged
+    const update = Object.fromEntries(beams.map((beam) => [beam.id, beam.step(this)]))
+    if (deepEqual(update, this.#lastUpdateBeams)) {
+      console.error('loop detected, exiting')
+      return
+    }
 
-    Puzzle.#counter++
-
+    this.#lastUpdateBeams = update
     this.#updateBeams()
   }
 

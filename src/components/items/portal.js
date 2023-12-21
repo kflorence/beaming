@@ -81,10 +81,10 @@ export class Portal extends movable(rotatable(Item)) {
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
       // Handle entry collision
-      return nextStep.copy({ state: nextStep.state.copy({ insertAbove: this }, new StepState.Portal(this)) })
+      return nextStep.copy({ insertAbove: this, state: nextStep.state.copy(new StepState.Portal(this)) })
     } else if (portalState.exitPortal === this) {
       // Handle exit collision
-      return nextStep.copy({ state: nextStep.state.copy(new StepState({ insertAbove: this })) })
+      return nextStep.copy({ insertAbove: this })
     }
 
     const direction = this.getDirection()
@@ -148,13 +148,12 @@ export class Portal extends movable(rotatable(Item)) {
 
   #step (portal, nextStep, portalState) {
     return nextStep.copy({
+      connected: false,
       direction: this.rotatable ? this.getDirection() : nextStep.direction,
+      insertAbove: portal,
       tile: portal.parent,
       point: portal.parent.center,
-      state: nextStep.state.copy(
-        { disconnectPath: true, insertAbove: portal },
-        new StepState.Portal(portalState.entryPortal, portal)
-      )
+      state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal))
     })
   }
 }

@@ -91,9 +91,10 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       // Beam has connected to a valid opening
       console.debug(beam.toString(), 'terminus connection', this.toString(), opening)
       return nextStep.copy({
+        done: true,
         onAdd: () => { this.onConnection(opening.direction) },
         onRemove: () => { this.onDisconnection(opening.direction) },
-        state: nextStep.state.copy({ done: true }, new StepState.TerminusConnection(this, opening))
+        state: nextStep.state.copy(new StepState.TerminusConnection(this, opening))
       })
     }
 
@@ -117,7 +118,6 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   onToggle () {
     this.updateState((state) => {
-      console.log(this.toString(), this.openings.filter((opening) => !opening.connected))
       this.openings.filter((opening) => !opening.connected).forEach((opening) => {
         opening.toggle()
         state.openings[opening.direction].on = opening.on

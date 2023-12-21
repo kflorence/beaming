@@ -54,8 +54,8 @@ export class Beam extends Item {
     if (
       previousStep && (
         step.color !== previousStep.color ||
-        step.state.disconnectPath ||
-        !step.state.insertAbove?.equals(previousStep.state.insertAbove)
+        !step.connected ||
+        !step.insertAbove?.equals(previousStep.insertAbove)
       )
     ) {
       currentPath.set({ closed: true })
@@ -63,15 +63,15 @@ export class Beam extends Item {
       const path = new Path(this.#path)
       const points = [step.point]
 
-      // If the next step is not disconnected, we will link it with the previous step
-      if (!step.state.disconnectPath) {
+      // If the next step is connected, we will link it with the previous step
+      if (step.connected) {
         points.unshift(previousStep.point)
       }
 
       path.add(...points)
 
       const pathIndex = this.path.push(path) - 1
-      const index = step.state.insertAbove ? step.state.insertAbove.getIndex() + 1 : 0
+      const index = step.insertAbove ? step.insertAbove.getIndex() + 1 : 0
 
       // Unless specified in the state, the path will be inserted beneath all items
       this.getLayer().insertChild(index, path)
@@ -191,7 +191,7 @@ export class Beam extends Item {
       const collision = lastStep.state.get(StepState.Collision)
       if (
         collision?.item.equals(beam) &&
-        !beamLastStep?.state.get(StepState.Collision)?.point.equals(lastStep.state.point)
+        !beamLastStep?.state.get(StepState.Collision)?.point.equals(collision.point)
       ) {
         console.debug(this.toString(), 're-evaluating collision with', beam.toString())
         this.done = false
@@ -209,7 +209,6 @@ export class Beam extends Item {
       }
     }
 
-    // FIXME
     // Check for invalid mergedWith
     const mergedWithStepIndex = this.getMergeWithStepIndex(beam)
     if (mergedWithStepIndex >= 0 && !beamLastStep?.state.get(StepState.MergeInto)?.beam.equals(this)) {
@@ -278,21 +277,21 @@ export class Beam extends Item {
           this.#updateHistory(stepIndex)
         }
 
-        step.state = step.state.copy({ done: true }, new StepState.Collision(collision.points[0], beam))
+        const updatedStep = step.copy({
+          done: true,
+          state: step.state.copy(new StepState.Collision(collision.points[0], beam))
+        })
 
         if (isLastStep) {
+          this.#steps[stepIndex] = updatedStep
           this.#onUpdate()
         } else {
-          this.addStep(step)
+          this.addStep(updatedStep)
         }
       }
 
-      if (step.state.insertAbove) {
-        // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
-        collisionStep.state.insertAbove = step.state.insertAbove
-      }
-
-      return collisionStep
+      // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
+      return collisionStep.copy({ insertAbove: step.insertAbove })
     }
 
     // The beams are traveling in the same direction
@@ -308,9 +307,13 @@ export class Beam extends Item {
       state: step.state.copy(new StepState.MergeWith(beams))
     }))
 
-    console.debug(beam.toString(), 'merging into', this.toString(), 'stopping')
+    console.debug(beam.toString(), 'merging into', this.toString())
 
-    return currentStep.copy({ state: currentStep.state.copy({ done: true }, new StepState.MergeInto(this)) })
+    return nextStep.copy({
+      done: true,
+      point: currentStep.point,
+      state: nextStep.state.copy(new StepState.MergeInto(this))
+    })
   }
 
   onModifierInvoked (event) {
@@ -405,14 +408,16 @@ export class Beam extends Item {
     let collisionStep
     for (let collisionIndex = 0; collisionIndex < collisions.length; collisionIndex++) {
       const collision = collisions[collisionIndex]
+      const point = collision.points[0]
 
       console.debug(this.toString(), 'resolving collision:', collision)
 
       // By default, the next step will be treated as a collision with the beam stopping at the first point of
       // intersection with the item.
       collisionStep = nextStep.copy({
-        point: collision.points[0],
-        state: nextStep.state.copy({ done: true }, StepState.Collision.from(collision))
+        done: true,
+        point,
+        state: nextStep.state.copy(new StepState.Collision(point, collision.item))
       })
 
       // Allow the item to change the resulting step
@@ -436,6 +441,7 @@ export class Beam extends Item {
     if (collisionStep) {
       // Allow collision resolvers to stop execution
       if (collisionStep instanceof Step.Stop) {
+        this.done = true
         this.#onUpdate()
         return
       }
@@ -464,16 +470,16 @@ export class Beam extends Item {
     }
 
     if (currentStep.point.equals(nextStep.point)) {
-      console.debug(this.toString(), 'unable to advance, exiting')
-      // Merge the state from next step into the current step
-      // FIXME this doesn't work
-      currentStep.state = nextStep.state.copy(currentStep.state)
-      console.log(currentStep)
+      console.debug(this.toString(), 'next step point is same as current step point, stopping.', nextStep)
+      // Update the reference to currentStep
+      this.#steps[this.#stepIndex] = nextStep
       this.#onUpdate()
       return
     }
 
     this.addStep(nextStep)
+
+    return nextStep
   }
 
   toString () {
@@ -487,8 +493,9 @@ export class Beam extends Item {
   #onUpdate (stepAdded, stepsDeleted) {
     const step = this.getStep()
 
-    // Stop processing if done is true
-    this.done = !!step?.state.done
+    if (!this.done) {
+      this.done = step?.done ?? false
+    }
 
     emitEvent(Beam.Events.Update, { beam: this, state: step?.state, stepAdded, stepsDeleted })
   }
