@@ -3,9 +3,8 @@ import { Item } from '../item'
 import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { getOppositeDirection } from '../util'
-import { BeamStop } from './beam'
+import { Step, StepState } from '../step'
 import { Puzzle } from '../puzzle'
-import { BeamState, BeamStatePortal } from '../beamState'
 
 export class Portal extends movable(rotatable(Item)) {
   constructor (tile, state) {
@@ -79,12 +78,13 @@ export class Portal extends movable(rotatable(Item)) {
     existingNextStep,
     collisionStep
   ) {
-    if (!currentStep.state.is(BeamStatePortal)) {
+    const portalState = currentStep.state.get(StepState.Portal)
+    if (!portalState) {
       // Handle entry collision
-      return nextStep.copy({ state: new BeamStatePortal(nextStep.state, { insertAbove: this, entry: this }) })
-    } else if (currentStep.state.exit === this) {
+      return nextStep.copy({ state: nextStep.state.copy({ insertAbove: this }, new StepState.Portal(this)) })
+    } else if (portalState.exitPortal === this) {
       // Handle exit collision
-      return nextStep.copy({ state: new BeamState(nextStep.state, { insertAbove: this }) })
+      return nextStep.copy({ state: nextStep.state.copy(new StepState({ insertAbove: this })) })
     }
 
     const direction = this.getDirection()
@@ -108,7 +108,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (destinations.length === 1) {
       // A single matching destination
-      return this.#step(destinations[0], nextStep)
+      return this.#step(destinations[0], nextStep, portalState)
     } else {
       const destinationTiles = destinations.map((portal) => portal.parent)
 
@@ -125,7 +125,7 @@ export class Portal extends movable(rotatable(Item)) {
           onClick: (puzzle, tile) => {
             const destination = destinations.find((portal) => portal.parent === tile)
             if (destination) {
-              beam.addStep(this.#step(destination, nextStep))
+              beam.addStep(this.#step(destination, nextStep, portalState))
               beam.updateState((state) => {
                 if (!state.collisions) {
                   state.collisions = {}
@@ -142,20 +142,19 @@ export class Portal extends movable(rotatable(Item)) {
         }
       ))
 
-      return new BeamStop()
+      return new Step.Stop()
     }
   }
 
-  #step (portal, nextStep) {
+  #step (portal, nextStep, portalState) {
     return nextStep.copy({
       direction: this.rotatable ? this.getDirection() : nextStep.direction,
       tile: portal.parent,
       point: portal.parent.center,
-      state: new BeamStatePortal(nextStep.state, {
-        disconnect: true,
-        insertAbove: portal,
-        exit: portal
-      })
+      state: nextStep.state.copy(
+        { disconnectPath: true, insertAbove: portal },
+        new StepState.Portal(portalState.entryPortal, portal)
+      )
     })
   }
 }

@@ -4,7 +4,7 @@ import { rotatable } from '../modifiers/rotate'
 import { getOppositeDirection, getReflectedDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
-import { BeamStateReflector } from '../beamState'
+import { StepState } from '../step'
 
 export class Reflector extends movable(rotatable(Item)) {
   constructor (tile, state) {
@@ -30,8 +30,8 @@ export class Reflector extends movable(rotatable(Item)) {
     }
 
     // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state
-    if (!currentStep.state.is(BeamStateReflector)) {
-      return nextStep.copy({ state: new BeamStateReflector(nextStep.state) })
+    if (!currentStep.state.has(StepState.Reflector)) {
+      return nextStep.copy({ state: nextStep.state.copy(new StepState.Reflector()) })
     }
 
     const point = Beam.getNextPoint(currentStep.point, nextStep.tile.parameters.inradius, directionTo)

@@ -3,7 +3,7 @@ import { Item } from '../item'
 import { Color, Path } from 'paper'
 import { movable } from '../modifiers/move'
 import { getColorElement } from '../util'
-import { BeamStateFiltered } from '../beamState'
+import { StepState } from '../step'
 
 export class Filter extends movable(Item) {
   constructor (tile, { color }) {
@@ -37,9 +37,9 @@ export class Filter extends movable(Item) {
   onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return nextStep.copy(
-      currentStep.state.is(BeamStateFiltered) ?
-        { colors: nextStep.colors.concat([this.color]) } :
-        { state: new BeamStateFiltered({ filtered: true, insertAbove: this })}
+      currentStep.state.has(StepState.Filter)
+        ? { colors: nextStep.colors.concat([this.color]) }
+        : { state: new StepState({ insertAbove: this }, new StepState.Filter()) }
     )
   }
 }

@@ -12,7 +12,7 @@ import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
 import { Puzzles } from '../puzzles'
-import { BeamStateCollision } from './beamState'
+import { StepState } from './step'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -160,6 +160,7 @@ export class Puzzle {
 
   update () {
     if (!this.#mask && !this.#isUpdatingBeams) {
+      Puzzle.#counter = 0
       this.#updateBeams()
     }
   }
@@ -219,14 +220,15 @@ export class Puzzle {
     const beam = event.detail.beam
     const state = event.detail.state
 
-    if (state?.is(BeamStateCollision)) {
-      const collisionId = Puzzle.Collision.id(state.point)
-      const collision = this.#collisions[collisionId]
+    if (state?.has(StepState.Collision)) {
+      const collision = state.get(StepState.Collision)
+      const collisionId = Puzzle.Collision.id(collision.point)
+      const existing = this.#collisions[collisionId]
 
-      if (collision) {
-        collision.addBeam(beam)
+      if (existing) {
+        existing.addBeam(beam)
       } else {
-        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [beam], state.point)
+        this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [beam], collision.point)
       }
 
       // Beam with collision has an active mask
@@ -450,12 +452,15 @@ export class Puzzle {
     this.#termini = []
   }
 
+  static #counter = 0
+
   #updateBeams () {
     this.#isUpdatingBeams = true
 
     const beams = this.#beams.filter((beam) => beam.isPending())
 
-    if (!beams.length) {
+    if (!beams.length || Puzzle.#counter > 100) {
+      console.log('counter', Puzzle.#counter)
       this.#isUpdatingBeams = false
       this.#updateSolution()
       return
@@ -466,6 +471,8 @@ export class Puzzle {
     }
 
     beams.forEach((beam) => beam.step(this))
+
+    Puzzle.#counter++
 
     this.#updateBeams()
   }
@@ -531,7 +538,7 @@ export class Puzzle {
     update () {
       // Remove any beam which no longer matches its collision point
       this.beams = this.beams.filter((beam) =>
-        fuzzyEquals(beam.getStep()?.state.get(BeamStateCollision)?.point, this.point))
+        fuzzyEquals(beam.getStep()?.state.get(StepState.Collision)?.point, this.point))
 
       const color = this.getColor()
 

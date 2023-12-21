@@ -6,7 +6,7 @@ import { rotatable } from '../modifiers/rotate'
 import { getColorElements, emitEvent, getNextDirection, getOppositeDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
-import { BeamStateTerminus } from '../beamState'
+import { StepState } from '../step'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   sortOrder = 1
@@ -82,13 +82,19 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       (opening.direction + this.rotation) % 6 === directionFrom)
 
     if (
-      opening && opening.color === nextStep.color &&
-      // Opening is either not on or we are re-evaluating history of an already connected opening
-      (!opening.on || opening.connected && existingNextStep?.state.get(BeamStateTerminus)?.terminus.equals(this))
+      opening && opening.color === nextStep.color && (
+        !opening.on ||
+        // When re-evaluating history of an already connected opening
+        (opening.connected && existingNextStep?.state.get(StepState.TerminusConnection)?.terminus.equals(this))
+      )
     ) {
       // Beam has connected to a valid opening
       console.debug(beam.toString(), 'terminus connection', this.toString(), opening)
-      return nextStep.copy({ state: new BeamStateTerminus(nextStep.state, { terminus: this, opening }) })
+      return nextStep.copy({
+        onAdd: () => { this.onConnection(opening.direction) },
+        onRemove: () => { this.onDisconnection(opening.direction) },
+        state: nextStep.state.copy({ done: true }, new StepState.TerminusConnection(this, opening))
+      })
     }
 
     // Otherwise, treat this as a collision

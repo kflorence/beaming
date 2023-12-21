@@ -115,8 +115,8 @@ export function deepEqual (x, y) {
     ? (
         Object.keys(x).length === Object.keys(y).length &&
         Object.keys(x).every(key => {
-          const xv = x[key], yv = y[key]
-          typeof xv.equals === 'function' ? xv.equals(yv) : deepEqual(xv, yv)
+          const xv = x[key]; const yv = y[key]
+          return typeof xv?.equals === 'function' ? xv.equals(yv) : deepEqual(xv, yv)
         })
       )
     : (x === y)
