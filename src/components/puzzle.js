@@ -17,6 +17,7 @@ import { StepState } from './step'
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
   connections: document.getElementById('connections'),
+  connectionsCompleted: document.getElementById('connections-completed'),
   connectionsRequired: document.getElementById('connections-required'),
   message: document.getElementById('message')
 })
@@ -346,19 +347,16 @@ export class Puzzle {
   }
 
   #onTerminusConnection (event) {
+    console.log('onTerminusConnection', event)
     const terminus = event.detail.terminus
-    const connectionIndex = this.connections.findIndex((connection) => connection === terminus)
-    const openings = terminus.openings.filter((opening) => opening.connected)
-    const color = openings.length ? chroma.average(openings.map((opening) => opening.color)).hex() : undefined
+    const opening = event.detail.opening
+    const connectionId = `${terminus.id}:${opening.direction}`
+    const connectionIndex = this.connections.findIndex((connection) => connection === connectionId)
 
-    if (connectionIndex >= 0) {
-      const connection = this.connections[connectionIndex]
-      // No longer connected
-      if (connection.color !== color) {
-        this.connections.splice(connectionIndex, 1)
-      }
-    } else if (terminus.color === color) {
-      this.connections.push(terminus)
+    if (opening.connected && connectionIndex < 0) {
+      this.connections.push(connectionId)
+    } else if (!opening.connected && connectionIndex >= 0) {
+      this.connections.splice(connectionIndex, 1)
     }
   }
 
@@ -387,10 +385,8 @@ export class Puzzle {
 
   #setSolution () {
     if (this.solution.connections) {
+      elements.connections.classList.add('active')
       elements.connectionsRequired.textContent = this.solution.connections.toString()
-    } else {
-      console.error('Invalid puzzle solution', this.solution)
-      throw Error('Invalid puzzle solution')
     }
 
     this.#updateSolution()
@@ -481,7 +477,7 @@ export class Puzzle {
   #updateSolution () {
     const connections = this.connections.length
 
-    elements.connections.textContent = connections.toString()
+    elements.connectionsCompleted.textContent = connections.toString()
 
     // Check for solution
     if (connections === this.solution.connections) {

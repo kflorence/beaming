@@ -152,18 +152,25 @@ main {
   display: flex;
 }
 
-#state {
+#solution {
   align-items: center;
   border-right: 1px solid #ddd;
   cursor: default;
   display: flex;
   line-height: 24px;
   list-style: none;
-  padding-right: 1em;
 }
 
-#state .icon {
+#solution .icon {
   margin-left: 0.5em;
+}
+
+#solution li {
+  display: none;
+}
+
+#solution li.active {
+  display: flex;
 }
 
 #version {
@@ -264,7 +271,7 @@ main {
 
 .puzzle-error #actions,
 .puzzle-error #puzzle,
-.puzzle-error #state,
+.puzzle-error #solution,
 .puzzle-error .modifiers {
   display: none;
 }
