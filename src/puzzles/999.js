@@ -9,7 +9,7 @@ export default {
     tiles: layout.map((column) => column.map((item) => item === 'x' ? { type: 'Tile' } : null)),
     type: 'even-r'
   },
-  solution: {
-    connections: 100
-  }
+  solution: [
+    { amount: 100, type: 'Connections' }
+  ]
 }

@@ -20,10 +20,6 @@ const elements = Object.freeze({
 
 const puzzle = new Puzzle(elements.puzzle)
 
-document.addEventListener(Puzzle.Events.Solved, () => {
-  document.body.classList.add(Puzzle.Events.Solved)
-})
-
 elements.info.addEventListener('click', () => {
   if (!elements.dialog.open) {
     elements.dialog.showModal()

@@ -1,0 +1,126 @@
+import { capitalize, emitEvent, getIconElement, getTextElement } from './util'
+import { Terminus } from './items/terminus'
+import { EventListener } from './eventListener'
+
+export class Solution {
+  #conditions = []
+
+  constructor (state) {
+    state.forEach((condition) => this.#conditionFactory(condition))
+  }
+
+  teardown () {
+    this.#conditions.forEach((condition) => condition.teardown())
+    Solution.element.replaceChildren()
+  }
+
+  update () {
+    if (this.#conditions.every((condition) => condition.isMet())) {
+      emitEvent(Solution.Events.Solved)
+    }
+  }
+
+  #conditionFactory (condition) {
+    switch (condition.type) {
+      case SolutionCondition.Types.connections: {
+        this.#conditions.push(new Connections(this, condition))
+        break
+      }
+      default: {
+        console.warn('Ignoring condition with unknown type:', condition.type)
+      }
+    }
+  }
+
+  static element = document.getElementById('solution')
+
+  static Events = Object.freeze({
+    Solved: 'solution-solved'
+  })
+}
+
+class SolutionCondition {
+  solution
+
+  constructor (solution, state, elements) {
+    this.solution = solution
+    this.state = state
+
+    const li = document.createElement('li')
+    li.append(...elements)
+    Solution.element.append(li)
+  }
+
+  isMet () {}
+
+  teardown () {}
+
+  update () {
+    this.solution.update()
+  }
+
+  static Types = Object.freeze(Object.fromEntries([
+    'connections'
+  ].map((type) => [type, capitalize(type)])))
+}
+
+class Connections extends SolutionCondition {
+  #elements = {}
+  #eventListener
+  #connections = []
+
+  constructor (solution, state) {
+    const completed = document.createElement('span')
+    completed.textContent = '0'
+
+    const required = document.createElement('span')
+    required.textContent = state.amount.toString()
+
+    const elements = [
+      completed,
+      getTextElement('/'),
+      required,
+      getIconElement('link', 'Connections')
+    ]
+
+    super(solution, state, elements)
+
+    this.#elements.completed = completed
+    this.#elements.required = required
+
+    this.#eventListener = new EventListener(this, {
+      [Terminus.Events.Connection]: this.update,
+      [Terminus.Events.Disconnection]: this.update
+    })
+
+    this.#eventListener.addEventListeners()
+  }
+
+  isMet () {
+    return this.#connections.length === this.state.amount
+  }
+
+  teardown () {
+    this.#eventListener.removeEventListeners()
+    super.teardown()
+  }
+
+  update (event) {
+    console.debug('Connections.update', event)
+
+    const terminus = event.detail.terminus
+    const opening = event.detail.opening
+    const connectionId = `${terminus.id}:${opening.direction}`
+    const connectionIndex = this.#connections.findIndex((connection) => connection === connectionId)
+
+    if (opening.connected && connectionIndex < 0) {
+      this.#connections.push(connectionId)
+    } else if (!opening.connected && connectionIndex >= 0) {
+      this.#connections.splice(connectionIndex, 1)
+    }
+
+    this.#elements.completed.textContent = this.#connections.length.toString()
+
+    super.update()
+  }
+}

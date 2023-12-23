@@ -29,7 +29,7 @@ export function modifierFactory (tile, configuration) {
       modifier = new Toggle(tile, configuration)
       break
     default:
-      console.error('Ignoring modifier with unknown type: ' + configuration.type)
+      console.error('Ignoring modifier with unknown type:', configuration.type)
       break
   }
 

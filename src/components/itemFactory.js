@@ -25,7 +25,7 @@ export function itemFactory (parent, configuration) {
       item = new Wall(parent, configuration)
       break
     default:
-      console.error('Ignoring item with unknown type: ' + configuration.type)
+      console.error('Ignoring item with unknown type:', configuration.type)
       break
   }
 

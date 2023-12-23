@@ -70,6 +70,21 @@ export function getColorElements (colors) {
   return elements
 }
 
+export function getIconElement (name, title) {
+  const span = document.createElement('span')
+  span.classList.add('icon', 'material-symbols-outlined')
+  span.textContent = name
+  span.title = title ?? capitalize(name)
+  return span
+}
+
+export function getTextElement (text) {
+  const span = document.createElement('span')
+  span.classList.add('text')
+  span.textContent = text.toString()
+  return span
+}
+
 /**
  * Calls the given function one time after a task has finished for the given amount of time.
  * @param func the function to call

@@ -39,7 +39,7 @@ export default {
       ]
     ]
   },
-  solution: {
-    connections: 1
-  }
+  solution: [
+    { amount: 1, type: 'Connections' }
+  ]
 }

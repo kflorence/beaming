@@ -89,8 +89,7 @@ export default {
     ],
     type: 'even-r'
   },
-  solution: {
-    connections: 6,
-    moves: 3 // TODO implement
-  }
+  solution: [
+    { amount: 6, type: 'Connections' }
+  ]
 }

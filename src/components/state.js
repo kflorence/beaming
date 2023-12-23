@@ -148,8 +148,8 @@ export class State {
 
     url.pathname = [id, state].join('/')
     history.pushState({ id, state }, '', url)
-    localStorage.setItem(State.Keys.id, id)
-    localStorage.setItem(this.#key(State.Keys.state), state)
+    localStorage.setItem(State.CacheKeys.id, id)
+    localStorage.setItem(this.#key(State.CacheKeys.state), state)
   }
 
   static clearCache (id) {
@@ -157,12 +157,15 @@ export class State {
       // Clear everything
       url.pathname = ''
       history.pushState({}, '', url)
+      id = localStorage.getItem(State.CacheKeys.id)
       localStorage.clear()
+      // Keep current puzzle ID
+      localStorage.setItem(State.CacheKeys.id, id)
     } else {
       // Clear a single puzzle
       url.pathname = `/${id}`
       history.pushState({ id }, '', url)
-      localStorage.removeItem(State.key(State.Keys.state, id))
+      localStorage.removeItem(State.key(State.CacheKeys.state, id))
     }
   }
 
@@ -180,8 +183,8 @@ export class State {
     let state
 
     // Allow cache to be cleared via URL param
-    if (params.has(State.Keys.clearCache)) {
-      State.clearCache(params.get(State.Keys.clearCache))
+    if (params.has(State.ParamKeys.clearCache)) {
+      State.clearCache(params.get(State.ParamKeys.clearCache))
     }
 
     const pathSegments = url.pathname.split('/').filter((path) => path !== '')
@@ -202,9 +205,9 @@ export class State {
 
     if (!state) {
       // Update ID before checking for state in localStorage.
-      id = id || pathSegments[0] || localStorage.getItem(State.Keys.id) || Puzzles.firstId
+      id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.firstId
 
-      const localState = localStorage.getItem(State.key(State.Keys.state, id))
+      const localState = localStorage.getItem(State.key(State.CacheKeys.state, id))
       if (localState) {
         try {
           state = State.fromEncoded(localState)
@@ -230,11 +233,14 @@ export class State {
     return `${key}:${id}`
   }
 
-  static Keys = Object.freeze({
+  static CacheKeys = Object.freeze({
     center: 'center',
-    clearCache: 'clearCache',
     id: 'id',
     state: 'state',
     zoom: 'zoom'
+  })
+
+  static ParamKeys = Object.freeze({
+    clearCache: 'clearCache'
   })
 }

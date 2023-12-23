@@ -6,13 +6,14 @@ import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
 import { Beam } from './items/beam'
-import { Terminus } from './items/terminus'
 import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
 import { Puzzles } from '../puzzles'
 import { StepState } from './step'
+import { EventListener } from './eventListener'
+import { Solution } from './solution'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -28,16 +29,16 @@ export class Puzzle {
   layers = {}
   message
   selectedTile
-  solution
   solved = false
 
   #beams
   #collisions = {}
-  #eventListeners = {}
+  #eventListener
   #isDragging = false
   #isUpdatingBeams = false
   #lastUpdateBeams
   #mask
+  #solution
   #state
   #termini
   #tiles = []
@@ -51,6 +52,15 @@ export class Puzzle {
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
+
+    this.#eventListener = new EventListener(this, {
+      keyup: this.#onKeyup,
+      [Beam.Events.Update]: this.#onBeamUpdate,
+      [Modifier.Events.Invoked]: this.#onModifierInvoked,
+      [Puzzle.Events.Mask]: this.#onMask,
+      [Solution.Events.Solved]: this.#onSolved,
+      [Stateful.Events.Update]: this.#onStateUpdate
+    })
 
     this.#tool = new Tool()
     this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
@@ -189,23 +199,6 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
-  #addEventListeners () {
-    Object.entries({
-      keyup: this.#onKeyup,
-      [Beam.Events.Update]: this.#onBeamUpdate,
-      [Modifier.Events.Invoked]: this.#onModifierInvoked,
-      [Puzzle.Events.Mask]: this.#onMask,
-      [Stateful.Events.Update]: this.#onStateUpdate,
-      [Terminus.Events.Connection]: this.#onTerminusConnection,
-      [Terminus.Events.Disconnection]: this.#onTerminusConnection
-    }).forEach(([name, handler]) => {
-      // Ensure proper 'this' context inside of event handlers
-      handler = handler.bind(this)
-      this.#eventListeners[name] = handler
-      document.addEventListener(name, handler)
-    })
-  }
-
   #addLayers () {
     // Add layers in the order we want them
     [
@@ -220,7 +213,7 @@ export class Puzzle {
   #onBeamUpdate (event) {
     const beam = event.detail.beam
     const state = event.detail.state
-
+    console.log(state)
     if (state?.has(StepState.Collision)) {
       const collision = state.get(StepState.Collision)
       const collisionId = Puzzle.Collision.id(collision.point)
@@ -339,25 +332,11 @@ export class Puzzle {
 
     elements.message.replaceChildren(span)
 
-    emitEvent(Puzzle.Events.Solved)
+    document.body.classList.add(Puzzle.Events.Solved)
   }
 
   #onStateUpdate () {
     this.updateState()
-  }
-
-  #onTerminusConnection (event) {
-    console.log('onTerminusConnection', event)
-    const terminus = event.detail.terminus
-    const opening = event.detail.opening
-    const connectionId = `${terminus.id}:${opening.direction}`
-    const connectionIndex = this.connections.findIndex((connection) => connection === connectionId)
-
-    if (opening.connected && connectionIndex < 0) {
-      this.connections.push(connectionId)
-    } else if (!opening.connected && connectionIndex >= 0) {
-      this.connections.splice(connectionIndex, 1)
-    }
   }
 
   #reload () {
@@ -370,46 +349,27 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
-  #removeEventListeners () {
-    Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => {
-        // noinspection JSCheckFunctionSignatures
-        document.removeEventListener(event, listener)
-      })
-  }
-
   #removeLayers () {
     Object.values(this.layers).forEach((layer) => layer.removeChildren())
     paper.project.clear()
-  }
-
-  #setSolution () {
-    if (this.solution.connections) {
-      elements.connections.classList.add('active')
-      elements.connectionsRequired.textContent = this.solution.connections.toString()
-    }
-
-    this.#updateSolution()
   }
 
   #setup () {
     // Reset the item IDs, so they are unique per-puzzle
     Item.uniqueId = 0
 
-    const { solution, layout, message } = this.#state.getCurrent()
+    const { layout, message, solution } = this.#state.getCurrent()
 
-    this.layout = new Layout(layout, this)
-
+    this.layout = new Layout(layout)
     this.message = message
-    this.solution = solution
+    this.#solution = new Solution(solution)
 
     this.#tiles = this.layout.tiles
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
 
-    this.#addEventListeners()
+    this.#eventListener.addEventListeners()
     this.#addLayers()
-    this.#setSolution()
 
     const selectedTileId = this.#state.getSelectedTile()
     const selectedTile = selectedTileId
@@ -423,23 +383,17 @@ export class Puzzle {
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
-    this.#tiles.forEach((tile) => tile.teardown())
-    this.#tiles = []
-
-    this.#removeEventListeners()
+    this.#eventListener.removeEventListeners()
     this.#removeLayers()
 
-    this.connections = []
-
-    if (this.layout) {
-      this.layout.teardown()
-      this.layout = undefined
-    }
-
-    this.selectedTile = undefined
-    this.solution = undefined
+    this.#tiles.forEach((tile) => tile.teardown())
+    this.#tiles = []
+    this.#solution?.teardown()
+    this.#solution = undefined
     this.solved = false
-
+    this.layout?.teardown()
+    this.layout = undefined
+    this.selectedTile = undefined
     this.#beams = []
     this.#collisions = {}
     this.#isDragging = false
@@ -455,7 +409,6 @@ export class Puzzle {
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
-      this.#updateSolution()
       return
     }
 
@@ -472,17 +425,6 @@ export class Puzzle {
 
     this.#lastUpdateBeams = update
     this.#updateBeams()
-  }
-
-  #updateSolution () {
-    const connections = this.connections.length
-
-    elements.connectionsCompleted.textContent = connections.toString()
-
-    // Check for solution
-    if (connections === this.solution.connections) {
-      this.#onSolved()
-    }
   }
 
   #updateMessage (tile) {

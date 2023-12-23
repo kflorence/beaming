@@ -1,6 +1,7 @@
 import { capitalize, emitEvent } from './util'
 import { Puzzle } from './puzzle'
 import { Stateful } from './stateful'
+import { EventListener } from './eventListener'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -9,7 +10,7 @@ let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
-  #eventListeners = {}
+  #eventListener
   #mask
   #selectionTime = 500
   #timeoutId
@@ -27,9 +28,10 @@ export class Modifier extends Stateful {
   constructor (tile, state) {
     super(state)
 
+    this.tile = tile
     this.type = state.type
 
-    Object.entries({
+    this.#eventListener = new EventListener(this, {
       click: (event) => {
         // Prevent calling onClick when the modifier has just been selected
         if (this.#timeoutId === 0) {
@@ -41,12 +43,7 @@ export class Modifier extends Stateful {
       mousedown: this.onMouseDown,
       mouseleave: this.onMouseLeave,
       mouseup: this.onMouseUp
-    }).forEach(([name, handler]) => {
-      // Ensure proper 'this' context inside of event handlers
-      this.#eventListeners[name] = handler.bind(this)
     })
-
-    this.tile = tile
   }
 
   /**
@@ -67,9 +64,7 @@ export class Modifier extends Stateful {
 
     this.update()
 
-    // noinspection JSCheckFunctionSignatures
-    Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => li.addEventListener(event, listener))
+    this.#eventListener.addEventListeners(li)
 
     this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li)
   }
@@ -84,9 +79,7 @@ export class Modifier extends Stateful {
 
     Modifier.deselect()
 
-    Object.entries(this.#eventListeners)
-      .forEach(([event, listener]) => this.#container.removeEventListener(event, listener))
-
+    this.#eventListener.removeEventListeners()
     this.#container.remove()
 
     this.selected = false

@@ -165,14 +165,6 @@ main {
   margin-left: 0.5em;
 }
 
-#solution li {
-  display: none;
-}
-
-#solution li.active {
-  display: flex;
-}
-
 #version {
   color: #999;
 }
@@ -249,12 +241,16 @@ main {
   display: flex;
   padding: 1em;
 }
+.menu.non-interactive li,
+.menu li.non-interactive {
+  cursor: default;
+}
 
 .menu li:first-child {
   border: none;
 }
 
-.menu li:not(.disabled,.selected):hover {
+.menu:not(.non-interactive) li:not(.disabled,.non-interactive,.selected):hover {
   background-color: #eee;
 }
 

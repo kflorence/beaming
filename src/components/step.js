@@ -30,6 +30,10 @@ export class Step {
     onAdd,
     onRemove
   ) {
+    if (state && !(state instanceof StepState)) {
+      throw new Error('Step.state must be instance of StepState')
+    }
+
     this.colors = Array.isArray(colors) ? Array.from(colors) : [colors]
 
     if (this.colors.length) {

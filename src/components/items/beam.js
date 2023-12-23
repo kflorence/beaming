@@ -262,8 +262,8 @@ export class Beam extends Item {
     }
 
     // Find the step with matching collision point
-    const stepIndex = this.#steps
-      .findLastIndex((step) => collision.points.some((point) => fuzzyEquals(point, step.point)))
+    const point = collision.points[0]
+    const stepIndex = this.#steps.findLastIndex((step) => fuzzyEquals(point, step.point))
     const step = this.#steps[stepIndex]
     const isLastStep = stepIndex === lastStepIndex
 
@@ -279,7 +279,7 @@ export class Beam extends Item {
 
         const updatedStep = step.copy({
           done: true,
-          state: step.state.copy(new StepState.Collision(collision.points[0], beam))
+          state: step.state.copy(new StepState.Collision(point, beam))
         })
 
         if (isLastStep) {
@@ -311,6 +311,7 @@ export class Beam extends Item {
 
     return nextStep.copy({
       done: true,
+      // Stop at current step point
       point: currentStep.point,
       state: nextStep.state.copy(new StepState.MergeInto(this))
     })
@@ -379,7 +380,10 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.debug(this.toString(), 'stopping due to out of bounds')
-      currentStep.state = currentStep.state.copy({ done: true }, new StepState.Collision(currentStep.point))
+      this.#steps[this.#stepIndex] = currentStep.copy({
+        done: true,
+        state: new StepState(new StepState.Collision(currentStep.point))
+      })
       this.#onUpdate()
       return
     }
