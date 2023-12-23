@@ -213,7 +213,7 @@ export class Puzzle {
   #onBeamUpdate (event) {
     const beam = event.detail.beam
     const state = event.detail.state
-    console.log(state)
+
     if (state?.has(StepState.Collision)) {
       const collision = state.get(StepState.Collision)
       const collisionId = Puzzle.Collision.id(collision.point)

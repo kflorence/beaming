@@ -90,6 +90,7 @@ export default {
     type: 'even-r'
   },
   solution: [
-    { amount: 6, type: 'Connections' }
+    { amount: 6, type: 'Connections' },
+    { amount: 4, operator: '<', type: 'Moves' }
   ]
 }

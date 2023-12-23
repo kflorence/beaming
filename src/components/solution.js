@@ -1,6 +1,7 @@
 import { capitalize, emitEvent, getIconElement, getTextElement } from './util'
 import { Terminus } from './items/terminus'
 import { EventListener } from './eventListener'
+import { Puzzle } from './puzzle'
 
 export class Solution {
   #conditions = []
@@ -26,8 +27,13 @@ export class Solution {
         this.#conditions.push(new Connections(this, condition))
         break
       }
+      case SolutionCondition.Types.moves: {
+        this.#conditions.push(new Moves(this, condition))
+        break
+      }
       default: {
         console.warn('Ignoring condition with unknown type:', condition.type)
+        break
       }
     }
   }
@@ -60,12 +66,13 @@ class SolutionCondition {
   }
 
   static Types = Object.freeze(Object.fromEntries([
-    'connections'
+    'connections',
+    'moves'
   ].map((type) => [type, capitalize(type)])))
 }
 
 class Connections extends SolutionCondition {
-  #elements = {}
+  #completed
   #eventListener
   #connections = []
 
@@ -85,8 +92,7 @@ class Connections extends SolutionCondition {
 
     super(solution, state, elements)
 
-    this.#elements.completed = completed
-    this.#elements.required = required
+    this.#completed = completed
 
     this.#eventListener = new EventListener(this, {
       [Terminus.Events.Connection]: this.update,
@@ -119,8 +125,71 @@ class Connections extends SolutionCondition {
       this.#connections.splice(connectionIndex, 1)
     }
 
-    this.#elements.completed.textContent = this.#connections.length.toString()
+    this.#completed.textContent = this.#connections.length.toString()
 
     super.update()
   }
+}
+
+class Moves extends SolutionCondition {
+  #completed
+  #eventListener
+  #moves = 0
+
+  constructor (solution, state) {
+    state.operator ??= Moves.Operators.equalTo
+
+    if (!Object.values(Moves.Operators).includes(state.operator)) {
+      throw new Error(`Invalid moves operator: ${state.operator}`)
+    }
+
+    const completed = document.createElement('span')
+    completed.textContent = '0'
+
+    const required = document.createElement('span')
+    required.textContent = state.amount.toString()
+
+    const elements = [
+      completed,
+      getTextElement(state.operator),
+      required,
+      getIconElement('stacks', 'Moves')
+    ]
+
+    super(solution, state, elements)
+
+    this.#completed = completed
+    this.#eventListener = new EventListener(this, { [Puzzle.Events.Updated]: this.update })
+    this.#eventListener.addEventListeners()
+  }
+
+  isMet () {
+    // TODO: support 'between' syntax like 2 < 3 < 4 ?
+    switch (this.state.operator) {
+      case Moves.Operators.equalTo:
+        return this.#moves === this.state.amount
+      case Moves.Operators.greaterThan:
+        return this.#moves > this.state.amount
+      case Moves.Operators.lessThan:
+        return this.#moves < this.state.amount
+    }
+  }
+
+  teardown () {
+    this.#eventListener.removeEventListeners()
+    super.teardown()
+  }
+
+  update (event) {
+    console.debug('Moves.update', event)
+    this.#moves = event.detail.state.length()
+    this.#completed.textContent = this.#moves.toString()
+    super.update()
+  }
+
+  static Operators = Object.freeze({
+    equalTo: '=',
+    greaterThan: '>',
+    lessThan: '<'
+  })
 }
