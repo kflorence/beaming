@@ -17,6 +17,7 @@ export class Modifier extends Stateful {
 
   configuration
   element
+  disabled = false
   id = uniqueId++
   immutable = false
   name
@@ -37,7 +38,10 @@ export class Modifier extends Stateful {
         if (this.#timeoutId === 0) {
           return
         }
-        this.onClick(event)
+        this.selected = false
+        if (!this.disabled) {
+          this.onClick(event)
+        }
       },
       deselected: this.onDeselected,
       mousedown: this.onMouseDown,
@@ -53,7 +57,7 @@ export class Modifier extends Stateful {
     const li = this.#container = document.createElement('li')
 
     if (this.immutable) {
-      li.classList.add('disabled')
+      this.disabled = true
     }
 
     const span = this.element = document.createElement('span')
@@ -156,14 +160,16 @@ export class Modifier extends Stateful {
 
   update (options) {
     options = Object.assign(
-      { selected: this.selected, name: this.name, title: this.title },
+      { disabled: this.disabled, selected: this.selected, name: this.name, title: this.title },
       options || {}
     )
 
+    this.disabled = options.disabled
     this.name = options.name
     this.title = options.title
     this.selected = options.selected
 
+    this.#container.classList.toggle('disabled', this.disabled)
     this.#container.classList.toggle('selected', this.selected)
     this.element.textContent = this.name
     this.element.title = this.title

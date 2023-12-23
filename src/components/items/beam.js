@@ -190,7 +190,7 @@ export class Beam extends Item {
       // Check for invalid collisions
       const collision = lastStep.state.get(StepState.Collision)
       if (
-        collision?.item.equals(beam) &&
+        collision?.item?.equals(beam) &&
         !beamLastStep?.state.get(StepState.Collision)?.point.equals(collision.point)
       ) {
         console.debug(this.toString(), 're-evaluating collision with', beam.toString())
@@ -330,8 +330,10 @@ export class Beam extends Item {
       return
     }
 
+    const tiles = event.detail.moved ? [event.detail.moved.fromTile, event.detail.moved.toTile] : [event.detail.tile]
+
     // We want the first step that contains the tile the event occurred on
-    const stepIndex = this.#steps.findIndex((step) => step.tile === event.detail.tile)
+    const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
     if (stepIndex >= 0) {
       // Mark as not done to trigger the processing of another step
       this.done = false

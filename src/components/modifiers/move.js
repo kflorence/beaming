@@ -1,6 +1,7 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
+import { Item } from '../item'
 
 export class Move extends Modifier {
   #mask
@@ -8,10 +9,15 @@ export class Move extends Modifier {
   name = 'drag_pan'
   title = 'Items in this tile can be moved to an empty tile.'
 
+  attach () {
+    super.attach()
+  }
+
   onClick (event) {
     super.onClick(event)
 
-    if (this.#mask) {
+    const items = this.tile.items.filter(Move.movable)
+    if (this.#mask || !items.length) {
       return
     }
 
@@ -35,7 +41,8 @@ export class Move extends Modifier {
 
   tileFilter (tile) {
     // Filter out immutable tiles and tiles with items, except for the current tile
-    return tile.modifiers.some(Modifier.immutable) || (tile.items.length > 0 && !(tile === this.tile))
+    return tile.modifiers.some(Modifier.immutable) ||
+      (tile.items.filter((item) => item.type !== Item.Types.beam).length > 0 && !(tile === this.tile))
   }
 
   #maskOnClick (puzzle, tile) {

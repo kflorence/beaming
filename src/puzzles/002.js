@@ -2,42 +2,57 @@ export default {
   layout: {
     tiles: [
       [
-        null,
         {
           items: [
             {
               color: 'blue',
-              openings: [null, null, null, null, { type: 'Beam' }, null],
+              openings: [null, null, null, { on: true, type: 'Beam' }, null, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Immutable' }],
+          modifiers: [
+            { type: 'Lock' }
+          ],
           type: 'Tile'
-        }
+        },
+        { type: 'Tile' }
       ],
       [
-        {
-          modifiers: [{ type: 'Immutable' }],
-          type: 'Tile'
-        }
+        { type: 'Tile' },
+        { type: 'Tile' },
+        { type: 'Tile' }
       ],
       [
         {
           items: [
             {
-              color: 'blue',
-              openings: [null, null, null, null, { on: true, type: 'Beam' }, null],
+              color: 'red',
+              openings: [null, { on: true, type: 'Beam' }, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
             { type: 'Lock' },
-            { type: 'Rotate' }
+            { clockwise: false, type: 'Rotate' }
+          ],
+          type: 'Tile'
+        },
+        {
+          items: [
+            {
+              color: 'blue',
+              openings: [{ type: 'Beam' }, null, null, null, null, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         }
       ]
-    ]
+    ],
+    type: 'even-r'
   },
   solution: [
     { amount: 1, type: 'Connections' }

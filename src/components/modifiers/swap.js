@@ -1,5 +1,6 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
+import { Item } from '../item'
 
 export class Swap extends Move {
   name = 'swap_horiz'
@@ -19,6 +20,6 @@ export class Swap extends Move {
 
   tileFilter (tile) {
     // Filter out immutable tiles and tiles without items
-    return tile.modifiers.some(Modifier.immutable) || !tile.items.length
+    return tile.modifiers.some(Modifier.immutable) || !tile.items.filter((item) => item.type !== Item.Types.beam).length
   }
 }

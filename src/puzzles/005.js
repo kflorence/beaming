@@ -2,25 +2,20 @@ export default {
   layout: {
     tiles: [
       [
-        null,
         {
-          items: [
-            {
-              openings: [null, null, null, { color: 'red', type: 'Beam' }, { color: 'blue', type: 'Beam' }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }],
-          type: 'Tile'
-        }
-      ],
-      [
-        {
-          modifiers: [{ type: 'Immutable' }],
           type: 'Tile'
         },
         {
-          modifiers: [{ type: 'Immutable' }],
+          items: [
+            {
+              color: 'blue',
+              openings: [null, null, null, null, null, { on: true, type: 'Beam' }],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' }
+          ],
           type: 'Tile'
         }
       ],
@@ -29,29 +24,49 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, { type: 'Beam' }, null, null, null, null],
+              openings: [null, null, { type: 'Beam' }, null, null, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
           type: 'Tile'
         },
-        null,
+        {
+          modifiers: [
+            { type: 'Move' }
+          ],
+          type: 'Tile'
+        },
         {
           items: [
             {
               color: 'red',
-              openings: [{ type: 'Beam' }, null, null, null, null, null],
+              openings: [null, null, null, null, null, { type: 'Beam' }],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
           type: 'Tile'
         }
+      ],
+      [
+        {
+          items: [
+            {
+              color: 'red',
+              openings: [null, null, { on: true, type: 'Beam' }, null, null, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' }
+          ],
+          type: 'Tile'
+        },
+        { type: 'Tile' }
       ]
-    ]
+    ],
+    type: 'even-r'
   },
   solution: [
-    { amount: 1, type: 'Connections' }
+    { amount: 2, type: 'Connections' }
   ]
 }

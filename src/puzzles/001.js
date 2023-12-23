@@ -6,62 +6,28 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, null, { type: 'Beam' }, null, { type: 'Beam' }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
-          type: 'Tile'
-        },
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [null, null, null, { type: 'Beam' }, null, { type: 'Beam' }],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
-          type: 'Tile'
-        }
-      ],
-      [
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [null, { type: 'Beam' }, null, { type: 'Beam' }, null, null],
+              openings: [null, null, null, { on: true, type: 'Beam' }, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
-            { type: 'Lock' },
-            { type: 'Toggle' }
+            { type: 'Lock' }
           ],
           type: 'Tile'
         },
+        { type: 'Tile' }
+      ],
+      [
         { type: 'Tile' },
-        {
-          items: [
-            {
-              color: 'blue',
-              openings: [{ type: 'Beam' }, null, null, null, { type: 'Beam' }, null],
-              type: 'Terminus'
-            }
-          ],
-          modifiers: [
-            { type: 'Lock' },
-            { type: 'Toggle' }
-          ],
-          type: 'Tile'
-        }
+        { type: 'Tile' },
+        { type: 'Tile' }
       ],
       [
         {
           items: [
             {
-              color: 'blue',
-              openings: [{ type: 'Beam' }, null, { type: 'Beam' }, null, null, null],
+              color: 'red',
+              openings: [null, { on: true, type: 'Beam' }, null, null, null, null],
               type: 'Terminus'
             }
           ],
@@ -75,13 +41,12 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, { type: 'Beam' }, null, null, null, { type: 'Beam' }],
+              openings: [{ type: 'Beam' }, null, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
-            { type: 'Lock' },
-            { type: 'Toggle' }
+            { type: 'Lock' }
           ],
           type: 'Tile'
         }
@@ -90,7 +55,6 @@ export default {
     type: 'even-r'
   },
   solution: [
-    { amount: 6, type: 'Connections' },
-    { amount: 4, operator: '<', type: 'Moves' }
+    { amount: 1, type: 'Connections' }
   ]
 }
