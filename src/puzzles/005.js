@@ -14,7 +14,8 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Lock' }
+            { type: 'Lock' },
+            { type: 'Move' }
           ],
           type: 'Tile'
         }
@@ -24,25 +25,28 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, null, { type: 'Beam' }, null, null, null],
+              openings: [null, { type: 'Beam' }, null, null, null, null],
               type: 'Terminus'
             }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         },
         {
-          modifiers: [
-            { type: 'Move' }
-          ],
           type: 'Tile'
         },
         {
           items: [
             {
               color: 'red',
-              openings: [null, null, null, null, null, { type: 'Beam' }],
+              openings: [null, null, null, null, { type: 'Beam' }, null],
               type: 'Terminus'
             }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         }
@@ -57,7 +61,9 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Lock' }
+            { type: 'Lock' },
+            { type: 'Swap' },
+            { clockwise: false, type: 'Rotate' }
           ],
           type: 'Tile'
         },

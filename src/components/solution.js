@@ -1,4 +1,4 @@
-import { capitalize, emitEvent, getIconElement, getTextElement } from './util'
+import { capitalize, getIconElement, getTextElement } from './util'
 import { Terminus } from './items/terminus'
 import { EventListener } from './eventListener'
 import { Puzzle } from './puzzle'
@@ -15,20 +15,18 @@ export class Solution {
     Solution.element.replaceChildren()
   }
 
-  update () {
-    if (this.#conditions.every((condition) => condition.isMet())) {
-      emitEvent(Solution.Events.Solved)
-    }
+  isSolved () {
+    return this.#conditions.every((condition) => condition.isMet())
   }
 
   #conditionFactory (condition) {
     switch (condition.type) {
       case SolutionCondition.Types.connections: {
-        this.#conditions.push(new Connections(this, condition))
+        this.#conditions.push(new Connections(condition))
         break
       }
       case SolutionCondition.Types.moves: {
-        this.#conditions.push(new Moves(this, condition))
+        this.#conditions.push(new Moves(condition))
         break
       }
       default: {
@@ -39,17 +37,10 @@ export class Solution {
   }
 
   static element = document.getElementById('solution')
-
-  static Events = Object.freeze({
-    Solved: 'solution-solved'
-  })
 }
 
 class SolutionCondition {
-  solution
-
-  constructor (solution, state, elements) {
-    this.solution = solution
+  constructor (state, elements) {
     this.state = state
 
     const li = document.createElement('li')
@@ -61,9 +52,7 @@ class SolutionCondition {
 
   teardown () {}
 
-  update () {
-    this.solution.update()
-  }
+  update () {}
 
   static Types = Object.freeze(Object.fromEntries([
     'connections',
@@ -76,7 +65,7 @@ class Connections extends SolutionCondition {
   #eventListener
   #connections = []
 
-  constructor (solution, state) {
+  constructor (state) {
     const completed = document.createElement('span')
     completed.textContent = '0'
 
@@ -90,7 +79,7 @@ class Connections extends SolutionCondition {
       getIconElement('link', 'Connections')
     ]
 
-    super(solution, state, elements)
+    super(state, elements)
 
     this.#completed = completed
 
@@ -126,8 +115,6 @@ class Connections extends SolutionCondition {
     }
 
     this.#completed.textContent = this.#connections.length.toString()
-
-    super.update()
   }
 }
 
@@ -136,7 +123,7 @@ class Moves extends SolutionCondition {
   #eventListener
   #moves = 0
 
-  constructor (solution, state) {
+  constructor (state) {
     state.operator ??= Moves.Operators.equalTo
 
     if (!Object.values(Moves.Operators).includes(state.operator)) {
@@ -156,7 +143,7 @@ class Moves extends SolutionCondition {
       getIconElement('stacks', 'Moves')
     ]
 
-    super(solution, state, elements)
+    super(state, elements)
 
     this.#completed = completed
     this.#eventListener = new EventListener(this, { [Puzzle.Events.Updated]: this.update })
@@ -184,7 +171,6 @@ class Moves extends SolutionCondition {
     console.debug('Moves.update', event)
     this.#moves = event.detail.state.length()
     this.#completed.textContent = this.#moves.toString()
-    super.update()
   }
 
   static Operators = Object.freeze({

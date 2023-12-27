@@ -58,7 +58,6 @@ export class Puzzle {
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
       [Puzzle.Events.Mask]: this.#onMask,
-      [Solution.Events.Solved]: this.#onSolved,
       [Stateful.Events.Update]: this.#onStateUpdate
     })
 
@@ -167,7 +166,6 @@ export class Puzzle {
     this.#mask = undefined
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
-    this.update()
   }
 
   update () {
@@ -227,7 +225,7 @@ export class Puzzle {
 
       // Beam with collision has an active mask
       const mask = this.#mask?.configuration
-      if (mask?.beam.equals(beam)) {
+      if (mask?.beam?.equals(beam)) {
         this.unmask()
       }
     }
@@ -333,6 +331,7 @@ export class Puzzle {
     elements.message.replaceChildren(span)
 
     document.body.classList.add(Puzzle.Events.Solved)
+    emitEvent(Puzzle.Events.Solved)
   }
 
   #onStateUpdate () {
@@ -409,6 +408,10 @@ export class Puzzle {
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
+      // FIXME this doesn't work if not all events (e.g. connections) have been processed yet
+      if (this.#solution.isSolved()) {
+        this.#onSolved()
+      }
       return
     }
 

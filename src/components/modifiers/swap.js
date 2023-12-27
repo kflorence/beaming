@@ -14,7 +14,8 @@ export class Swap extends Move {
     toItems.forEach((item) => item.move(this.tile))
 
     return {
-      moved: [Move.data(this.tile, tile, fromItems), Move.data(tile, this.tile, toItems)]
+      moved: [Move.data(this.tile, tile, fromItems), Move.data(tile, this.tile, toItems)],
+      tiles: [this.tile, tile]
     }
   }
 

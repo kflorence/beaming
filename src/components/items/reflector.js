@@ -20,12 +20,12 @@ export class Reflector extends movable(rotatable(Item)) {
     const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
     if (directionTo === currentStep.direction) {
-      console.debug(beam.color, 'stopping due to collision with non-reflective side of reflector')
+      console.debug(beam.toString(), 'stopping due to collision with non-reflective side of reflector')
       return collisionStep
     }
 
     if (directionTo === directionFrom) {
-      console.debug(beam.color, 'stopping due to reflection back at self')
+      console.debug(beam.toString(), 'stopping due to reflection back at self')
       return collisionStep
     }
 

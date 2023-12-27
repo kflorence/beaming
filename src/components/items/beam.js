@@ -14,7 +14,7 @@ import { Step, StepState } from '../step'
 export class Beam extends Item {
   done = false
   path = []
-  sortOrder = 2
+  sortOrder = 3
 
   #direction
   #path
@@ -330,7 +330,7 @@ export class Beam extends Item {
       return
     }
 
-    const tiles = event.detail.moved ? [event.detail.moved.fromTile, event.detail.moved.toTile] : [event.detail.tile]
+    const tiles = event.detail.tiles || [event.detail.tile]
 
     // We want the first step that contains the tile the event occurred on
     const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))

@@ -9,7 +9,7 @@ import { movable } from '../modifiers/move'
 import { StepState } from '../step'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
-  sortOrder = 1
+  sortOrder = 2
 
   #ui
 

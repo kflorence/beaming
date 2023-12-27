@@ -36,7 +36,10 @@ export class Move extends Modifier {
   moveItems (tile) {
     const items = this.tile.items.filter(Move.movable)
     items.forEach((item) => item.move(tile))
-    return { moved: Move.data(this.tile, tile, items) }
+    return {
+      moved: [Move.data(this.tile, tile, items)],
+      tiles: [this.tile, tile]
+    }
   }
 
   tileFilter (tile) {

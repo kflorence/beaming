@@ -6,33 +6,37 @@ export default {
           items: [
             {
               color: 'blue',
-              openings: [null, null, null, { on: true, type: 'Beam' }, null, null],
+              openings: [null, null, null, { type: 'Beam' }, null, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [
-            { type: 'Lock' }
-          ],
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
           type: 'Tile'
         },
-        { type: 'Tile' }
-      ],
-      [
-        { type: 'Tile' },
-        { type: 'Tile' },
-        { type: 'Tile' }
+        null,
+        {
+          items: [
+            {
+              direction: 0,
+              type: 'Portal'
+            }
+          ],
+          modifiers: [{ type: 'Lock' }],
+          type: 'Tile'
+        }
       ],
       [
         {
           items: [
             {
-              color: 'red',
-              openings: [null, { on: true, type: 'Beam' }, null, null, null, null],
-              type: 'Terminus'
+              direction: 3,
+              type: 'Portal'
             }
           ],
+          modifiers: [{ type: 'Lock' }],
           type: 'Tile'
         },
+        null,
         {
           items: [
             {
@@ -41,14 +45,11 @@ export default {
               type: 'Terminus'
             }
           ],
-          modifiers: [
-            { clockwise: false, type: 'Rotate' }
-          ],
+          modifiers: [{ type: 'Lock' }, { type: 'Toggle' }],
           type: 'Tile'
         }
       ]
-    ],
-    type: 'even-r'
+    ]
   },
   solution: [
     { amount: 1, type: 'Connections' }
