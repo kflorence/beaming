@@ -407,11 +407,14 @@ export class Puzzle {
     const beams = this.#beams.filter((beam) => beam.isPending())
 
     if (!beams.length) {
-      this.#isUpdatingBeams = false
-      // FIXME this doesn't work if not all events (e.g. connections) have been processed yet
-      if (this.#solution.isSolved()) {
-        this.#onSolved()
-      }
+      // Ensure we check for a solution after all other in-progress events have processed
+      // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
+      setTimeout(() => {
+        if (this.#solution.isSolved()) {
+          this.#onSolved()
+        }
+        this.#isUpdatingBeams = false
+      }, 0)
       return
     }
 

@@ -7,7 +7,7 @@ import {
   fuzzyEquals,
   getConvertedDirection,
   getMidPoint,
-  sortByDistance
+  getDistance
 } from '../util'
 import { Step, StepState } from '../step'
 
@@ -269,9 +269,11 @@ export class Beam extends Item {
 
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
-      console.debug(beam.toString(), 'has collided with', this.toString(), 'stopping')
+      const isSelf = beam.equals(this)
 
-      if (!step.state.has(StepState.Collision)) {
+      console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), 'stopping')
+
+      if (!isSelf && !step.state.has(StepState.Collision)) {
         if (!isLastStep) {
           // If matched step is not last step, update history
           this.#updateHistory(stepIndex)
@@ -569,7 +571,7 @@ export class Beam extends Item {
         }
 
         // Sort collision points by distance from origin point (closest collision points first)
-        points.sort(sortByDistance(firstPoint))
+        points.sort(getDistance(firstPoint))
 
         if (puzzle.debug) {
           puzzle.drawDebugPoint(firstPoint)
@@ -580,17 +582,15 @@ export class Beam extends Item {
       })
       .filter((result) => result.points.length)
       .sort((a, b) => {
-        const sortOrder = a.item.sortOrder - b.item.sortOrder
-        // First sort by precedence as defined on the item
-        if (sortOrder !== 0) {
-          return sortOrder
-        } else {
-          // If they are the same, sort by distance of closest intersection point from target point
-          // Note: sort() mutates, so we need to create copies of these arrays first
-          const closestPointA = Array.from(a.points).sort(sortByDistance(lastPoint)).shift()
-          const closestPointB = Array.from(b.points).sort(sortByDistance(lastPoint)).shift()
-          return sortByDistance(lastPoint)(closestPointA, closestPointB)
+        // Sort items returned by proximity to starting point
+        const distance = getDistance(firstPoint)(a.points[0], b.points[0])
+console.log(distance, a.item.type, b.item.type)
+        if (distance === 0) {
+          // If two items are an equal distance away, sort by sort order as defined on item
+          return  a.item.sortOrder - b.item.sortOrder
         }
+
+        return distance
       })
   }
 

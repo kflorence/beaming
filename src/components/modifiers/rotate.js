@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { coalesce, MouseButton } from '../util'
+import { addDirection, coalesce, MouseButton } from '../util'
 
 export class Rotate extends Modifier {
   clockwise
@@ -51,14 +51,15 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     this.direction = coalesce(state.direction, configuration.direction)
     this.rotatable = coalesce(true, state.rotatable, configuration.rotatable)
     this.rotationDegrees = coalesce(60, state.rotationDegrees, configuration.rotationDegrees)
-    this.rotation = coalesce(0, this.direction, state.rotation, configuration.rotation) % this.getMaxRotation()
+    this.rotation = coalesce(0, state.rotation, configuration.rotation) % this.getMaxRotation()
   }
 
   // Get the direction of an item with rotation factored in
-  getDirection () {
-    return this.direction === undefined
-      ? this.direction
-      : Math.abs((this.direction + (this.rotation - this.direction)) % 6)
+  getDirection (direction) {
+    direction = direction ?? this.direction
+    return direction === undefined
+      ? direction
+      : addDirection(direction, this.rotation)
   }
 
   getMaxRotation () {
@@ -68,8 +69,12 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
   onInitialization () {
     super.onInitialization()
 
-    // Align the items with the configured direction on initialization
     this.rotateGroup(this.rotation)
+
+    if (this.direction !== undefined) {
+      // Direction will not affect initial rotation of item
+      this.rotateGroup(this.direction)
+    }
   }
 
   rotateGroup (rotation) {

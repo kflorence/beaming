@@ -22,6 +22,10 @@ export function addDegrees (original, degrees) {
   return result
 }
 
+export function addDirection(direction, amount) {
+  return ((direction + amount) + 6) % 6
+}
+
 export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
@@ -152,14 +156,14 @@ export function getCentroid (triangle) {
   return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
 }
 
+export function getDistance (point) {
+  return (a, b) => a.subtract(point).length - b.subtract(point).length
+}
+
 export function getMidPoint (pointA, pointB) {
   const vector = pointA.subtract(pointB)
   vector.length = vector.length / 2
   return pointA.subtract(vector)
-}
-
-export function getNextDirection (direction, max = 5) {
-  return direction === max ? 0 : direction + 1
 }
 
 export function getOppositeDirection (direction) {
@@ -191,6 +195,6 @@ export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
-export function sortByDistance (point) {
-  return (a, b) => a.subtract(point).length - b.subtract(point).length
+export function subtractDirection(direction, amount) {
+  return addDirection(direction, amount * -1)
 }

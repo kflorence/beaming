@@ -3,7 +3,7 @@ import { Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getColorElements, emitEvent, getNextDirection, getOppositeDirection } from '../util'
+import { getColorElements, emitEvent, getOppositeDirection, addDirection, subtractDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
@@ -18,7 +18,9 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
     const colors = state.openings.filter((opening) => opening?.color)
       .flatMap((opening) => Array.isArray(opening.color) ? opening.color : [opening.color])
-    const color = colors.length ? chroma.average(colors).hex() : chroma(state.color).hex()
+    const color = chroma.average(
+      colors.length ? colors : (Array.isArray(state.color) ? state.color : [state.color])
+    ).hex()
 
     const openings = state.openings.map((state, direction) =>
       state
@@ -33,7 +35,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
     this.#ui = Terminus.ui(tile, color, openings)
 
-    this.group.addChildren([this.#ui.terminus, ...this.#ui.openings])
+    this.group.addChildren([...this.#ui.openings, this.#ui.terminus])
 
     this.color = color
     this.openings = openings
@@ -77,10 +79,9 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     }
 
     const directionFrom = getOppositeDirection(currentStep.direction)
-    const opening = this.openings.find((opening) =>
-      // Take rotation of terminus into account
-      (opening.direction + this.rotation) % 6 === directionFrom)
 
+    // Take rotation of terminus into account
+    const opening = this.openings.find((opening) => this.getDirection(opening.direction) === directionFrom)
     if (
       opening && opening.color === nextStep.color && (
         !opening.on ||
@@ -150,8 +151,11 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     const openings = configuration.map((opening) => {
       const direction = opening.direction
 
-      const p1 = terminus.segments[direction].point
-      const p2 = terminus.segments[getNextDirection(direction)].point
+      // Each opening is essentially a triangle from the mid-point segments of the terminus with the tip of the triangle
+      // pointing in the direction of the opening. This ensures there isn't a gap between the opening triangle and the
+      // terminus hexagon.
+      const p1 = terminus.segments[subtractDirection(direction, 1)].point
+      const p2 = terminus.segments[addDirection(direction, 2)].point
 
       const vector = p2.subtract(p1)
 

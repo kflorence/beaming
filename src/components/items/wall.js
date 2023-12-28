@@ -1,6 +1,6 @@
 import { Item } from '../item'
 import { Path } from 'paper'
-import { getNextDirection } from '../util'
+import { addDirection } from '../util'
 import { rotatable } from '../modifiers/rotate'
 import { movable } from '../modifiers/move'
 
@@ -38,7 +38,7 @@ export class Wall extends movable(rotatable(Item)) {
         segments: [
           center,
           hexagon.segments[direction].point,
-          hexagon.segments[getNextDirection(direction)].point
+          hexagon.segments[addDirection(direction, 1)].point
         ]
       })
     })
