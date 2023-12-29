@@ -9,7 +9,7 @@ export class Filter extends movable(Item) {
   constructor (tile, { color }) {
     super(...arguments)
 
-    this.color = chroma(color).hex()
+    this.color = chroma.average(Array.isArray(color) ? color : [color]).hex()
 
     const fillColor = new Color(color)
     fillColor.alpha = 0.25

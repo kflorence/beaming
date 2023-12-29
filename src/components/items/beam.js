@@ -584,7 +584,6 @@ export class Beam extends Item {
       .sort((a, b) => {
         // Sort items returned by proximity to starting point
         const distance = getDistance(firstPoint)(a.points[0], b.points[0])
-console.log(distance, a.item.type, b.item.type)
         if (distance === 0) {
           // If two items are an equal distance away, sort by sort order as defined on item
           return  a.item.sortOrder - b.item.sortOrder

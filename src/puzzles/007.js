@@ -2,37 +2,44 @@ export default {
   layout: {
     tiles: [
       [
-        null,
-        { type: 'Tile' },
-        { type: 'Tile' },
-        { type: 'Tile' }
-      ],
-      [
         {
           items: [
             {
-              color: '#BBDBB4',
-              openings: [null, null, { on: true, type: 'Beam' }, { type: 'Beam' }, null, null],
+              color: 'blue',
+              openings: [null, null, null, { type: 'Beam' }, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
-            { on: true, type: 'Toggle' }
+            { type: 'Lock' },
+            { type: 'Swap' }
           ],
           type: 'Tile'
         },
-        { type: 'Tile' },
-        { type: 'Tile' },
+        {
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Rotate' }
+          ],
+          type: 'Tile'
+        },
+        {
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Toggle' }
+          ],
+          type: 'Tile'
+        },
         {
           items: [
             {
-              color: '#BBDBB4',
-              openings: [null, null, null, null, { type: 'Beam' }, { type: 'Beam' }],
+              color: ['red', 'blue'],
+              openings: [null, null, null, null, { type: 'Beam' }, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
-            { type: 'Toggle' }
+            { type: 'Immutable' }
           ],
           type: 'Tile'
         }
@@ -40,46 +47,98 @@ export default {
       [
         {
           items: [
-            {
-              color: '#D56AA0',
-              openings: [null, null, { type: 'Beam'}, null, null, null],
-              type: 'Terminus'
-            }
+            { type: 'Reflector' }
+          ],
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Move' }
           ],
           type: 'Tile'
         },
-        { type: 'Tile' },
-        null,
-        { type: 'Tile' },
-        { type: 'Tile' }
-      ],
-      [
-        { type: 'Tile' },
-        { type: 'Tile' },
-        { type: 'Tile' },
-        { type: 'Tile' }
-      ],
-      [
-        null,
-        { type: 'Tile' },
         {
           items: [
             {
-              color: '#BBDBB4',
-              openings: [{ on: true, type: 'Beam'}, { on: true, type: 'Beam'}, null, null, null, null],
+              color: 'blue',
+              type: 'Filter'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Move' }
+          ],
+          type: 'Tile'
+        },
+        {
+          items: [
+            {
+              color: 'red',
+              type: 'Filter'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Move' }
+          ],
+          type: 'Tile'
+        },
+        {
+          items: [
+            { type: 'Reflector' }
+          ],
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Move' }
+          ],
+          type: 'Tile'
+        }
+      ],
+      [
+        null,
+        {
+          items: [
+            {
+              color: ['red', 'blue'],
+              openings: [null, { type: 'Beam' }, null, null, null, null],
               type: 'Terminus'
             }
           ],
           modifiers: [
+            { type: 'Immutable' }
+          ],
+          type: 'Tile'
+        },
+        {
+          modifiers: [
+            { type: 'Lock' },
             { type: 'Toggle' }
           ],
           type: 'Tile'
         },
-        { type: 'Tile' }
+        {
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Rotate' }
+          ],
+          type: 'Tile'
+        },
+        {
+          items: [
+            {
+              color: 'red',
+              openings: [{ type: 'Beam' }, null, null, null, null, null],
+              type: 'Terminus'
+            }
+          ],
+          modifiers: [
+            { type: 'Lock' },
+            { type: 'Swap' }
+          ],
+          type: 'Tile'
+        }
       ]
     ]
   },
   solution: [
-    { amount: 1, type: 'Connections' }
+    { amount: 2, type: 'Connections' }
   ]
 }
