@@ -77,7 +77,7 @@ export class Step {
   static Stop = class StepStop extends Step {
     done = true
     constructor () {
-      super(null, [], null, null, null, null)
+      super(null, [])
     }
   }
 }
@@ -148,7 +148,11 @@ export class StepState {
   }
 
   static Reflector = class StepReflector {
-    reflector = {}
+    reflector
+
+    constructor (item) {
+      this.reflector = { item }
+    }
   }
 
   static TerminusConnection = class StepTerminusConnection {

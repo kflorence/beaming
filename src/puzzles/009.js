@@ -2,24 +2,25 @@ export default {
   layout: {
     tiles: [
       [
-        null,
         {
           items: [
             {
-              openings: [null, null, null, null, { color: ['blue', 'red'], type: 'Beam' }, null],
+              color: 'red',
+              openings: [null, null, null, { on: true, type: 'Beam' }, null, null],
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Immutable' }],
           type: 'Tile'
-        },
-        null
+        }
       ],
       [
         {
-          type: 'Tile'
-        },
-        {
+          items: [
+            { type: 'Reflector' }
+          ],
+          modifiers: [
+            { type: 'Rotate' }
+          ],
           type: 'Tile'
         }
       ],
@@ -27,21 +28,11 @@ export default {
         {
           items: [
             {
-              rotation: 5,
-              type: 'Reflector'
+              color: 'green',
+              openings: [null, { on: true, type: 'Beam' }, null, null, null, null],
+              type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Immutable' }],
-          type: 'Tile'
-        },
-        {
-          items: [
-            {
-              color: 'red',
-              type: 'Filter'
-            }
-          ],
-          modifiers: [{ type: 'Immutable' }],
           type: 'Tile'
         },
         {
@@ -52,13 +43,12 @@ export default {
               type: 'Terminus'
             }
           ],
-          modifiers: [{ type: 'Lock' }, { clockwise: false, type: 'Rotate' }],
           type: 'Tile'
         }
       ]
     ]
   },
   solution: [
-    { amount: 1, type: 'Connections' }
+    { amount: 999, type: 'Connections' }
   ]
 }

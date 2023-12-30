@@ -5,8 +5,9 @@ import _004 from './004'
 import _005 from './005'
 import _006 from './006'
 import _007 from './007'
+import _008 from './008'
+import _009 from './009'
 
-import _016 from './016'
 import _017 from './017'
 import _018 from './018'
 import _999 from './999'
@@ -20,6 +21,8 @@ const configuration = Object.fromEntries(Object.entries({
   '005': _005,
   '006': _006,
   '007': _007,
+  '008': _008,
+  '009': _009,
   '017': _017,
   '018': _018,
   999: _999

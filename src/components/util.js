@@ -145,8 +145,8 @@ export function emitEvent (event, detail = null) {
   document.dispatchEvent(new CustomEvent(event, { detail }))
 }
 
-export function fuzzyEquals (pointA, pointB, maxDiff = 2) {
-  return pointA && pointB && pointA.ceil().subtract(pointB.floor()).length <= maxDiff
+export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
+  return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
 }
 
 export function getCentroid (triangle) {
@@ -180,6 +180,13 @@ export function getConvertedDirection (direction, toPaperJs = true) {
   if (direction < 0) return direction + 6
   else if (direction > 5) return direction - 6
   return direction
+}
+
+// Gets the position of the point relative to the line.
+// Returns 0 if point is on the line, +1 on one side of the line and -1 on the other.
+export function getPosition (line, point) {
+  const [a, b] = line, c = point
+  return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
 }
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {

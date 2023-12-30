@@ -7,7 +7,7 @@ import {
   fuzzyEquals,
   getConvertedDirection,
   getMidPoint,
-  getDistance
+  getDistance, getOppositeDirection
 } from '../util'
 import { Step, StepState } from '../step'
 
@@ -69,17 +69,18 @@ export class Beam extends Item {
       }
 
       path.add(...points)
+      this.path.push(path)
 
-      const pathIndex = this.path.push(path) - 1
       const index = step.insertAbove ? step.insertAbove.getIndex() + 1 : 0
 
       // Unless specified in the state, the path will be inserted beneath all items
       this.getLayer().insertChild(index, path)
-
-      step.pathIndex = pathIndex
     } else {
       currentPath.add(step.point)
     }
+
+    step.pathIndex = this.path.length - 1
+    step.segmentIndex = this.path[step.pathIndex].segments.length - 1
 
     this.#steps.push(step)
 
@@ -213,8 +214,6 @@ export class Beam extends Item {
     const mergedWithStepIndex = this.getMergeWithStepIndex(beam)
     if (mergedWithStepIndex >= 0 && !beamLastStep?.state.get(StepState.MergeInto)?.beam.equals(this)) {
       console.debug(this.toString(), 're-evaluating merge with', beam.toString())
-      const mergeInto = beamLastStep?.state.get(StepState.MergeInto)
-      console.log(beamLastStep, mergeInto, mergeInto?.beam.equals(this))
       this.done = false
       this.#stepIndex = Math.max(mergedWithStepIndex - 1, 0)
     }
@@ -233,6 +232,18 @@ export class Beam extends Item {
   ) {
     console.debug(this.toString(), 'evaluating collision with', beam.toString())
 
+    // FIXME: This doesn't seem relevant and was causing a bug, commenting out for now.
+    // if (lastStep?.state.get(StepState.TerminusConnection)?.terminus.equals(beam.parent)) {
+    //   console.debug(this.toString(), 'ignoring collision with connected beam', beam.toString())
+    //   return
+    // }
+
+    const lastStepIndex = this.lastStepIndex()
+    if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
+      console.debug(this.toString(), 'ignoring collision with self while re-evaluating history')
+      return
+    }
+
     if (!beam.isPending()) {
       console.debug(this.toString(), 'ignoring collision with inactive beam', beam.toString())
       return
@@ -250,22 +261,29 @@ export class Beam extends Item {
       return
     }
 
-    if (lastStep?.state.get(StepState.TerminusConnection)?.terminus.equals(beam.parent)) {
-      console.debug(this.toString(), 'ignoring collision with connected beam', beam.toString())
-      return
-    }
-
-    const lastStepIndex = this.lastStepIndex()
-    if (beam === this && collision.item === this && this.#stepIndex < lastStepIndex) {
-      console.debug(this.toString(), 'ignoring collision with self while re-evaluating history')
-      return
-    }
-
     // Find the step with matching collision point
     const point = collision.points[0]
     const stepIndex = this.#steps.findLastIndex((step) => fuzzyEquals(point, step.point))
+    if (stepIndex < 0) {
+      // This shouldn't happen...
+      throw new Error(
+        `Could not find matching step for beam collision between ${this.toString()} and ${beam.toString()}`)
+    }
+
     const step = this.#steps[stepIndex]
     const isLastStep = stepIndex === lastStepIndex
+
+    const reflector = lastStep?.state.get(StepState.Reflector) ?? beam.getStep()?.state.get(StepState.Reflector)
+    if (reflector) {
+      // Since every step goes to the center of the tile, we need to go one pixel back in the direction we came from
+      // in order to properly test which side of the reflector the beams are on.
+      const stepPoint = Beam.getNextPoint(step.point, 1, getOppositeDirection(step.direction))
+      const nextStepPoint = Beam.getNextPoint(currentStep.point, 1, getOppositeDirection(currentStep.direction))
+      if (!reflector.item.isSameSide(stepPoint, nextStepPoint)) {
+        console.debug(this.toString(), 'ignoring collision with beam on opposite side of reflector', beam.toString())
+        return
+      }
+    }
 
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
@@ -337,15 +355,17 @@ export class Beam extends Item {
     // We want the first step that contains the tile the event occurred on
     const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
     if (stepIndex >= 0) {
-      // Mark as not done to trigger the processing of another step
-      this.done = false
-      // Begin re-evaluating at the step prior to this
-      this.#stepIndex = Math.max(stepIndex - 1, 0)
+      // Re-build from this point
+      this.#updateHistory(stepIndex)
     }
   }
 
   remove (stepIndex = 0) {
     this.#updateHistory(stepIndex)
+  }
+
+  selected (selected = true) {
+    this.path.forEach((path) => { path.selected = selected })
   }
 
   startDirection () {
@@ -368,7 +388,7 @@ export class Beam extends Item {
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.addStep(new Step(tile, this.getColor(), this.startDirection(), tile.center, 0, 0))
+      this.addStep(new Step(tile, this.getColor(), this.startDirection(), tile.center))
     }
 
     const currentStep = this.#steps[this.#stepIndex]
@@ -394,14 +414,16 @@ export class Beam extends Item {
 
     const nextStepIndex = this.#stepIndex + 1
     const existingNextStep = this.#steps[nextStepIndex]
+    const lastPathIndex = this.path.length - 1
+    const lastSegmentIndex = this.path[lastPathIndex].segments.length - 1
 
     let nextStep = new Step(
       tile,
       currentStep.color,
       direction,
       nextStepPoint,
-      existingNextStep?.pathIndex || currentStep.pathIndex + 1,
-      existingNextStep?.segmentIndex || currentStep.segmentIndex + 1
+      existingNextStep?.pathIndex || lastPathIndex,
+      existingNextStep?.segmentIndex || lastSegmentIndex
     )
 
     const items = tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items)
@@ -498,58 +520,9 @@ export class Beam extends Item {
     return this.parent.updateState((state) => updater(state.openings[this.#direction]), dispatchEvent)
   }
 
-  #onUpdate (stepAdded, stepsDeleted) {
-    const step = this.getStep()
-
-    if (!this.done) {
-      this.done = step?.done ?? false
-    }
-
-    emitEvent(Beam.Events.Update, { beam: this, state: step?.state, stepAdded, stepsDeleted })
-  }
-
-  #updateHistory (stepIndex) {
-    const lastStepIndex = this.lastStepIndex()
-    const lastStep = this.#steps[lastStepIndex]
-    const step = this.#steps[stepIndex]
-
-    console.debug(this.toString(), 'updateHistory', 'stepIndex: ' + stepIndex, 'lastStepIndex: ' + lastStepIndex)
-
-    if (step) {
-      // Remove now invalid path items
-      this.path.splice(step.pathIndex).forEach((item) => item.remove())
-
-      // Remove any now invalid segments from the now current path item
-      const lastPathIndex = this.path.length - 1
-      if (lastPathIndex >= 0) {
-        this.path[lastPathIndex].removeSegments(step.segmentIndex)
-      }
-
-      const deletedSteps = this.#steps.splice(stepIndex)
-
-      console.debug(this.toString(), 'removed steps: ', deletedSteps)
-
-      // Remove beam from tiles it is being removed from
-      const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
-      tiles.forEach((tile) => tile.removeItem(this))
-
-      // Handle any state changes from the previous last step
-      if (typeof lastStep.onRemove === 'function') {
-        lastStep.onRemove()
-      }
-
-      this.done = false
-      this.#stepIndex = (stepIndex - 1)
-
-      this.#onUpdate(undefined, deletedSteps)
-    }
-
-    return step
-  }
-
   #getCollisions (items, segments, puzzle) {
     const path = new Path({ segments })
-    const { 0: firstPoint, [segments.length - 1]: lastPoint } = segments
+    const firstPoint = segments[0]
     return items
       .map((item) => {
         const points = []
@@ -591,6 +564,49 @@ export class Beam extends Item {
 
         return distance
       })
+  }
+
+  #onUpdate (stepAdded, stepsDeleted) {
+    const step = this.getStep()
+
+    if (!this.done) {
+      this.done = step?.done ?? false
+    }
+
+    emitEvent(Beam.Events.Update, { beam: this, state: step?.state, stepAdded, stepsDeleted })
+  }
+
+  #updateHistory (stepIndex) {
+    const lastStepIndex = this.lastStepIndex()
+    const lastStep = this.#steps[lastStepIndex]
+    const step = this.#steps[stepIndex]
+
+    console.debug(this.toString(), 'updateHistory', 'stepIndex: ' + stepIndex, 'lastStepIndex: ' + lastStepIndex)
+
+    if (step) {
+      // Remove now invalid path items
+      this.path.splice(step.pathIndex).forEach((item) => item.remove())
+
+      const deletedSteps = this.#steps.splice(stepIndex)
+
+      console.debug(this.toString(), 'removed steps: ', deletedSteps)
+
+      // Remove beam from tiles it is being removed from
+      const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
+      tiles.forEach((tile) => tile.removeItem(this))
+
+      // Handle any state changes from the previous last step
+      if (typeof lastStep.onRemove === 'function') {
+        lastStep.onRemove()
+      }
+
+      this.done = false
+      this.#stepIndex = (stepIndex - 1)
+
+      this.#onUpdate(undefined, deletedSteps)
+    }
+
+    return step
   }
 
   static getNextPoint (point, length, direction) {

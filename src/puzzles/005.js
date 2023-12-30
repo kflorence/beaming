@@ -46,7 +46,7 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Lock' }
+            { type: 'Immutable' }
           ],
           type: 'Tile'
         }

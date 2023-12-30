@@ -170,6 +170,7 @@ export class Puzzle {
 
   update () {
     if (!this.#mask && !this.#isUpdatingBeams) {
+      this.#isUpdatingBeams = true
       this.#updateBeams()
     }
   }
@@ -236,7 +237,7 @@ export class Puzzle {
       .filter((otherBeam) => otherBeam !== beam)
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
-    this.update()
+    setTimeout(() => this.update(), 0)
   }
 
   #onClick (event) {
@@ -287,7 +288,7 @@ export class Puzzle {
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
-    this.update()
+    setTimeout(() => this.update(), 0)
   }
 
   #onMouseDrag (event) {
@@ -318,6 +319,10 @@ export class Puzzle {
   }
 
   #onSolved () {
+    if (this.solved) {
+      return
+    }
+
     this.solved = true
 
     this.updateSelectedTile(undefined)
@@ -402,8 +407,6 @@ export class Puzzle {
   }
 
   #updateBeams () {
-    this.#isUpdatingBeams = true
-
     const beams = this.#beams.filter((beam) => beam.isPending())
 
     if (!beams.length) {
@@ -425,6 +428,7 @@ export class Puzzle {
     // Prevent infinite looping when something is bugged
     const update = Object.fromEntries(beams.map((beam) => [beam.id, beam.step(this)]))
     if (deepEqual(update, this.#lastUpdateBeams)) {
+      this.#isUpdatingBeams = false
       console.error('loop detected, exiting')
       return
     }
@@ -499,7 +503,8 @@ export class Puzzle {
     }
 
     static id (point) {
-      return [Math.round(point.x), Math.round(point.y)].join(',')
+      const rounded = point.round()
+      return [rounded.x, rounded.y].join(',')
     }
   }
 
