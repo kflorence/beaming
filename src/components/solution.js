@@ -169,7 +169,7 @@ class Moves extends SolutionCondition {
 
   update (event) {
     console.debug('Moves.update', event)
-    this.#moves = event.detail.state.length()
+    this.#moves = event.detail.state.moves()
     this.#completed.textContent = this.#moves.toString()
   }
 

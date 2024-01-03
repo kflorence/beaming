@@ -428,9 +428,7 @@ export class Puzzle {
     // Prevent infinite looping when something is bugged
     const update = Object.fromEntries(beams.map((beam) => [beam.id, beam.step(this)]))
     if (deepEqual(update, this.#lastUpdateBeams)) {
-      this.#isUpdatingBeams = false
-      console.error('loop detected, exiting')
-      return
+      throw new Error('Infinite loop detected, exiting')
     }
 
     this.#lastUpdateBeams = update

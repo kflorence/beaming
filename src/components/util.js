@@ -22,7 +22,7 @@ export function addDegrees (original, degrees) {
   return result
 }
 
-export function addDirection(direction, amount) {
+export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
 
@@ -185,8 +185,8 @@ export function getConvertedDirection (direction, toPaperJs = true) {
 // Gets the position of the point relative to the line.
 // Returns 0 if point is on the line, +1 on one side of the line and -1 on the other.
 export function getPosition (line, point) {
-  const [a, b] = line, c = point
-  return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+  const [a, b] = line; const c = point
+  return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 }
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {
@@ -202,6 +202,6 @@ export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
-export function subtractDirection(direction, amount) {
+export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
 }

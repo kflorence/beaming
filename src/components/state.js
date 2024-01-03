@@ -70,6 +70,10 @@ export class State {
     return this.#selectedTile
   }
 
+  moves () {
+    return this.#index + 1
+  }
+
   length () {
     return this.#deltas.length
   }
@@ -139,7 +143,7 @@ export class State {
   }
 
   #lastIndex () {
-    return this.length() - 1
+    return this.#deltas.length - 1
   }
 
   #updateCache () {
