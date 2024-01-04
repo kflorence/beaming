@@ -33,7 +33,7 @@ elements.reset.addEventListener('click', puzzle.reset.bind(puzzle))
 elements.undo.addEventListener('click', puzzle.undo.bind(puzzle))
 
 // Generate puzzle ID dropdown
-for (const id of Puzzles.ids) {
+for (const id of Puzzles.visible.ids) {
   const option = document.createElement('option')
   option.value = id
   option.innerText = Puzzles.titles[id]
@@ -61,16 +61,16 @@ document.addEventListener(Puzzle.Events.Updated, (event) => {
     disable.push(elements.redo)
   }
 
-  if (!Puzzles.has(id)) {
+  if (!Puzzles.visible.has(id)) {
     // Custom puzzle
     elements.puzzleId.value = ''
     disable.push(elements.previous, elements.next)
   } else {
     elements.puzzleId.value = id
 
-    if (id === Puzzles.firstId) {
+    if (id === Puzzles.visible.firstId) {
       disable.push(elements.previous)
-    } else if (id === Puzzles.lastId) {
+    } else if (id === Puzzles.visible.lastId) {
       disable.push(elements.next)
     }
   }

@@ -6,11 +6,12 @@ import _005 from './005'
 import _006 from './006'
 import _007 from './007'
 import _008 from './008'
-import _009 from './009'
 
-import _017 from './017'
-import _018 from './018'
-import _999 from './999'
+// These are just for testing purposes
+// They won't show up in the list but are accessible via URL
+import testLayout from './testLayout'
+import testPortal from './testPortal'
+import testReflector from './testReflector'
 
 // Ensure puzzle configuration is valid JSON
 const configuration = Object.fromEntries(Object.entries({
@@ -22,38 +23,47 @@ const configuration = Object.fromEntries(Object.entries({
   '006': _006,
   '007': _007,
   '008': _008,
-  '009': _009,
-  '017': _017,
-  '018': _018,
-  999: _999
+  test_layout: testLayout,
+  test_portal: testPortal,
+  test_reflector: testReflector
 }).map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]))
 
-function traverse (id, amount) {
-  const index = Puzzles.ids.indexOf(id)
-  return Puzzles.ids[index < 0 ? index : index + amount]
+function traverse (ids, id, amount) {
+  const index = ids.indexOf(id)
+  return ids[index < 0 ? index : index + amount]
 }
 
-export class Puzzles {
-  static ids = Object.keys(configuration).sort()
-  static firstId = Puzzles.ids[0]
-  static lastId = Puzzles.ids[Puzzles.ids.length - 1]
-  static titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title || id]))
+class PuzzleGroup {
+  ids
 
-  static get (id) {
-    // Ensure we return a deep clone of the configuration to ensure any mutations downstream will not end up in
-    // subsequent calls to this method.
-    return structuredClone(configuration[id])
+  constructor (ids) {
+    this.firstId = ids[0]
+    this.ids = ids
+    this.lastId = ids[ids.length - 1]
   }
 
-  static has (id) {
-    return Object.hasOwn(configuration, id)
+  get (id) {
+    if (this.has(id)) {
+      // Note: deep cloning configuration to prevent mutation
+      return structuredClone(configuration[id])
+    }
   }
 
-  static nextId (id) {
-    return traverse(id, 1)
+  has (id) {
+    return this.ids.includes(id)
   }
 
-  static previousId (id) {
-    return traverse(id, -1)
+  nextId (id) {
+    return traverse(this.ids, id, 1)
+  }
+
+  previousId (id) {
+    return traverse(this.ids, id, -1)
   }
 }
+
+export const Puzzles = new PuzzleGroup(Object.keys(configuration).sort())
+
+Puzzles.hidden = new PuzzleGroup(Puzzles.ids.filter((id) => id.startsWith('test_')))
+Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title || id]))
+Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id) => !Puzzles.hidden.has(id)))

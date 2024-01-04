@@ -117,14 +117,14 @@ export class Puzzle {
   }
 
   next () {
-    const id = Puzzles.nextId(this.#state.getId())
+    const id = Puzzles.visible.nextId(this.#state.getId())
     if (id) {
       this.select(id)
     }
   }
 
   previous () {
-    const id = Puzzles.previousId(this.#state.getId())
+    const id = Puzzles.visible.previousId(this.#state.getId())
     if (id) {
       this.select(id)
     }

@@ -209,7 +209,7 @@ export class State {
 
     if (!state) {
       // Update ID before checking for state in localStorage.
-      id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.firstId
+      id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
 
       const localState = localStorage.getItem(State.key(State.CacheKeys.state, id))
       if (localState) {
