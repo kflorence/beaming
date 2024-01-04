@@ -100,6 +100,11 @@ export class Modifier extends Stateful {
     this.tile = tile
   }
 
+  moveFilter (tile) {
+    // Filter out immutable tiles
+    return tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
+  }
+
   onClick () {
     this.selected = false
   }
@@ -133,13 +138,7 @@ export class Modifier extends Stateful {
     this.update({ selected: true })
     this.tile.beforeModify()
 
-    const mask = new Puzzle.Mask(
-      (tile) => tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable),
-      { onClick: this.#maskOnClick.bind(this) }
-    )
-
-    this.#mask = mask
-
+    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onClick: this.#maskOnClick.bind(this) })
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
@@ -184,6 +183,11 @@ export class Modifier extends Stateful {
 
     this.#mask = undefined
     this.update({ selected: false })
+  }
+
+  #moveFilter (tile) {
+    // Always include current tile
+    return !tile.equals(this.tile) && this.moveFilter(tile)
   }
 
   static deselect () {

@@ -33,6 +33,11 @@ export class Move extends Modifier {
     emitEvent(Puzzle.Events.Mask, { mask })
   }
 
+  moveFilter (tile) {
+    // Filter out tiles that contain no movable items
+    return super.moveFilter(tile) || !tile.items.some((item) => item.movable)
+  }
+
   moveItems (tile) {
     const items = this.tile.items.filter(Move.movable)
     items.forEach((item) => item.move(tile))

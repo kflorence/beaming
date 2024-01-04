@@ -7,6 +7,7 @@ import _006 from './006'
 import _007 from './007'
 import _008 from './008'
 import _009 from './009'
+import _010 from './010'
 
 // These are just for testing purposes
 // They won't show up in the list but are accessible via URL
@@ -25,6 +26,7 @@ const configuration = Object.fromEntries(Object.entries({
   '007': _007,
   '008': _008,
   '009': _009,
+  '010': _010,
   test_layout: testLayout,
   test_portal: testPortal,
   test_reflector: testReflector

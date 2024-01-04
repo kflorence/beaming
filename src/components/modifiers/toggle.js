@@ -19,6 +19,11 @@ export class Toggle extends Modifier {
     super.attach()
   }
 
+  moveFilter (tile) {
+    // Filter out tiles that contain no toggleable items
+    return super.moveFilter(tile) || !tile.items.some((item) => item.toggleable)
+  }
+
   onClick (event) {
     super.onClick(event)
 

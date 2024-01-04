@@ -12,6 +12,11 @@ export class Rotate extends Modifier {
     this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
   }
 
+  moveFilter (tile) {
+    // Filter out tiles that contain no rotatable items
+    return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
+  }
+
   onClick (event) {
     super.onClick(event)
 
