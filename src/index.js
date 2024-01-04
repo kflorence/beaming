@@ -118,8 +118,10 @@ elements.puzzle.addEventListener('wheel', (event) => {
 
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {
-  event.preventDefault()
-  return false
+  if (!elements.dialog.open) {
+    event.preventDefault()
+    return false
+  }
 })
 
 window.drawDebugPoint = function (x, y, style) {
