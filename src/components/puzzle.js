@@ -411,6 +411,8 @@ export class Puzzle {
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
+      this.#lastUpdateBeams = undefined
+
       // Ensure we check for a solution after all other in-progress events have processed
       // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
       setTimeout(() => {

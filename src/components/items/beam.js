@@ -55,13 +55,11 @@ export class Beam extends Item {
       !step.connected || (
         previousStep && (
           step.color !== previousStep.color ||
-          (step.insertAbove && !step.insertAbove.equals(previousStep.insertAbove))
+          step.insertAbove !== previousStep.insertAbove
         )
       )
     ) {
       console.debug(this.toString(), 'adding new path item for step:', step, 'previous step:', previousStep)
-
-      currentPath.set({ closed: true })
 
       const path = new Path(this.#path)
       const points = [step.point]
@@ -78,12 +76,15 @@ export class Beam extends Item {
 
       // Unless specified in the state, the path will be inserted beneath all items
       this.getLayer().insertChild(index, path)
+
+      // Reset the segmentIndex
+      step.segmentIndex = 0
     } else {
       currentPath.add(step.point)
+      step.segmentIndex = currentPath.segments.length - 1
     }
 
     step.pathIndex = this.path.length - 1
-    step.segmentIndex = this.path[step.pathIndex].segments.length - 1
 
     this.#steps.push(step)
 
@@ -495,6 +496,7 @@ export class Beam extends Item {
         console.debug(this.toString(), 'existing next step:', existingNextStep)
         // We are revising history.
         this.#updateHistory(nextStepIndex)
+        console.log(this.path.length)
         nextStep.pathIndex = this.path.length - 1
         nextStep.segmentIndex = this.path[nextStep.pathIndex].segments.length - 1
         console.debug(this.toString(), 'new next step:', nextStep)
@@ -583,14 +585,28 @@ export class Beam extends Item {
     const lastStep = this.#steps[lastStepIndex]
     const step = this.#steps[stepIndex]
 
-    console.debug(this.toString(), 'updateHistory', 'stepIndex: ' + stepIndex, 'lastStepIndex: ' + lastStepIndex)
+    console.debug(
+      this.toString(),
+      'updateHistory',
+      'stepIndex:',
+      stepIndex,
+      'lastStepIndex:',
+      lastStepIndex,
+      'step:',
+      step
+    )
 
     if (step) {
+      const currentPath = this.path[step.pathIndex]
+
       // Remove any now invalid path segments
-      this.path[step.pathIndex].removeSegments(step.segmentIndex)
+      currentPath.removeSegments(step.segmentIndex)
+
+      // If the current path is empty, remove it along with everything after it.
+      const spliceIndex = step.pathIndex + (currentPath.segments.length === 0 ? 0 : 1)
 
       // Remove any now invalid path items
-      this.path.splice(step.pathIndex + 1).forEach((item) => item.remove())
+      this.path.splice(spliceIndex).forEach((item) => item.remove())
 
       const deletedSteps = this.#steps.splice(stepIndex)
 

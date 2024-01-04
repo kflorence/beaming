@@ -9,44 +9,34 @@ export class Wall extends movable(rotatable(Item)) {
 
   constructor (tile, state) {
     super(tile, state, { rotationDegrees: 60 })
-    const item = Wall.item(tile, state)
-    this.group.addChild(item)
+    const walls = Wall.item(tile, state)
+    this.group.addChildren(walls)
   }
 
-  static item (tile, { openings }) {
-    const center = tile.center
+  static item (tile, configuration) {
     const radius = tile.parameters.circumradius
-    const cavityRadius = radius / 12
+    const width = radius / 12
     const fillColor = tile.styles.default.strokeColor
 
-    const hexagon = new Path.RegularPolygon({
-      center,
-      fillColor,
-      radius,
-      sides: 6
-    })
+    return configuration.directions.map((direction) => {
+      const firstSegment = tile.hexagon.segments[direction].point
+      const nextDirection = addDirection(direction, 1)
+      const lastSegment = tile.hexagon.segments[nextDirection].point
 
-    const cavity = new Path.RegularPolygon({
-      center,
-      radius: radius - cavityRadius,
-      sides: 6
-    })
-
-    const paths = openings.map((direction) => {
       return new Path({
         closed: true,
+        fillColor,
         segments: [
-          center,
-          hexagon.segments[direction].point,
-          hexagon.segments[addDirection(direction, 1)].point
+          firstSegment,
+          tile.hexagon.getLocationAt(
+            (direction === 0 ? tile.hexagon.length : tile.hexagon.getOffsetOf(firstSegment)) - width
+          ),
+          tile.hexagon.getLocationAt(
+            (nextDirection === 0 ? 0 : tile.hexagon.getOffsetOf(lastSegment)) + width
+          ),
+          lastSegment
         ]
       })
     })
-
-    // Create the final shape
-    return paths.reduce(
-      (shape, path) => shape.subtract(path),
-      hexagon.exclude(cavity)
-    )
   }
 }
