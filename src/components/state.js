@@ -150,7 +150,7 @@ export class State {
     const id = this.getId()
     const state = this.encode()
 
-    url.pathname = [id, state].join('/')
+    url.hash = ['', id, state].join('/')
     history.pushState({ id, state }, '', url)
     localStorage.setItem(State.CacheKeys.id, id)
     localStorage.setItem(this.#key(State.CacheKeys.state), state)
@@ -159,7 +159,7 @@ export class State {
   static clearCache (id) {
     if (!id) {
       // Clear everything
-      url.pathname = ''
+      url.hash = ''
       history.pushState({}, '', url)
       id = localStorage.getItem(State.CacheKeys.id)
       localStorage.clear()
@@ -167,7 +167,7 @@ export class State {
       localStorage.setItem(State.CacheKeys.id, id)
     } else {
       // Clear a single puzzle
-      url.pathname = `/${id}`
+      url.hash = `/${id}`
       history.pushState({ id }, '', url)
       localStorage.removeItem(State.key(State.CacheKeys.state, id))
     }
@@ -191,7 +191,7 @@ export class State {
       State.clearCache(params.get(State.ParamKeys.clearCache))
     }
 
-    const pathSegments = url.pathname.split('/').filter((path) => path !== '')
+    const pathSegments = url.hash.substring(1).split('/').filter((path) => path !== '')
 
     if (!id) {
       // If no explicit ID is given, try to load state from URL
