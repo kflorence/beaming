@@ -34,12 +34,7 @@ export class Modifier extends Stateful {
 
     this.#eventListener = new EventListener(this, {
       click: (event) => {
-        // Prevent calling onClick when the modifier has just been selected
-        if (this.#timeoutId === 0) {
-          return
-        }
-        this.selected = false
-        if (!this.disabled) {
+        if (!this.disabled && !this.selected) {
           this.onClick(event)
         }
       },
@@ -116,8 +111,10 @@ export class Modifier extends Stateful {
   }
 
   onMouseDown () {
-    // Locked tiles cannot have their modifiers selected
-    if (!this.#mask && !this.tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)) {
+    if (
+      !this.#mask &&
+      !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+    ) {
       this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
     }
   }
@@ -131,19 +128,13 @@ export class Modifier extends Stateful {
   }
 
   onSelected () {
-    this.#timeoutId = 0
-
     Modifier.deselect()
 
     this.update({ selected: true })
     this.tile.beforeModify()
 
     const mask = new Puzzle.Mask(
-      (tile) => {
-        // Include any tiles that are not immutable or locked
-        return tile.modifiers.some((modifier) =>
-          [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
-      },
+      (tile) => tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable),
       { onClick: this.#maskOnClick.bind(this) }
     )
 
@@ -192,6 +183,7 @@ export class Modifier extends Stateful {
     }
 
     this.#mask = undefined
+    this.update({ selected: false })
   }
 
   static deselect () {

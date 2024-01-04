@@ -11,7 +11,7 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Lock' }
+            { type: 'Immutable' }
           ],
           type: 'Tile'
         },
@@ -30,6 +30,9 @@ export default {
               openings: [null, { on: true, type: 'Beam' }, null, null, null, null],
               type: 'Terminus'
             }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         },
