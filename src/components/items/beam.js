@@ -496,7 +496,7 @@ export class Beam extends Item {
         console.debug(this.toString(), 'existing next step:', existingNextStep)
         // We are revising history.
         this.#updateHistory(nextStepIndex)
-        console.log(this.path.length)
+        // Ensure we have the correct path and segment index
         nextStep.pathIndex = this.path.length - 1
         nextStep.segmentIndex = this.path[nextStep.pathIndex].segments.length - 1
         console.debug(this.toString(), 'new next step:', nextStep)

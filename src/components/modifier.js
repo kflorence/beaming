@@ -33,15 +33,13 @@ export class Modifier extends Stateful {
     this.type = state.type
 
     this.#eventListener = new EventListener(this, {
-      click: (event) => {
-        if (!this.disabled && !this.selected) {
-          this.onClick(event)
-        }
-      },
+      click: this.#onClick,
       deselected: this.onDeselected,
       mousedown: this.onMouseDown,
       mouseleave: this.onMouseLeave,
-      mouseup: this.onMouseUp
+      mouseup: this.onMouseUp,
+      touchstart: this.onTouchStart,
+      touchend: this.onTouchEnd
     })
   }
 
@@ -142,6 +140,19 @@ export class Modifier extends Stateful {
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
+  onTouchEnd (event) {
+    // Prevent any mouse events from firing
+    event.preventDefault()
+    this.onMouseUp(event)
+    this.#onClick(event)
+  }
+
+  onTouchStart (event) {
+    // Prevent any mouse events from firing
+    event.preventDefault()
+    this.onMouseDown(event)
+  }
+
   remove () {
     this.detach()
     this.tile.removeModifier(this)
@@ -188,6 +199,12 @@ export class Modifier extends Stateful {
   #moveFilter (tile) {
     // Always include current tile
     return !tile.equals(this.tile) && this.moveFilter(tile)
+  }
+
+  #onClick (event) {
+    if (!this.disabled && !this.selected) {
+      return this.onClick(event)
+    }
   }
 
   static deselect () {
