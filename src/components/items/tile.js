@@ -1,4 +1,4 @@
-import { Path, Point } from 'paper'
+import { Color, Path, Point } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
 import { emitEvent } from '../util'
@@ -164,19 +164,21 @@ export class Tile extends Item {
   })
 
   static Styles = Object.freeze({
+    // Need to use new Color here explicitly due to:
+    // https://github.com/paperjs/paper.js/issues/2049
     default: {
       dashArray: [],
-      fillColor: 'white',
-      strokeColor: '#666',
+      fillColor: new Color('white'),
+      strokeColor: new Color('#666'),
       strokeWidth: 1
     },
     edit: {
-      strokeColor: 'black',
+      strokeColor: new Color('black'),
       strokeWidth: 2
     },
     selected: {
       dashArray: [],
-      strokeColor: 'black',
+      strokeColor: new Color('black'),
       strokeWidth: 2
     }
   })
