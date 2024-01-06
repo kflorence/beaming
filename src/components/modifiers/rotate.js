@@ -3,7 +3,7 @@ import { addDirection, coalesce, MouseButton } from '../util'
 
 export class Rotate extends Modifier {
   clockwise
-  title = 'Items in this tile can be rotated.'
+  title = 'Rotate'
 
   constructor (tile, state, configuration = {}) {
     super(...arguments)

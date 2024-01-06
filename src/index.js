@@ -93,6 +93,8 @@ window.addEventListener('resize', debounce(resize))
 resize()
 
 // Handle zoom
+// TODO add mobile support for pinch/zoom
+// See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Pinch_zoom_gestures
 elements.puzzle.addEventListener('wheel', (event) => {
   event.preventDefault()
 
@@ -124,13 +126,11 @@ document.body.addEventListener('contextmenu', (event) => {
   }
 })
 
-window.drawDebugPoint = function (x, y, style) {
-  return puzzle.drawDebugPoint(new paper.Point(x, y), style)
-}
-
 // Initialize
 puzzle.select()
 
-window.paper = paper
-window.puzzle = puzzle
-window.puzzles = Puzzles
+// Expose for debug purposes
+window.beaming = { paper, puzzle }
+window.beaming.drawDebugPoint = function (x, y, style) {
+  return puzzle.drawDebugPoint(new paper.Point(x, y), style)
+}

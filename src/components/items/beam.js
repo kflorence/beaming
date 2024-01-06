@@ -287,6 +287,7 @@ export class Beam extends Item {
       }
     }
 
+    // FIXME: if the beam we are colliding with has already collided with something else, it can infinite loop
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
       const isSelf = beam.equals(this)

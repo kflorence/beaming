@@ -2,7 +2,7 @@ import { Modifier } from '../modifier'
 
 export class Toggle extends Modifier {
   on
-  title = 'Items in this tile can be toggled between states.'
+  title = 'Toggle'
 
   constructor (tile, { on }) {
     super(...arguments)

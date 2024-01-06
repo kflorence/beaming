@@ -4,7 +4,7 @@ import { Item } from '../item'
 
 export class Swap extends Move {
   name = 'swap_horiz'
-  title = 'Items in this tile can be swapped for items in another tile.'
+  title = 'Swap'
 
   moveItems (tile) {
     const toItems = tile.items.filter(Move.movable)

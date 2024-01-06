@@ -7,7 +7,7 @@ export class Move extends Modifier {
   #mask
 
   name = 'drag_pan'
-  title = 'Items in this tile can be moved to an empty tile.'
+  title = 'Move'
 
   attach () {
     super.attach()

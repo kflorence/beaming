@@ -28,6 +28,24 @@ code {
   background-color: #f4f4f4;
 }
 
+details {
+  border-bottom: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  padding: 1em;
+}
+
+details + details {
+  border-top: none;
+}
+
+details > details {
+  border: none;
+}
+
+details > summary {
+  cursor: help;
+}
+
 dialog {
   background-color: white;
   box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
@@ -41,15 +59,31 @@ dialog .flex-left {
 }
 
 dialog h1 {
-  background-color: #333;
-  color: white;
   margin: 0;
-  padding: 1rem 0;
-  text-align: center;
+  padding: 0;
 }
 
 dialog h3 {
   padding: 0.25rem 1rem;
+}
+
+dialog h4 {
+  padding: 0 1rem;
+}
+
+dialog header {
+  align-items: center;
+  background-color: #333;
+  color: white;
+  display: flex;
+  padding: 1rem;
+}
+
+dialog header button {
+  border: none;
+  background: none;
+  color: white;
+  cursor: pointer;
 }
 
 dialog p {
@@ -214,6 +248,7 @@ main {
     'GRAD' 0,
     'opsz' 24;
   user-select: none;
+  vertical-align: middle;
 }
 
 .material-symbols-outlined.fill {
@@ -298,7 +333,9 @@ main {
     border-top: 1px solid #ddd;
     order: 1;
   }
+}
 
+@media (max-width: 1024px) {
   dialog {
     width: 100%;
   }
