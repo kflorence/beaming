@@ -43,26 +43,24 @@
         <summary>The Basics</summary>
         <p>
           The core gameplay involves selecting a hexagonal tile, which will bring up a toolbar at the bottom of the
-          screen which contains <em>actions</em> that can be used to manipulate the items in the puzzle. The solution
+          screen that contains <em>actions</em> that can be used to manipulate the items in the puzzle. The solution
           for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
           of the screen.
         </p>
         <p>
-          When looking at the toolbar, you will notice there are icons on the left and right-hand side. When I refer to
-          <em>actions</em>, I am referring to the icons on the right-hand side. Actions can be used to manipulate the
-          items inside a tile. The icons on the left-hand side are <em>attributes</em>. Attributes define behaviors
-          which belong to a tile. They cannot be interacted with, they are strictly informational.
-        </p>
-        <p>
-          There are two ways to interact with the <em>actions</em> on the left-hand side of the toolbar:
+          When looking at the toolbar, you will notice there are two sets of icons on the left and right sides. From
+          here on I will refer to set of icons on the left side as <em>attributes</em> and on the right side as
+          <em>actions</em>. Attributes define behaviors which belong to a tile. They cannot be interacted with, they are
+          strictly informational. Actions define behaviors which belong to the items inside a tile. They can be
+          interacted with in the following ways:
         </p>
         <ul>
           <li>
-            Clicking on them (or tapping on touch-enabled devices). This will execute the action on the items in the
+            By clicking on them (or tapping on touch-enabled devices). This will execute the action on the items in the
             currently selected tile.
           </li>
           <li>
-            Clicking and holding on them (or touching and holding on touch-enabled devices). This will select the
+            By clicking and holding on them (or touching and holding on touch-enabled devices). This will select the
             action, which allows it to be moved to another, valid tile. Different actions will have different
             requirements about which tiles they can be moved to.
           </li>
@@ -70,29 +68,28 @@
         <p>
           Some actions utilize a <em>mask</em> which covers invalid tiles (they will appear darkened). While a mask is
           active, the action can be cancelled by clicking or tapping outside the puzzle area or on the currently
-          selected tile, which has a dashed-line border around it while the mask is active.
+          selected tile.
         </p>
       </details>
       <details>
         <summary>Attributes</summary>
         <p>
           As previously mentioned in <em>The Basics</em> above, <em>attributes</em> are the icons on the left-hand side
-          of the toolbar at the bottom of the screen. Each attribute, which defines a specific behavior of a tile, are
-          listed below:
+          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
         </p>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Immutable">block</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Immutable">block</span> - Immutable</summary>
           <p>
-            Immutable: The tile, and the items within the tile, cannot be modified in any way. If there are any
-            <em>actions</em> on the tile, they cannot be interacted with.
+            The tile, and the items within the tile, cannot be modified in any way. If there are any <em>actions</em>
+            on the tile, they cannot be interacted with either.
           </p>
         </details>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Locked">lock</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Locked">lock</span> - Locked</summary>
           <p>
-            "Locked": The <em>actions</em> on the left-hand side of the toolbar can be used, but they cannot be
-            selected, and therefore cannot be moved to other tiles. Locked tiles can still receive <em>actions</em>
-            from other tiles, but they will become locked once moved onto a locked tile.
+            The <em>actions</em> on the right-hand side of the toolbar can be used, but they cannot be selected, and
+            therefore cannot be moved to other tiles. Locked tiles can still receive <em>actions</em> from other tiles,
+            but they will become locked once moved onto a locked tile.
           </p>
         </details>
       </details>
@@ -100,34 +97,33 @@
         <summary>Actions</summary>
         <p>
           As previously mentioned in <em>The Basics</em> above, <em>actions</em> are the icons on the right-hand side
-          of the toolbar at the bottom of the screen. Each action, which applies specific behaviors to all valid items
-          inside the currently selected tile, are listed below:
+          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
         </p>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Toggle">toggle_on</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Toggle">toggle_on</span> - Toggle</summary>
           <p>
-            "Toggle": Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
+            Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
             <em>terminus</em> item will turn beams on and off.
           </p>
         </details>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Rotate">rotate_left</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Rotate">rotate_left</span> - Rotate</summary>
           <p>
-            "Rotate": Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
+            Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
             (either clockwise or counter-clockwise).
           </p>
         </details>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Move">drag_pan</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Move">drag_pan</span> - Move</summary>
           <p>
-            "Move": Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
+            Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
             of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
           </p>
         </details>
         <details>
-          <summary><span class="fill material-symbols-outlined" title="Swap">swap_horiz</span></summary>
+          <summary><span class="fill material-symbols-outlined" title="Swap">swap_horiz</span> - Swap</summary>
           <p>
-            "Swap": Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
+            Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
             items in a valid tile of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
           </p>
         </details>
@@ -145,20 +141,21 @@
       <p>
         If you just want to get on with puzzle solving after encountering an issue, you can first try refreshing the page. If
         that doesn't work, you can try clearing the cache for the current puzzle by adding <code>?clearCache=[puzzle-id]</code>
-        to the URL right before the hash sign (#) in the URL and pressing enter. Just be sure to remove it after the page
-        has re-loaded, otherwise any changes you make to that puzzle will not be stored in the local browser cache. If
-        for some reason you want to clear all cache, you can use <code>?clearCache</code> without the <code>=[puzzle-id]</code>.
+        right before the hash sign (#) in the URL and pressing enter. Be sure to remove it after the page has re-loaded,
+        otherwise any changes you make to that puzzle will not be stored in the local browser cache. If for some reason
+        you want to clear all cache, you can use <code>?clearCache</code> without the <code>=[puzzle-id]</code>.
       </p>
       <h3>Thanks!</h3>
       <p>
         This game was primarily inspired by
         <a href="https://en.wikipedia.org/wiki/The_Talos_Principle">The Talos Principle</a> and
         <a href="https://en.wikipedia.org/wiki/The_Witness_(2016_video_game)">The Witness</a>, two highly recommended
-        puzzle games. Additionally, this game would not have been possible without <a href="http://paperjs.org/">Paper.js</a>.
+        puzzle games. Additionally, this game would not have been possible without the
+        <a href="http://paperjs.org/">Paper.js</a> library.
       </p>
       <p>
         If you're enjoying the game, please consider sharing it with others. If you'd like to help support further
-        development, please click on the <em>support me</em> link below.
+        development, please check out the <em>support me</em> link below.
       </p>
       <p class="emoji">&#128513;</p>
       <footer>
