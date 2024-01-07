@@ -36,13 +36,13 @@ export class Puzzle {
   #eventListener
   #isDragging = false
   #isUpdatingBeams = false
-  #lastUpdateBeams
   #mask
   #solution
   #state
   #termini
   #tiles = []
   #tool
+  #updateBeamsCache = []
 
   constructor (canvas) {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -145,12 +145,13 @@ export class Puzzle {
 
     try {
       this.#state = State.resolve(id)
-      this.#reload()
     } catch (e) {
-      console.error(e)
-      elements.message.textContent = 'Invalid puzzle.'
-      document.body.classList.add(Puzzle.Events.Error)
+      this.#onError(e, 'Could not load puzzle.')
     }
+
+    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+
+    this.#reload()
   }
 
   undo () {
@@ -267,6 +268,28 @@ export class Puzzle {
         tile.onClick(event)
       }
     }
+  }
+
+  #onError (error, message, cause) {
+    // Support exclusion of error
+    if (typeof error === 'string') {
+      message = error
+      cause = message
+      error = undefined
+    }
+
+    if (error) {
+      console.error(error)
+    }
+
+    cause = cause ?? error?.cause
+    if (cause) {
+      console.error('cause:', cause)
+    }
+
+    message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
+    elements.message.textContent = message
+    document.body.classList.add(Puzzle.Events.Error)
   }
 
   #onKeyup (event) {
@@ -411,11 +434,11 @@ export class Puzzle {
 
     if (!beams.length) {
       this.#isUpdatingBeams = false
-      this.#lastUpdateBeams = undefined
 
       // Ensure we check for a solution after all other in-progress events have processed
       // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
       setTimeout(() => {
+        this.#updateBeamsCache = []
         if (this.#solution.isSolved()) {
           this.#onSolved()
         }
@@ -427,13 +450,15 @@ export class Puzzle {
       this.layers.debug.clear()
     }
 
-    // Prevent infinite looping when something is bugged
-    const update = Object.fromEntries(beams.map((beam) => [beam.id, beam.step(this)]))
-    if (deepEqual(update, this.#lastUpdateBeams)) {
-      throw new Error('Infinite loop detected, exiting')
+    // Detect infinite looping when something is bugged
+    const updates = Object.fromEntries(beams.map((beam) => [beam.toString(), beam.step(this)]))
+    if (this.#updateBeamsCache.some((cachedUpdates) => deepEqual(cachedUpdates, updates))) {
+      console.debug('updateBeams:', updates)
+      this.#onError()
+      throw new Error('Infinite loop detected, exiting.')
     }
 
-    this.#lastUpdateBeams = update
+    this.#updateBeamsCache.push(updates)
     this.#updateBeams()
   }
 

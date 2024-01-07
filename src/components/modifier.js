@@ -38,7 +38,7 @@ export class Modifier extends Stateful {
       mousedown: this.onMouseDown,
       mouseleave: this.onMouseLeave,
       mouseup: this.onMouseUp,
-      touchstart: this.onTouchStart,
+      touchstart: { handler: this.onTouchStart, options: { passive: false } },
       touchend: this.onTouchEnd
     })
   }

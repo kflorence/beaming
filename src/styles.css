@@ -299,9 +299,12 @@ main {
   color: white;
 }
 
-.puzzle-error #actions,
+.puzzle-error .flex-left,
+.puzzle-error .flex-right {
+  flex: 0;
+}
+
 .puzzle-error #puzzle,
-.puzzle-error #solution,
 .puzzle-error .modifiers {
   display: none;
 }
