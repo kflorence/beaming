@@ -2,9 +2,8 @@ import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import pako from 'pako'
 import chroma from 'chroma-js'
 
+// noinspection JSCheckFunctionSignatures
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
-
-window.jsonDiffPatch = jsonDiffPatch
 
 export const MouseButton = Object.freeze({
   Left: 0,

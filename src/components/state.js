@@ -31,6 +31,10 @@ export class State {
   }
 
   apply (delta) {
+    // Support for deltas stored as stringified JSON in cache
+    if (typeof delta === 'string') {
+      delta = JSON.parse(delta)
+    }
     console.debug('StateManager: applying delta', delta)
     return jsonDiffPatch.patch(this.#current, delta)
   }
@@ -118,7 +122,7 @@ export class State {
 
   update (newState) {
     const delta = jsonDiffPatch.diff(this.#current, newState)
-    console.debug('State.update', delta)
+    console.debug('delta', delta)
 
     if (delta === undefined) {
       // Nothing to do
@@ -132,7 +136,11 @@ export class State {
     }
 
     this.apply(delta)
-    this.#deltas.push(delta)
+
+    // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+    // their stringified JSON representation and parsed before being applied.
+    // See:https://github.com/benjamine/jsondiffpatch/issues/34
+    this.#deltas.push(JSON.stringify(delta))
     this.#index = this.#lastIndex()
 
     this.#updateCache()
