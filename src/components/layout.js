@@ -98,9 +98,9 @@ export class Layout extends Stateful {
 
   getState () {
     // Tiles are defined by offset in the puzzle state
-    return {
+    return Object.assign(super.getState(), {
       tiles: this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
-    }
+    })
   }
 
   getNeighboringTile (axial, direction) {

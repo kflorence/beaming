@@ -438,6 +438,7 @@ export class Puzzle {
       // Ensure we check for a solution after all other in-progress events have processed
       // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
       setTimeout(() => {
+        console.debug('Puzzle: resetting beams cache')
         this.#updateBeamsCache = []
         if (this.#solution.isSolved()) {
           this.#onSolved()
@@ -452,8 +453,10 @@ export class Puzzle {
 
     // Detect infinite looping when something is bugged
     const updates = Object.fromEntries(beams.map((beam) => [beam.toString(), beam.step(this)]))
-    if (this.#updateBeamsCache.some((cachedUpdates) => deepEqual(cachedUpdates, updates))) {
-      console.debug('updateBeams:', updates)
+    const matchedIndex = this.#updateBeamsCache.findIndex((cachedUpdates) => deepEqual(updates, cachedUpdates))
+    if (matchedIndex >= 0) {
+      const matchedUpdates = this.#updateBeamsCache[matchedIndex]
+      console.debug('updateBeams match at index:', matchedIndex, updates, matchedUpdates, this.#updateBeamsCache)
       this.#onError()
       throw new Error('Infinite loop detected, exiting.')
     }

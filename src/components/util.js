@@ -33,6 +33,75 @@ export function coalesce (...args) {
   return args.findLast((arg) => arg !== undefined)
 }
 
+export function base64decode (string) {
+  const binString = window.atob(base64unescape(string))
+  // noinspection JSCheckFunctionSignatures
+  return new TextDecoder().decode(pako.inflate(Uint8Array.from(binString, (c) => c.codePointAt(0))))
+}
+
+window.base64decode = base64decode
+
+export function base64encode (string) {
+  return base64escape(window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string)))))
+}
+
+window.base64encode = base64encode
+
+function base64escape (string) {
+  // https://en.wikipedia.org/wiki/Base64#URL_applications
+  return string.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+}
+
+function base64unescape (string) {
+  return (string + '==='.slice((string.length + 3) % 4))
+    .replace(/-/g, '+').replace(/_/g, '/')
+}
+
+/**
+ * Calls the given function one time after a task has finished for the given amount of time.
+ * @param func the function to call
+ * @param delay the time to wait after the task has completed
+ * @returns {(function(...[*]): void)|*}
+ */
+export function debounce (func, delay = 500) {
+  let timeout
+  return (...args) => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      func(...args)
+    }, delay)
+  }
+}
+
+export function deepEqual (x, y) {
+  return typeof x === 'object' && typeof y === 'object'
+    ? (
+        Object.keys(x).length === Object.keys(y).length &&
+        Object.keys(x).every(key => {
+          const xv = x[key]
+          const yv = y[key]
+          return Object.hasOwn(y, key) &&
+            (typeof xv?.equals === 'function' ? xv.equals(yv) : deepEqual(xv, yv))
+        })
+      )
+    : (x === y)
+}
+
+export function emitEvent (event, detail = null) {
+  document.dispatchEvent(new CustomEvent(event, { detail }))
+}
+
+export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
+  return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
+}
+
+export function getCentroid (triangle) {
+  const segments = triangle.segments
+  const vertex = segments[0].point
+  const opposite = segments[1].point.subtract(segments[1].point.subtract(segments[2].point).divide(2))
+  return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
+}
+
 export function getColorElement (color) {
   const span = document.createElement('span')
   span.classList.add('beam')
@@ -73,90 +142,16 @@ export function getColorElements (colors) {
   return elements
 }
 
+export function getDistance (point) {
+  return (a, b) => a.subtract(point).length - b.subtract(point).length
+}
+
 export function getIconElement (name, title) {
   const span = document.createElement('span')
   span.classList.add('icon', 'material-symbols-outlined')
   span.textContent = name
   span.title = title ?? capitalize(name)
   return span
-}
-
-export function getTextElement (text) {
-  const span = document.createElement('span')
-  span.classList.add('text')
-  span.textContent = text.toString()
-  return span
-}
-
-/**
- * Calls the given function one time after a task has finished for the given amount of time.
- * @param func the function to call
- * @param delay the time to wait after the task has completed
- * @returns {(function(...[*]): void)|*}
- */
-export function debounce (func, delay = 500) {
-  let timeout
-  return (...args) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => {
-      func(...args)
-    }, delay)
-  }
-}
-
-export function base64decode (string) {
-  const binString = window.atob(base64unescape(string))
-  // noinspection JSCheckFunctionSignatures
-  return new TextDecoder().decode(pako.inflate(Uint8Array.from(binString, (c) => c.codePointAt(0))))
-}
-
-window.base64decode = base64decode
-
-export function base64encode (string) {
-  return base64escape(window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string)))))
-}
-
-window.base64encode = base64encode
-
-function base64escape (string) {
-  // https://en.wikipedia.org/wiki/Base64#URL_applications
-  return string.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
-}
-
-function base64unescape (string) {
-  return (string + '==='.slice((string.length + 3) % 4))
-    .replace(/-/g, '+').replace(/_/g, '/')
-}
-
-export function deepEqual (x, y) {
-  return typeof x === 'object' && typeof y === 'object'
-    ? (
-        Object.keys(x).length === Object.keys(y).length &&
-        Object.keys(x).every(key => {
-          const xv = x[key]; const yv = y[key]
-          return typeof xv?.equals === 'function' ? xv.equals(yv) : deepEqual(xv, yv)
-        })
-      )
-    : (x === y)
-}
-
-export function emitEvent (event, detail = null) {
-  document.dispatchEvent(new CustomEvent(event, { detail }))
-}
-
-export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
-  return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
-}
-
-export function getCentroid (triangle) {
-  const segments = triangle.segments
-  const vertex = segments[0].point
-  const opposite = segments[1].point.subtract(segments[1].point.subtract(segments[2].point).divide(2))
-  return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
-}
-
-export function getDistance (point) {
-  return (a, b) => a.subtract(point).length - b.subtract(point).length
 }
 
 export function getMidPoint (pointA, pointB) {
@@ -195,6 +190,13 @@ export function getReflectedDirection (beamDirection, reflectorDirection) {
   const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
   // And convert back to our normal directions on the way out
   return getConvertedDirection((addDegrees(beamAngle, reflectedBeamAngle) / 60) % 6, false)
+}
+
+export function getTextElement (text) {
+  const span = document.createElement('span')
+  span.classList.add('text')
+  span.textContent = text.toString()
+  return span
 }
 
 export function removeClass (className, ...elements) {
