@@ -304,12 +304,12 @@ main {
   flex: 0;
 }
 
-.puzzle-error #puzzle,
+.puzzle-error:not(.puzzle-loaded) #puzzle,
 .puzzle-error .modifiers {
   display: none;
 }
 
-.puzzle-error #error {
+.puzzle-error:not(.puzzle-loaded) #error {
   display: flex;
 }
 

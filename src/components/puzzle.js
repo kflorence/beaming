@@ -23,9 +23,13 @@ const elements = Object.freeze({
   message: document.getElementById('message')
 })
 
+// There are various spots below that utilize setTimeout in order to process events in order and to prevent
+// long-running computations from blocking UI updates.
+// See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
   connections = []
   debug = false
+  error = false
   layers = {}
   message
   selectedTile
@@ -146,8 +150,6 @@ export class Puzzle {
   }
 
   select (id) {
-    document.body.classList.remove(Puzzle.Events.Error)
-
     try {
       this.#state = State.resolve(id)
     } catch (e) {
@@ -249,7 +251,7 @@ export class Puzzle {
   #onClick (event) {
     let tile
 
-    if (this.#isDragging || this.solved) {
+    if (this.#isDragging || this.solved || this.error) {
       return
     }
 
@@ -276,6 +278,8 @@ export class Puzzle {
   }
 
   #onError (error, message, cause) {
+    this.error = true
+
     // Support exclusion of error
     if (typeof error === 'string') {
       message = error
@@ -372,6 +376,8 @@ export class Puzzle {
   }
 
   #reload () {
+    this.error = false
+
     if (this.#state) {
       this.#teardown()
     }
@@ -402,6 +408,8 @@ export class Puzzle {
 
     this.#eventListener.addEventListeners()
     this.#addLayers()
+
+    document.body.classList.add(Puzzle.Events.Loaded)
 
     const selectedTileId = this.#state.getSelectedTile()
     const selectedTile = selectedTileId
@@ -441,7 +449,6 @@ export class Puzzle {
       this.#isUpdatingBeams = false
 
       // Ensure we check for a solution after all other in-progress events have processed
-      // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
       setTimeout(() => {
         console.debug('Puzzle: resetting beams cache')
         this.#updateBeamsCache = []
@@ -467,7 +474,9 @@ export class Puzzle {
     }
 
     this.#updateBeamsCache.push(updates)
-    this.#updateBeams()
+
+    // Ensure the UI has a chance to update between loops
+    setTimeout(() => this.#updateBeams(), 0)
   }
 
   #updateMessage (tile) {
@@ -520,7 +529,7 @@ export class Puzzle {
     update () {
       // Remove any beam which no longer matches its collision point
       this.beams = this.beams.filter((beam) =>
-        fuzzyEquals(beam.getStep()?.state.get(StepState.Collision)?.point, this.point))
+        beam.getCollisions().some((collision) => fuzzyEquals(collision.point, this.point)))
 
       const color = this.getColor()
 
@@ -543,6 +552,7 @@ export class Puzzle {
 
   static Events = Object.freeze({
     Error: 'puzzle-error',
+    Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'

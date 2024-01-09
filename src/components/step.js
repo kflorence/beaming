@@ -1,5 +1,5 @@
 import chroma from 'chroma-js'
-import { deepEqual } from './util'
+import { deepEqual, fuzzyEquals } from './util'
 
 export class Step {
   color
@@ -12,6 +12,7 @@ export class Step {
   onRemove
   point
   pathIndex
+  projection
   segmentIndex
   state
   tile
@@ -26,6 +27,7 @@ export class Step {
     connected,
     insertAbove,
     done,
+    projection,
     state,
     onAdd,
     onRemove
@@ -48,6 +50,7 @@ export class Step {
     this.onRemove = onRemove
     this.point = point
     this.pathIndex = pathIndex
+    this.projection = projection ?? false
     this.segmentIndex = segmentIndex
     this.state = state ?? new StepState()
     this.tile = tile
@@ -64,6 +67,7 @@ export class Step {
       settings.connected ?? this.connected,
       settings.insertAbove ?? this.insertAbove,
       settings.done ?? this.done,
+      settings.projection ?? this.projection,
       settings.state ?? new StepState(this.state),
       settings.onAdd ?? this.onAdd,
       settings.onRemove ?? this.onRemove
@@ -120,6 +124,14 @@ export class StepState {
 
   static Filter = class StepFilter {
     filter = {}
+  }
+
+  static CollisionLoop = class StepCollisionLoop {
+    collisionLoop
+
+    constructor (collisions) {
+      this.collisionLoop = collisions
+    }
   }
 
   static MergeInto = class StepMergeInto {

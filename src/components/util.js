@@ -206,3 +206,10 @@ export function removeClass (className, ...elements) {
 export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
 }
+
+export function uniqueBy (array, key) {
+  const values = array.map((value) => value[key])
+  return array.filter((value, index) => !values.includes(value[key], index + 1))
+}
+
+//window.uniqueBy = uniqueBy
