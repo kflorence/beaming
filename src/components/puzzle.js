@@ -476,7 +476,7 @@ export class Puzzle {
     this.#updateBeamsCache.push(updates)
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(), 0)
+    setTimeout(() => this.#updateBeams(), 25)
   }
 
   #updateMessage (tile) {

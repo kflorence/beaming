@@ -238,7 +238,7 @@ export class Beam extends Item {
           .filter((step) => step.state.has(StepState.Collision))
           .map((step) => step.state.get(StepState.Collision))
           .some((otherCollision) =>
-            otherCollision.item.equals(this) && fuzzyEquals(otherCollision.point, collision.point)
+            otherCollision.item?.equals(this) && fuzzyEquals(otherCollision.point, collision.point)
           )
       ) {
         console.debug(this.toString(), 're-evaluating collision with', beam.toString())
@@ -491,10 +491,9 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.debug(this.toString(), 'stopping due to out of bounds')
-      return this.updateStep(currentStepIndex, {
-        done: true,
-        state: new StepState(new StepState.Collision(currentStep.point))
-      })
+      const state = new StepState.Collision(currentStep.point)
+      this.addCollision(currentStepIndex, state.collision)
+      return this.updateStep(currentStepIndex, { done: true, state: new StepState(state) })
     }
 
     const nextStepIndex = currentStepIndex + 1
@@ -683,15 +682,15 @@ export class Beam extends Item {
 
     if (stepIndex === lastStepIndex) {
       // Update beam status if last step was updated
-      this.done = step.done
+      this.done = step?.done ?? false
     }
 
-    if (this.done && !step.state.get(StepState.Collision)) {
+    if (this.done && !step?.state.get(StepState.Collision)) {
       // If the beam ends without a collision, we can clear out any we have tracked
       this.#collisions = {}
     }
 
-    emitEvent(Beam.Events.Update, { beam: this, state: step.state, step, stepIndex })
+    emitEvent(Beam.Events.Update, { beam: this, state: step?.state, step, stepIndex })
   }
 
   #updateHistory (stepIndex) {
