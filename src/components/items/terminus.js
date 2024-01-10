@@ -66,7 +66,9 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     collisionIndex,
     collisions,
     currentStep,
+    currentStepIndex,
     nextStep,
+    nextStepIndex,
     existingNextStep,
     collisionStep
   ) {

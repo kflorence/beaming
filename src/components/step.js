@@ -1,5 +1,5 @@
 import chroma from 'chroma-js'
-import { deepEqual, fuzzyEquals } from './util'
+import { deepEqual } from './util'
 
 export class Step {
   color
@@ -24,10 +24,10 @@ export class Step {
     point,
     pathIndex,
     segmentIndex,
+    projection,
     connected,
     insertAbove,
     done,
-    projection,
     state,
     onAdd,
     onRemove
@@ -64,10 +64,10 @@ export class Step {
       settings.point ?? this.point,
       settings.pathIndex ?? this.pathIndex,
       settings.segmentIndex ?? this.segmentIndex,
+      settings.projection ?? this.projection,
       settings.connected ?? this.connected,
       settings.insertAbove ?? this.insertAbove,
       settings.done ?? this.done,
-      settings.projection ?? this.projection,
       settings.state ?? new StepState(this.state),
       settings.onAdd ?? this.onAdd,
       settings.onRemove ?? this.onRemove

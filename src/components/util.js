@@ -211,5 +211,3 @@ export function uniqueBy (array, key) {
   const values = array.map((value) => value[key])
   return array.filter((value, index) => !values.includes(value[key], index + 1))
 }
-
-//window.uniqueBy = uniqueBy

@@ -74,7 +74,9 @@ export class Portal extends movable(rotatable(Item)) {
     collisionIndex,
     collisions,
     currentStep,
+    currentStepIndex,
     nextStep,
+    nextStepIndex,
     existingNextStep,
     collisionStep
   ) {

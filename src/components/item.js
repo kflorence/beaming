@@ -62,7 +62,9 @@ export class Item extends Stateful {
     collisionIndex,
     collisions,
     currentStep,
+    currentStepIndex,
     nextStep,
+    nextStepIndex,
     existingNextStep,
     collisionStep
   ) {

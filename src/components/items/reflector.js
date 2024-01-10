@@ -42,7 +42,9 @@ export class Reflector extends movable(rotatable(Item)) {
     collisionIndex,
     collisions,
     currentStep,
+    currentStepIndex,
     nextStep,
+    nextStepIndex,
     existingNextStep,
     collisionStep
   ) {
