@@ -513,6 +513,10 @@ export class Puzzle {
       this.layer.addChild(this.item.group)
     }
 
+    equals (other) {
+      return fuzzyEquals(this.point, other.point)
+    }
+
     getColor () {
       return this.beams.length
         ? chroma.average(this.beams.map((beam) => beam.getColor())).hex()
@@ -529,7 +533,7 @@ export class Puzzle {
     update () {
       // Remove any beam which no longer matches its collision point
       this.beams = this.beams.filter((beam) =>
-        beam.getCollisions().some((collision) => fuzzyEquals(collision.point, this.point)))
+        Object.values(beam.getCollisions()).some((collision) => this.equals(collision)))
 
       const color = this.getColor()
 

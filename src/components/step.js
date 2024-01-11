@@ -129,8 +129,8 @@ export class StepState {
   static CollisionLoop = class StepCollisionLoop {
     collisionLoop
 
-    constructor (collisions) {
-      this.collisionLoop = collisions
+    constructor (collisionLoop) {
+      this.collisionLoop = collisionLoop
     }
   }
 
