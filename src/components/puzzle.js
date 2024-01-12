@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Tool } from 'paper'
-import { deepEqual, emitEvent, fuzzyEquals } from './util'
+import { emitEvent, fuzzyEquals } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -46,7 +46,6 @@ export class Puzzle {
   #termini
   #tiles = []
   #tool
-  #updateBeamsCache = []
 
   constructor (canvas) {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -450,8 +449,6 @@ export class Puzzle {
 
       // Ensure we check for a solution after all other in-progress events have processed
       setTimeout(() => {
-        console.debug('Puzzle: resetting beams cache')
-        this.#updateBeamsCache = []
         if (this.#solution.isSolved()) {
           this.#onSolved()
         }
@@ -463,20 +460,10 @@ export class Puzzle {
       this.layers.debug.clear()
     }
 
-    // Detect infinite looping when something is bugged
-    const updates = Object.fromEntries(beams.map((beam) => [beam.toString(), beam.step(this)]))
-    const matchedIndex = this.#updateBeamsCache.findIndex((cachedUpdates) => deepEqual(updates, cachedUpdates))
-    if (matchedIndex >= 0) {
-      const matchedUpdates = this.#updateBeamsCache[matchedIndex]
-      console.debug('updateBeams match at index:', matchedIndex, updates, matchedUpdates, this.#updateBeamsCache)
-      this.#onError()
-      throw new Error('Infinite loop detected, exiting.')
-    }
-
-    this.#updateBeamsCache.push(updates)
+    beams.forEach((beam) => beam.step(this))
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(), 25)
+    setTimeout(() => this.#updateBeams(), 30)
   }
 
   #updateMessage (tile) {
@@ -514,7 +501,7 @@ export class Puzzle {
     }
 
     equals (other) {
-      return fuzzyEquals(this.point, other.point)
+      return fuzzyEquals(this.point, other?.point)
     }
 
     getColor () {
@@ -532,8 +519,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) =>
-        Object.values(beam.getCollisions()).some((collision) => this.equals(collision)))
+      this.beams = this.beams.filter((beam) => this.equals(beam.getCollision()))
 
       const color = this.getColor()
 

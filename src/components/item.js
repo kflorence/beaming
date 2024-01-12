@@ -55,19 +55,7 @@ export class Item extends Stateful {
 
   onClick () {}
 
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    currentStepIndex,
-    nextStep,
-    nextStepIndex,
-    existingNextStep,
-    collisionStep
-  ) {
+  onCollision ({ collisionStep }) {
     return collisionStep
   }
 

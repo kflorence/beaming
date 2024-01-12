@@ -59,19 +59,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.beams.forEach((beam) => beam.remove())
   }
 
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    currentStepIndex,
-    nextStep,
-    nextStepIndex,
-    existingNextStep,
-    collisionStep
-  ) {
+  onCollision ({ beam, collisionStep, currentStep, existingNextStep, nextStep }) {
     console.debug(this.toString(), 'collision', beam.toString())
 
     // Colliding with the starting terminus, ignore
@@ -95,8 +83,14 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       console.debug(beam.toString(), 'terminus connection', this.toString(), opening)
       return nextStep.copy({
         done: true,
-        onAdd: () => { this.onConnection(opening.direction) },
-        onRemove: () => { this.onDisconnection(opening.direction) },
+        onAdd: () => {
+          nextStep.onAdd()
+          this.onConnection(opening.direction)
+        },
+        onRemove: () => {
+          nextStep.onRemove()
+          this.onDisconnection(opening.direction)
+        },
         state: nextStep.state.copy(new StepState.TerminusConnection(this, opening))
       })
     }
@@ -107,15 +101,29 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   onConnection (direction) {
     const opening = this.getOpening(direction)
+
+    if (opening.connected) {
+      // Already connected
+      return
+    }
+
     opening.connect()
     this.update()
+
     emitEvent(Terminus.Events.Connection, { terminus: this, opening })
   }
 
   onDisconnection (direction) {
     const opening = this.getOpening(direction)
+
+    if (!opening.connected) {
+      // Already disconnected
+      return
+    }
+
     opening.disconnect()
     this.update()
+
     emitEvent(Terminus.Events.Disconnection, { terminus: this, opening })
   }
 
@@ -179,7 +187,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   static #Opening = class {
     constructor (color, direction, connected, on) {
-      this.color = Array.isArray(color) ? chroma.average(color).hex() : chroma(color).hex()
+      this.colors = Array.isArray(color) ? color : [color]
+      this.color = chroma.average(this.colors).hex()
       this.direction = direction
       this.connected = connected === true
       this.on = on === true

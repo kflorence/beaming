@@ -35,19 +35,7 @@ export class Reflector extends movable(rotatable(Item)) {
     return this.getSide(pointA) === this.getSide(pointB)
   }
 
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    currentStepIndex,
-    nextStep,
-    nextStepIndex,
-    existingNextStep,
-    collisionStep
-  ) {
+  onCollision ({ beam, collisionStep, currentStep, nextStep }) {
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
@@ -58,10 +46,11 @@ export class Reflector extends movable(rotatable(Item)) {
 
     if (directionTo === directionFrom) {
       console.debug(beam.toString(), 'stopping due to reflection back at self')
-      // Not using collisionStep here because we want to block other beams that are using the same reflector
-      return nextStep.copy({
-        done: true,
-        state: nextStep.state.copy(new StepState.Collision(nextStep.point, this))
+      // Updating the collisionStep to use nextStep.point to ensure beams using the same reflector can be collided with
+      return collisionStep.copy({
+        point: nextStep.point,
+        state: collisionStep.state.copy(
+          new StepState.Collision(collisionStep.state.get(StepState.Collision).copy({ points: [nextStep.point] })))
       })
     }
 

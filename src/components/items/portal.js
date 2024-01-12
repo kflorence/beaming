@@ -67,19 +67,7 @@ export class Portal extends movable(rotatable(Item)) {
 
   // TODO: allow multiple beams to enter a portal.
   // Collision should still occur between beams if one is entering and one is exiting.
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    currentStepIndex,
-    nextStep,
-    nextStepIndex,
-    existingNextStep,
-    collisionStep
-  ) {
+  onCollision ({ beam, collisionStep, currentStep, nextStep, puzzle }) {
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
       // Handle entry collision

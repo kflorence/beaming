@@ -1,12 +1,8 @@
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode, jsonDiffPatch } from './util'
+import { base64decode, base64encode, jsonDiffPatch, params, url } from './util'
 
 const history = window.history
-const location = window.location
 const localStorage = window.localStorage
-
-const params = new URLSearchParams(location.search)
-const url = new URL(location)
 
 export class State {
   #current

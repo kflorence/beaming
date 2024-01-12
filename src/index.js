@@ -1,8 +1,19 @@
 import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
-import { addClass, debounce, removeClass } from './components/util'
+import { addClass, debounce, params, removeClass } from './components/util'
 import { Puzzles } from './puzzles'
 import { OffsetCoordinates } from './components/coordinates/offset'
+
+const beaming = window.beaming = {}
+const console = window.console = window.console || { debug: function () {} }
+
+const consoleDebug = console.debug
+beaming.debug = function (debug) {
+  console.debug = debug ? consoleDebug : function () {}
+}
+
+// Silence debug logging by default since it can affect performance
+beaming.debug(params.has('debug') ?? false)
 
 const elements = Object.freeze({
   dialog: document.getElementById('dialog'),
@@ -19,7 +30,7 @@ const elements = Object.freeze({
   undo: document.getElementById('undo')
 })
 
-const puzzle = new Puzzle(elements.puzzle)
+const puzzle = beaming.puzzle = new Puzzle(elements.puzzle)
 
 elements.info.addEventListener('click', () => {
   if (!elements.dialog.open) {
@@ -130,13 +141,12 @@ document.body.addEventListener('contextmenu', (event) => {
 // Initialize
 puzzle.select()
 
-// Expose for debug purposes
-const beaming = window.beaming = { paper, puzzle }
-
+// Used by functional tests
 beaming.centerOnTile = function (r, c) {
   return puzzle.centerOnTile(new OffsetCoordinates(r, c))
 }
 
+// Useful for debug purposes
 beaming.drawDebugPoint = function (x, y, style) {
   return puzzle.drawDebugPoint(new Point(x, y), style)
 }
