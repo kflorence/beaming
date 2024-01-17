@@ -92,6 +92,17 @@ export class Puzzle {
     return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result
   }
 
+  /**
+   * Gets the x, y offset position for the center of a tile, relative to the center of the canvas.
+   * @param offset OffsetCoordinates (row, column)
+   * @returns {[Number, Number]}
+   */
+  getTileOffsetPosition (offset) {
+    const tile = this.layout.getTileByOffset(offset)
+    const center = tile.center.subtract(paper.view.center).floor()
+    return [center.x, center.y]
+  }
+
   mask (mask) {
     if (this.#mask) {
       console.error('Ignoring mask request due to existing mask', mask, this.#mask)

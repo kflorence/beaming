@@ -2,6 +2,7 @@ import paper, { Point, Size } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { addClass, debounce, removeClass } from './components/util'
 import { Puzzles } from './puzzles'
+import { OffsetCoordinates } from './components/coordinates/offset'
 
 const elements = Object.freeze({
   dialog: document.getElementById('dialog'),
@@ -133,4 +134,7 @@ puzzle.select()
 window.beaming = { paper, puzzle }
 window.beaming.drawDebugPoint = function (x, y, style) {
   return puzzle.drawDebugPoint(new paper.Point(x, y), style)
+}
+window.beaming.getTileOffsetPosition = function (r, c) {
+  return puzzle.getTileOffsetPosition(new OffsetCoordinates(r, c))
 }
