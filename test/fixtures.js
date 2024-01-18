@@ -24,8 +24,12 @@ class PuzzleFixture {
   async before () {
     const options = new chrome.Options()
     options.addArguments(
+      '--disable-dev-shm-usage',
+      '--disable-extensions',
+      '--disable-gpu',
       '--headless=new',
-      '--window-size=1920,1080'
+      '--ignore-certificate-errors',
+      '--window-size=768,1024'
     )
 
     this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build()
