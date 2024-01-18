@@ -1,6 +1,6 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, until } = require('selenium-webdriver')
+const { Builder, By } = require('selenium-webdriver')
 
 class PuzzleFixture {
   driver
