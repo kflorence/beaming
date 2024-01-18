@@ -131,10 +131,12 @@ document.body.addEventListener('contextmenu', (event) => {
 puzzle.select()
 
 // Expose for debug purposes
-window.beaming = { paper, puzzle }
-window.beaming.drawDebugPoint = function (x, y, style) {
-  return puzzle.drawDebugPoint(new paper.Point(x, y), style)
+const beaming = window.beaming = { paper, puzzle }
+
+beaming.centerOnTile = function (r, c) {
+  return puzzle.centerOnTile(new OffsetCoordinates(r, c))
 }
-window.beaming.getTileOffsetPosition = function (r, c) {
-  return puzzle.getTileOffsetPosition(new OffsetCoordinates(r, c))
+
+beaming.drawDebugPoint = function (x, y, style) {
+  return puzzle.drawDebugPoint(new Point(x, y), style)
 }

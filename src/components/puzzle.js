@@ -66,6 +66,11 @@ export class Puzzle {
     this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
   }
 
+  centerOnTile (offset) {
+    const tile = this.layout.getTileByOffset(offset)
+    paper.view.center = tile.center
+  }
+
   drawDebugPoint (point, style = {}) {
     const circle = new Path.Circle(Object.assign({
       radius: 3,
@@ -90,17 +95,6 @@ export class Puzzle {
       tolerance: 0
     })
     return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result
-  }
-
-  /**
-   * Gets the x, y offset position for the center of a tile, relative to the center of the canvas.
-   * @param offset OffsetCoordinates (row, column)
-   * @returns {[Number, Number]}
-   */
-  getTileOffsetPosition (offset) {
-    const tile = this.layout.getTileByOffset(offset)
-    const center = tile.center.subtract(paper.view.center).floor()
-    return [center.x, center.y]
   }
 
   mask (mask) {
