@@ -2,15 +2,17 @@
 const { PuzzleFixture } = require('../fixtures.js')
 const assert = require('assert')
 
-describe('Puzzle 001', function () {
-  const puzzle = new PuzzleFixture('001')
+describe('Puzzle 003', function () {
+  const puzzle = new PuzzleFixture('003')
 
   after(puzzle.after)
   before(puzzle.before)
 
   it('should be solved', async function () {
+    await puzzle.clickOnTile(2, 1)
+    await puzzle.selectModifier('rotate')
     await puzzle.clickOnTile(2, 0)
-    await puzzle.clickModifier('toggle')
+    await puzzle.clickModifier('rotate')
 
     assert(await puzzle.isSolved())
   })

@@ -10,9 +10,10 @@ class PuzzleFixture {
     modifiers: undefined
   }
 
-  constructor () {
+  constructor (id) {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
+    this.url = `${PuzzleFixture.baseUrl}/#/${id}`
   }
 
   async after () {
@@ -33,7 +34,7 @@ class PuzzleFixture {
     )
 
     this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build()
-    await this.driver.get('http://localhost:1234')
+    await this.driver.get(this.url)
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
@@ -41,24 +42,30 @@ class PuzzleFixture {
   }
 
   async clickModifier (name) {
-    const modifier = await this.driver.findElement(By.className(`modifier-${name}`))
-    const actions = this.driver.actions({ async: true })
-    await actions.move({ origin: modifier }).click().perform()
+    const origin = this.#getModifier(name)
+    await this.driver.actions({ async: true }).move({ origin }).click().perform()
   }
 
   async isSolved () {
     return hasClass(this.elements.body, 'puzzle-solved')
   }
 
-  async selectTile (r, c) {
+  async selectModifier (name) {
+    const origin = this.#getModifier(name)
+    await this.driver.actions({ async: true }).move({ origin }).press().pause(500).release().perform()
+  }
+
+  async clickOnTile (r, c) {
     // Center on the tile we want to click on. This ensures it is visible
     await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
-
-    const actions = this.driver.actions({ async: true })
-    await actions.move({ origin: this.elements.canvas }).click().perform()
-
-    await this.driver.wait(until.elementIsVisible(this.elements.modifiers), 500)
+    await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
   }
+
+  async #getModifier (name) {
+    return await this.driver.findElement(By.className(`modifier-${name}`))
+  }
+
+  static baseUrl = 'http://localhost:1234'
 }
 
 async function hasClass (element, name) {
