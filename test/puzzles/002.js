@@ -9,7 +9,7 @@ describe('Puzzle 002', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickOnTile(2, 0)
+    await puzzle.clickTile(2, 0)
     await puzzle.clickModifier('rotate')
 
     assert(await puzzle.isSolved())

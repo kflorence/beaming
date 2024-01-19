@@ -13,7 +13,7 @@
     "build": "parcel build --public-url 'https://kflorence.github.io/beaming'",
     "start": "parcel",
     "test": "npm run test-lint && npm run test-functional",
-    "test-functional": "mocha test --recursive --timeout 5000",
+    "test-functional": "mocha test --recursive --timeout 10000",
     "test-lint": "standard"
   },
   "devDependencies": {

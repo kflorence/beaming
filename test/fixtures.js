@@ -41,9 +41,20 @@ class PuzzleFixture {
     this.elements.modifiers = await this.driver.findElement(By.id('modifiers-mutable'))
   }
 
-  async clickModifier (name) {
+  async clickModifier (name, options = {}) {
+    const times = options.times ?? 1
     const origin = this.#getModifier(name)
-    await this.driver.actions({ async: true }).move({ origin }).click().perform()
+    const actions = this.driver.actions({ async: true }).move({ origin })
+    for (let i = 0; i < times; i++) {
+      actions[options.right ? 'contextClick' : 'click']()
+    }
+    await actions.perform()
+  }
+
+  async clickTile (r, c) {
+    // Center on the tile we want to click on. This ensures it is visible
+    await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
+    await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
   }
 
   async isSolved () {
@@ -53,12 +64,6 @@ class PuzzleFixture {
   async selectModifier (name) {
     const origin = this.#getModifier(name)
     await this.driver.actions({ async: true }).move({ origin }).press().pause(500).release().perform()
-  }
-
-  async clickOnTile (r, c) {
-    // Center on the tile we want to click on. This ensures it is visible
-    await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
-    await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
   }
 
   async #getModifier (name) {
