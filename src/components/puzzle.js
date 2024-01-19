@@ -66,6 +66,11 @@ export class Puzzle {
     this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
   }
 
+  centerOnTile (offset) {
+    const tile = this.layout.getTileByOffset(offset)
+    paper.view.center = tile.center
+  }
+
   drawDebugPoint (point, style = {}) {
     const circle = new Path.Circle(Object.assign({
       radius: 3,

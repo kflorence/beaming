@@ -49,6 +49,8 @@ export class Modifier extends Stateful {
   attach () {
     const li = this.#container = document.createElement('li')
 
+    li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
+
     if (this.immutable) {
       this.disabled = true
     }
