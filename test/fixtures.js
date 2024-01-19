@@ -1,6 +1,6 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By } = require('selenium-webdriver')
+const { Builder, By, until } = require('selenium-webdriver')
 
 class PuzzleFixture {
   driver
@@ -67,6 +67,7 @@ class PuzzleFixture {
   }
 
   async #getModifier (name) {
+    await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
     return await this.driver.findElement(By.className(`modifier-${name}`))
   }
 
