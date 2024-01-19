@@ -15,13 +15,15 @@ export class State {
   #index
   #original
   #selectedTile
+  #version
 
-  constructor (id, original, deltas, deltasIndex, selectedTile) {
+  constructor (id, original, deltas, deltasIndex, selectedTile, version) {
     this.#id = id
     this.#original = original
     this.#deltas = deltas || []
     this.#index = deltasIndex || this.#lastIndex()
     this.#selectedTile = selectedTile
+    this.#version = version ?? original.version
 
     // Update current state
     this.#current = structuredClone(original)
@@ -54,7 +56,8 @@ export class State {
       original: Puzzles.has(this.#id) ? undefined : this.#original,
       deltas: this.#deltas,
       deltasIndex: this.#index,
-      selectedTile: this.#selectedTile
+      selectedTile: this.#selectedTile,
+      version: this.#version
     }))
   }
 
@@ -184,7 +187,15 @@ export class State {
   static fromEncoded (state) {
     state = JSON.parse(base64decode(state))
     state.original = state.original || Puzzles.get(state.id)
-    return new State(state.id, state.original, state.deltas, state.deltasIndex, state.selectedTile)
+    state.original.version ??= 0
+    return new State(
+      state.id,
+      state.original,
+      state.deltas,
+      state.deltasIndex,
+      state.selectedTile,
+      state.version
+    )
   }
 
   static fromId (id) {
@@ -226,6 +237,20 @@ export class State {
         } catch (e) {
           console.debug(`Could not parse state with ID '${id}' from localStorage`, e)
         }
+      }
+    }
+
+    if (state) {
+      const cachedVersion = state.#version
+      const originalVersion = state.#original.version
+
+      if (cachedVersion !== originalVersion) {
+        console.log(
+          `Invalidating cache for ID ${id} due to version mismatch. ` +
+          `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`
+        )
+        state = undefined
+        State.clearCache(id)
       }
     }
 
