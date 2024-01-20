@@ -1,6 +1,6 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, until } = require('selenium-webdriver')
+const { Builder, By, until, WebElementCondition } = require('selenium-webdriver')
 
 class PuzzleFixture {
   driver
@@ -58,7 +58,7 @@ class PuzzleFixture {
   }
 
   async isSolved () {
-    return hasClass(this.elements.body, 'puzzle-solved')
+    return elementHasClass(this.elements.body, 'puzzle-solved')
   }
 
   async selectModifier (name) {
@@ -74,9 +74,10 @@ class PuzzleFixture {
   static baseUrl = 'http://localhost:1234'
 }
 
-async function hasClass (element, name) {
-  const classes = (await element.getAttribute('class')).split(' ')
-  return classes.some((className) => name === className)
+function elementHasClass (element, name) {
+  return new WebElementCondition('until element has class', function () {
+    return element.getAttribute('class').then((classes) => classes.split(' ').some((className) => name === className))
+  })
 }
 
 module.exports = {

@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Tool } from 'paper'
-import { deepEqual, emitEvent, fuzzyEquals } from './util'
+import { emitEvent, fuzzyEquals } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -23,9 +23,13 @@ const elements = Object.freeze({
   message: document.getElementById('message')
 })
 
+// There are various spots below that utilize setTimeout in order to process events in order and to prevent
+// long-running computations from blocking UI updates.
+// See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
   connections = []
   debug = false
+  error = false
   layers = {}
   message
   selectedTile
@@ -42,7 +46,6 @@ export class Puzzle {
   #termini
   #tiles = []
   #tool
-  #updateBeamsCache = []
 
   constructor (canvas) {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -146,8 +149,6 @@ export class Puzzle {
   }
 
   select (id) {
-    document.body.classList.remove(Puzzle.Events.Error)
-
     try {
       this.#state = State.resolve(id)
     } catch (e) {
@@ -249,7 +250,7 @@ export class Puzzle {
   #onClick (event) {
     let tile
 
-    if (this.#isDragging || this.solved) {
+    if (this.#isDragging || this.solved || this.error) {
       return
     }
 
@@ -276,6 +277,8 @@ export class Puzzle {
   }
 
   #onError (error, message, cause) {
+    this.error = true
+
     // Support exclusion of error
     if (typeof error === 'string') {
       message = error
@@ -372,6 +375,8 @@ export class Puzzle {
   }
 
   #reload () {
+    this.error = false
+
     if (this.#state) {
       this.#teardown()
     }
@@ -402,6 +407,8 @@ export class Puzzle {
 
     this.#eventListener.addEventListeners()
     this.#addLayers()
+
+    document.body.classList.add(Puzzle.Events.Loaded)
 
     const selectedTileId = this.#state.getSelectedTile()
     const selectedTile = selectedTileId
@@ -441,10 +448,7 @@ export class Puzzle {
       this.#isUpdatingBeams = false
 
       // Ensure we check for a solution after all other in-progress events have processed
-      // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
       setTimeout(() => {
-        console.debug('Puzzle: resetting beams cache')
-        this.#updateBeamsCache = []
         if (this.#solution.isSolved()) {
           this.#onSolved()
         }
@@ -456,18 +460,10 @@ export class Puzzle {
       this.layers.debug.clear()
     }
 
-    // Detect infinite looping when something is bugged
-    const updates = Object.fromEntries(beams.map((beam) => [beam.toString(), beam.step(this)]))
-    const matchedIndex = this.#updateBeamsCache.findIndex((cachedUpdates) => deepEqual(updates, cachedUpdates))
-    if (matchedIndex >= 0) {
-      const matchedUpdates = this.#updateBeamsCache[matchedIndex]
-      console.debug('updateBeams match at index:', matchedIndex, updates, matchedUpdates, this.#updateBeamsCache)
-      this.#onError()
-      throw new Error('Infinite loop detected, exiting.')
-    }
+    beams.forEach((beam) => beam.step(this))
 
-    this.#updateBeamsCache.push(updates)
-    this.#updateBeams()
+    // Ensure the UI has a chance to update between loops
+    setTimeout(() => this.#updateBeams(), 30)
   }
 
   #updateMessage (tile) {
@@ -504,6 +500,10 @@ export class Puzzle {
       this.layer.addChild(this.item.group)
     }
 
+    equals (other) {
+      return fuzzyEquals(this.point, other?.point)
+    }
+
     getColor () {
       return this.beams.length
         ? chroma.average(this.beams.map((beam) => beam.getColor())).hex()
@@ -519,8 +519,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) =>
-        fuzzyEquals(beam.getStep()?.state.get(StepState.Collision)?.point, this.point))
+      this.beams = this.beams.filter((beam) => this.equals(beam.getCollision()))
 
       const color = this.getColor()
 
@@ -543,6 +542,7 @@ export class Puzzle {
 
   static Events = Object.freeze({
     Error: 'puzzle-error',
+    Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'

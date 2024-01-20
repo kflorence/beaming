@@ -34,7 +34,7 @@ export class Filter extends movable(Item) {
     return [getColorElement(this.color)]
   }
 
-  onCollision (beam, puzzle, collision, collisionIndex, collisions, currentStep, nextStep) {
+  onCollision (beam, puzzle, { currentStep, nextStep }) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return nextStep.copy(
       currentStep.state.has(StepState.Filter)

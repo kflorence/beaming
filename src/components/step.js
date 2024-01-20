@@ -17,6 +17,7 @@ export class Step {
   tile
 
   constructor (
+    index,
     tile,
     colors,
     direction,
@@ -34,7 +35,7 @@ export class Step {
       throw new Error('Step.state must be instance of StepState')
     }
 
-    this.colors = Array.isArray(colors) ? Array.from(colors) : [colors]
+    this.colors = colors ? (Array.isArray(colors) ? Array.from(colors) : [colors]) : []
 
     if (this.colors.length) {
       this.color = chroma.average(this.colors).hex()
@@ -43,9 +44,11 @@ export class Step {
     this.connected = connected ?? true
     this.direction = direction
     this.done = done ?? false
+    this.index = index
     this.insertAbove = insertAbove
-    this.onAdd = onAdd
-    this.onRemove = onRemove
+    // The onAdd and onRemove methods should be idempotent!
+    this.onAdd = onAdd ?? (() => {})
+    this.onRemove = onRemove ?? (() => {})
     this.point = point
     this.pathIndex = pathIndex
     this.segmentIndex = segmentIndex
@@ -55,6 +58,7 @@ export class Step {
 
   copy (settings) {
     return new Step(
+      settings.index ?? this.index,
       settings.tile ?? this.tile,
       settings.colors ?? settings.color ?? this.colors,
       settings.direction ?? this.direction,
@@ -76,9 +80,6 @@ export class Step {
 
   static Stop = class StepStop extends Step {
     done = true
-    constructor () {
-      super(null, [])
-    }
   }
 }
 
@@ -95,10 +96,7 @@ export class StepState {
   }
 
   get (Class) {
-    const values = this.#keys(Class).map((key) => this[key]).filter((value) => value)
-    if (values.length) {
-      return Object.assign({}, ...values)
-    }
+    return this.#keys(Class).map((key) => this[key]).find((value) => value)
   }
 
   has (Class) {
@@ -113,8 +111,8 @@ export class StepState {
     collision
 
     // Item is optional, in the case of an out-of-bounds collision for example
-    constructor (point, item) {
-      this.collision = { point, item }
+    constructor (collision) {
+      this.collision = collision
     }
   }
 
@@ -133,9 +131,8 @@ export class StepState {
   static MergeWith = class StepMergeWith {
     mergeWith
 
-    constructor (beams) {
-      beams = Array.isArray(beams) ? Array.from(beams) : [beams]
-      this.mergeWith = { beams }
+    constructor (mergeWith) {
+      this.mergeWith = mergeWith
     }
   }
 

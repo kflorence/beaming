@@ -2,6 +2,11 @@ import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import pako from 'pako'
 import chroma from 'chroma-js'
 
+const location = window.location
+
+export const params = new URLSearchParams(location.search)
+export const url = new URL(location)
+
 // noinspection JSCheckFunctionSignatures
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
 
@@ -23,14 +28,6 @@ export function addDegrees (original, degrees) {
 
 export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
-}
-
-export function capitalize (string) {
-  return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
-export function coalesce (...args) {
-  return args.findLast((arg) => arg !== undefined)
 }
 
 export function base64decode (string) {
@@ -55,6 +52,14 @@ function base64escape (string) {
 function base64unescape (string) {
   return (string + '==='.slice((string.length + 3) % 4))
     .replace(/-/g, '+').replace(/_/g, '/')
+}
+
+export function capitalize (string) {
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function coalesce (...args) {
+  return args.findLast((arg) => arg !== undefined)
 }
 
 /**
@@ -205,4 +210,9 @@ export function removeClass (className, ...elements) {
 
 export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
+}
+
+export function uniqueBy (array, key) {
+  const values = array.map((value) => value[key])
+  return array.filter((value, index) => !values.includes(value[key], index + 1))
 }

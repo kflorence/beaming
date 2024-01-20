@@ -5,6 +5,7 @@ import { getMidPoint, getOppositeDirection, getPosition, getReflectedDirection }
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
+import { Collision } from '../collision'
 
 export class Reflector extends movable(rotatable(Item)) {
   #item
@@ -35,17 +36,7 @@ export class Reflector extends movable(rotatable(Item)) {
     return this.getSide(pointA) === this.getSide(pointB)
   }
 
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    nextStep,
-    existingNextStep,
-    collisionStep
-  ) {
+  onCollision ({ beam, collisions, collisionStep, currentStep, nextStep }) {
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
@@ -56,11 +47,22 @@ export class Reflector extends movable(rotatable(Item)) {
 
     if (directionTo === directionFrom) {
       console.debug(beam.toString(), 'stopping due to reflection back at self')
-      // Not using collisionStep here because we want to block other beams that are using the same reflector
-      return nextStep.copy({
-        done: true,
-        state: nextStep.state.copy(new StepState.Collision(nextStep.point, this))
-      })
+      if (collisions.some((collision) => collision.item.type === Item.Types.beam)) {
+        // If there is also a beam collision in the list of collisions for this step, let that one resolve it
+        return
+      } else {
+        const collision = collisionStep.state.get(StepState.Collision)
+        // Updating the collision stored on collisionStep to use nextStep.point to ensure any beams hitting the same
+        // reflector will be collided with
+        return collisionStep.copy({
+          point: nextStep.point,
+          state: collisionStep.state.copy(new StepState.Collision(new Collision(
+            collision.index,
+            [nextStep.point],
+            collision.items
+          )))
+        })
+      }
     }
 
     // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state

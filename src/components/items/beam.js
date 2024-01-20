@@ -7,18 +7,22 @@ import {
   fuzzyEquals,
   getConvertedDirection,
   getMidPoint,
-  getDistance, getOppositeDirection
+  getDistance,
+  getOppositeDirection,
+  uniqueBy
 } from '../util'
 import { Step, StepState } from '../step'
+import { Collision, CollisionMergeWith } from '../collision'
+import { Cache } from '../cache'
 
 export class Beam extends Item {
   done = false
   path = []
   sortOrder = 3
 
+  #cache = new Cache(Object.values(Beam.CacheKeys))
   #direction
   #path
-
   #stepIndex = -1
   #steps = []
 
@@ -38,7 +42,11 @@ export class Beam extends Item {
   }
 
   addStep (step) {
+    const lastStepIndex = this.getLastStepIndex()
+
+    // Can't be done if adding a new step
     this.done = false
+
     this.#path.strokeColor = step.color
 
     if (this.path.length === 0) {
@@ -48,7 +56,7 @@ export class Beam extends Item {
     }
 
     const currentPath = this.path[this.path.length - 1]
-    const previousStep = this.#steps[this.#steps.length - 1]
+    const previousStep = this.#steps[lastStepIndex]
 
     // Handles cases that require adding a new path item
     if (
@@ -88,30 +96,37 @@ export class Beam extends Item {
 
     this.#steps.push(step)
 
+    step.index = this.#stepIndex = this.#steps.length - 1
+
     if (!step.tile.items.some((item) => item === this)) {
       // Add this beam to the tile item list so other beams can see it
       step.tile.addItem(this)
     }
 
-    // Step index does not have to correspond to steps length if we are re-evaluating history
-    this.#stepIndex++
+    step.onAdd()
 
-    if (typeof step.onAdd === 'function') {
-      step.onAdd()
-    }
+    console.debug(this.toString(), 'added step', step)
 
-    console.debug(this.toString(), 'added step', this.#stepIndex, step)
+    this.#onUpdate(this.#stepIndex)
 
-    this.#onUpdate(step)
+    return step
+  }
+
+  getCollision () {
+    return this.getStep()?.state.get(StepState.Collision)
   }
 
   getColor () {
     return this.getStep()?.color || this.getOpening().color
   }
 
+  getColors () {
+    return Array.from(this.getStep()?.colors || this.getOpening().colors)
+  }
+
   getColorElements (tile) {
     // Show color elements for merged beams
-    const step = this.getSteps(tile).find((step) => step.state?.has(StepState.MergeWith))
+    const step = this.getSteps(tile).find((step) => step.state.has(StepState.MergeWith))
     return step ? getColorElements(step.color) : []
   }
 
@@ -123,13 +138,16 @@ export class Beam extends Item {
     return this.path[this.path.length - 1].index
   }
 
+  getLastStepIndex () {
+    return this.length() - 1
+  }
+
   getLayer () {
     return this.parent.getLayer()
   }
 
-  getMergeWithStepIndex (beam) {
-    return this.getSteps().findIndex((step) =>
-      step.state?.get(StepState.MergeWith)?.beams.some((mergedBeam) => mergedBeam.equals(beam)))
+  getMergeWith (beam) {
+    return this.#cache.get(Beam.CacheKeys.MergeWith).get(beam.id)
   }
 
   getOpening () {
@@ -141,7 +159,7 @@ export class Beam extends Item {
   }
 
   getStep (stepIndex) {
-    return this.#steps[stepIndex || this.lastStepIndex()]
+    return this.#steps[stepIndex || this.getLastStepIndex()]
   }
 
   getSteps (tile) {
@@ -169,10 +187,6 @@ export class Beam extends Item {
     return this.isOn() && !this.done
   }
 
-  lastStepIndex () {
-    return this.length() - 1
-  }
-
   length () {
     return this.#steps.length
   }
@@ -185,8 +199,6 @@ export class Beam extends Item {
       return
     }
 
-    console.debug(this.toString(), 'onBeamUpdated', event)
-
     const beamLastStep = beam.getStep()
 
     if (this.isComplete()) {
@@ -194,19 +206,16 @@ export class Beam extends Item {
 
       // Check for invalid collisions
       const collision = lastStep.state.get(StepState.Collision)
-      if (
-        collision?.item?.equals(beam) &&
-        !beamLastStep?.state.get(StepState.Collision)?.point.equals(collision.point)
-      ) {
+      if (collision?.has(beam) && !collision.equals(beamLastStep?.state.get(StepState.Collision))) {
         console.debug(this.toString(), 're-evaluating collision with', beam.toString())
         this.done = false
-        this.#stepIndex = Math.max(this.#stepIndex - 1, 0)
+        this.#stepIndex = Math.max(lastStep.index - 1, 0)
         return
       }
 
       // Check for invalid mergedInto
       const mergeInto = lastStep.state.get(StepState.MergeInto)
-      if (mergeInto?.beam.equals(beam) && beam.getMergeWithStepIndex(this) < 0) {
+      if (mergeInto?.beam.equals(beam) && !beam.getMergeWith(this)) {
         console.debug(this.toString(), 're-evaluating merge into', beam.toString())
         this.done = false
         this.#stepIndex = Math.max(this.#stepIndex - 1, 0)
@@ -215,28 +224,20 @@ export class Beam extends Item {
     }
 
     // Check for invalid mergedWith
-    const mergedWithStepIndex = this.getMergeWithStepIndex(beam)
-    if (mergedWithStepIndex >= 0 && !beamLastStep?.state.get(StepState.MergeInto)?.beam.equals(this)) {
+    const mergeWith = this.getMergeWith(beam)
+    if (mergeWith && !beamLastStep?.state.get(StepState.MergeInto)?.beam.equals(this)) {
       console.debug(this.toString(), 're-evaluating merge with', beam.toString())
       this.done = false
-      this.#stepIndex = Math.max(mergedWithStepIndex - 1, 0)
+      this.#stepIndex = Math.max(mergeWith.stepIndex - 1, 0)
     }
   }
 
-  onCollision (
-    beam,
-    puzzle,
-    collision,
-    collisionIndex,
-    collisions,
-    currentStep,
-    nextStep,
-    existingNextStep,
-    collisionStep
-  ) {
-    console.debug(this.toString(), 'evaluating collision with', beam.toString())
+  onCollision ({ beam, collision, collisionStep, currentStep, nextStep }) {
+    const isSelf = beam.equals(this)
 
-    if (beam === this && collision.item === this && this.#stepIndex < this.lastStepIndex()) {
+    console.debug(this.toString(), 'evaluating collision with', (isSelf ? 'self' : beam.toString()))
+
+    if (isSelf && this.#stepIndex < this.getLastStepIndex()) {
       console.debug(this.toString(), 'ignoring collision with self while re-evaluating history')
       return
     }
@@ -252,8 +253,7 @@ export class Beam extends Item {
     }
 
     // Find the step with matching collision point
-    const point = collision.points[0]
-    const stepIndex = this.#steps.findLastIndex((step) => fuzzyEquals(point, step.point))
+    const stepIndex = this.#steps.findLastIndex((step) => fuzzyEquals(collision.point, step.point))
     if (stepIndex < 0) {
       // This error will occur if the steps are out of sync with the path segments for some reason
       throw new Error(
@@ -287,36 +287,50 @@ export class Beam extends Item {
       }
     }
 
-    // FIXME: if the beam we are colliding with has already collided with something else, it can infinite loop
     // The beams are traveling in different directions, it's a collision
     if (step.direction !== nextStep.direction) {
-      const isSelf = beam.equals(this)
+      console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
 
-      console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), 'stopping')
-
+      // When colliding with self, no need to update since the collisionStep will take care of it
       if (!isSelf) {
-        // Update history to reflect collision
-        this.#updateHistory(stepIndex)
-        this.addStep(step.copy({
+        const settings = {
           done: true,
-          state: step.state.copy(new StepState.Collision(point, beam))
-        }))
+          state: step.state.copy(new StepState.Collision(collision))
+        }
+
+        if (stepIndex < this.getLastStepIndex() && !step.state.has(StepState.Collision)) {
+          // History must be updated if the collision occurred on an earlier step.
+          // If the step already contains a collision in its state, do not update history as that step may be part
+          // of a collision loop and updating will cause the infinite loop to continue.
+          this.#updateHistory(stepIndex)
+          this.addStep(step.copy(settings))
+        } else {
+          this.updateStep(stepIndex, settings)
+        }
       }
 
-      // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
-      return collisionStep.copy({ insertAbove: step.insertAbove })
+      return collisionStep.copy({
+        done: true,
+        // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
+        insertAbove: step.insertAbove
+      })
     }
 
-    // The beams are traveling in the same direction
     console.debug(this.toString(), 'merging with', beam.toString())
 
     // Update history to reflect changing color of path
     this.#updateHistory(stepIndex)
 
-    const beams = [beam].concat(step.state.get(StepState.MergeWith)?.beams || [])
+    const mergeWith = new CollisionMergeWith(beam, step, stepIndex)
     this.addStep(step.copy({
-      colors: step.colors.concat([beam.getColor()]),
-      state: step.state.copy(new StepState.MergeWith(beams))
+      colors: mergeWith.colors,
+      onAdd: () => {
+        this.#cache.get(Beam.CacheKeys.MergeWith).add(beam.id, mergeWith)
+      },
+      onRemove: () => {
+        this.#cache.get(Beam.CacheKeys.MergeWith).remove(beam.id)
+      },
+      state: step.state.copy(new StepState.MergeWith(mergeWith))
     }))
 
     console.debug(beam.toString(), 'merging into', this.toString())
@@ -330,11 +344,9 @@ export class Beam extends Item {
   }
 
   onModifierInvoked (event) {
-    console.debug(this.toString(), 'onModifierInvoked', event)
-
     if (!this.isOn()) {
-      // If the beam is off but has steps, we should get rid of them (toggled off).
       if (this.#steps.length) {
+        console.debug(this.toString(), 'beam has been toggled off')
         // Also reset any state changes from collision resolution
         this.updateState((state) => { delete state.collisions })
         this.remove()
@@ -347,6 +359,7 @@ export class Beam extends Item {
     // We want the first step that contains the tile the event occurred on
     const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
     if (stepIndex >= 0) {
+      console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
       // Re-evaluate beginning at the step before the matched one
       this.done = false
       this.#stepIndex = Math.max(stepIndex - 1, 0)
@@ -376,18 +389,19 @@ export class Beam extends Item {
       return
     }
 
-    console.debug(this.toString(), 'stepIndex = ', this.#stepIndex)
+    console.debug(this.toString(), 'currentStepIndex', this.#stepIndex)
 
     // First step
     if (this.#steps.length === 0) {
       const tile = this.parent.parent
-      this.addStep(new Step(tile, this.getColor(), this.startDirection(), tile.center))
+      this.addStep(new Step(0, tile, this.getColor(), this.startDirection(), tile.center))
     }
 
-    const currentStep = this.#steps[this.#stepIndex]
+    const currentStepIndex = this.#stepIndex
+    const currentStep = this.#steps[currentStepIndex]
 
     // On the first step, we have to take the rotation of the terminus into account
-    const direction = this.#stepIndex === 0 ? this.startDirection() : currentStep.direction
+    const direction = currentStepIndex === 0 ? this.startDirection() : currentStep.direction
     const nextStepPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction)
 
     // Use the midpoint between the previous and next step points to calculate which tile we are in.
@@ -397,20 +411,21 @@ export class Beam extends Item {
     // The next step would be off the grid
     if (!tile) {
       console.debug(this.toString(), 'stopping due to out of bounds')
-      this.#steps[this.#stepIndex] = currentStep.copy({
+
+      const collision = new Collision(0, [currentStep.point], [this])
+      return this.updateStep(currentStepIndex, {
         done: true,
-        state: new StepState(new StepState.Collision(currentStep.point))
+        state: new StepState(new StepState.Collision(collision))
       })
-      this.#onUpdate()
-      return
     }
 
-    const nextStepIndex = this.#stepIndex + 1
+    const nextStepIndex = currentStepIndex + 1
     const existingNextStep = this.#steps[nextStepIndex]
     const lastPathIndex = this.path.length - 1
     const lastSegmentIndex = this.path[lastPathIndex].segments.length - 1
 
     let nextStep = new Step(
+      nextStepIndex,
       tile,
       currentStep.color,
       direction,
@@ -419,19 +434,24 @@ export class Beam extends Item {
       existingNextStep?.segmentIndex || lastSegmentIndex
     )
 
-    const items = tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items)
+    const items = uniqueBy(
+      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items),
+      'id'
+    )
 
     console.debug(this.toString(), 'collision items:', items)
 
     // See if there are any collisions along the path we plan to take
     const collisions = this.#getCollisions(items, [currentStep.point, nextStep.point], puzzle)
+      .map((collision, index) => new Collision(index, collision.points, [this, collision.item]))
 
-    console.debug(this.toString(), 'collisions:', collisions)
+    if (collisions.length) {
+      console.debug(this.toString(), 'collisions:', collisions)
+    }
 
     let collisionStep
     for (let collisionIndex = 0; collisionIndex < collisions.length; collisionIndex++) {
       const collision = collisions[collisionIndex]
-      const point = collision.points[0]
 
       console.debug(this.toString(), 'resolving collision:', collision)
 
@@ -439,22 +459,21 @@ export class Beam extends Item {
       // intersection with the item.
       collisionStep = nextStep.copy({
         done: true,
-        point,
-        state: nextStep.state.copy(new StepState.Collision(point, collision.item))
+        point: collision.point,
+        state: nextStep.state.copy(new StepState.Collision(collision))
       })
 
       // Allow the item to change the resulting step
-      collisionStep = collision.item.onCollision(
-        this,
-        puzzle,
+      collisionStep = collision.item.onCollision({
+        beam: this,
         collision,
-        collisionIndex,
         collisions,
+        collisionStep,
         currentStep,
         nextStep,
         existingNextStep,
-        collisionStep
-      )
+        puzzle
+      })
 
       if (collisionStep instanceof Step) {
         break
@@ -466,7 +485,7 @@ export class Beam extends Item {
       if (collisionStep instanceof Step.Stop) {
         this.done = true
         this.#onUpdate()
-        return
+        return collisionStep
       }
       nextStep = collisionStep
     }
@@ -477,7 +496,7 @@ export class Beam extends Item {
       if (nextStep.equals(existingNextStep)) {
         this.#stepIndex++
 
-        const lastStepIndex = this.lastStepIndex()
+        const lastStepIndex = this.getLastStepIndex()
         console.debug(
           this.toString(),
           'new step is same as existing. new step index:',
@@ -488,33 +507,26 @@ export class Beam extends Item {
 
         if (this.#stepIndex === lastStepIndex) {
           // To ensure we mark as done
-          this.#onUpdate()
+          this.#onUpdate(this.#stepIndex)
         }
 
-        return
+        return existingNextStep
       } else {
-        console.debug(this.toString(), 'is revising history.')
-        console.debug(this.toString(), 'existing next step:', existingNextStep)
-        // We are revising history.
+        console.debug(this.toString(), 'is revising history')
         this.#updateHistory(nextStepIndex)
         // Ensure we have the correct path and segment index
         nextStep.pathIndex = this.path.length - 1
         nextStep.segmentIndex = this.path[nextStep.pathIndex].segments.length - 1
-        console.debug(this.toString(), 'new next step:', nextStep)
+        console.debug(this.toString(), 'revised next step:', nextStep)
       }
     }
 
     if (currentStep.point.equals(nextStep.point)) {
       console.debug(this.toString(), 'next step point is same as current step point, stopping.', nextStep)
-      // Update the reference to currentStep
-      this.#steps[this.#stepIndex] = nextStep
-      this.#onUpdate()
-      return
+      return this.updateStep(currentStepIndex, nextStep)
     }
 
-    this.addStep(nextStep)
-
-    return nextStep
+    return this.addStep(nextStep)
   }
 
   toString () {
@@ -523,6 +535,25 @@ export class Beam extends Item {
 
   updateState (updater, dispatchEvent = true) {
     return this.parent.updateState((state) => updater(state.openings[this.#direction]), dispatchEvent)
+  }
+
+  updateStep (stepIndex, settings) {
+    const step = this.getStep(stepIndex)
+    if (step) {
+      // Handle (stepIndex, updater(step))
+      if (typeof settings === 'function') {
+        settings = settings(step, stepIndex)
+      }
+
+      const updatedStep = settings instanceof Step ? settings : step.copy(settings)
+
+      this.#steps[stepIndex] = updatedStep
+      updatedStep.onAdd()
+
+      console.debug(this.toString(), 'updated step at index', stepIndex, 'from', step, 'to', updatedStep)
+      this.#onUpdate(stepIndex)
+      return updatedStep
+    }
   }
 
   #getCollisions (items, segments, puzzle) {
@@ -556,7 +587,7 @@ export class Beam extends Item {
           points.forEach((point) => puzzle.drawDebugPoint(point, { fillColor: 'black' }))
         }
 
-        return { item, points }
+        return { points, item }
       })
       .filter((result) => result.points.length)
       .sort((a, b) => {
@@ -571,19 +602,22 @@ export class Beam extends Item {
       })
   }
 
-  #onUpdate (stepAdded, stepsDeleted) {
-    const step = this.getStep()
+  #onUpdate (stepIndex) {
+    const lastStepIndex = this.getLastStepIndex()
+    stepIndex ??= lastStepIndex
 
-    if (!this.done) {
+    const step = this.getStep(stepIndex)
+
+    if (stepIndex === lastStepIndex) {
+      // Update beam status if last step was updated
       this.done = step?.done ?? false
     }
 
-    emitEvent(Beam.Events.Update, { beam: this, state: step?.state, stepAdded, stepsDeleted })
+    emitEvent(Beam.Events.Update, { beam: this, state: step?.state, step, stepIndex })
   }
 
   #updateHistory (stepIndex) {
-    const lastStepIndex = this.lastStepIndex()
-    const lastStep = this.#steps[lastStepIndex]
+    const lastStepIndex = this.getLastStepIndex()
     const step = this.#steps[stepIndex]
 
     console.debug(
@@ -617,15 +651,12 @@ export class Beam extends Item {
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
       tiles.forEach((tile) => tile.removeItem(this))
 
-      // Handle any state changes from the previous last step
-      if (typeof lastStep.onRemove === 'function') {
-        lastStep.onRemove()
-      }
+      deletedSteps.forEach((step) => step.onRemove())
 
       this.done = false
       this.#stepIndex = (stepIndex - 1)
 
-      this.#onUpdate(undefined, deletedSteps)
+      this.#onUpdate(this.#stepIndex)
     }
 
     return step
@@ -637,6 +668,10 @@ export class Beam extends Item {
     vector.angle = getConvertedDirection(direction) * 60
     return point.add(vector)
   }
+
+  static CacheKeys = Object.freeze({
+    MergeWith: 'mergeWith'
+  })
 
   static Events = Object.freeze({
     Collision: 'beam-collision',

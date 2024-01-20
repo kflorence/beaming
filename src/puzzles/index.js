@@ -14,6 +14,7 @@ import _010 from './010'
 import testLayout from './testLayout'
 import testPortal from './testPortal'
 import testReflector from './testReflector'
+import testInfiniteLoop from './testInfiniteLoop'
 
 // Ensure puzzle configuration is valid JSON
 const configuration = Object.fromEntries(Object.entries({
@@ -27,6 +28,7 @@ const configuration = Object.fromEntries(Object.entries({
   '008': _008,
   '009': _009,
   '010': _010,
+  test_infinite_loop: testInfiniteLoop,
   test_layout: testLayout,
   test_portal: testPortal,
   test_reflector: testReflector
