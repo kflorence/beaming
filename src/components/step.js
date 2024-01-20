@@ -12,7 +12,6 @@ export class Step {
   onRemove
   point
   pathIndex
-  projection
   segmentIndex
   state
   tile
@@ -25,7 +24,6 @@ export class Step {
     point,
     pathIndex,
     segmentIndex,
-    projection,
     connected,
     insertAbove,
     done,
@@ -53,7 +51,6 @@ export class Step {
     this.onRemove = onRemove ?? (() => {})
     this.point = point
     this.pathIndex = pathIndex
-    this.projection = projection ?? false
     this.segmentIndex = segmentIndex
     this.state = state ?? new StepState()
     this.tile = tile
@@ -68,7 +65,6 @@ export class Step {
       settings.point ?? this.point,
       settings.pathIndex ?? this.pathIndex,
       settings.segmentIndex ?? this.segmentIndex,
-      settings.projection ?? this.projection,
       settings.connected ?? this.connected,
       settings.insertAbove ?? this.insertAbove,
       settings.done ?? this.done,

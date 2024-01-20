@@ -47,7 +47,6 @@ export class Beam extends Item {
     // Can't be done if adding a new step
     this.done = false
 
-    this.#path.opacity = step.projection ? 0.25 : 1
     this.#path.strokeColor = step.color
 
     if (this.path.length === 0) {
@@ -64,8 +63,7 @@ export class Beam extends Item {
       !step.connected || (
         previousStep && (
           step.color !== previousStep.color ||
-          step.insertAbove !== previousStep.insertAbove ||
-          step.projection !== previousStep.projection
+          step.insertAbove !== previousStep.insertAbove
         )
       )
     ) {
@@ -433,8 +431,7 @@ export class Beam extends Item {
       direction,
       nextStepPoint,
       existingNextStep?.pathIndex || lastPathIndex,
-      existingNextStep?.segmentIndex || lastSegmentIndex,
-      existingNextStep?.projection ?? currentStep.projection
+      existingNextStep?.segmentIndex || lastSegmentIndex
     )
 
     const items = uniqueBy(
