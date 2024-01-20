@@ -7,6 +7,9 @@
   "eslintConfig": {
     "env": {
       "browser": true
+    },
+    "globals": {
+      "doorbell": false
     }
   },
   "scripts": {
