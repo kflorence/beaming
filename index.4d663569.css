@@ -42,7 +42,7 @@ details > details {
 }
 
 details > summary {
-  cursor: help;
+  cursor: pointer;
 }
 
 dialog {
@@ -55,6 +55,13 @@ dialog {
 
 dialog .flex-left {
   flex: 2;
+}
+
+dialog details h3, dialog details h4, dialog details p {
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 dialog h1 {
@@ -141,6 +148,18 @@ main {
   flex: auto;
 }
 
+#doorbell.doorbell-inline #doorbell-container {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  width: auto;
+  margin: 0;
+  padding: 1em;
+}
+
+#doorbell form legend {
+  display: none;
+}
+
 #error, #puzzle {
   cursor: pointer;
 }
@@ -209,6 +228,28 @@ main {
 .beam::selection {
   color: #fff;
   background-color: #000;
+}
+
+.button {
+  color: #333;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: #eee;
+  border: 1px solid #ccc;
+  margin: 0;
+  padding: .5em 1em;
+  text-decoration: none;
+}
+
+.button:hover {
+  cursor: pointer;
+  background-color: #ddd;
+  border-color: #aaa;
+}
+
+.buttons {
+  grid-gap: 1em;
+  margin: 1em 0;
 }
 
 .flex-center, .flex-left, .flex-right {

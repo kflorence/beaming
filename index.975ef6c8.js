@@ -596,8 +596,13 @@ beaming.debug = function(debug) {
 };
 // Silence debug logging by default since it can affect performance
 beaming.debug((0, _util.params).has("debug") ?? false);
+// Feedback module
+const doorbellOptions = window.doorbellOptions;
 const elements = Object.freeze({
     dialog: document.getElementById("dialog"),
+    feedback: document.getElementById("feedback"),
+    feedbackContainer: document.getElementById("feedback-container"),
+    help: document.getElementById("help"),
     info: document.getElementById("info"),
     main: document.getElementById("main"),
     message: document.getElementById("message"),
@@ -611,6 +616,10 @@ const elements = Object.freeze({
     undo: document.getElementById("undo")
 });
 const puzzle = beaming.puzzle = new (0, _puzzle.Puzzle)(elements.puzzle);
+elements.feedback.addEventListener("click", ()=>{
+    elements.help.setAttribute("open", "true");
+    elements.feedbackContainer.scrollIntoView(true);
+});
 elements.info.addEventListener("click", ()=>{
     if (!elements.dialog.open) elements.dialog.showModal();
 });
@@ -631,6 +640,7 @@ document.addEventListener((0, _puzzle.Puzzle).Events.Updated, (event)=>{
     const state = event.detail.state;
     const id = state.getId();
     const title = state.getTitle();
+    doorbellOptions.properties.puzzleId = id;
     elements.title.textContent = `Beaming: Puzzle ${title}`;
     (0, _util.removeClass)("disabled", ...Array.from(document.querySelectorAll("#actions li")));
     const disable = [];
