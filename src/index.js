@@ -39,7 +39,7 @@ const elements = Object.freeze({
 const puzzle = beaming.puzzle = new Puzzle(elements.puzzle)
 
 elements.feedback.addEventListener('click', () => {
-  elements.help.setAttribute('open', "true")
+  elements.help.setAttribute('open', 'true')
   elements.feedbackContainer.scrollIntoView(true)
 })
 
