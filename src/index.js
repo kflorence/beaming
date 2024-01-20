@@ -15,8 +15,14 @@ beaming.debug = function (debug) {
 // Silence debug logging by default since it can affect performance
 beaming.debug(params.has('debug') ?? false)
 
+// Feedback module
+const doorbellOptions = window.doorbellOptions
+
 const elements = Object.freeze({
   dialog: document.getElementById('dialog'),
+  feedback: document.getElementById('feedback'),
+  feedbackContainer: document.getElementById('feedback-container'),
+  help: document.getElementById('help'),
   info: document.getElementById('info'),
   main: document.getElementById('main'),
   message: document.getElementById('message'),
@@ -31,6 +37,11 @@ const elements = Object.freeze({
 })
 
 const puzzle = beaming.puzzle = new Puzzle(elements.puzzle)
+
+elements.feedback.addEventListener('click', () => {
+  elements.help.setAttribute('open', 'true')
+  elements.feedbackContainer.scrollIntoView(true)
+})
 
 elements.info.addEventListener('click', () => {
   if (!elements.dialog.open) {
@@ -58,6 +69,8 @@ document.addEventListener(Puzzle.Events.Updated, (event) => {
   const state = event.detail.state
   const id = state.getId()
   const title = state.getTitle()
+
+  doorbellOptions.properties.puzzleId = id
 
   elements.title.textContent = `Beaming: Puzzle ${title}`
 
