@@ -17,8 +17,8 @@ export class Rotate extends Modifier {
     return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
   }
 
-  onClick (event) {
-    super.onClick(event)
+  onTap (event) {
+    super.onTap(event)
 
     const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
@@ -26,14 +26,14 @@ export class Rotate extends Modifier {
     this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
-  onMouseDown (event) {
+  onPointerDown (event) {
     // Change rotation direction if user right-clicks on the modifier
     if (event.button === MouseButton.Right) {
       this.clockwise = !this.clockwise
       this.updateState((state) => { state.clockwise = this.clockwise })
       this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
     } else {
-      super.onMouseDown(event)
+      super.onPointerDown(event)
     }
   }
 

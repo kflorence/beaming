@@ -1,5 +1,6 @@
+const Element = window.Element
+
 export class EventListener {
-  #element
   #listeners = {}
 
   constructor (context, events) {
@@ -14,17 +15,16 @@ export class EventListener {
   }
 
   addEventListeners (element) {
-    this.#element = element ?? document
     Object.entries(this.#listeners).forEach(([name, config]) =>
-      this.#element.addEventListener(name, config.handler, config.options))
+      (config.element = element instanceof Element ? element : element?.[name] ?? config.element ?? document)
+        .addEventListener(name, config.handler, config.options))
   }
 
   removeEventListeners () {
-    if (!this.#element) {
-      return
-    }
-
-    Object.entries(this.#listeners).forEach(([event, config]) =>
-      this.#element.removeEventListener(event, config.handler))
+    Object.entries(this.#listeners).forEach(([event, config]) => {
+      if (config.element) {
+        config.element.removeEventListener(event, config.handler)
+      }
+    })
   }
 }

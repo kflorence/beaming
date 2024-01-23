@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer, Path, Tool } from 'paper'
+import paper, { Layer, Path } from 'paper'
 import { emitEvent, fuzzyEquals } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -14,6 +14,7 @@ import { Puzzles } from '../puzzles'
 import { StepState } from './step'
 import { EventListener } from './eventListener'
 import { Solution } from './solution'
+import { Interact } from './interact'
 
 const elements = Object.freeze({
   beams: document.getElementById('beams'),
@@ -38,14 +39,13 @@ export class Puzzle {
   #beams
   #collisions = {}
   #eventListener
-  #isDragging = false
+  #interact
   #isUpdatingBeams = false
   #mask
   #solution
   #state
   #termini
   #tiles = []
-  #tool
 
   constructor (canvas) {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -58,20 +58,23 @@ export class Puzzle {
 
     this.#eventListener = new EventListener(this, {
       keyup: this.#onKeyup,
+      tap: { element: canvas, handler: this.#onTap },
       [Beam.Events.Update]: this.#onBeamUpdate,
       [Modifier.Events.Invoked]: this.#onModifierInvoked,
       [Puzzle.Events.Mask]: this.#onMask,
       [Stateful.Events.Update]: this.#onStateUpdate
     })
 
-    this.#tool = new Tool()
-    this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
-    this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
+    this.#interact = new Interact(canvas)
   }
 
   centerOnTile (offset) {
     const tile = this.layout.getTileByOffset(offset)
     paper.view.center = tile.center
+  }
+
+  clearDebugPoints () {
+    this.layers.debug.clear()
   }
 
   drawDebugPoint (point, style = {}) {
@@ -247,35 +250,6 @@ export class Puzzle {
     setTimeout(() => this.update(), 0)
   }
 
-  #onClick (event) {
-    let tile
-
-    if (this.#isDragging || this.solved || this.error) {
-      return
-    }
-
-    const result = paper.project.hitTest(event.point)
-
-    switch (result?.item.data.type) {
-      case Item.Types.mask:
-        return
-      case Item.Types.tile:
-        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
-        break
-    }
-
-    // There is an active mask
-    if (this.#mask) {
-      this.#mask.onClick(this, tile)
-    } else {
-      const previouslySelectedTile = this.updateSelectedTile(tile)
-
-      if (tile && tile === previouslySelectedTile) {
-        tile.onClick(event)
-      }
-    }
-  }
-
   #onError (error, message, cause) {
     this.error = true
 
@@ -322,33 +296,6 @@ export class Puzzle {
     setTimeout(() => this.update(), 0)
   }
 
-  #onMouseDrag (event) {
-    const center = event.downPoint.subtract(event.point).add(paper.view.center)
-
-    // Allow a little wiggle room
-    if (paper.view.center.subtract(center).length > 1) {
-      if (!this.#isDragging) {
-        document.body.classList.add('grab')
-      }
-
-      // Note: MouseDrag is always called on mobile even when tapping, so only consider it actually dragging if
-      // the cursor has moved the center
-      this.#isDragging = true
-
-      // Center on the cursor
-      paper.view.center = center
-    }
-  }
-
-  #onMouseUp (event) {
-    if (!this.#isDragging) {
-      this.#onClick(event)
-    }
-
-    this.#isDragging = false
-    document.body.classList.remove('grab')
-  }
-
   #onSolved () {
     if (this.solved) {
       return
@@ -372,6 +319,35 @@ export class Puzzle {
 
   #onStateUpdate () {
     this.updateState()
+  }
+
+  #onTap (event) {
+    let tile
+
+    if (this.solved || this.error) {
+      return
+    }
+
+    const result = paper.project.hitTest(event.detail.point)
+
+    switch (result?.item.data.type) {
+      case Item.Types.mask:
+        return
+      case Item.Types.tile:
+        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
+        break
+    }
+
+    // There is an active mask
+    if (this.#mask) {
+      this.#mask.onTap(this, tile)
+    } else {
+      const previouslySelectedTile = this.updateSelectedTile(tile)
+
+      if (tile && tile === previouslySelectedTile) {
+        tile.onTap(event)
+      }
+    }
   }
 
   #reload () {
@@ -435,7 +411,6 @@ export class Puzzle {
     this.selectedTile = undefined
     this.#beams = []
     this.#collisions = {}
-    this.#isDragging = false
     this.#isUpdatingBeams = false
     this.#mask = undefined
     this.#termini = []
@@ -555,7 +530,7 @@ export class Puzzle {
       this.configuration = configuration
       this.filter = filter
 
-      this.onClick = configuration.onClick
+      this.onTap = configuration.onTap
       this.onUnmask = configuration.onUnmask
     }
   }

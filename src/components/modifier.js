@@ -10,6 +10,7 @@ let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
+  #down = false
   #eventListener
   #mask
   #selectionTime = 500
@@ -33,13 +34,10 @@ export class Modifier extends Stateful {
     this.type = state.type
 
     this.#eventListener = new EventListener(this, {
-      click: this.#onClick,
       deselected: this.onDeselected,
-      mousedown: this.onMouseDown,
-      mouseleave: this.onMouseLeave,
-      mouseup: this.onMouseUp,
-      touchstart: { handler: this.onTouchStart, options: { passive: false } },
-      touchend: this.onTouchEnd
+      pointerdown: this.onPointerDown,
+      pointerleave: this.onPointerUp,
+      pointerup: this.onPointerUp
     })
   }
 
@@ -105,17 +103,15 @@ export class Modifier extends Stateful {
     return tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
   }
 
-  onClick () {
-    this.selected = false
-  }
-
   onDeselected () {
     this.update({ selected: false })
     this.tile.afterModify()
     this.dispatchEvent(Modifier.Events.Deselected)
   }
 
-  onMouseDown () {
+  onPointerDown (event) {
+    console.log('onPointerDown', event)
+    this.#down = true
     if (
       !this.#mask &&
       !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
@@ -124,12 +120,14 @@ export class Modifier extends Stateful {
     }
   }
 
-  onMouseLeave () {
+  onPointerUp (event) {
     clearTimeout(this.#timeoutId)
-  }
 
-  onMouseUp () {
-    clearTimeout(this.#timeoutId)
+    if (event.type === 'pointerup' && this.#down && !this.disabled && !this.selected) {
+      this.onTap(event)
+    }
+
+    this.#down = false
   }
 
   onSelected () {
@@ -138,21 +136,12 @@ export class Modifier extends Stateful {
     this.update({ selected: true })
     this.tile.beforeModify()
 
-    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onClick: this.#maskOnClick.bind(this) })
+    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onTap: this.#maskOnTap.bind(this) })
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
-  onTouchEnd (event) {
-    // Prevent any mouse events from firing
-    event.preventDefault()
-    this.onMouseUp(event)
-    this.#onClick(event)
-  }
-
-  onTouchStart (event) {
-    // Prevent any mouse events from firing
-    event.preventDefault()
-    this.onMouseDown(event)
+  onTap () {
+    this.selected = false
   }
 
   remove () {
@@ -178,7 +167,7 @@ export class Modifier extends Stateful {
     this.element.title = this.title
   }
 
-  #maskOnClick (puzzle, tile) {
+  #maskOnTap (puzzle, tile) {
     if (tile && tile !== this.tile) {
       const fromTile = this.tile
 
@@ -201,12 +190,6 @@ export class Modifier extends Stateful {
   #moveFilter (tile) {
     // Always include current tile
     return !tile.equals(this.tile) && this.moveFilter(tile)
-  }
-
-  #onClick (event) {
-    if (!this.disabled && !this.selected) {
-      return this.onClick(event)
-    }
   }
 
   static deselect () {

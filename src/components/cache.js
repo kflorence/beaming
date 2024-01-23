@@ -10,7 +10,7 @@ export class Cache {
     keys.forEach((key) => { this.#cache[key] = new Cache() })
   }
 
-  add (key, item) {
+  set (key, item) {
     if (this.#hasKeys && !this.#keys.includes(key)) {
       throw new Error(`Invalid key: ${key}`)
     }
@@ -22,7 +22,24 @@ export class Cache {
     return key ? this.#cache[key] : this.#cache
   }
 
-  remove (key) {
+  keys (key) {
+    return Object.keys(this.#get(key))
+  }
+
+  length (key) {
+    return this.keys(key).length
+  }
+
+  unset (key) {
     delete this.#cache[key]
+  }
+
+  values (key) {
+    return Object.values(this.#get(key))
+  }
+
+  #get (key) {
+    const value = this.get(key)
+    return value instanceof Cache ? value.get() : value
   }
 }

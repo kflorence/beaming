@@ -9,12 +9,8 @@ export class Move extends Modifier {
   name = 'drag_pan'
   title = 'Move'
 
-  attach () {
-    super.attach()
-  }
-
-  onClick (event) {
-    super.onClick(event)
+  onTap (event) {
+    super.onTap(event)
 
     const items = this.tile.items.filter(Move.movable)
     if (this.#mask || !items.length) {
@@ -24,7 +20,7 @@ export class Move extends Modifier {
     this.tile.beforeModify()
 
     const mask = new Puzzle.Mask(this.tileFilter.bind(this), {
-      onClick: this.#maskOnClick.bind(this),
+      onTap: this.#maskOnTap.bind(this),
       onUnmask: () => this.tile.afterModify()
     })
 
@@ -53,7 +49,7 @@ export class Move extends Modifier {
       (tile.items.filter((item) => item.type !== Item.Types.beam).length > 0 && !(tile === this.tile))
   }
 
-  #maskOnClick (puzzle, tile) {
+  #maskOnTap (puzzle, tile) {
     if (tile) {
       const data = this.moveItems(tile)
 

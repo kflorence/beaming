@@ -117,32 +117,6 @@ function resize () {
 window.addEventListener('resize', debounce(resize))
 resize()
 
-// Handle zoom
-// TODO add mobile support for pinch/zoom
-// See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Pinch_zoom_gestures
-elements.puzzle.addEventListener('wheel', (event) => {
-  event.preventDefault()
-
-  const zoom = paper.view.zoom * (event.deltaY > 0 ? 0.95 : 1.05)
-
-  // Don't allow zooming too far in or out
-  if (zoom > 2 || zoom < 0.5) {
-    return
-  }
-
-  // Convert the mouse point from the view coordinate space to the project coordinate space
-  const mousePoint = paper.view.viewToProject(new Point(event.offsetX, event.offsetY))
-  const mouseOffset = mousePoint.subtract(paper.view.center)
-
-  // Adjust center towards cursor location
-  const zoomOffset = mousePoint
-    .subtract(mouseOffset.multiply(paper.view.zoom / zoom))
-    .subtract(paper.view.center)
-
-  paper.view.zoom = zoom
-  paper.view.center = paper.view.center.add(zoomOffset)
-}, { passive: false })
-
 // Prevent browser context menu on right click
 document.body.addEventListener('contextmenu', (event) => {
   if (!elements.dialog.open) {
@@ -160,6 +134,7 @@ beaming.centerOnTile = function (r, c) {
 }
 
 // Useful for debug purposes
+beaming.clearDebugPoints = puzzle.clearDebugPoints.bind(puzzle)
 beaming.drawDebugPoint = function (x, y, style) {
   return puzzle.drawDebugPoint(new Point(x, y), style)
 }
