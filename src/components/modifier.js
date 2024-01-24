@@ -1,17 +1,19 @@
 import { capitalize, emitEvent } from './util'
 import { Puzzle } from './puzzle'
 import { Stateful } from './stateful'
-import { EventListener } from './eventListener'
+import { EventListeners } from './eventListeners'
+import { Interact } from './interact'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
+const navigator = window.navigator
 
 let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
   #down = false
-  #eventListener
+  #eventListener = new EventListeners({ context: this })
   #mask
   #selectionTime = 500
   #timeoutId
@@ -32,13 +34,6 @@ export class Modifier extends Stateful {
 
     this.tile = tile
     this.type = state.type
-
-    this.#eventListener = new EventListener(this, {
-      deselected: this.onDeselected,
-      pointerdown: this.onPointerDown,
-      pointerleave: this.onPointerUp,
-      pointerup: this.onPointerUp
-    })
   }
 
   /**
@@ -61,7 +56,12 @@ export class Modifier extends Stateful {
 
     this.update()
 
-    this.#eventListener.addEventListeners(li)
+    this.#eventListener.add([
+      { type: 'deselected', handler: this.onDeselected },
+      { type: 'pointerdown', handler: this.onPointerDown },
+      { type: 'pointerleave', handler: this.onPointerUp },
+      { type: 'pointerup', handler: this.onPointerUp }
+    ], { element: li })
 
     this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li)
   }
@@ -76,7 +76,7 @@ export class Modifier extends Stateful {
 
     Modifier.deselect()
 
-    this.#eventListener.removeEventListeners()
+    this.#eventListener.remove()
     this.#container.remove()
 
     this.selected = false
@@ -110,21 +110,35 @@ export class Modifier extends Stateful {
   }
 
   onPointerDown (event) {
-    console.log('onPointerDown', event)
-    this.#down = true
-    if (
-      !this.#mask &&
-      !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
-    ) {
-      this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+    if (event.button !== 0) {
+      // Support toggle on non-primary pointer button
+      this.onToggle(event)
+    } else {
+      this.#down = true
+      if (
+        !this.#mask &&
+        !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+      ) {
+        this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+      }
     }
   }
 
   onPointerUp (event) {
     clearTimeout(this.#timeoutId)
 
-    if (event.type === 'pointerup' && this.#down && !this.disabled && !this.selected) {
-      this.onTap(event)
+    if (this.#down && !this.disabled && !this.selected) {
+      switch (event.type) {
+        case 'pointerleave': {
+          // Support swiping up on pointer device
+          this.onToggle(event)
+          break
+        }
+        case 'pointerup': {
+          this.onTap(event)
+          break
+        }
+      }
     }
 
     this.#down = false
@@ -132,6 +146,8 @@ export class Modifier extends Stateful {
 
   onSelected () {
     Modifier.deselect()
+
+    navigator.vibrate(Interact.vibratePattern)
 
     this.update({ selected: true })
     this.tile.beforeModify()
@@ -142,6 +158,10 @@ export class Modifier extends Stateful {
 
   onTap () {
     this.selected = false
+  }
+
+  onToggle () {
+    navigator.vibrate(Interact.vibratePattern)
   }
 
   remove () {

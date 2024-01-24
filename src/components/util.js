@@ -10,11 +10,6 @@ export const url = new URL(location)
 // noinspection JSCheckFunctionSignatures
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
 
-export const MouseButton = Object.freeze({
-  Left: 0,
-  Right: 2
-})
-
 export function addClass (className, ...elements) {
   elements.forEach((element) => element.classList.add(className))
 }

@@ -1,29 +1,27 @@
 import paper, { Point } from 'paper'
 import { Cache } from './cache'
-import { EventListener } from './eventListener'
+import { EventListeners } from './eventListeners'
 
 export class Interact {
   #bounds
   #cache = new Cache(Object.values(Interact.CacheKeys))
   #element
-  #eventListener
+  #eventListener = new EventListeners({ context: this })
   #offset
 
   constructor (element) {
     this.#bounds = element.getBoundingClientRect()
     this.#element = element
     this.#offset = new Point(this.#bounds.left, this.#bounds.top)
-    this.#eventListener = new EventListener(this, {
-      pointercancel: this.onPointerUp,
-      pointerdown: this.onPointerDown,
-      pointerleave: this.onPointerUp,
-      pointermove: this.onPointerMove,
-      pointerout: this.onPointerUp,
-      pointerup: this.onPointerUp,
-      wheel: { handler: this.onMouseWheel, options: { passive: false } }
-    })
-
-    this.#eventListener.addEventListeners(element)
+    this.#eventListener.add([
+      { type: 'pointercancel', handler: this.onPointerUp },
+      { type: 'pointerdown', handler: this.onPointerDown },
+      { type: 'pointerleave', handler: this.onPointerUp },
+      { type: 'pointermove', handler: this.onPointerMove },
+      { type: 'pointerout', handler: this.onPointerUp },
+      { type: 'pointerup', handler: this.onPointerUp },
+      { type: 'wheel', handler: this.onMouseWheel, options: { passive: false } }
+    ], { element })
   }
 
   onMouseWheel (event) {
@@ -174,4 +172,6 @@ export class Interact {
     Pinch: 'pinch',
     Tap: 'tap'
   })
+
+  static vibratePattern = 25
 }

@@ -46,7 +46,7 @@ class PuzzleFixture {
     const origin = this.#getModifier(name)
     const actions = this.driver.actions({ async: true }).move({ origin })
     for (let i = 0; i < times; i++) {
-      actions[options.right ? 'contextClick' : 'click']()
+      actions.press(options.button).release(options.button)
     }
     await actions.perform()
   }
