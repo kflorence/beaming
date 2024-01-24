@@ -20,7 +20,10 @@ body {
 }
 
 canvas {
+  touch-action: none;
+  z-index: 0;
   display: block;
+  position: relative;
 }
 
 code {
@@ -129,10 +132,12 @@ dialog footer ul li:first-child {
 }
 
 body > footer, body > header {
+  z-index: 1;
   background-color: #fff;
   align-items: stretch;
   min-height: 3.5em;
   display: flex;
+  position: relative;
   box-shadow: 0 0 .75rem .5rem #00000040;
 }
 
@@ -324,6 +329,11 @@ main {
   box-sizing: border-box;
   color: #fff;
   background-color: #333;
+}
+
+.modifiers {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .puzzle-error .flex-left, .puzzle-error .flex-right {

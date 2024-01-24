@@ -579,31 +579,68 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
 }
 
 },{}],"8lqZg":[function(require,module,exports) {
+var _feedback = require("./components/feedback");
+var _infoDialog = require("./components/infoDialog");
+var _debug = require("./components/debug");
+var _paper = require("paper");
+var _puzzle = require("./components/puzzle");
+var _offset = require("./components/coordinates/offset");
+const puzzle = new (0, _puzzle.Puzzle)();
+const beaming = {
+    debug: (0, _debug.debug),
+    puzzle
+};
+// Used by functional tests
+beaming.centerOnTile = function(r, c) {
+    return puzzle.centerOnTile(new (0, _offset.OffsetCoordinates)(r, c));
+};
+beaming.clearDebugPoints = puzzle.clearDebugPoints.bind(puzzle);
+beaming.drawDebugPoint = function(x, y, style) {
+    return puzzle.drawDebugPoint(new (0, _paper.Point)(x, y), style);
+};
+// Export
+window.beaming = beaming;
+
+},{"./components/feedback":"gOaSP","./components/infoDialog":"7tCga","./components/debug":"7Nkch","paper":"agkns","./components/puzzle":"jIcx0","./components/coordinates/offset":"3z9Dj"}],"gOaSP":[function(require,module,exports) {
+var _puzzle = require("./puzzle");
+const container = document.getElementById("feedback-container");
+const help = document.getElementById("help");
+document.getElementById("feedback").addEventListener("click", ()=>{
+    help.setAttribute("open", "true");
+    container.scrollIntoView(true);
+});
+const doorbellOptions = window.doorbellOptions;
+document.addEventListener((0, _puzzle.Puzzle).Events.Updated, (event)=>{
+    doorbellOptions.properties.puzzleId = event.detail.state.getId();
+});
+
+},{"./puzzle":"jIcx0"}],"jIcx0":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// There are various spots below that utilize setTimeout in order to process events in order and to prevent
+// long-running computations from blocking UI updates.
+// See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
+parcelHelpers.export(exports, "Puzzle", ()=>Puzzle);
+var _layout = require("./layout");
+var _chromaJs = require("chroma-js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
 var _paper = require("paper");
 var _paperDefault = parcelHelpers.interopDefault(_paper);
-var _puzzle = require("./components/puzzle");
-var _util = require("./components/util");
-var _puzzles = require("./puzzles");
-var _offset = require("./components/coordinates/offset");
-const beaming = window.beaming = {};
-const console = window.console = window.console || {
-    debug: function() {}
-};
-const consoleDebug = console.debug;
-beaming.debug = function(debug) {
-    console.debug = debug ? consoleDebug : function() {};
-};
-// Silence debug logging by default since it can affect performance
-beaming.debug((0, _util.params).has("debug") ?? false);
-// Feedback module
-const doorbellOptions = window.doorbellOptions;
+var _util = require("./util");
+var _item = require("./item");
+var _mask = require("./items/mask");
+var _modifier = require("./modifier");
+var _beam = require("./items/beam");
+var _collision = require("./items/collision");
+var _stateful = require("./stateful");
+var _offset = require("./coordinates/offset");
+var _state = require("./state");
+var _puzzles = require("../puzzles");
+var _step = require("./step");
+var _eventListeners = require("./eventListeners");
+var _solution = require("./solution");
+var _interact = require("./interact");
 const elements = Object.freeze({
-    dialog: document.getElementById("dialog"),
-    feedback: document.getElementById("feedback"),
-    feedbackContainer: document.getElementById("feedback-container"),
-    help: document.getElementById("help"),
-    info: document.getElementById("info"),
     main: document.getElementById("main"),
     message: document.getElementById("message"),
     next: document.getElementById("next"),
@@ -612,97 +649,586 @@ const elements = Object.freeze({
     puzzleId: document.getElementById("puzzle-id"),
     redo: document.getElementById("redo"),
     reset: document.getElementById("reset"),
-    title: document.querySelector("title"),
-    undo: document.getElementById("undo")
+    undo: document.getElementById("undo"),
+    title: document.querySelector("title")
 });
-const puzzle = beaming.puzzle = new (0, _puzzle.Puzzle)(elements.puzzle);
-elements.feedback.addEventListener("click", ()=>{
-    elements.help.setAttribute("open", "true");
-    elements.feedbackContainer.scrollIntoView(true);
-});
-elements.info.addEventListener("click", ()=>{
-    if (!elements.dialog.open) elements.dialog.showModal();
-});
-elements.next.addEventListener("click", puzzle.next.bind(puzzle));
-elements.previous.addEventListener("click", puzzle.previous.bind(puzzle));
-elements.redo.addEventListener("click", puzzle.redo.bind(puzzle));
-elements.reset.addEventListener("click", puzzle.reset.bind(puzzle));
-elements.undo.addEventListener("click", puzzle.undo.bind(puzzle));
-// Generate puzzle ID dropdown
-for (const id of (0, _puzzles.Puzzles).visible.ids){
-    const option = document.createElement("option");
-    option.value = id;
-    option.innerText = (0, _puzzles.Puzzles).titles[id];
-    elements.puzzleId.append(option);
-}
-elements.puzzleId.addEventListener("change", (event)=>puzzle.select(event.target.value));
-document.addEventListener((0, _puzzle.Puzzle).Events.Updated, (event)=>{
-    const state = event.detail.state;
-    const id = state.getId();
-    const title = state.getTitle();
-    doorbellOptions.properties.puzzleId = id;
-    elements.title.textContent = `Beaming: Puzzle ${title}`;
-    (0, _util.removeClass)("disabled", ...Array.from(document.querySelectorAll("#actions li")));
-    const disable = [];
-    if (!state.canUndo()) disable.push(elements.undo);
-    if (!state.canRedo()) disable.push(elements.redo);
-    if (!(0, _puzzles.Puzzles).visible.has(id)) {
-        // Custom puzzle
-        elements.puzzleId.value = "";
-        disable.push(elements.previous, elements.next);
-    } else {
-        elements.puzzleId.value = id;
-        if (id === (0, _puzzles.Puzzles).visible.firstId) disable.push(elements.previous);
-        else if (id === (0, _puzzles.Puzzles).visible.lastId) disable.push(elements.next);
+class Puzzle {
+    connections = [];
+    debug = false;
+    error = false;
+    layers = {};
+    message;
+    selectedTile;
+    solved = false;
+    #beams;
+    #collisions = {};
+    #eventListeners = new (0, _eventListeners.EventListeners)({
+        context: this
+    });
+    #interact;
+    #isUpdatingBeams = false;
+    #mask;
+    #solution;
+    #state;
+    #termini;
+    #tiles = [];
+    constructor(){
+        // Don't automatically insert items into the scene graph, they must be explicitly inserted
+        (0, _paperDefault.default).settings.insertItems = false;
+        // noinspection JSCheckFunctionSignatures
+        (0, _paperDefault.default).setup(elements.puzzle);
+        this.#resize();
+        this.layers.mask = new (0, _paper.Layer)();
+        this.layers.collisions = new (0, _paper.Layer)();
+        this.layers.debug = new (0, _paper.Layer)();
+        this.#eventListeners.add([
+            {
+                type: (0, _beam.Beam).Events.Update,
+                handler: this.#onBeamUpdate
+            },
+            {
+                type: "change",
+                element: elements.puzzleId,
+                handler: this.#onSelect
+            },
+            {
+                type: "click",
+                element: elements.next,
+                handler: this.#next
+            },
+            {
+                type: "click",
+                element: elements.previous,
+                handler: this.#previous
+            },
+            {
+                type: "click",
+                element: elements.redo,
+                handler: this.#redo
+            },
+            {
+                type: "click",
+                element: elements.reset,
+                handler: this.#reset
+            },
+            {
+                type: "click",
+                element: elements.undo,
+                handler: this.#undo
+            },
+            {
+                type: "keyup",
+                handler: this.#onKeyup
+            },
+            {
+                type: (0, _modifier.Modifier).Events.Invoked,
+                handler: this.#onModifierInvoked
+            },
+            {
+                type: Puzzle.Events.Mask,
+                handler: this.#onMask
+            },
+            {
+                type: "resize",
+                element: window,
+                handler: (0, _util.debounce)(this.#resize)
+            },
+            {
+                type: (0, _stateful.Stateful).Events.Update,
+                handler: this.#onStateUpdate
+            },
+            {
+                type: "tap",
+                element: elements.puzzle,
+                handler: this.#onTap
+            }
+        ]);
+        this.#interact = new (0, _interact.Interact)(elements.puzzle);
+        this.#updateDropdown();
+        this.select();
     }
-    (0, _util.addClass)("disabled", ...disable);
-});
-function resize() {
-    const { width, height } = elements.main.getBoundingClientRect();
-    elements.puzzle.style.height = height + "px";
-    elements.puzzle.style.width = width + "px";
-    if ((0, _paperDefault.default).view?.viewSize) (0, _paperDefault.default).view.viewSize = new (0, _paper.Size)(width, height);
-}
-// Handle canvas resize
-window.addEventListener("resize", (0, _util.debounce)(resize));
-resize();
-// Handle zoom
-// TODO add mobile support for pinch/zoom
-// See: https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Pinch_zoom_gestures
-elements.puzzle.addEventListener("wheel", (event)=>{
-    event.preventDefault();
-    const zoom = (0, _paperDefault.default).view.zoom * (event.deltaY > 0 ? 0.95 : 1.05);
-    // Don't allow zooming too far in or out
-    if (zoom > 2 || zoom < 0.5) return;
-    // Convert the mouse point from the view coordinate space to the project coordinate space
-    const mousePoint = (0, _paperDefault.default).view.viewToProject(new (0, _paper.Point)(event.offsetX, event.offsetY));
-    const mouseOffset = mousePoint.subtract((0, _paperDefault.default).view.center);
-    // Adjust center towards cursor location
-    const zoomOffset = mousePoint.subtract(mouseOffset.multiply((0, _paperDefault.default).view.zoom / zoom)).subtract((0, _paperDefault.default).view.center);
-    (0, _paperDefault.default).view.zoom = zoom;
-    (0, _paperDefault.default).view.center = (0, _paperDefault.default).view.center.add(zoomOffset);
-}, {
-    passive: false
-});
-// Prevent browser context menu on right click
-document.body.addEventListener("contextmenu", (event)=>{
-    if (!elements.dialog.open) {
-        event.preventDefault();
-        return false;
+    centerOnTile(offset) {
+        const tile = this.layout.getTileByOffset(offset);
+        (0, _paperDefault.default).view.center = tile.center;
     }
-});
-// Initialize
-puzzle.select();
-// Used by functional tests
-beaming.centerOnTile = function(r, c) {
-    return puzzle.centerOnTile(new (0, _offset.OffsetCoordinates)(r, c));
-};
-// Useful for debug purposes
-beaming.drawDebugPoint = function(x, y, style) {
-    return puzzle.drawDebugPoint(new (0, _paper.Point)(x, y), style);
-};
+    clearDebugPoints() {
+        this.layers.debug.clear();
+    }
+    drawDebugPoint(point, style = {}) {
+        const circle = new (0, _paper.Path).Circle(Object.assign({
+            radius: 3,
+            fillColor: "red",
+            strokeColor: "white",
+            strokeWidth: 1,
+            center: point
+        }, style));
+        this.layers.debug.addChild(circle);
+    }
+    getItems(tile) {
+        return (tile ? this.#tiles.filter((t)=>t === tile) : this.#tiles).flatMap((tile)=>tile.items);
+    }
+    getTile(point) {
+        const result = (0, _paperDefault.default).project.hitTest(point.ceil(), {
+            fill: true,
+            match: (result)=>result.item.data.type === (0, _item.Item).Types.tile,
+            segments: true,
+            stroke: true,
+            tolerance: 0
+        });
+        return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result;
+    }
+    mask(mask) {
+        if (this.#mask) {
+            console.error("Ignoring mask request due to existing mask", mask, this.#mask);
+            return;
+        }
+        this.#mask = mask;
+        // TODO animation?
+        const tiles = this.#tiles.filter(mask.filter).map((tile)=>new (0, _mask.Mask)(tile, typeof mask.configuration.style === "function" ? mask.configuration.style(tile) : mask.configuration.style));
+        this.layers.mask.addChildren(tiles.map((tile)=>tile.group));
+        if (mask.configuration.message) elements.message.textContent = mask.configuration.message;
+    }
+    select(id) {
+        if (id !== undefined && id === this.#state?.getId()) // This ID is already selected
+        return;
+        try {
+            this.#state = (0, _state.State).resolve(id);
+        } catch (e) {
+            this.#onError(e, "Could not load puzzle.");
+        }
+        this.#reload();
+    }
+    unmask() {
+        if (typeof this.#mask.onUnmask === "function") this.#mask.onUnmask(this);
+        this.#mask = undefined;
+        this.layers.mask.removeChildren();
+        this.#updateMessage(this.selectedTile);
+    }
+    update() {
+        if (!this.#mask && !this.#isUpdatingBeams) {
+            this.#isUpdatingBeams = true;
+            this.#updateBeams();
+        }
+    }
+    updateSelectedTile(tile) {
+        const previouslySelectedTile = this.selectedTile;
+        this.selectedTile = tile;
+        this.#state.setSelectedTile(tile);
+        this.#updateMessage(tile);
+        if (previouslySelectedTile && previouslySelectedTile !== tile) previouslySelectedTile.onDeselected(tile);
+        if (tile && tile !== previouslySelectedTile) tile.onSelected(previouslySelectedTile);
+        return previouslySelectedTile;
+    }
+    updateState() {
+        this.#state.update(Object.assign(this.#state.getCurrent(), {
+            layout: this.layout.getState()
+        }));
+        this.#updateActions();
+        (0, _util.emitEvent)(Puzzle.Events.Updated, {
+            state: this.#state
+        });
+    }
+    #addLayers() {
+        // Add layers in the order we want them
+        [
+            this.layout.layers.tiles,
+            this.layout.layers.items,
+            this.layers.mask,
+            this.layers.collisions,
+            this.layers.debug
+        ].forEach((layer)=>(0, _paperDefault.default).project.addLayer(layer));
+    }
+    #next() {
+        const id = (0, _puzzles.Puzzles).visible.nextId(this.#state.getId());
+        if (id) this.select(id);
+    }
+    #onBeamUpdate(event) {
+        const beam = event.detail.beam;
+        const state = event.detail.state;
+        if (state?.has((0, _step.StepState).Collision)) {
+            const collision = state.get((0, _step.StepState).Collision);
+            const collisionId = Puzzle.Collision.id(collision.point);
+            const existing = this.#collisions[collisionId];
+            if (existing) existing.addBeam(beam);
+            else this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [
+                beam
+            ], collision.point);
+            // Beam with collision has an active mask
+            const mask = this.#mask?.configuration;
+            if (mask?.beam?.equals(beam)) this.unmask();
+        }
+        Object.values(this.#collisions).forEach((collision)=>collision.update());
+        this.#beams.filter((otherBeam)=>otherBeam !== beam).forEach((beam)=>beam.onBeamUpdated(event, this));
+        setTimeout(()=>this.update(), 0);
+    }
+    #onError(error, message, cause) {
+        this.error = true;
+        // Support exclusion of error
+        if (typeof error === "string") {
+            message = error;
+            cause = message;
+            error = undefined;
+        }
+        if (error) console.error(error);
+        cause = cause ?? error?.cause;
+        if (cause) console.error("cause:", cause);
+        message = message ?? error?.message ?? "The puzzle has encountered an error, please consider reporting.";
+        elements.message.textContent = message;
+        document.body.classList.add(Puzzle.Events.Error);
+    }
+    #onKeyup(event) {
+        if (this.debug && event.key === "s") this.update();
+    }
+    #onMask(event) {
+        console.debug("Mask event", event);
+        this.mask(event.detail.mask);
+    }
+    #onModifierInvoked(event) {
+        const tile = event.detail.tile;
+        this.#beams// Update beams in the tile being modified first
+        .sort((beam)=>tile.items.some((item)=>item === beam) ? -1 : 0).forEach((beam)=>beam.onModifierInvoked(event, this));
+        setTimeout(()=>this.update(), 0);
+    }
+    #onSelect(event) {
+        this.select(event.target.value);
+    }
+    #onSolved() {
+        if (this.solved) return;
+        this.solved = true;
+        this.updateSelectedTile(undefined);
+        this.mask(Puzzle.#solvedMask);
+        const span = document.createElement("span");
+        span.classList.add("material-symbols-outlined");
+        span.textContent = "celebration";
+        span.title = "Solved!";
+        elements.message.replaceChildren(span);
+        document.body.classList.add(Puzzle.Events.Solved);
+        (0, _util.emitEvent)(Puzzle.Events.Solved);
+    }
+    #onStateUpdate() {
+        this.updateState();
+    }
+    #onTap(event) {
+        let tile;
+        if (this.solved || this.error) return;
+        const result = (0, _paperDefault.default).project.hitTest(event.detail.point);
+        switch(result?.item.data.type){
+            case (0, _item.Item).Types.mask:
+                return;
+            case (0, _item.Item).Types.tile:
+                tile = this.layout.getTileByAxial(result.item.data.coordinates.axial);
+                break;
+        }
+        // There is an active mask
+        if (this.#mask) this.#mask.onTap(this, tile);
+        else {
+            const previouslySelectedTile = this.updateSelectedTile(tile);
+            if (tile && tile === previouslySelectedTile) tile.onTap(event);
+        }
+    }
+    #previous() {
+        const id = (0, _puzzles.Puzzles).visible.previousId(this.#state.getId());
+        if (id) this.select(id);
+    }
+    #redo() {
+        this.#state.redo();
+        this.#reload();
+    }
+    #reload() {
+        this.error = false;
+        if (this.#state) this.#teardown();
+        this.#setup();
+        (0, _util.emitEvent)(Puzzle.Events.Updated, {
+            state: this.#state
+        });
+    }
+    #removeLayers() {
+        Object.values(this.layers).forEach((layer)=>layer.removeChildren());
+        (0, _paperDefault.default).project.clear();
+    }
+    #reset() {
+        this.#state.reset();
+        this.#reload();
+    }
+    #resize() {
+        const { width, height } = elements.main.getBoundingClientRect();
+        elements.puzzle.style.height = height + "px";
+        elements.puzzle.style.width = width + "px";
+        (0, _paperDefault.default).view.viewSize = new (0, _paper.Size)(width, height);
+    }
+    #setup() {
+        // Reset the item IDs, so they are unique per-puzzle
+        (0, _item.Item).uniqueId = 0;
+        const { layout, message, solution } = this.#state.getCurrent();
+        this.layout = new (0, _layout.Layout)(layout);
+        this.message = message;
+        this.#solution = new (0, _solution.Solution)(solution);
+        this.#tiles = this.layout.tiles;
+        this.#termini = this.layout.items.filter((item)=>item.type === (0, _item.Item).Types.terminus);
+        this.#beams = this.#termini.flatMap((terminus)=>terminus.beams);
+        this.#addLayers();
+        document.body.classList.add(Puzzle.Events.Loaded);
+        const selectedTileId = this.#state.getSelectedTile();
+        const selectedTile = selectedTileId ? this.layout.getTileByOffset(new (0, _offset.OffsetCoordinates)(...selectedTileId.split(","))) : undefined;
+        this.updateSelectedTile(selectedTile);
+        this.update();
+        this.#updateActions();
+    }
+    #teardown() {
+        document.body.classList.remove(...Object.values(Puzzle.Events));
+        this.#removeLayers();
+        this.#tiles.forEach((tile)=>tile.teardown());
+        this.#tiles = [];
+        this.#solution?.teardown();
+        this.#solution = undefined;
+        this.solved = false;
+        this.layout?.teardown();
+        this.layout = undefined;
+        this.selectedTile = undefined;
+        this.#beams = [];
+        this.#collisions = {};
+        this.#isUpdatingBeams = false;
+        this.#mask = undefined;
+        this.#termini = [];
+    }
+    #undo() {
+        this.#state.undo();
+        this.#reload();
+    }
+    #updateActions() {
+        const id = this.#state.getId();
+        const title = this.#state.getTitle();
+        // Update browser title
+        elements.title.textContent = `Beaming: Puzzle ${title}`;
+        (0, _util.removeClass)("disabled", ...Array.from(document.querySelectorAll("#actions li")));
+        const disable = [];
+        if (!this.#state.canUndo()) disable.push(elements.undo);
+        if (!this.#state.canRedo()) disable.push(elements.redo);
+        if (!(0, _puzzles.Puzzles).visible.has(id)) {
+            // Custom puzzle
+            elements.puzzleId.value = "";
+            disable.push(elements.previous, elements.next);
+        } else {
+            elements.puzzleId.value = id;
+            if (id === (0, _puzzles.Puzzles).visible.firstId) disable.push(elements.previous);
+            else if (id === (0, _puzzles.Puzzles).visible.lastId) disable.push(elements.next);
+        }
+        (0, _util.addClass)("disabled", ...disable);
+    }
+    #updateDropdown() {
+        elements.puzzleId.replaceChildren();
+        for (const id of (0, _puzzles.Puzzles).visible.ids){
+            const option = document.createElement("option");
+            option.value = id;
+            option.innerText = (0, _puzzles.Puzzles).titles[id];
+            elements.puzzleId.append(option);
+        }
+    }
+    #updateBeams() {
+        const beams = this.#beams.filter((beam)=>beam.isPending());
+        if (!beams.length) {
+            this.#isUpdatingBeams = false;
+            // Ensure we check for a solution after all other in-progress events have processed
+            setTimeout(()=>{
+                if (this.#solution.isSolved()) this.#onSolved();
+            }, 0);
+            return;
+        }
+        if (this.debug) this.layers.debug.clear();
+        beams.forEach((beam)=>beam.step(this));
+        // Ensure the UI has a chance to update between loops
+        setTimeout(()=>this.#updateBeams(), 30);
+    }
+    #updateMessage(tile) {
+        if (tile) {
+            // Check to see if tile has any color elements that need to be displayed
+            const colorElements = tile.items.map((item)=>item.getColorElements(tile)).find((colorElements)=>colorElements.length > 0) || [];
+            elements.message.replaceChildren(...colorElements);
+        } else elements.message.textContent = this.message || "Select a tile";
+    }
+    static Collision = class {
+        constructor(layer, beams, point, item){
+            this.id = Puzzle.Collision.id(point);
+            this.layer = layer;
+            this.beams = beams;
+            this.point = point;
+            this.item = item;
+        }
+        addBeam(beam) {
+            if (!this.beams.some((otherBeam)=>otherBeam.id === beam.id)) this.beams.push(beam);
+            return this.beams;
+        }
+        addItem(color) {
+            this.item = new (0, _collision.Collision)({
+                center: this.point,
+                color
+            });
+            this.layer.addChild(this.item.group);
+        }
+        equals(other) {
+            return (0, _util.fuzzyEquals)(this.point, other?.point);
+        }
+        getColor() {
+            return this.beams.length ? (0, _chromaJsDefault.default).average(this.beams.map((beam)=>beam.getColor())).hex() : undefined;
+        }
+        removeItem() {
+            if (this.item) {
+                this.item.remove();
+                this.item = undefined;
+            }
+        }
+        update() {
+            // Remove any beam which no longer matches its collision point
+            this.beams = this.beams.filter((beam)=>this.equals(beam.getCollision()));
+            const color = this.getColor();
+            // Remove no longer valid collision items
+            if (this.item && (!this.beams.length || this.item.color !== color)) this.removeItem();
+            // Add missing collision items
+            if (this.beams.length && !this.item) this.addItem(color);
+        }
+        static id(point) {
+            const rounded = point.round();
+            return [
+                rounded.x,
+                rounded.y
+            ].join(",");
+        }
+    };
+    static Events = Object.freeze({
+        Error: "puzzle-error",
+        Loaded: "puzzle-loaded",
+        Mask: "puzzle-mask",
+        Solved: "puzzle-solved",
+        Updated: "puzzle-updated"
+    });
+    static Mask = class {
+        constructor(filter, configuration = {}){
+            configuration.style = configuration.style || {};
+            this.configuration = configuration;
+            this.filter = filter;
+            this.onTap = configuration.onTap;
+            this.onUnmask = configuration.onUnmask;
+        }
+    };
+    // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
+    static #connectedBeams = (item)=>item.type === (0, _item.Item).Types.beam && item.isConnected();
+    static #solvedMask = new Puzzle.Mask((tile)=>tile.items.some(Puzzle.#connectedBeams), {
+        style: (tile)=>{
+            const beams = tile.items.filter(Puzzle.#connectedBeams);
+            const colors = beams.flatMap((beam)=>beam.getSteps(tile).flatMap((step)=>step.color));
+            return {
+                fillColor: (0, _chromaJsDefault.default).average(colors).hex()
+            };
+        }
+    });
+}
 
-},{"paper":"agkns","./components/puzzle":"jIcx0","./components/util":"92uDI","./puzzles":"7ifRD","./components/coordinates/offset":"3z9Dj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"agkns":[function(require,module,exports) {
+},{"./layout":"kCkVw","chroma-js":"iVrwS","paper":"agkns","./util":"92uDI","./item":"klNFr","./items/mask":"dOejK","./modifier":"bQhih","./items/beam":"9UvIU","./items/collision":"hUIiT","./stateful":"2njM8","./coordinates/offset":"3z9Dj","./state":"7XqMQ","../puzzles":"7ifRD","./step":"71fBe","./eventListeners":"8T0Qv","./solution":"foTr2","./interact":"fHNCq","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kCkVw":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Layout", ()=>Layout);
+var _paper = require("paper");
+var _paperDefault = parcelHelpers.interopDefault(_paper);
+var _cube = require("./coordinates/cube");
+var _offset = require("./coordinates/offset");
+var _tile = require("./items/tile");
+var _util = require("./util");
+var _stateful = require("./stateful");
+class Layout extends (0, _stateful.Stateful) {
+    #tilesByAxial = [];
+    #tilesByOffset = [];
+    items = [];
+    layers = {};
+    tiles = [];
+    tileSize = 120;
+    constructor(state){
+        super(state);
+        this.type = state.type || Layout.Types.oddR;
+        const center = (0, _paperDefault.default).view.center;
+        const parameters = (0, _tile.Tile).parameters(this.tileSize);
+        const tiles = state.tiles;
+        // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
+        const height = tiles.length * parameters.width;
+        const startingOffsetY = center.y - height / 2;
+        this.layers.tiles = new (0, _paper.Layer)();
+        this.layers.items = new (0, _paper.Layer)();
+        // Find the widest row
+        const widestRow = tiles.reduce((current, row, index)=>{
+            const length = row.length;
+            // Favor offset rows, since they will be wider
+            if (length > current.length || length === current.length && this.#isOffsetRow(index)) return {
+                index,
+                length
+            };
+            return current;
+        }, {
+            index: 0,
+            length: 0
+        });
+        const width = widestRow.length * parameters.width + (this.#isOffsetRow(widestRow.index) ? parameters.inradius : 0);
+        const startingOffsetX = center.x - width / 2;
+        for(let r = 0; r < tiles.length; r++){
+            const row = tiles[r];
+            const rowByAxial = new Array(row.length).fill(null);
+            const rowByOffset = new Array(row.length).fill(null);
+            const rowOffset = Math.floor(r / 2);
+            for(let c = 0; c < row.length; c++){
+                const axial = new (0, _cube.CubeCoordinates)(c - rowOffset, r);
+                const offset = new (0, _offset.OffsetCoordinates)(r, c);
+                const layout = {
+                    row: r,
+                    column: c,
+                    // Shift row to the right if it is an offset row
+                    startingOffsetX: startingOffsetX + (this.#isOffsetRow(r) ? parameters.inradius : 0),
+                    startingOffsetY
+                };
+                const state = row[c];
+                if (!state) continue;
+                const tile = new (0, _tile.Tile)({
+                    axial,
+                    offset
+                }, layout, parameters, state);
+                this.layers.tiles.addChild(tile.group);
+                if (tile.items.length) {
+                    this.items.push(...tile.items);
+                    this.layers.items.addChildren(tile.items.map((item)=>item.group));
+                }
+                this.tiles.push(tile);
+                rowByAxial[axial.q] = tile;
+                rowByOffset[offset.c] = tile;
+            }
+            this.#tilesByAxial.push(rowByAxial);
+            this.#tilesByOffset.push(rowByOffset);
+        }
+    }
+    getTileByAxial(axial) {
+        return (this.#tilesByAxial[axial.r] || [])[axial.q];
+    }
+    getTileByOffset(offset) {
+        return this.#tilesByOffset[offset.r][offset.c];
+    }
+    getState() {
+        // Tiles are defined by offset in the puzzle state
+        return Object.assign(super.getState(), {
+            tiles: this.#tilesByOffset.map((row)=>row.map((tile)=>tile?.getState() || null))
+        });
+    }
+    getNeighboringTile(axial, direction) {
+        return this.getTileByAxial((0, _cube.CubeCoordinates).neighbor(axial, (0, _util.getConvertedDirection)(direction)));
+    }
+    teardown() {
+        Object.values(this.layers).forEach((layer)=>layer.removeChildren());
+    }
+    #isOffsetRow(index) {
+        return index % 2 === 0 ? this.type === Layout.Types.evenR : this.type === Layout.Types.oddR;
+    }
+    static Types = Object.freeze({
+        evenR: "even-r",
+        oddR: "odd-r"
+    });
+}
+
+},{"paper":"agkns","./coordinates/cube":"dL4ay","./coordinates/offset":"3z9Dj","./items/tile":"3fTdS","./util":"92uDI","./stateful":"2njM8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"agkns":[function(require,module,exports) {
 /*!
  * Paper.js v0.12.17 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
@@ -19542,535 +20068,7 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"jIcx0":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-// There are various spots below that utilize setTimeout in order to process events in order and to prevent
-// long-running computations from blocking UI updates.
-// See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
-parcelHelpers.export(exports, "Puzzle", ()=>Puzzle);
-var _layout = require("./layout");
-var _chromaJs = require("chroma-js");
-var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
-var _paper = require("paper");
-var _paperDefault = parcelHelpers.interopDefault(_paper);
-var _util = require("./util");
-var _item = require("./item");
-var _mask = require("./items/mask");
-var _modifier = require("./modifier");
-var _beam = require("./items/beam");
-var _collision = require("./items/collision");
-var _stateful = require("./stateful");
-var _offset = require("./coordinates/offset");
-var _state = require("./state");
-var _puzzles = require("../puzzles");
-var _step = require("./step");
-var _eventListener = require("./eventListener");
-var _solution = require("./solution");
-const elements = Object.freeze({
-    beams: document.getElementById("beams"),
-    connections: document.getElementById("connections"),
-    connectionsCompleted: document.getElementById("connections-completed"),
-    connectionsRequired: document.getElementById("connections-required"),
-    message: document.getElementById("message")
-});
-class Puzzle {
-    connections = [];
-    debug = false;
-    error = false;
-    layers = {};
-    message;
-    selectedTile;
-    solved = false;
-    #beams;
-    #collisions = {};
-    #eventListener;
-    #isDragging = false;
-    #isUpdatingBeams = false;
-    #mask;
-    #solution;
-    #state;
-    #termini;
-    #tiles = [];
-    #tool;
-    constructor(canvas){
-        // Don't automatically insert items into the scene graph, they must be explicitly inserted
-        (0, _paperDefault.default).settings.insertItems = false;
-        (0, _paperDefault.default).setup(canvas);
-        this.layers.mask = new (0, _paper.Layer)();
-        this.layers.collisions = new (0, _paper.Layer)();
-        this.layers.debug = new (0, _paper.Layer)();
-        this.#eventListener = new (0, _eventListener.EventListener)(this, {
-            keyup: this.#onKeyup,
-            [(0, _beam.Beam).Events.Update]: this.#onBeamUpdate,
-            [(0, _modifier.Modifier).Events.Invoked]: this.#onModifierInvoked,
-            [Puzzle.Events.Mask]: this.#onMask,
-            [(0, _stateful.Stateful).Events.Update]: this.#onStateUpdate
-        });
-        this.#tool = new (0, _paper.Tool)();
-        this.#tool.onMouseDrag = (event)=>this.#onMouseDrag(event);
-        this.#tool.onMouseUp = (event)=>this.#onMouseUp(event);
-    }
-    centerOnTile(offset) {
-        const tile = this.layout.getTileByOffset(offset);
-        (0, _paperDefault.default).view.center = tile.center;
-    }
-    drawDebugPoint(point, style = {}) {
-        const circle = new (0, _paper.Path).Circle(Object.assign({
-            radius: 3,
-            fillColor: "red",
-            strokeColor: "white",
-            strokeWidth: 1,
-            center: point
-        }, style));
-        this.layers.debug.addChild(circle);
-    }
-    getItems(tile) {
-        return (tile ? this.#tiles.filter((t)=>t === tile) : this.#tiles).flatMap((tile)=>tile.items);
-    }
-    getTile(point) {
-        const result = (0, _paperDefault.default).project.hitTest(point.ceil(), {
-            fill: true,
-            match: (result)=>result.item.data.type === (0, _item.Item).Types.tile,
-            segments: true,
-            stroke: true,
-            tolerance: 0
-        });
-        return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result;
-    }
-    mask(mask) {
-        if (this.#mask) {
-            console.error("Ignoring mask request due to existing mask", mask, this.#mask);
-            return;
-        }
-        this.#mask = mask;
-        // TODO animation?
-        const tiles = this.#tiles.filter(mask.filter).map((tile)=>new (0, _mask.Mask)(tile, typeof mask.configuration.style === "function" ? mask.configuration.style(tile) : mask.configuration.style));
-        this.layers.mask.addChildren(tiles.map((tile)=>tile.group));
-        if (mask.configuration.message) elements.message.textContent = mask.configuration.message;
-    }
-    next() {
-        const id = (0, _puzzles.Puzzles).visible.nextId(this.#state.getId());
-        if (id) this.select(id);
-    }
-    previous() {
-        const id = (0, _puzzles.Puzzles).visible.previousId(this.#state.getId());
-        if (id) this.select(id);
-    }
-    redo() {
-        this.#state.redo();
-        this.#reload();
-    }
-    reset() {
-        this.#state.reset();
-        this.#reload();
-    }
-    select(id) {
-        try {
-            this.#state = (0, _state.State).resolve(id);
-        } catch (e) {
-            this.#onError(e, "Could not load puzzle.");
-        }
-        (0, _util.emitEvent)(Puzzle.Events.Updated, {
-            state: this.#state
-        });
-        this.#reload();
-    }
-    undo() {
-        this.#state.undo();
-        this.#reload();
-    }
-    unmask() {
-        if (typeof this.#mask.onUnmask === "function") this.#mask.onUnmask(this);
-        this.#mask = undefined;
-        this.layers.mask.removeChildren();
-        this.#updateMessage(this.selectedTile);
-    }
-    update() {
-        if (!this.#mask && !this.#isUpdatingBeams) {
-            this.#isUpdatingBeams = true;
-            this.#updateBeams();
-        }
-    }
-    updateSelectedTile(tile) {
-        const previouslySelectedTile = this.selectedTile;
-        this.selectedTile = tile;
-        this.#state.setSelectedTile(tile);
-        this.#updateMessage(tile);
-        if (previouslySelectedTile && previouslySelectedTile !== tile) previouslySelectedTile.onDeselected(tile);
-        if (tile && tile !== previouslySelectedTile) tile.onSelected(previouslySelectedTile);
-        return previouslySelectedTile;
-    }
-    updateState() {
-        this.#state.update(Object.assign(this.#state.getCurrent(), {
-            layout: this.layout.getState()
-        }));
-        (0, _util.emitEvent)(Puzzle.Events.Updated, {
-            state: this.#state
-        });
-    }
-    #addLayers() {
-        // Add layers in the order we want them
-        [
-            this.layout.layers.tiles,
-            this.layout.layers.items,
-            this.layers.mask,
-            this.layers.collisions,
-            this.layers.debug
-        ].forEach((layer)=>(0, _paperDefault.default).project.addLayer(layer));
-    }
-    #onBeamUpdate(event) {
-        const beam = event.detail.beam;
-        const state = event.detail.state;
-        if (state?.has((0, _step.StepState).Collision)) {
-            const collision = state.get((0, _step.StepState).Collision);
-            const collisionId = Puzzle.Collision.id(collision.point);
-            const existing = this.#collisions[collisionId];
-            if (existing) existing.addBeam(beam);
-            else this.#collisions[collisionId] = new Puzzle.Collision(this.layers.collisions, [
-                beam
-            ], collision.point);
-            // Beam with collision has an active mask
-            const mask = this.#mask?.configuration;
-            if (mask?.beam?.equals(beam)) this.unmask();
-        }
-        Object.values(this.#collisions).forEach((collision)=>collision.update());
-        this.#beams.filter((otherBeam)=>otherBeam !== beam).forEach((beam)=>beam.onBeamUpdated(event, this));
-        setTimeout(()=>this.update(), 0);
-    }
-    #onClick(event) {
-        let tile;
-        if (this.#isDragging || this.solved || this.error) return;
-        const result = (0, _paperDefault.default).project.hitTest(event.point);
-        switch(result?.item.data.type){
-            case (0, _item.Item).Types.mask:
-                return;
-            case (0, _item.Item).Types.tile:
-                tile = this.layout.getTileByAxial(result.item.data.coordinates.axial);
-                break;
-        }
-        // There is an active mask
-        if (this.#mask) this.#mask.onClick(this, tile);
-        else {
-            const previouslySelectedTile = this.updateSelectedTile(tile);
-            if (tile && tile === previouslySelectedTile) tile.onClick(event);
-        }
-    }
-    #onError(error, message, cause) {
-        this.error = true;
-        // Support exclusion of error
-        if (typeof error === "string") {
-            message = error;
-            cause = message;
-            error = undefined;
-        }
-        if (error) console.error(error);
-        cause = cause ?? error?.cause;
-        if (cause) console.error("cause:", cause);
-        message = message ?? error?.message ?? "The puzzle has encountered an error, please consider reporting.";
-        elements.message.textContent = message;
-        document.body.classList.add(Puzzle.Events.Error);
-    }
-    #onKeyup(event) {
-        if (this.debug && event.key === "s") this.update();
-    }
-    #onMask(event) {
-        console.debug("Mask event", event);
-        this.mask(event.detail.mask);
-    }
-    #onModifierInvoked(event) {
-        const tile = event.detail.tile;
-        this.#beams// Update beams in the tile being modified first
-        .sort((beam)=>tile.items.some((item)=>item === beam) ? -1 : 0).forEach((beam)=>beam.onModifierInvoked(event, this));
-        setTimeout(()=>this.update(), 0);
-    }
-    #onMouseDrag(event) {
-        const center = event.downPoint.subtract(event.point).add((0, _paperDefault.default).view.center);
-        // Allow a little wiggle room
-        if ((0, _paperDefault.default).view.center.subtract(center).length > 1) {
-            if (!this.#isDragging) document.body.classList.add("grab");
-            // Note: MouseDrag is always called on mobile even when tapping, so only consider it actually dragging if
-            // the cursor has moved the center
-            this.#isDragging = true;
-            // Center on the cursor
-            (0, _paperDefault.default).view.center = center;
-        }
-    }
-    #onMouseUp(event) {
-        if (!this.#isDragging) this.#onClick(event);
-        this.#isDragging = false;
-        document.body.classList.remove("grab");
-    }
-    #onSolved() {
-        if (this.solved) return;
-        this.solved = true;
-        this.updateSelectedTile(undefined);
-        this.mask(Puzzle.#solvedMask);
-        const span = document.createElement("span");
-        span.classList.add("material-symbols-outlined");
-        span.textContent = "celebration";
-        span.title = "Solved!";
-        elements.message.replaceChildren(span);
-        document.body.classList.add(Puzzle.Events.Solved);
-        (0, _util.emitEvent)(Puzzle.Events.Solved);
-    }
-    #onStateUpdate() {
-        this.updateState();
-    }
-    #reload() {
-        this.error = false;
-        if (this.#state) this.#teardown();
-        this.#setup();
-        (0, _util.emitEvent)(Puzzle.Events.Updated, {
-            state: this.#state
-        });
-    }
-    #removeLayers() {
-        Object.values(this.layers).forEach((layer)=>layer.removeChildren());
-        (0, _paperDefault.default).project.clear();
-    }
-    #setup() {
-        // Reset the item IDs, so they are unique per-puzzle
-        (0, _item.Item).uniqueId = 0;
-        const { layout, message, solution } = this.#state.getCurrent();
-        this.layout = new (0, _layout.Layout)(layout);
-        this.message = message;
-        this.#solution = new (0, _solution.Solution)(solution);
-        this.#tiles = this.layout.tiles;
-        this.#termini = this.layout.items.filter((item)=>item.type === (0, _item.Item).Types.terminus);
-        this.#beams = this.#termini.flatMap((terminus)=>terminus.beams);
-        this.#eventListener.addEventListeners();
-        this.#addLayers();
-        document.body.classList.add(Puzzle.Events.Loaded);
-        const selectedTileId = this.#state.getSelectedTile();
-        const selectedTile = selectedTileId ? this.layout.getTileByOffset(new (0, _offset.OffsetCoordinates)(...selectedTileId.split(","))) : undefined;
-        this.updateSelectedTile(selectedTile);
-        this.update();
-    }
-    #teardown() {
-        document.body.classList.remove(...Object.values(Puzzle.Events));
-        this.#eventListener.removeEventListeners();
-        this.#removeLayers();
-        this.#tiles.forEach((tile)=>tile.teardown());
-        this.#tiles = [];
-        this.#solution?.teardown();
-        this.#solution = undefined;
-        this.solved = false;
-        this.layout?.teardown();
-        this.layout = undefined;
-        this.selectedTile = undefined;
-        this.#beams = [];
-        this.#collisions = {};
-        this.#isDragging = false;
-        this.#isUpdatingBeams = false;
-        this.#mask = undefined;
-        this.#termini = [];
-    }
-    #updateBeams() {
-        const beams = this.#beams.filter((beam)=>beam.isPending());
-        if (!beams.length) {
-            this.#isUpdatingBeams = false;
-            // Ensure we check for a solution after all other in-progress events have processed
-            setTimeout(()=>{
-                if (this.#solution.isSolved()) this.#onSolved();
-            }, 0);
-            return;
-        }
-        if (this.debug) this.layers.debug.clear();
-        beams.forEach((beam)=>beam.step(this));
-        // Ensure the UI has a chance to update between loops
-        setTimeout(()=>this.#updateBeams(), 30);
-    }
-    #updateMessage(tile) {
-        if (tile) {
-            // Check to see if tile has any color elements that need to be displayed
-            const colorElements = tile.items.map((item)=>item.getColorElements(tile)).find((colorElements)=>colorElements.length > 0) || [];
-            elements.message.replaceChildren(...colorElements);
-        } else elements.message.textContent = this.message || "Select a tile";
-    }
-    static Collision = class {
-        constructor(layer, beams, point, item){
-            this.id = Puzzle.Collision.id(point);
-            this.layer = layer;
-            this.beams = beams;
-            this.point = point;
-            this.item = item;
-        }
-        addBeam(beam) {
-            if (!this.beams.some((otherBeam)=>otherBeam.id === beam.id)) this.beams.push(beam);
-            return this.beams;
-        }
-        addItem(color) {
-            this.item = new (0, _collision.Collision)({
-                center: this.point,
-                color
-            });
-            this.layer.addChild(this.item.group);
-        }
-        equals(other) {
-            return (0, _util.fuzzyEquals)(this.point, other?.point);
-        }
-        getColor() {
-            return this.beams.length ? (0, _chromaJsDefault.default).average(this.beams.map((beam)=>beam.getColor())).hex() : undefined;
-        }
-        removeItem() {
-            if (this.item) {
-                this.item.remove();
-                this.item = undefined;
-            }
-        }
-        update() {
-            // Remove any beam which no longer matches its collision point
-            this.beams = this.beams.filter((beam)=>this.equals(beam.getCollision()));
-            const color = this.getColor();
-            // Remove no longer valid collision items
-            if (this.item && (!this.beams.length || this.item.color !== color)) this.removeItem();
-            // Add missing collision items
-            if (this.beams.length && !this.item) this.addItem(color);
-        }
-        static id(point) {
-            const rounded = point.round();
-            return [
-                rounded.x,
-                rounded.y
-            ].join(",");
-        }
-    };
-    static Events = Object.freeze({
-        Error: "puzzle-error",
-        Loaded: "puzzle-loaded",
-        Mask: "puzzle-mask",
-        Solved: "puzzle-solved",
-        Updated: "puzzle-updated"
-    });
-    static Mask = class {
-        constructor(filter, configuration = {}){
-            configuration.style = configuration.style || {};
-            this.configuration = configuration;
-            this.filter = filter;
-            this.onClick = configuration.onClick;
-            this.onUnmask = configuration.onUnmask;
-        }
-    };
-    // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
-    static #connectedBeams = (item)=>item.type === (0, _item.Item).Types.beam && item.isConnected();
-    static #solvedMask = new Puzzle.Mask((tile)=>tile.items.some(Puzzle.#connectedBeams), {
-        style: (tile)=>{
-            const beams = tile.items.filter(Puzzle.#connectedBeams);
-            const colors = beams.flatMap((beam)=>beam.getSteps(tile).flatMap((step)=>step.color));
-            return {
-                fillColor: (0, _chromaJsDefault.default).average(colors).hex()
-            };
-        }
-    });
-}
-
-},{"./layout":"kCkVw","chroma-js":"iVrwS","paper":"agkns","./util":"92uDI","./item":"klNFr","./items/mask":"dOejK","./modifier":"bQhih","./items/beam":"9UvIU","./items/collision":"hUIiT","./stateful":"2njM8","./coordinates/offset":"3z9Dj","./state":"7XqMQ","../puzzles":"7ifRD","./step":"71fBe","./eventListener":"8PUhN","./solution":"foTr2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kCkVw":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Layout", ()=>Layout);
-var _paper = require("paper");
-var _paperDefault = parcelHelpers.interopDefault(_paper);
-var _cube = require("./coordinates/cube");
-var _offset = require("./coordinates/offset");
-var _tile = require("./items/tile");
-var _util = require("./util");
-var _stateful = require("./stateful");
-class Layout extends (0, _stateful.Stateful) {
-    #tilesByAxial = [];
-    #tilesByOffset = [];
-    items = [];
-    layers = {};
-    tiles = [];
-    tileSize = 120;
-    constructor(state){
-        super(state);
-        this.type = state.type || Layout.Types.oddR;
-        const center = (0, _paperDefault.default).view.center;
-        const parameters = (0, _tile.Tile).parameters(this.tileSize);
-        const tiles = state.tiles;
-        // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
-        const height = tiles.length * parameters.width;
-        const startingOffsetY = center.y - height / 2;
-        this.layers.tiles = new (0, _paper.Layer)();
-        this.layers.items = new (0, _paper.Layer)();
-        // Find the widest row
-        const widestRow = tiles.reduce((current, row, index)=>{
-            const length = row.length;
-            // Favor offset rows, since they will be wider
-            if (length > current.length || length === current.length && this.#isOffsetRow(index)) return {
-                index,
-                length
-            };
-            return current;
-        }, {
-            index: 0,
-            length: 0
-        });
-        const width = widestRow.length * parameters.width + (this.#isOffsetRow(widestRow.index) ? parameters.inradius : 0);
-        const startingOffsetX = center.x - width / 2;
-        for(let r = 0; r < tiles.length; r++){
-            const row = tiles[r];
-            const rowByAxial = new Array(row.length).fill(null);
-            const rowByOffset = new Array(row.length).fill(null);
-            const rowOffset = Math.floor(r / 2);
-            for(let c = 0; c < row.length; c++){
-                const axial = new (0, _cube.CubeCoordinates)(c - rowOffset, r);
-                const offset = new (0, _offset.OffsetCoordinates)(r, c);
-                const layout = {
-                    row: r,
-                    column: c,
-                    // Shift row to the right if it is an offset row
-                    startingOffsetX: startingOffsetX + (this.#isOffsetRow(r) ? parameters.inradius : 0),
-                    startingOffsetY
-                };
-                const state = row[c];
-                if (!state) continue;
-                const tile = new (0, _tile.Tile)({
-                    axial,
-                    offset
-                }, layout, parameters, state);
-                this.layers.tiles.addChild(tile.group);
-                if (tile.items.length) {
-                    this.items.push(...tile.items);
-                    this.layers.items.addChildren(tile.items.map((item)=>item.group));
-                }
-                this.tiles.push(tile);
-                rowByAxial[axial.q] = tile;
-                rowByOffset[offset.c] = tile;
-            }
-            this.#tilesByAxial.push(rowByAxial);
-            this.#tilesByOffset.push(rowByOffset);
-        }
-    }
-    getTileByAxial(axial) {
-        return (this.#tilesByAxial[axial.r] || [])[axial.q];
-    }
-    getTileByOffset(offset) {
-        return this.#tilesByOffset[offset.r][offset.c];
-    }
-    getState() {
-        // Tiles are defined by offset in the puzzle state
-        return Object.assign(super.getState(), {
-            tiles: this.#tilesByOffset.map((row)=>row.map((tile)=>tile?.getState() || null))
-        });
-    }
-    getNeighboringTile(axial, direction) {
-        return this.getTileByAxial((0, _cube.CubeCoordinates).neighbor(axial, (0, _util.getConvertedDirection)(direction)));
-    }
-    teardown() {
-        Object.values(this.layers).forEach((layer)=>layer.removeChildren());
-    }
-    #isOffsetRow(index) {
-        return index % 2 === 0 ? this.type === Layout.Types.evenR : this.type === Layout.Types.oddR;
-    }
-    static Types = Object.freeze({
-        evenR: "even-r",
-        oddR: "odd-r"
-    });
-}
-
-},{"paper":"agkns","./coordinates/cube":"dL4ay","./coordinates/offset":"3z9Dj","./items/tile":"3fTdS","./util":"92uDI","./stateful":"2njM8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dL4ay":[function(require,module,exports) {
+},{}],"dL4ay":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 /**
@@ -20210,9 +20208,9 @@ class Tile extends (0, _item.Item) {
         if (modifiers.length) state.modifiers = modifiers;
         return state;
     }
-    onClick(event) {
+    onTap(event) {
         console.debug(this.coordinates.offset.toString(), this);
-        this.items.forEach((item)=>item.onClick(event));
+        this.items.forEach((item)=>item.onTap(event));
     }
     onDeselected(selectedTile) {
         this.selected = false;
@@ -20364,7 +20362,7 @@ class Item extends (0, _stateful.Stateful) {
     getLayer() {
         return this.group.parent;
     }
-    onClick() {}
+    onTap() {}
     onCollision({ collisionStep }) {
         return collisionStep;
     }
@@ -20403,7 +20401,6 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "params", ()=>params);
 parcelHelpers.export(exports, "url", ()=>url);
 parcelHelpers.export(exports, "jsonDiffPatch", ()=>jsonDiffPatch);
-parcelHelpers.export(exports, "MouseButton", ()=>MouseButton);
 parcelHelpers.export(exports, "addClass", ()=>addClass);
 parcelHelpers.export(exports, "addDegrees", ()=>addDegrees);
 parcelHelpers.export(exports, "addDirection", ()=>addDirection);
@@ -20451,10 +20448,6 @@ const params = new URLSearchParams(location.search);
 const url = new URL(location);
 const jsonDiffPatch = _jsondiffpatch.create({
     objectHash: deepEqual
-});
-const MouseButton = Object.freeze({
-    Left: 0,
-    Right: 2
 });
 function addClass(className, ...elements) {
     elements.forEach((element)=>element.classList.add(className));
@@ -30716,16 +30709,13 @@ class Move extends (0, _modifier.Modifier) {
     #mask;
     name = "drag_pan";
     title = "Move";
-    attach() {
-        super.attach();
-    }
-    onClick(event) {
-        super.onClick(event);
+    onTap(event) {
+        super.onTap(event);
         const items = this.tile.items.filter(Move.movable);
         if (this.#mask || !items.length) return;
         this.tile.beforeModify();
         const mask = new (0, _puzzle.Puzzle).Mask(this.tileFilter.bind(this), {
-            onClick: this.#maskOnClick.bind(this),
+            onTap: this.#maskOnTap.bind(this),
             onUnmask: ()=>this.tile.afterModify()
         });
         this.#mask = mask;
@@ -30754,7 +30744,7 @@ class Move extends (0, _modifier.Modifier) {
         // Filter out immutable tiles and tiles with items, except for the current tile
         return tile.modifiers.some((0, _modifier.Modifier).immutable) || tile.items.filter((item)=>item.type !== (0, _item.Item).Types.beam).length > 0 && !(tile === this.tile);
     }
-    #maskOnClick(puzzle, tile) {
+    #maskOnTap(puzzle, tile) {
         if (tile) {
             const data = this.moveItems(tile);
             puzzle.updateState();
@@ -30802,13 +30792,18 @@ parcelHelpers.export(exports, "Modifier", ()=>Modifier);
 var _util = require("./util");
 var _puzzle = require("./puzzle");
 var _stateful = require("./stateful");
-var _eventListener = require("./eventListener");
+var _eventListeners = require("./eventListeners");
+var _interact = require("./interact");
 const modifiersImmutable = document.getElementById("modifiers-immutable");
 const modifiersMutable = document.getElementById("modifiers-mutable");
+const navigator = window.navigator;
 let uniqueId = 0;
 class Modifier extends (0, _stateful.Stateful) {
     #container;
-    #eventListener;
+    #down = false;
+    #eventListener = new (0, _eventListeners.EventListeners)({
+        context: this
+    });
     #mask;
     #selectionTime = 500;
     #timeoutId;
@@ -30826,20 +30821,6 @@ class Modifier extends (0, _stateful.Stateful) {
         super(state);
         this.tile = tile;
         this.type = state.type;
-        this.#eventListener = new (0, _eventListener.EventListener)(this, {
-            click: this.#onClick,
-            deselected: this.onDeselected,
-            mousedown: this.onMouseDown,
-            mouseleave: this.onMouseLeave,
-            mouseup: this.onMouseUp,
-            touchstart: {
-                handler: this.onTouchStart,
-                options: {
-                    passive: false
-                }
-            },
-            touchend: this.onTouchEnd
-        });
     }
     /**
    * Attach the modifier to the DOM and add listeners.
@@ -30854,7 +30835,26 @@ class Modifier extends (0, _stateful.Stateful) {
         span.classList.add("material-symbols-outlined", "fill");
         li.append(span);
         this.update();
-        this.#eventListener.addEventListeners(li);
+        this.#eventListener.add([
+            {
+                type: "deselected",
+                handler: this.onDeselected
+            },
+            {
+                type: "pointerdown",
+                handler: this.onPointerDown
+            },
+            {
+                type: "pointerleave",
+                handler: this.onPointerUp
+            },
+            {
+                type: "pointerup",
+                handler: this.onPointerUp
+            }
+        ], {
+            element: li
+        });
         this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li);
     }
     /**
@@ -30862,7 +30862,7 @@ class Modifier extends (0, _stateful.Stateful) {
    */ detach() {
         if (!this.#container) return;
         Modifier.deselect();
-        this.#eventListener.removeEventListeners();
+        this.#eventListener.remove();
         this.#container.remove();
         this.selected = false;
         this.element = undefined;
@@ -30886,9 +30886,6 @@ class Modifier extends (0, _stateful.Stateful) {
         // Filter out immutable tiles
         return tile.modifiers.some((modifier)=>modifier.type === Modifier.Types.immutable);
     }
-    onClick() {
-        this.selected = false;
-    }
     onDeselected() {
         this.update({
             selected: false
@@ -30896,41 +30893,49 @@ class Modifier extends (0, _stateful.Stateful) {
         this.tile.afterModify();
         this.dispatchEvent(Modifier.Events.Deselected);
     }
-    onMouseDown() {
-        if (!this.#mask && !this.tile.modifiers.some((modifier)=>[
-                Modifier.Types.immutable,
-                Modifier.Types.lock
-            ].includes(modifier.type))) this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime);
+    onPointerDown(event) {
+        if (event.button !== 0) // Support toggle on non-primary pointer button
+        this.onToggle(event);
+        else {
+            this.#down = true;
+            if (!this.#mask && !this.tile.modifiers.some((modifier)=>[
+                    Modifier.Types.immutable,
+                    Modifier.Types.lock
+                ].includes(modifier.type))) this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime);
+        }
     }
-    onMouseLeave() {
+    onPointerUp(event) {
         clearTimeout(this.#timeoutId);
-    }
-    onMouseUp() {
-        clearTimeout(this.#timeoutId);
+        if (this.#down && !this.disabled && !this.selected) switch(event.type){
+            case "pointerleave":
+                // Support swiping up on pointer device
+                this.onToggle(event);
+                break;
+            case "pointerup":
+                this.onTap(event);
+                break;
+        }
+        this.#down = false;
     }
     onSelected() {
         Modifier.deselect();
+        navigator.vibrate((0, _interact.Interact).vibratePattern);
         this.update({
             selected: true
         });
         this.tile.beforeModify();
         const mask = this.#mask = new (0, _puzzle.Puzzle).Mask(this.#moveFilter.bind(this), {
-            onClick: this.#maskOnClick.bind(this)
+            onTap: this.#maskOnTap.bind(this)
         });
         this.dispatchEvent((0, _puzzle.Puzzle).Events.Mask, {
             mask
         });
     }
-    onTouchEnd(event) {
-        // Prevent any mouse events from firing
-        event.preventDefault();
-        this.onMouseUp(event);
-        this.#onClick(event);
+    onTap() {
+        this.selected = false;
     }
-    onTouchStart(event) {
-        // Prevent any mouse events from firing
-        event.preventDefault();
-        this.onMouseDown(event);
+    onToggle() {
+        navigator.vibrate((0, _interact.Interact).vibratePattern);
     }
     remove() {
         this.detach();
@@ -30953,7 +30958,7 @@ class Modifier extends (0, _stateful.Stateful) {
         this.element.textContent = this.name;
         this.element.title = this.title;
     }
-    #maskOnClick(puzzle, tile) {
+    #maskOnTap(puzzle, tile) {
         if (tile && tile !== this.tile) {
             const fromTile = this.tile;
             this.move(tile);
@@ -30975,9 +30980,6 @@ class Modifier extends (0, _stateful.Stateful) {
     #moveFilter(tile) {
         // Always include current tile
         return !tile.equals(this.tile) && this.moveFilter(tile);
-    }
-    #onClick(event) {
-        if (!this.disabled && !this.selected) return this.onClick(event);
     }
     static deselect() {
         const selectedModifier = document.querySelector(".modifiers .selected");
@@ -31004,30 +31006,235 @@ class Modifier extends (0, _stateful.Stateful) {
         ])));
 }
 
-},{"./util":"92uDI","./puzzle":"jIcx0","./stateful":"2njM8","./eventListener":"8PUhN","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8PUhN":[function(require,module,exports) {
+},{"./util":"92uDI","./puzzle":"jIcx0","./stateful":"2njM8","./eventListeners":"8T0Qv","./interact":"fHNCq","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8T0Qv":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "EventListener", ()=>EventListener);
-class EventListener {
+parcelHelpers.export(exports, "EventListeners", ()=>EventListeners);
+class EventListeners {
+    #events = [];
+    #options = {
+        element: document
+    };
+    constructor(options = {}){
+        this.#options = Object.assign(this.#options, options);
+    }
+    add(events, options = {}) {
+        this.#events = this.#events.concat(events.map((event)=>{
+            event = Object.assign({}, this.#options, options, event);
+            if (!event.type) throw new Error("Event type is required");
+            if (event.context) event.handler = event.handler.bind(event.context);
+            event.element.addEventListener(event.type, event.handler, event.options);
+            return event;
+        }));
+    }
+    remove() {
+        this.#events.forEach((event)=>event.element.removeEventListener(event.type, event.handler));
+        this.#events = [];
+    }
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fHNCq":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Interact", ()=>Interact);
+var _paper = require("paper");
+var _paperDefault = parcelHelpers.interopDefault(_paper);
+var _cache = require("./cache");
+var _eventListeners = require("./eventListeners");
+class Interact {
+    #bounds;
+    #cache = new (0, _cache.Cache)(Object.values(Interact.CacheKeys));
     #element;
-    #listeners = {};
-    constructor(context, events){
-        Object.entries(events).forEach(([name, config])=>{
-            // Support [name: handler]
-            if (typeof config === "function") config = {
-                handler: config
-            };
-            config.handler = config.handler.bind(context);
-            this.#listeners[name] = config;
+    #eventListener = new (0, _eventListeners.EventListeners)({
+        context: this
+    });
+    #offset;
+    constructor(element){
+        this.#bounds = element.getBoundingClientRect();
+        this.#element = element;
+        this.#offset = new (0, _paper.Point)(this.#bounds.left, this.#bounds.top);
+        this.#eventListener.add([
+            {
+                type: "pointercancel",
+                handler: this.onPointerUp
+            },
+            {
+                type: "pointerdown",
+                handler: this.onPointerDown
+            },
+            {
+                type: "pointerleave",
+                handler: this.onPointerUp
+            },
+            {
+                type: "pointermove",
+                handler: this.onPointerMove
+            },
+            {
+                type: "pointerout",
+                handler: this.onPointerUp
+            },
+            {
+                type: "pointerup",
+                handler: this.onPointerUp
+            },
+            {
+                type: "wheel",
+                handler: this.onMouseWheel,
+                options: {
+                    passive: false
+                }
+            }
+        ], {
+            element
         });
     }
-    addEventListeners(element) {
-        this.#element = element ?? document;
-        Object.entries(this.#listeners).forEach(([name, config])=>this.#element.addEventListener(name, config.handler, config.options));
+    onMouseWheel(event) {
+        event.preventDefault();
+        this.#zoom(new (0, _paper.Point)(event.offsetX, event.offsetY), event.deltaY, 1.05);
     }
-    removeEventListeners() {
-        if (!this.#element) return;
-        Object.entries(this.#listeners).forEach(([event, config])=>this.#element.removeEventListener(event, config.handler));
+    onPan(event) {
+        const point = this.#getPoint(event);
+        const pan = this.#getGesture(Interact.GestureKeys.Pan);
+        if (!pan) {
+            this.#setGesture(Interact.GestureKeys.Pan, {
+                from: point
+            });
+            return;
+        }
+        const center = pan.from.subtract(point).add((0, _paperDefault.default).view.center);
+        // Allow a little wiggle room to prevent panning on tap
+        if ((0, _paperDefault.default).view.center.subtract(center).length > 1) {
+            if (!document.body.classList.contains("grab")) document.body.classList.add("grab");
+            // Center on the cursor
+            (0, _paperDefault.default).view.center = center;
+        }
+    }
+    onPinch(events) {
+        const pointer0 = events[0];
+        const pointer1 = events[1];
+        const delta = Math.abs(pointer0.clientX - pointer1.clientX);
+        const pinch = this.#getGesture(Interact.GestureKeys.Pinch);
+        if (!pinch) {
+            const point0 = new (0, _paper.Point)(pointer0.clientX, pointer0.clientY);
+            const point1 = new (0, _paper.Point)(pointer1.clientX, pointer1.clientY);
+            const vector = point1.subtract(point0).divide(2);
+            const center = point1.subtract(vector).subtract(this.#offset);
+            this.#setGesture(Interact.GestureKeys.Pinch, {
+                center,
+                delta
+            });
+            return;
+        }
+        if (delta > 1) this.#zoom(pinch.center, pinch.delta - delta, 1.01);
+        pinch.delta = delta;
+    }
+    onPointerDown(event) {
+        this.#cache.get(Interact.CacheKeys.Down).set(event.pointerId, event);
+    }
+    onPointerMove(event) {
+        const down = this.#cache.get(Interact.CacheKeys.Down).get(event.pointerId);
+        if (!down) // Ignore events until there is a pointer down event
+        return;
+        // For some reason pointermove fires on mobile even if there was no movement
+        const diff = this.#getPoint(event).subtract(this.#getPoint(down)).length;
+        if (diff > 1) {
+            this.#cache.get(Interact.CacheKeys.Move).set(event.pointerId, event);
+            const events = this.#cache.get(Interact.CacheKeys.Move).values();
+            if (events.length === 2) this.onPinch(events);
+            else this.onPan(event);
+        }
+    }
+    onPointerUp(event) {
+        const down = this.#cache.get(Interact.CacheKeys.Down).get(event.pointerId);
+        if (!down) return;
+        if (this.#cache.length(Interact.CacheKeys.Down) === 1 && !this.#cache.get(Interact.CacheKeys.Move).get(event.pointerId)) this.onTap(down);
+        document.body.classList.remove("grab");
+        this.#cache.get(Interact.CacheKeys.Down).unset(event.pointerId);
+        this.#cache.get(Interact.CacheKeys.Move).unset(event.pointerId);
+        this.#cache.get(Interact.CacheKeys.Gesture).unset(Interact.GestureKeys.Pan);
+        if (this.#cache.length(Interact.CacheKeys.Move) < 2) this.#cache.get(Interact.CacheKeys.Gesture).unset(Interact.GestureKeys.Pinch);
+    }
+    onTap(event) {
+        const point = this.#getPoint(event);
+        this.#element.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, {
+            detail: {
+                event,
+                point
+            }
+        }));
+    }
+    #getGesture(key) {
+        return this.#cache.get(Interact.CacheKeys.Gesture).get(key);
+    }
+    #getPoint(event) {
+        return (0, _paperDefault.default).view.viewToProject(new (0, _paper.Point)(event.clientX, event.clientY).subtract(this.#offset));
+    }
+    #setGesture(key, value) {
+        this.#cache.get(Interact.CacheKeys.Gesture).set(key, value);
+    }
+    #zoom(point, delta, factor) {
+        const zoom = delta < 0 ? (0, _paperDefault.default).view.zoom * factor : (0, _paperDefault.default).view.zoom / factor;
+        // Don't allow zooming too far in or out
+        if (zoom > 2 || zoom < 0.5) return;
+        // Convert the touch point from the view coordinate space to the project coordinate space
+        const touchPoint = (0, _paperDefault.default).view.viewToProject(point);
+        const touchOffset = touchPoint.subtract((0, _paperDefault.default).view.center);
+        // Adjust center towards cursor location
+        const zoomOffset = touchPoint.subtract(touchOffset.multiply((0, _paperDefault.default).view.zoom / zoom)).subtract((0, _paperDefault.default).view.center);
+        (0, _paperDefault.default).view.zoom = zoom;
+        (0, _paperDefault.default).view.center = (0, _paperDefault.default).view.center.add(zoomOffset);
+    }
+    static CacheKeys = Object.freeze({
+        Down: "down",
+        Move: "move",
+        Gesture: "gesture"
+    });
+    static GestureKeys = Object.freeze({
+        Pan: "pan",
+        Pinch: "pinch",
+        Tap: "tap"
+    });
+    static vibratePattern = 25;
+}
+
+},{"paper":"agkns","./cache":"dDiTO","./eventListeners":"8T0Qv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dDiTO":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Cache", ()=>Cache);
+class Cache {
+    #cache = {};
+    #hasKeys;
+    #keys;
+    constructor(keys = []){
+        this.#keys = keys;
+        this.#hasKeys = keys.length !== 0;
+        keys.forEach((key)=>{
+            this.#cache[key] = new Cache();
+        });
+    }
+    set(key, item) {
+        if (this.#hasKeys && !this.#keys.includes(key)) throw new Error(`Invalid key: ${key}`);
+        this.#cache[key] = item;
+    }
+    get(key) {
+        return key ? this.#cache[key] : this.#cache;
+    }
+    keys(key) {
+        return Object.keys(this.#get(key));
+    }
+    length(key) {
+        return this.keys(key).length;
+    }
+    unset(key) {
+        delete this.#cache[key];
+    }
+    values(key) {
+        return Object.values(this.#get(key));
+    }
+    #get(key) {
+        const value = this.get(key);
+        return value instanceof Cache ? value.get() : value;
     }
 }
 
@@ -31255,7 +31462,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
                 return !(this.parent === tile || destinationTiles.some((destinationTile)=>destinationTile === tile));
             }, {
                 beam,
-                onClick: (puzzle, tile)=>{
+                onTap: (puzzle, tile)=>{
                     const destination = destinations.find((portal)=>portal.parent === tile);
                     if (destination) {
                         beam.addStep(this.#step(destination, nextStep, portalState));
@@ -31305,25 +31512,23 @@ class Rotate extends (0, _modifier.Modifier) {
         // Filter out tiles that contain no rotatable items
         return super.moveFilter(tile) || !tile.items.some((item)=>item.rotatable);
     }
-    onClick(event) {
-        super.onClick(event);
+    onTap(event) {
+        super.onTap(event);
         const items = this.tile.items.filter((item)=>item.rotatable);
         items.forEach((item)=>item.rotate(this.clockwise));
         this.dispatchEvent((0, _modifier.Modifier).Events.Invoked, {
             items
         });
     }
-    onMouseDown(event) {
-        // Change rotation direction if user right-clicks on the modifier
-        if (event.button === (0, _util.MouseButton).Right) {
-            this.clockwise = !this.clockwise;
-            this.updateState((state)=>{
-                state.clockwise = this.clockwise;
-            });
-            this.update({
-                name: Rotate.Names[this.clockwise ? "right" : "left"]
-            });
-        } else super.onMouseDown(event);
+    onToggle() {
+        super.onToggle();
+        this.clockwise = !this.clockwise;
+        this.updateState((state)=>{
+            state.clockwise = this.clockwise;
+        });
+        this.update({
+            name: Rotate.Names[this.clockwise ? "right" : "left"]
+        });
     }
     static Names = Object.freeze({
         left: "rotate_left",
@@ -31575,8 +31780,8 @@ class Toggle extends (0, _modifier.Modifier) {
         // Filter out tiles that contain no toggleable items
         return super.moveFilter(tile) || !tile.items.some((item)=>item.toggleable);
     }
-    onClick(event) {
-        super.onClick(event);
+    onTap(event) {
+        super.onTap(event);
         this.on = !this.on;
         const items = this.tile.items.filter((item)=>item.toggleable);
         items.forEach((item)=>item.toggle(this.on));
@@ -31852,10 +32057,10 @@ class Beam extends (0, _item.Item) {
         this.addStep(step.copy({
             colors: mergeWith.colors,
             onAdd: ()=>{
-                this.#cache.get(Beam.CacheKeys.MergeWith).add(beam.id, mergeWith);
+                this.#cache.get(Beam.CacheKeys.MergeWith).set(beam.id, mergeWith);
             },
             onRemove: ()=>{
-                this.#cache.get(Beam.CacheKeys.MergeWith).remove(beam.id);
+                this.#cache.get(Beam.CacheKeys.MergeWith).unset(beam.id);
             },
             state: step.state.copy(new (0, _step.StepState).MergeWith(mergeWith))
         }));
@@ -32152,34 +32357,7 @@ class CollisionMergeWith {
     }
 }
 
-},{"./step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dDiTO":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "Cache", ()=>Cache);
-class Cache {
-    #cache = {};
-    #hasKeys;
-    #keys;
-    constructor(keys = []){
-        this.#keys = keys;
-        this.#hasKeys = keys.length !== 0;
-        keys.forEach((key)=>{
-            this.#cache[key] = new Cache();
-        });
-    }
-    add(key, item) {
-        if (this.#hasKeys && !this.#keys.includes(key)) throw new Error(`Invalid key: ${key}`);
-        this.#cache[key] = item;
-    }
-    get(key) {
-        return key ? this.#cache[key] : this.#cache;
-    }
-    remove(key) {
-        delete this.#cache[key];
-    }
-}
-
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cTFZx":[function(require,module,exports) {
+},{"./step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cTFZx":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Reflector", ()=>Reflector);
@@ -32650,7 +32828,7 @@ class State {
             const cachedVersion = state.#version;
             const originalVersion = state.#original.version;
             if (cachedVersion !== originalVersion) {
-                console.log(`Invalidating cache for ID ${id} due to version mismatch. ` + `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`);
+                console.debug(`Invalidating cache for ID ${id} due to version mismatch. ` + `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`);
                 state = undefined;
                 State.clearCache(id);
             }
@@ -34709,7 +34887,7 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Solution", ()=>Solution);
 var _util = require("./util");
 var _terminus = require("./items/terminus");
-var _eventListener = require("./eventListener");
+var _eventListeners = require("./eventListeners");
 var _puzzle = require("./puzzle");
 class Solution {
     #conditions = [];
@@ -34758,7 +34936,9 @@ class SolutionCondition {
 }
 class Connections extends SolutionCondition {
     #completed;
-    #eventListener;
+    #eventListeners = new (0, _eventListeners.EventListeners)({
+        context: this
+    });
     #connections = [];
     constructor(state){
         const completed = document.createElement("span");
@@ -34773,17 +34953,22 @@ class Connections extends SolutionCondition {
         ];
         super(state, elements);
         this.#completed = completed;
-        this.#eventListener = new (0, _eventListener.EventListener)(this, {
-            [(0, _terminus.Terminus).Events.Connection]: this.update,
-            [(0, _terminus.Terminus).Events.Disconnection]: this.update
-        });
-        this.#eventListener.addEventListeners();
+        this.#eventListeners.add([
+            {
+                type: (0, _terminus.Terminus).Events.Connection,
+                handler: this.update
+            },
+            {
+                type: (0, _terminus.Terminus).Events.Disconnection,
+                handler: this.update
+            }
+        ]);
     }
     isMet() {
         return this.#connections.length === this.state.amount;
     }
     teardown() {
-        this.#eventListener.removeEventListeners();
+        this.#eventListeners.remove();
         super.teardown();
     }
     update(event) {
@@ -34799,7 +34984,9 @@ class Connections extends SolutionCondition {
 }
 class Moves extends SolutionCondition {
     #completed;
-    #eventListener;
+    #eventListeners = new (0, _eventListeners.EventListeners)({
+        context: this
+    });
     #moves = 0;
     constructor(state){
         state.operator ??= Moves.Operators.equalTo;
@@ -34816,10 +35003,12 @@ class Moves extends SolutionCondition {
         ];
         super(state, elements);
         this.#completed = completed;
-        this.#eventListener = new (0, _eventListener.EventListener)(this, {
-            [(0, _puzzle.Puzzle).Events.Updated]: this.update
-        });
-        this.#eventListener.addEventListeners();
+        this.#eventListeners.add([
+            {
+                type: (0, _puzzle.Puzzle).Events.Updated,
+                handler: this.update
+            }
+        ]);
     }
     isMet() {
         // TODO: support 'between' syntax like 2 < 3 < 4 ?
@@ -34833,7 +35022,7 @@ class Moves extends SolutionCondition {
         }
     }
     teardown() {
-        this.#eventListener.removeEventListeners();
+        this.#eventListeners.remove();
         super.teardown();
     }
     update(event) {
@@ -34848,6 +35037,27 @@ class Moves extends SolutionCondition {
     });
 }
 
-},{"./util":"92uDI","./items/terminus":"7I7P6","./eventListener":"8PUhN","./puzzle":"jIcx0","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4rkIz","8lqZg"], "8lqZg", "parcelRequiref3c5")
+},{"./util":"92uDI","./items/terminus":"7I7P6","./eventListeners":"8T0Qv","./puzzle":"jIcx0","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7tCga":[function(require,module,exports) {
+const dialog = document.getElementById("dialog");
+document.getElementById("info").addEventListener("click", ()=>{
+    if (!dialog.open) dialog.showModal();
+});
+
+},{}],"7Nkch":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "debug", ()=>debug);
+var _util = require("./util");
+const console = window.console = window.console || {
+    debug: function() {}
+};
+const consoleDebug = console.debug;
+function debug(debug) {
+    console.debug = debug ? consoleDebug : function() {};
+}
+// Silence debug logging by default
+debug((0, _util.params).has("debug") ?? false);
+
+},{"./util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["4rkIz","8lqZg"], "8lqZg", "parcelRequiref3c5")
 
 //# sourceMappingURL=index.975ef6c8.js.map
