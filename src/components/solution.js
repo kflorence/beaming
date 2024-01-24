@@ -1,6 +1,6 @@
 import { capitalize, getIconElement, getTextElement } from './util'
 import { Terminus } from './items/terminus'
-import { EventListener } from './eventListener'
+import { EventListeners } from './eventListeners'
 import { Puzzle } from './puzzle'
 
 export class Solution {
@@ -62,7 +62,7 @@ class SolutionCondition {
 
 class Connections extends SolutionCondition {
   #completed
-  #eventListener
+  #eventListeners = new EventListeners({ context: this })
   #connections = []
 
   constructor (state) {
@@ -83,12 +83,10 @@ class Connections extends SolutionCondition {
 
     this.#completed = completed
 
-    this.#eventListener = new EventListener(this, {
-      [Terminus.Events.Connection]: this.update,
-      [Terminus.Events.Disconnection]: this.update
-    })
-
-    this.#eventListener.addEventListeners()
+    this.#eventListeners.add([
+      { type: Terminus.Events.Connection, handler: this.update },
+      { type: Terminus.Events.Disconnection, handler: this.update }
+    ])
   }
 
   isMet () {
@@ -96,7 +94,7 @@ class Connections extends SolutionCondition {
   }
 
   teardown () {
-    this.#eventListener.removeEventListeners()
+    this.#eventListeners.remove()
     super.teardown()
   }
 
@@ -120,7 +118,7 @@ class Connections extends SolutionCondition {
 
 class Moves extends SolutionCondition {
   #completed
-  #eventListener
+  #eventListeners = new EventListeners({ context: this })
   #moves = 0
 
   constructor (state) {
@@ -146,8 +144,7 @@ class Moves extends SolutionCondition {
     super(state, elements)
 
     this.#completed = completed
-    this.#eventListener = new EventListener(this, { [Puzzle.Events.Updated]: this.update })
-    this.#eventListener.addEventListeners()
+    this.#eventListeners.add([{ type: Puzzle.Events.Updated, handler: this.update }])
   }
 
   isMet () {
@@ -163,7 +160,7 @@ class Moves extends SolutionCondition {
   }
 
   teardown () {
-    this.#eventListener.removeEventListeners()
+    this.#eventListeners.remove()
     super.teardown()
   }
 

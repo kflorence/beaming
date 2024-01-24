@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { addDirection, coalesce, MouseButton } from '../util'
+import { addDirection, coalesce } from '../util'
 
 export class Rotate extends Modifier {
   clockwise
@@ -17,8 +17,8 @@ export class Rotate extends Modifier {
     return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
   }
 
-  onClick (event) {
-    super.onClick(event)
+  onTap (event) {
+    super.onTap(event)
 
     const items = this.tile.items.filter((item) => item.rotatable)
     items.forEach((item) => item.rotate(this.clockwise))
@@ -26,15 +26,12 @@ export class Rotate extends Modifier {
     this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
-  onMouseDown (event) {
-    // Change rotation direction if user right-clicks on the modifier
-    if (event.button === MouseButton.Right) {
-      this.clockwise = !this.clockwise
-      this.updateState((state) => { state.clockwise = this.clockwise })
-      this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
-    } else {
-      super.onMouseDown(event)
-    }
+  onToggle () {
+    super.onToggle()
+
+    this.clockwise = !this.clockwise
+    this.updateState((state) => { state.clockwise = this.clockwise })
+    this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
   }
 
   static Names = Object.freeze({ left: 'rotate_left', right: 'rotate_right ' })

@@ -112,7 +112,7 @@ export class Portal extends movable(rotatable(Item)) {
         },
         {
           beam,
-          onClick: (puzzle, tile) => {
+          onTap: (puzzle, tile) => {
             const destination = destinations.find((portal) => portal.parent === tile)
             if (destination) {
               beam.addStep(this.#step(destination, nextStep, portalState))

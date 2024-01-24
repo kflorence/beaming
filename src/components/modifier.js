@@ -1,16 +1,19 @@
 import { capitalize, emitEvent } from './util'
 import { Puzzle } from './puzzle'
 import { Stateful } from './stateful'
-import { EventListener } from './eventListener'
+import { EventListeners } from './eventListeners'
+import { Interact } from './interact'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
+const navigator = window.navigator
 
 let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
-  #eventListener
+  #down = false
+  #eventListener = new EventListeners({ context: this })
   #mask
   #selectionTime = 500
   #timeoutId
@@ -31,16 +34,6 @@ export class Modifier extends Stateful {
 
     this.tile = tile
     this.type = state.type
-
-    this.#eventListener = new EventListener(this, {
-      click: this.#onClick,
-      deselected: this.onDeselected,
-      mousedown: this.onMouseDown,
-      mouseleave: this.onMouseLeave,
-      mouseup: this.onMouseUp,
-      touchstart: { handler: this.onTouchStart, options: { passive: false } },
-      touchend: this.onTouchEnd
-    })
   }
 
   /**
@@ -63,7 +56,12 @@ export class Modifier extends Stateful {
 
     this.update()
 
-    this.#eventListener.addEventListeners(li)
+    this.#eventListener.add([
+      { type: 'deselected', handler: this.onDeselected },
+      { type: 'pointerdown', handler: this.onPointerDown },
+      { type: 'pointerleave', handler: this.onPointerUp },
+      { type: 'pointerup', handler: this.onPointerUp }
+    ], { element: li })
 
     this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li)
   }
@@ -78,7 +76,7 @@ export class Modifier extends Stateful {
 
     Modifier.deselect()
 
-    this.#eventListener.removeEventListeners()
+    this.#eventListener.remove()
     this.#container.remove()
 
     this.selected = false
@@ -105,54 +103,65 @@ export class Modifier extends Stateful {
     return tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
   }
 
-  onClick () {
-    this.selected = false
-  }
-
   onDeselected () {
     this.update({ selected: false })
     this.tile.afterModify()
     this.dispatchEvent(Modifier.Events.Deselected)
   }
 
-  onMouseDown () {
-    if (
-      !this.#mask &&
-      !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
-    ) {
-      this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+  onPointerDown (event) {
+    if (event.button !== 0) {
+      // Support toggle on non-primary pointer button
+      this.onToggle(event)
+    } else {
+      this.#down = true
+      if (
+        !this.#mask &&
+        !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
+      ) {
+        this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
+      }
     }
   }
 
-  onMouseLeave () {
+  onPointerUp (event) {
     clearTimeout(this.#timeoutId)
-  }
 
-  onMouseUp () {
-    clearTimeout(this.#timeoutId)
+    if (this.#down && !this.disabled && !this.selected) {
+      switch (event.type) {
+        case 'pointerleave': {
+          // Support swiping up on pointer device
+          this.onToggle(event)
+          break
+        }
+        case 'pointerup': {
+          this.onTap(event)
+          break
+        }
+      }
+    }
+
+    this.#down = false
   }
 
   onSelected () {
     Modifier.deselect()
 
+    navigator.vibrate(Interact.vibratePattern)
+
     this.update({ selected: true })
     this.tile.beforeModify()
 
-    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onClick: this.#maskOnClick.bind(this) })
+    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onTap: this.#maskOnTap.bind(this) })
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
-  onTouchEnd (event) {
-    // Prevent any mouse events from firing
-    event.preventDefault()
-    this.onMouseUp(event)
-    this.#onClick(event)
+  onTap () {
+    this.selected = false
   }
 
-  onTouchStart (event) {
-    // Prevent any mouse events from firing
-    event.preventDefault()
-    this.onMouseDown(event)
+  onToggle () {
+    navigator.vibrate(Interact.vibratePattern)
   }
 
   remove () {
@@ -178,7 +187,7 @@ export class Modifier extends Stateful {
     this.element.title = this.title
   }
 
-  #maskOnClick (puzzle, tile) {
+  #maskOnTap (puzzle, tile) {
     if (tile && tile !== this.tile) {
       const fromTile = this.tile
 
@@ -201,12 +210,6 @@ export class Modifier extends Stateful {
   #moveFilter (tile) {
     // Always include current tile
     return !tile.equals(this.tile) && this.moveFilter(tile)
-  }
-
-  #onClick (event) {
-    if (!this.disabled && !this.selected) {
-      return this.onClick(event)
-    }
   }
 
   static deselect () {

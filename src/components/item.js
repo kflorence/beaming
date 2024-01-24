@@ -53,7 +53,7 @@ export class Item extends Stateful {
     return this.group.parent
   }
 
-  onClick () {}
+  onTap () {}
 
   onCollision ({ collisionStep }) {
     return collisionStep

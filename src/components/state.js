@@ -241,7 +241,7 @@ export class State {
       const originalVersion = state.#original.version
 
       if (cachedVersion !== originalVersion) {
-        console.log(
+        console.debug(
           `Invalidating cache for ID ${id} due to version mismatch. ` +
           `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`
         )

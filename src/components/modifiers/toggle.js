@@ -24,8 +24,8 @@ export class Toggle extends Modifier {
     return super.moveFilter(tile) || !tile.items.some((item) => item.toggleable)
   }
 
-  onClick (event) {
-    super.onClick(event)
+  onTap (event) {
+    super.onTap(event)
 
     this.on = !this.on
 

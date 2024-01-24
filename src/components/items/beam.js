@@ -325,10 +325,10 @@ export class Beam extends Item {
     this.addStep(step.copy({
       colors: mergeWith.colors,
       onAdd: () => {
-        this.#cache.get(Beam.CacheKeys.MergeWith).add(beam.id, mergeWith)
+        this.#cache.get(Beam.CacheKeys.MergeWith).set(beam.id, mergeWith)
       },
       onRemove: () => {
-        this.#cache.get(Beam.CacheKeys.MergeWith).remove(beam.id)
+        this.#cache.get(Beam.CacheKeys.MergeWith).unset(beam.id)
       },
       state: step.state.copy(new StepState.MergeWith(mergeWith))
     }))

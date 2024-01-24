@@ -66,9 +66,9 @@ export class Tile extends Item {
     return state
   }
 
-  onClick (event) {
+  onTap (event) {
     console.debug(this.coordinates.offset.toString(), this)
-    this.items.forEach((item) => item.onClick(event))
+    this.items.forEach((item) => item.onTap(event))
   }
 
   onDeselected (selectedTile) {

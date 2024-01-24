@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer, Path, Tool } from 'paper'
-import { emitEvent, fuzzyEquals } from './util'
+import paper, { Layer, Path, Size } from 'paper'
+import { addClass, debounce, emitEvent, fuzzyEquals, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -12,15 +12,21 @@ import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
 import { Puzzles } from '../puzzles'
 import { StepState } from './step'
-import { EventListener } from './eventListener'
+import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
+import { Interact } from './interact'
 
 const elements = Object.freeze({
-  beams: document.getElementById('beams'),
-  connections: document.getElementById('connections'),
-  connectionsCompleted: document.getElementById('connections-completed'),
-  connectionsRequired: document.getElementById('connections-required'),
-  message: document.getElementById('message')
+  main: document.getElementById('main'),
+  message: document.getElementById('message'),
+  next: document.getElementById('next'),
+  previous: document.getElementById('previous'),
+  puzzle: document.getElementById('puzzle'),
+  puzzleId: document.getElementById('puzzle-id'),
+  redo: document.getElementById('redo'),
+  reset: document.getElementById('reset'),
+  undo: document.getElementById('undo'),
+  title: document.querySelector('title')
 })
 
 // There are various spots below that utilize setTimeout in order to process events in order and to prevent
@@ -37,41 +43,56 @@ export class Puzzle {
 
   #beams
   #collisions = {}
-  #eventListener
-  #isDragging = false
+  #eventListeners = new EventListeners({ context: this })
+  #interact
   #isUpdatingBeams = false
   #mask
   #solution
   #state
   #termini
   #tiles = []
-  #tool
 
-  constructor (canvas) {
+  constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
     paper.settings.insertItems = false
-    paper.setup(canvas)
+    // noinspection JSCheckFunctionSignatures
+    paper.setup(elements.puzzle)
+
+    this.#resize()
 
     this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    this.#eventListener = new EventListener(this, {
-      keyup: this.#onKeyup,
-      [Beam.Events.Update]: this.#onBeamUpdate,
-      [Modifier.Events.Invoked]: this.#onModifierInvoked,
-      [Puzzle.Events.Mask]: this.#onMask,
-      [Stateful.Events.Update]: this.#onStateUpdate
-    })
+    this.#eventListeners.add([
+      { type: Beam.Events.Update, handler: this.#onBeamUpdate },
+      { type: 'change', element: elements.puzzleId, handler: this.#onSelect },
+      { type: 'click', element: elements.next, handler: this.#next },
+      { type: 'click', element: elements.previous, handler: this.#previous },
+      { type: 'click', element: elements.redo, handler: this.#redo },
+      { type: 'click', element: elements.reset, handler: this.#reset },
+      { type: 'click', element: elements.undo, handler: this.#undo },
+      { type: 'keyup', handler: this.#onKeyup },
+      { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
+      { type: Puzzle.Events.Mask, handler: this.#onMask },
+      { type: 'resize', element: window, handler: debounce(this.#resize) },
+      { type: Stateful.Events.Update, handler: this.#onStateUpdate },
+      { type: 'tap', element: elements.puzzle, handler: this.#onTap }
+    ])
 
-    this.#tool = new Tool()
-    this.#tool.onMouseDrag = (event) => this.#onMouseDrag(event)
-    this.#tool.onMouseUp = (event) => this.#onMouseUp(event)
+    this.#interact = new Interact(elements.puzzle)
+    this.#updateDropdown()
+
+    this.select()
   }
 
   centerOnTile (offset) {
     const tile = this.layout.getTileByOffset(offset)
     paper.view.center = tile.center
+  }
+
+  clearDebugPoints () {
+    this.layers.debug.clear()
   }
 
   drawDebugPoint (point, style = {}) {
@@ -124,44 +145,18 @@ export class Puzzle {
     }
   }
 
-  next () {
-    const id = Puzzles.visible.nextId(this.#state.getId())
-    if (id) {
-      this.select(id)
-    }
-  }
-
-  previous () {
-    const id = Puzzles.visible.previousId(this.#state.getId())
-    if (id) {
-      this.select(id)
-    }
-  }
-
-  redo () {
-    this.#state.redo()
-    this.#reload()
-  }
-
-  reset () {
-    this.#state.reset()
-    this.#reload()
-  }
-
   select (id) {
+    if (id !== undefined && id === this.#state?.getId()) {
+      // This ID is already selected
+      return
+    }
+
     try {
       this.#state = State.resolve(id)
     } catch (e) {
       this.#onError(e, 'Could not load puzzle.')
     }
 
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
-
-    this.#reload()
-  }
-
-  undo () {
-    this.#state.undo()
     this.#reload()
   }
 
@@ -202,6 +197,7 @@ export class Puzzle {
 
   updateState () {
     this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+    this.#updateActions()
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
@@ -214,6 +210,13 @@ export class Puzzle {
       this.layers.collisions,
       this.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
+  }
+
+  #next () {
+    const id = Puzzles.visible.nextId(this.#state.getId())
+    if (id) {
+      this.select(id)
+    }
   }
 
   #onBeamUpdate (event) {
@@ -245,35 +248,6 @@ export class Puzzle {
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
     setTimeout(() => this.update(), 0)
-  }
-
-  #onClick (event) {
-    let tile
-
-    if (this.#isDragging || this.solved || this.error) {
-      return
-    }
-
-    const result = paper.project.hitTest(event.point)
-
-    switch (result?.item.data.type) {
-      case Item.Types.mask:
-        return
-      case Item.Types.tile:
-        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
-        break
-    }
-
-    // There is an active mask
-    if (this.#mask) {
-      this.#mask.onClick(this, tile)
-    } else {
-      const previouslySelectedTile = this.updateSelectedTile(tile)
-
-      if (tile && tile === previouslySelectedTile) {
-        tile.onClick(event)
-      }
-    }
   }
 
   #onError (error, message, cause) {
@@ -322,31 +296,8 @@ export class Puzzle {
     setTimeout(() => this.update(), 0)
   }
 
-  #onMouseDrag (event) {
-    const center = event.downPoint.subtract(event.point).add(paper.view.center)
-
-    // Allow a little wiggle room
-    if (paper.view.center.subtract(center).length > 1) {
-      if (!this.#isDragging) {
-        document.body.classList.add('grab')
-      }
-
-      // Note: MouseDrag is always called on mobile even when tapping, so only consider it actually dragging if
-      // the cursor has moved the center
-      this.#isDragging = true
-
-      // Center on the cursor
-      paper.view.center = center
-    }
-  }
-
-  #onMouseUp (event) {
-    if (!this.#isDragging) {
-      this.#onClick(event)
-    }
-
-    this.#isDragging = false
-    document.body.classList.remove('grab')
+  #onSelect (event) {
+    this.select(event.target.value)
   }
 
   #onSolved () {
@@ -374,6 +325,47 @@ export class Puzzle {
     this.updateState()
   }
 
+  #onTap (event) {
+    let tile
+
+    if (this.solved || this.error) {
+      return
+    }
+
+    const result = paper.project.hitTest(event.detail.point)
+
+    switch (result?.item.data.type) {
+      case Item.Types.mask:
+        return
+      case Item.Types.tile:
+        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
+        break
+    }
+
+    // There is an active mask
+    if (this.#mask) {
+      this.#mask.onTap(this, tile)
+    } else {
+      const previouslySelectedTile = this.updateSelectedTile(tile)
+
+      if (tile && tile === previouslySelectedTile) {
+        tile.onTap(event)
+      }
+    }
+  }
+
+  #previous () {
+    const id = Puzzles.visible.previousId(this.#state.getId())
+    if (id) {
+      this.select(id)
+    }
+  }
+
+  #redo () {
+    this.#state.redo()
+    this.#reload()
+  }
+
   #reload () {
     this.error = false
 
@@ -391,6 +383,18 @@ export class Puzzle {
     paper.project.clear()
   }
 
+  #reset () {
+    this.#state.reset()
+    this.#reload()
+  }
+
+  #resize () {
+    const { width, height } = elements.main.getBoundingClientRect()
+    elements.puzzle.style.height = height + 'px'
+    elements.puzzle.style.width = width + 'px'
+    paper.view.viewSize = new Size(width, height)
+  }
+
   #setup () {
     // Reset the item IDs, so they are unique per-puzzle
     Item.uniqueId = 0
@@ -405,7 +409,6 @@ export class Puzzle {
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
 
-    this.#eventListener.addEventListeners()
     this.#addLayers()
 
     document.body.classList.add(Puzzle.Events.Loaded)
@@ -417,12 +420,12 @@ export class Puzzle {
 
     this.updateSelectedTile(selectedTile)
     this.update()
+    this.#updateActions()
   }
 
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
-    this.#eventListener.removeEventListeners()
     this.#removeLayers()
 
     this.#tiles.forEach((tile) => tile.teardown())
@@ -435,10 +438,60 @@ export class Puzzle {
     this.selectedTile = undefined
     this.#beams = []
     this.#collisions = {}
-    this.#isDragging = false
     this.#isUpdatingBeams = false
     this.#mask = undefined
     this.#termini = []
+  }
+
+  #undo () {
+    this.#state.undo()
+    this.#reload()
+  }
+
+  #updateActions () {
+    const id = this.#state.getId()
+    const title = this.#state.getTitle()
+
+    // Update browser title
+    elements.title.textContent = `Beaming: Puzzle ${title}`
+
+    removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
+
+    const disable = []
+
+    if (!this.#state.canUndo()) {
+      disable.push(elements.undo)
+    }
+
+    if (!this.#state.canRedo()) {
+      disable.push(elements.redo)
+    }
+
+    if (!Puzzles.visible.has(id)) {
+      // Custom puzzle
+      elements.puzzleId.value = ''
+      disable.push(elements.previous, elements.next)
+    } else {
+      elements.puzzleId.value = id
+
+      if (id === Puzzles.visible.firstId) {
+        disable.push(elements.previous)
+      } else if (id === Puzzles.visible.lastId) {
+        disable.push(elements.next)
+      }
+    }
+
+    addClass('disabled', ...disable)
+  }
+
+  #updateDropdown () {
+    elements.puzzleId.replaceChildren()
+    for (const id of Puzzles.visible.ids) {
+      const option = document.createElement('option')
+      option.value = id
+      option.innerText = Puzzles.titles[id]
+      elements.puzzleId.append(option)
+    }
   }
 
   #updateBeams () {
@@ -555,7 +608,7 @@ export class Puzzle {
       this.configuration = configuration
       this.filter = filter
 
-      this.onClick = configuration.onClick
+      this.onTap = configuration.onTap
       this.onUnmask = configuration.onUnmask
     }
   }
