@@ -17,6 +17,10 @@ jobs:
         run: npm install
       - name: Run server
         run: npm start &
+        env:
+          NODE_ENV: ci
+      - name: Wait
+        run: npx wait-on --timeout 5000 http://localhost:1234
       - name: Run tests
         run: npm test
       - name: Build NPM package

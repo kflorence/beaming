@@ -17,5 +17,7 @@ jobs:
         run: npm install
       - name: Run server
         run: npm start &
+      - name: Wait
+        run: npx wait-on --timeout 5000 http://localhost:1234
       - name: Run tests
         run: npm test

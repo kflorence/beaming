@@ -1,9 +1,13 @@
-import './components/feedback'
-import './components/infoDialog'
+import './info'
 import { debug } from './components/debug'
 import { Point } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { OffsetCoordinates } from './components/coordinates/offset'
+
+if (process.env.NODE_ENV === 'production') {
+  require('./analytics')
+  require('./feedback')
+}
 
 const puzzle = new Puzzle()
 const beaming = { debug, puzzle }

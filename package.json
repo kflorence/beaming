@@ -24,7 +24,8 @@
     "mocha": "^10.2.0",
     "parcel": "^2.9.3",
     "selenium-webdriver": "^4.16.0",
-    "standard": "^17.1.0"
+    "standard": "^17.1.0",
+    "wait-on": "^7.2.0"
   },
   "dependencies": {
     "@types/chroma-js": "^2.4.3",
