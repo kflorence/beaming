@@ -1,5 +1,5 @@
 const doorbellOptions = window.doorbellOptions = {
-  appKey: "o1smdnJiyxObjMcY0jSTf08TIhA814yLq68rEwTDWTavma7dtIVKEdwzMePE2LHC",
+  appKey: 'o1smdnJiyxObjMcY0jSTf08TIhA814yLq68rEwTDWTavma7dtIVKEdwzMePE2LHC',
   container: document.getElementById('feedback-container'),
   hideButton: true,
   properties: {}
