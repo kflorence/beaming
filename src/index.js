@@ -4,7 +4,7 @@ import { Point } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { OffsetCoordinates } from './components/coordinates/offset'
 
-if (process.env.NODE_ENV !== 'ci') {
+if (process.env.NODE_ENV === 'production') {
   require('./analytics')
   require('./feedback')
 }
