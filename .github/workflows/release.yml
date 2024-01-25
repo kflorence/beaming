@@ -17,6 +17,8 @@ jobs:
         run: npm install
       - name: Run server
         run: npm start &
+        env:
+          NODE_ENV: ci
       - name: Run tests
         run: npm test
       - name: Build NPM package
