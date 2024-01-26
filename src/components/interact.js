@@ -30,7 +30,7 @@ export class Interact {
   }
 
   onPan (event) {
-    const point = this.#getPoint(event)
+    const point = paper.view.viewToProject(Interact.point(event))
     const pan = this.#getGesture(Interact.GestureKeys.Pan)
 
     if (!pan) {
@@ -55,23 +55,23 @@ export class Interact {
     const pointer0 = events[0]
     const pointer1 = events[1]
 
-    const delta = Math.abs(pointer0.clientX - pointer1.clientX)
-    const pinch = this.#getGesture(Interact.GestureKeys.Pinch)
+    const point0 = Interact.point(pointer0)
+    const point1 = Interact.point(pointer1)
+    const distance = point0.getDistance(point1)
 
+    const pinch = this.#getGesture(Interact.GestureKeys.Pinch)
     if (!pinch) {
-      const point0 = new Point(pointer0.clientX, pointer0.clientY)
-      const point1 = new Point(pointer1.clientX, pointer1.clientY)
-      const vector = point1.subtract(point0).divide(2)
-      const center = point1.subtract(vector).subtract(this.#offset)
-      this.#setGesture(Interact.GestureKeys.Pinch, { center, delta })
+      this.#setGesture(Interact.GestureKeys.Pinch, { distance })
       return
     }
 
-    if (delta > 1) {
-      this.#zoom(pinch.center, pinch.delta - delta, 1.01)
-    }
+    const center = point0.add(point1).divide(2).subtract(this.#offset)
+    const scale = distance / pinch.distance
+    const delta = (pinch.distance - distance) * scale
 
-    pinch.delta = delta
+    this.#zoom(center, delta, 1.01)
+
+    pinch.distance = distance
   }
 
   onPointerDown (event) {
@@ -86,7 +86,7 @@ export class Interact {
     }
 
     // For some reason pointermove fires on mobile even if there was no movement
-    const diff = this.#getPoint(event).subtract(this.#getPoint(down)).length
+    const diff = Interact.point(event).subtract(Interact.point(down)).length
     if (diff > 1) {
       this.#cache.get(Interact.CacheKeys.Move).set(event.pointerId, event)
 
@@ -124,7 +124,7 @@ export class Interact {
   }
 
   onTap (event) {
-    const point = this.#getPoint(event)
+    const point = paper.view.viewToProject(Interact.point(event).subtract(this.#offset))
     this.#element.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, { detail: { event, point } }))
   }
 
@@ -132,21 +132,18 @@ export class Interact {
     return this.#cache.get(Interact.CacheKeys.Gesture).get(key)
   }
 
-  #getPoint (event) {
-    return paper.view.viewToProject(new Point(event.clientX, event.clientY).subtract(this.#offset))
-  }
-
   #setGesture (key, value) {
     this.#cache.get(Interact.CacheKeys.Gesture).set(key, value)
   }
 
   #zoom (point, delta, factor) {
-    const zoom = delta < 0 ? paper.view.zoom * factor : paper.view.zoom / factor
-
-    // Don't allow zooming too far in or out
-    if (zoom > 2 || zoom < 0.5) {
-      return
-    }
+    const zoom = Math.max(
+      Math.min(
+        delta < 0 ? paper.view.zoom * factor : paper.view.zoom / factor,
+        Interact.maxZoom
+      ),
+      Interact.minZoom
+    )
 
     // Convert the touch point from the view coordinate space to the project coordinate space
     const touchPoint = paper.view.viewToProject(point)
@@ -161,6 +158,10 @@ export class Interact {
     paper.view.center = paper.view.center.add(zoomOffset)
   }
 
+  static point (event) {
+    return new Point(event.clientX, event.clientY)
+  }
+
   static CacheKeys = Object.freeze({
     Down: 'down',
     Move: 'move',
@@ -173,5 +174,7 @@ export class Interact {
     Tap: 'tap'
   })
 
+  static maxZoom = 2
+  static minZoom = 0.5
   static vibratePattern = 25
 }

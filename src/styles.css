@@ -142,6 +142,8 @@ body > header {
   display: flex;
   min-height: 3.5em;
   position: relative;
+  /* Prevent Chrome from trying to open search on tap in mobile. */
+  user-select: none;
   z-index: 1;
 }
 
