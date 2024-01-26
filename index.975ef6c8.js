@@ -31107,7 +31107,7 @@ class Interact {
         this.#zoom(new (0, _paper.Point)(event.offsetX, event.offsetY), event.deltaY, 1.05);
     }
     onPan(event) {
-        const point = this.#getPoint(event);
+        const point = (0, _paperDefault.default).view.viewToProject(Interact.point(event));
         const pan = this.#getGesture(Interact.GestureKeys.Pan);
         if (!pan) {
             this.#setGesture(Interact.GestureKeys.Pan, {
@@ -31126,21 +31126,21 @@ class Interact {
     onPinch(events) {
         const pointer0 = events[0];
         const pointer1 = events[1];
-        const delta = Math.abs(pointer0.clientX - pointer1.clientX);
+        const point0 = Interact.point(pointer0);
+        const point1 = Interact.point(pointer1);
+        const distance = point0.getDistance(point1);
         const pinch = this.#getGesture(Interact.GestureKeys.Pinch);
         if (!pinch) {
-            const point0 = new (0, _paper.Point)(pointer0.clientX, pointer0.clientY);
-            const point1 = new (0, _paper.Point)(pointer1.clientX, pointer1.clientY);
-            const vector = point1.subtract(point0).divide(2);
-            const center = point1.subtract(vector).subtract(this.#offset);
             this.#setGesture(Interact.GestureKeys.Pinch, {
-                center,
-                delta
+                distance
             });
             return;
         }
-        if (delta > 1) this.#zoom(pinch.center, pinch.delta - delta, 1.01);
-        pinch.delta = delta;
+        const center = point0.add(point1).divide(2).subtract(this.#offset);
+        const scale = distance / pinch.distance;
+        const delta = (pinch.distance - distance) * scale;
+        this.#zoom(center, delta, 1.01);
+        pinch.distance = distance;
     }
     onPointerDown(event) {
         this.#cache.get(Interact.CacheKeys.Down).set(event.pointerId, event);
@@ -31150,7 +31150,7 @@ class Interact {
         if (!down) // Ignore events until there is a pointer down event
         return;
         // For some reason pointermove fires on mobile even if there was no movement
-        const diff = this.#getPoint(event).subtract(this.#getPoint(down)).length;
+        const diff = Interact.point(event).subtract(Interact.point(down)).length;
         if (diff > 1) {
             this.#cache.get(Interact.CacheKeys.Move).set(event.pointerId, event);
             const events = this.#cache.get(Interact.CacheKeys.Move).values();
@@ -31169,7 +31169,7 @@ class Interact {
         if (this.#cache.length(Interact.CacheKeys.Move) < 2) this.#cache.get(Interact.CacheKeys.Gesture).unset(Interact.GestureKeys.Pinch);
     }
     onTap(event) {
-        const point = this.#getPoint(event);
+        const point = (0, _paperDefault.default).view.viewToProject(Interact.point(event).subtract(this.#offset));
         this.#element.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, {
             detail: {
                 event,
@@ -31180,16 +31180,11 @@ class Interact {
     #getGesture(key) {
         return this.#cache.get(Interact.CacheKeys.Gesture).get(key);
     }
-    #getPoint(event) {
-        return (0, _paperDefault.default).view.viewToProject(new (0, _paper.Point)(event.clientX, event.clientY).subtract(this.#offset));
-    }
     #setGesture(key, value) {
         this.#cache.get(Interact.CacheKeys.Gesture).set(key, value);
     }
     #zoom(point, delta, factor) {
-        const zoom = delta < 0 ? (0, _paperDefault.default).view.zoom * factor : (0, _paperDefault.default).view.zoom / factor;
-        // Don't allow zooming too far in or out
-        if (zoom > 2 || zoom < 0.5) return;
+        const zoom = Math.max(Math.min(delta < 0 ? (0, _paperDefault.default).view.zoom * factor : (0, _paperDefault.default).view.zoom / factor, Interact.maxZoom), Interact.minZoom);
         // Convert the touch point from the view coordinate space to the project coordinate space
         const touchPoint = (0, _paperDefault.default).view.viewToProject(point);
         const touchOffset = touchPoint.subtract((0, _paperDefault.default).view.center);
@@ -31197,6 +31192,9 @@ class Interact {
         const zoomOffset = touchPoint.subtract(touchOffset.multiply((0, _paperDefault.default).view.zoom / zoom)).subtract((0, _paperDefault.default).view.center);
         (0, _paperDefault.default).view.zoom = zoom;
         (0, _paperDefault.default).view.center = (0, _paperDefault.default).view.center.add(zoomOffset);
+    }
+    static point(event) {
+        return new (0, _paper.Point)(event.clientX, event.clientY);
     }
     static CacheKeys = Object.freeze({
         Down: "down",
@@ -31208,6 +31206,8 @@ class Interact {
         Pinch: "pinch",
         Tap: "tap"
     });
+    static maxZoom = 2;
+    static minZoom = 0.5;
     static vibratePattern = 25;
 }
 

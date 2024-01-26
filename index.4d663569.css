@@ -132,6 +132,8 @@ dialog footer ul li:first-child {
 }
 
 body > footer, body > header {
+  -webkit-user-select: none;
+  user-select: none;
   z-index: 1;
   background-color: #fff;
   align-items: stretch;
