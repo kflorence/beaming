@@ -33,7 +33,10 @@ class PuzzleFixture {
       '--window-size=768,1024'
     )
 
+    console.log('Building driver...')
     this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build()
+
+    console.log(`Getting URL: ${this.url}`)
     await this.driver.get(this.url)
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
