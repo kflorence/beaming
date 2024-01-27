@@ -6,7 +6,7 @@ import {
   emitEvent,
   fuzzyEquals,
   getConvertedDirection,
-  getMidPoint,
+  getPointBetween,
   getDistance,
   getOppositeDirection,
   uniqueBy
@@ -406,7 +406,7 @@ export class Beam extends Item {
 
     // Use the midpoint between the previous and next step points to calculate which tile we are in.
     // This will ensure we consistently pick the same tile when the next step point is on the edge of two tiles.
-    const tile = puzzle.getTile(getMidPoint(currentStep.point, nextStepPoint))
+    const tile = puzzle.getTile(getPointBetween(currentStep.point, nextStepPoint))
 
     // The next step would be off the grid
     if (!tile) {
