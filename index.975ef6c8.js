@@ -654,7 +654,7 @@ parcelHelpers.export(exports, "getColorElement", ()=>getColorElement);
 parcelHelpers.export(exports, "getColorElements", ()=>getColorElements);
 parcelHelpers.export(exports, "getDistance", ()=>getDistance);
 parcelHelpers.export(exports, "getIconElement", ()=>getIconElement);
-parcelHelpers.export(exports, "getMidPoint", ()=>getMidPoint);
+parcelHelpers.export(exports, "getPointBetween", ()=>getPointBetween);
 parcelHelpers.export(exports, "getOppositeDirection", ()=>getOppositeDirection);
 // Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
 // first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
@@ -786,9 +786,9 @@ function getIconElement(name, title) {
     span.title = title ?? capitalize(name);
     return span;
 }
-function getMidPoint(pointA, pointB) {
+function getPointBetween(pointA, pointB, length = (length)=>length / 2) {
     const vector = pointA.subtract(pointB);
-    vector.length = vector.length / 2;
+    vector.length = typeof length === "function" ? length(vector.length) : length;
     return pointA.subtract(vector);
 }
 function getOppositeDirection(direction) {
@@ -30377,16 +30377,22 @@ class Tile extends (0, _item.Item) {
         this.hexagon = this.#ui.hexagon;
         this.parameters = parameters;
         this.styles = this.#ui.styles;
-        this.group.addChild(this.#ui.hexagon);
+        this.group.addChildren([
+            this.#ui.hexagon,
+            this.#ui.indicator
+        ]);
         // These need to be last, since they reference this
         this.items = (state.items || []).map((state)=>(0, _itemFactory.itemFactory)(this, state)).filter((item)=>item !== undefined);
         this.modifiers = (state.modifiers || []).map((state)=>(0, _modifierFactory.modifierFactory)(this, state)).filter((modifier)=>modifier !== undefined);
+        this.update();
     }
     addItem(item) {
         this.items.unshift(item);
+        this.update();
     }
     addModifier(modifier) {
         this.modifiers.unshift(modifier);
+        this.update();
     }
     afterModify() {
         this.setStyle(this.selected ? "selected" : "default");
@@ -30429,11 +30435,17 @@ class Tile extends (0, _item.Item) {
     }
     removeItem(item) {
         const index = this.items.indexOf(item);
-        if (index >= 0) this.items.splice(index, 1);
+        if (index >= 0) {
+            this.items.splice(index, 1);
+            this.update();
+        }
     }
     removeModifier(modifier) {
         const index = this.modifiers.indexOf(modifier);
-        if (index >= 0) this.modifiers.splice(index, 1);
+        if (index >= 0) {
+            this.modifiers.splice(index, 1);
+            this.update();
+        }
     }
     setStyle(style) {
         this.hexagon.set(this.styles[style]);
@@ -30443,6 +30455,10 @@ class Tile extends (0, _item.Item) {
     }
     toString() {
         return this.coordinates.offset.toString();
+    }
+    update() {
+        super.update();
+        this.#ui.indicator.opacity = this.modifiers.length ? 1 : 0;
     }
     static parameters(height) {
         const circumradius = height / 2;
@@ -30476,9 +30492,22 @@ class Tile extends (0, _item.Item) {
             sides: 6,
             style: styles.default
         });
+        const indicator = new (0, _paper.Path).RegularPolygon({
+            center: (0, _util.getPointBetween)(hexagon.segments[1].point, center, (length)=>length / 3),
+            data: {
+                collidable: false
+            },
+            opacity: 0,
+            radius: parameters.circumradius / 16,
+            sides: 6,
+            style: {
+                fillColor: "#ccc"
+            }
+        });
         return {
             center,
             hexagon,
+            indicator,
             styles
         };
     }
@@ -32140,7 +32169,7 @@ class Beam extends (0, _item.Item) {
         const nextStepPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction);
         // Use the midpoint between the previous and next step points to calculate which tile we are in.
         // This will ensure we consistently pick the same tile when the next step point is on the edge of two tiles.
-        const tile = puzzle.getTile((0, _util.getMidPoint)(currentStep.point, nextStepPoint));
+        const tile = puzzle.getTile((0, _util.getPointBetween)(currentStep.point, nextStepPoint));
         // The next step would be off the grid
         if (!tile) {
             console.debug(this.toString(), "stopping due to out of bounds");
@@ -32395,8 +32424,8 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
     midLine() {
         // Two points which form a line through the mid-point of the reflector
         return [
-            (0, _util.getMidPoint)(this.#item.segments[3].point, this.#item.segments[0].point),
-            (0, _util.getMidPoint)(this.#item.segments[1].point, this.#item.segments[2].point)
+            (0, _util.getPointBetween)(this.#item.segments[3].point, this.#item.segments[0].point),
+            (0, _util.getPointBetween)(this.#item.segments[1].point, this.#item.segments[2].point)
         ];
     }
     getSide(point) {
