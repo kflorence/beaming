@@ -154,9 +154,9 @@ export function getIconElement (name, title) {
   return span
 }
 
-export function getMidPoint (pointA, pointB) {
+export function getPointBetween (pointA, pointB, length = (length) => length / 2) {
   const vector = pointA.subtract(pointB)
-  vector.length = vector.length / 2
+  vector.length = typeof length === 'function' ? length(vector.length) : length
   return pointA.subtract(vector)
 }
 

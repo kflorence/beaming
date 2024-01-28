@@ -1,7 +1,7 @@
 import { Color, Path, Point } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
-import { emitEvent } from '../util'
+import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
@@ -20,7 +20,7 @@ export class Tile extends Item {
     this.parameters = parameters
     this.styles = this.#ui.styles
 
-    this.group.addChild(this.#ui.hexagon)
+    this.group.addChildren([this.#ui.hexagon, this.#ui.indicator])
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
@@ -30,14 +30,18 @@ export class Tile extends Item {
     this.modifiers = (state.modifiers || [])
       .map((state) => modifierFactory(this, state))
       .filter((modifier) => modifier !== undefined)
+
+    this.update()
   }
 
   addItem (item) {
     this.items.unshift(item)
+    this.update()
   }
 
   addModifier (modifier) {
     this.modifiers.unshift(modifier)
+    this.update()
   }
 
   afterModify () {
@@ -92,6 +96,7 @@ export class Tile extends Item {
     const index = this.items.indexOf(item)
     if (index >= 0) {
       this.items.splice(index, 1)
+      this.update()
     }
   }
 
@@ -99,6 +104,7 @@ export class Tile extends Item {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
       this.modifiers.splice(index, 1)
+      this.update()
     }
   }
 
@@ -112,6 +118,11 @@ export class Tile extends Item {
 
   toString () {
     return this.coordinates.offset.toString()
+  }
+
+  update () {
+    super.update()
+    this.#ui.indicator.opacity = this.modifiers.length ? 1 : 0
   }
 
   static parameters (height) {
@@ -155,7 +166,16 @@ export class Tile extends Item {
       style: styles.default
     })
 
-    return { center, hexagon, styles }
+    const indicator = new Path.RegularPolygon({
+      center: getPointBetween(hexagon.segments[1].point, center, (length) => length / 3),
+      data: { collidable: false },
+      opacity: 0,
+      radius: parameters.circumradius / 16,
+      sides: 6,
+      style: { fillColor: '#ccc' }
+    })
+
+    return { center, hexagon, indicator, styles }
   }
 
   static Events = Object.freeze({

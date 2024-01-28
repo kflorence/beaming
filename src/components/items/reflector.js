@@ -1,7 +1,7 @@
 import { Path, Point, Size } from 'paper'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getMidPoint, getOppositeDirection, getPosition, getReflectedDirection } from '../util'
+import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection } from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
@@ -22,8 +22,8 @@ export class Reflector extends movable(rotatable(Item)) {
   midLine () {
     // Two points which form a line through the mid-point of the reflector
     return [
-      getMidPoint(this.#item.segments[3].point, this.#item.segments[0].point),
-      getMidPoint(this.#item.segments[1].point, this.#item.segments[2].point)
+      getPointBetween(this.#item.segments[3].point, this.#item.segments[0].point),
+      getPointBetween(this.#item.segments[1].point, this.#item.segments[2].point)
     ]
   }
 
