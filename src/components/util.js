@@ -199,6 +199,12 @@ export function getTextElement (text) {
   return span
 }
 
+export function noop (value) {
+  if (value) {
+    return value
+  }
+}
+
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }

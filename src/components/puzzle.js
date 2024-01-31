@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, fuzzyEquals, removeClass } from './util'
+import { addClass, debounce, emitEvent, fuzzyEquals, noop, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -42,11 +42,13 @@ export class Puzzle {
   solved = false
 
   #beams
+  #beamsUpdateDelay = 30
   #collisions = {}
   #eventListeners = new EventListeners({ context: this })
   #interact
   #isUpdatingBeams = false
   #mask
+  #maskQueue = []
   #solution
   #state
   #termini
@@ -106,6 +108,10 @@ export class Puzzle {
     this.layers.debug.addChild(circle)
   }
 
+  getBeamsUpdateDelay () {
+    return this.#beamsUpdateDelay
+  }
+
   getItems (tile) {
     return (tile ? this.#tiles.filter((t) => t === tile) : this.#tiles).flatMap((tile) => tile.items)
   }
@@ -123,14 +129,19 @@ export class Puzzle {
 
   mask (mask) {
     if (this.#mask) {
-      console.error('Ignoring mask request due to existing mask', mask, this.#mask)
+      if (this.#mask.equals(mask)) {
+        console.debug(mask)
+        throw new Error(`Duplicate mask detected: ${mask.id}`)
+      }
+
+      this.#maskQueue.push(mask)
       return
     }
 
     this.#mask = mask
 
     // TODO animation?
-    const tiles = this.#tiles.filter(mask.filter)
+    const tiles = this.#tiles.filter(mask.tileFilter)
       .map((tile) => new Mask(
         tile,
         typeof mask.configuration.style === 'function'
@@ -140,9 +151,11 @@ export class Puzzle {
 
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
 
-    if (mask.configuration.message) {
-      elements.message.textContent = mask.configuration.message
+    if (mask.message) {
+      elements.message.textContent = mask.message
     }
+
+    mask.onMask(this)
   }
 
   select (id) {
@@ -161,13 +174,16 @@ export class Puzzle {
   }
 
   unmask () {
-    if (typeof this.#mask.onUnmask === 'function') {
-      this.#mask.onUnmask(this)
-    }
-
-    this.#mask = undefined
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
+    this.#mask.onUnmask(this)
+    this.#mask = undefined
+
+    const mask = this.#maskQueue.pop()
+    if (mask) {
+      // Evaluate after any current events have processed (e.g. beam updates from last mask)
+      setTimeout(() => this.mask(mask), 0)
+    }
   }
 
   update () {
@@ -516,7 +532,7 @@ export class Puzzle {
     beams.forEach((beam) => beam.step(this))
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(), 30)
+    setTimeout(() => this.#updateBeams(), this.#beamsUpdateDelay)
   }
 
   #updateMessage (tile) {
@@ -602,28 +618,32 @@ export class Puzzle {
   })
 
   static Mask = class {
-    constructor (filter, configuration = {}) {
-      configuration.style = configuration.style || {}
-
+    constructor (configuration = {}) {
+      configuration.style ??= {}
       this.configuration = configuration
-      this.filter = filter
 
-      this.onTap = configuration.onTap
-      this.onUnmask = configuration.onUnmask
+      this.id = configuration.id
+      this.message = configuration.message
+      this.tileFilter = configuration.tileFilter ?? noop(true)
+      this.onMask = configuration.onMask ?? noop
+      this.onTap = configuration.onTap ?? noop
+      this.onUnmask = configuration.onUnmask ?? noop
+    }
+
+    equals (other) {
+      return this.id === other.id
     }
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
   static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
 
-  static #solvedMask = new Puzzle.Mask(
-    (tile) => tile.items.some(Puzzle.#connectedBeams),
-    {
-      style: (tile) => {
-        const beams = tile.items.filter(Puzzle.#connectedBeams)
-        const colors = beams.flatMap((beam) => beam.getSteps(tile).flatMap((step) => step.color))
-        return { fillColor: chroma.average(colors).hex() }
-      }
-    }
-  )
+  static #solvedMask = new Puzzle.Mask({
+    style: (tile) => {
+      const beams = tile.items.filter(Puzzle.#connectedBeams)
+      const colors = beams.flatMap((beam) => beam.getSteps(tile).flatMap((step) => step.color))
+      return { fillColor: chroma.average(colors).hex() }
+    },
+    tileFilter: (tile) => tile.items.some(Puzzle.#connectedBeams)
+  })
 }

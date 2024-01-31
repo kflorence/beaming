@@ -232,23 +232,23 @@ export class Beam extends Item {
     }
   }
 
-  onCollision ({ beam, collision, collisionStep, currentStep, nextStep }) {
+  onCollision ({ beam, collision, collisionStep, currentStep, nextStep, puzzle }) {
     const isSelf = beam.equals(this)
 
     console.debug(this.toString(), 'evaluating collision with', (isSelf ? 'self' : beam.toString()))
 
-    if (isSelf && this.#stepIndex < this.getLastStepIndex()) {
-      console.debug(this.toString(), 'ignoring collision with self while re-evaluating history')
-      return
-    }
-
-    if (!beam.isPending()) {
+    if (!beam.isOn()) {
       console.debug(this.toString(), 'ignoring collision with inactive beam', beam.toString())
       return
     }
 
-    if (beam.parent.equals(this.parent) && nextStep.direction === beam.startDirection()) {
+    if (beam.parent.equals(this.parent) && currentStep.index === 0) {
       console.debug(this.toString(), 'ignoring collision with sibling beam', beam.toString())
+      return
+    }
+
+    if (isSelf && this.#stepIndex < this.getLastStepIndex()) {
+      console.debug(this.toString(), 'ignoring collision with self while re-evaluating history')
       return
     }
 
@@ -268,8 +268,7 @@ export class Beam extends Item {
     }
 
     // Note: we only want to evaluate this at the collision point, otherwise terminus connection is irrelevant.
-    const terminusConnection = step.state.get(StepState.TerminusConnection)
-    if (terminusConnection && terminusConnection.terminus.equals(beam.parent)) {
+    if (step.state.get(StepState.TerminusConnection)?.terminus.equals(beam.parent)) {
       console.debug(this.toString(), 'ignoring collision with connected beam in parent terminus', beam.toString())
       return
     }
@@ -291,22 +290,25 @@ export class Beam extends Item {
     if (step.direction !== nextStep.direction) {
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
 
-      // When colliding with self, no need to update since the collisionStep will take care of it
       if (!isSelf) {
         const settings = {
           done: true,
           state: step.state.copy(new StepState.Collision(collision))
         }
-
         if (stepIndex < this.getLastStepIndex() && !step.state.has(StepState.Collision)) {
           // History must be updated if the collision occurred on an earlier step.
-          // If the step already contains a collision in its state, do not update history as that step may be part
-          // of a collision loop and updating will cause the infinite loop to continue.
           this.#updateHistory(stepIndex)
           this.addStep(step.copy(settings))
         } else {
           this.updateStep(stepIndex, settings)
         }
+      } else {
+        // If colliding with self, draw the collisionStep and then remove it in the next update loop.
+        // This will give a smoother visual indication that the beam is colliding with itself in an infinite loop.
+        setTimeout(() => {
+          this.#updateHistory(stepIndex)
+          this.addStep(step)
+        }, puzzle.getBeamsUpdateDelay())
       }
 
       return collisionStep.copy({
@@ -316,6 +318,7 @@ export class Beam extends Item {
       })
     }
 
+    // TODO handle merge with self -- collision?
     console.debug(this.toString(), 'merging with', beam.toString())
 
     // Update history to reflect changing color of path
@@ -484,7 +487,6 @@ export class Beam extends Item {
       // Allow collision resolvers to stop execution
       if (collisionStep instanceof Step.Stop) {
         this.done = true
-        this.#onUpdate()
         return collisionStep
       }
       nextStep = collisionStep
@@ -523,7 +525,7 @@ export class Beam extends Item {
 
     if (currentStep.point.equals(nextStep.point)) {
       console.debug(this.toString(), 'next step point is same as current step point, stopping.', nextStep)
-      return this.updateStep(currentStepIndex, nextStep)
+      return this.updateStep(currentStepIndex, nextStep.copy({ done: true }))
     }
 
     return this.addStep(nextStep)

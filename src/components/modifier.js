@@ -150,9 +150,14 @@ export class Modifier extends Stateful {
     navigator.vibrate(Interact.vibratePattern)
 
     this.update({ selected: true })
-    this.tile.beforeModify()
 
-    const mask = this.#mask = new Puzzle.Mask(this.#moveFilter.bind(this), { onTap: this.#maskOnTap.bind(this) })
+    const mask = this.#mask = new Puzzle.Mask({
+      id: this.toString(),
+      onMask: () => this.tile.beforeModify(),
+      onTap: this.#maskOnTap.bind(this),
+      tileFilter: this.#moveFilter.bind(this)
+    })
+
     this.dispatchEvent(Puzzle.Events.Mask, { mask })
   }
 
@@ -168,6 +173,10 @@ export class Modifier extends Stateful {
     this.detach()
     this.tile.removeModifier(this)
     this.tile = null
+  }
+
+  toString () {
+    return [this.name, this.id].join(':')
   }
 
   update (options) {

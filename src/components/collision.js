@@ -14,6 +14,14 @@ export class Collision {
     this.points = points
   }
 
+  copy (settings) {
+    return new Collision(
+      settings.index ?? this.index,
+      settings.points ?? this.points,
+      settings.items ?? this.items
+    )
+  }
+
   equals (other) {
     return other && other.point.equals(this.point) &&
       other.items.length === this.items.length &&

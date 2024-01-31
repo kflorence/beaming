@@ -1,5 +1,5 @@
 import chroma from 'chroma-js'
-import { deepEqual } from './util'
+import { deepEqual, noop } from './util'
 
 export class Step {
   color
@@ -47,8 +47,8 @@ export class Step {
     this.index = index
     this.insertAbove = insertAbove
     // The onAdd and onRemove methods should be idempotent!
-    this.onAdd = onAdd ?? (() => {})
-    this.onRemove = onRemove ?? (() => {})
+    this.onAdd = onAdd ?? noop
+    this.onRemove = onRemove ?? noop
     this.point = point
     this.pathIndex = pathIndex
     this.segmentIndex = segmentIndex
