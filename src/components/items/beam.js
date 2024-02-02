@@ -286,11 +286,33 @@ export class Beam extends Item {
       }
     }
 
-    // The beams are traveling in different directions, it's a collision
-    if (step.direction !== nextStep.direction) {
+    const isSameDirection = step.direction === nextStep.direction
+    const stepPortal = step.state.get(StepState.Portal)
+    const currentStepPortal = currentStep.state.get(StepState.Portal)
+    const isCollision = stepPortal
+      ? (
+          (
+            // Beams are exiting the same portal in the same direction.
+            isSameDirection && stepPortal.exitPortal && currentStepPortal.exitPortal
+          ) ||
+          (
+            // Beams are entering/exiting a portal in opposite directions.
+            currentStep.direction === getOppositeDirection(step.direction) && (
+              (!stepPortal.exitPortal && currentStepPortal.exitPortal) ||
+              (!currentStepPortal.exitPortal && stepPortal.exitPortal)
+            )
+          )
+        )
+      : (
+          // Beams are traveling in different directions (they would cross), or a beam is merging into itself.
+          !isSameDirection || isSelf
+        )
+
+    if (isCollision) {
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
 
       if (!isSelf) {
+        // History can be updated immediately if not self.
         const settings = {
           done: true,
           state: step.state.copy(new StepState.Collision(collision))
@@ -302,9 +324,11 @@ export class Beam extends Item {
         } else {
           this.updateStep(stepIndex, settings)
         }
-      } else {
-        // If colliding with self, draw the collisionStep and then remove it in the next update loop.
-        // This will give a smoother visual indication that the beam is colliding with itself in an infinite loop.
+      } else if (!isSameDirection) {
+        // If self, and not a merge into self collision, schedule a removal of the added collisionStep.
+        // Visually this means:
+        // - a merge into self collision will display a collision point and not an infinite loop
+        // - any other collision with self will result in an infinite loop
         setTimeout(() => {
           this.#updateHistory(stepIndex)
           this.addStep(step)
@@ -316,9 +340,15 @@ export class Beam extends Item {
         // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
         insertAbove: step.insertAbove
       })
+    } else if (stepPortal) {
+      console.debug(
+        this.toString(),
+        'ignoring collision with beam using same portal with different direction',
+        beam.toString()
+      )
+      return
     }
 
-    // TODO handle merge with self -- collision?
     console.debug(this.toString(), 'merging with', beam.toString())
 
     // Update history to reflect changing color of path
@@ -484,11 +514,6 @@ export class Beam extends Item {
     }
 
     if (collisionStep) {
-      // Allow collision resolvers to stop execution
-      if (collisionStep instanceof Step.Stop) {
-        this.done = true
-        return collisionStep
-      }
       nextStep = collisionStep
     }
 

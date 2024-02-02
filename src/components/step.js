@@ -77,10 +77,6 @@ export class Step {
   equals (step) {
     return deepEqual(this, step)
   }
-
-  static Stop = class StepStop extends Step {
-    done = true
-  }
 }
 
 export class StepState {

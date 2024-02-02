@@ -2,7 +2,7 @@ import { movable } from '../modifiers/move'
 import { Item } from '../item'
 import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
-import { Step, StepState } from '../step'
+import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
 
 export class Portal extends movable(rotatable(Item)) {
@@ -64,14 +64,12 @@ export class Portal extends movable(rotatable(Item)) {
     }
   }
 
-  onCollision ({ beam, collision, currentStep, nextStep, puzzle }) {
+  onCollision ({ beam, currentStep, nextStep, puzzle }) {
     const direction = this.getDirection()
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
       // Handle entry collision
       return nextStep.copy({
-        // Use the direction indicated by the entry portal if it exists, otherwise continue in the same direction.
-        direction: direction ?? nextStep.direction,
         insertAbove: this,
         state: nextStep.state.copy(new StepState.Portal(this))
       })
@@ -101,10 +99,8 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (destinations.length === 0) {
       console.debug(this.toString(), 'no valid destinations found')
-      // Update current step with collision.
-      return currentStep.copy({
-        state: currentStep.state.copy(new StepState.Collision(collision.copy({ points: [currentStep.point] })))
-      })
+      // This will cause the beam to stop
+      return currentStep
     }
 
     if (destinations.length === 1) {
@@ -142,15 +138,19 @@ export class Portal extends movable(rotatable(Item)) {
 
       puzzle.mask(mask)
 
-      return new Step.Stop()
+      // This will cause the beam to stop
+      return currentStep
     }
   }
 
   #step (portal, nextStep, portalState) {
     return nextStep.copy({
       connected: false,
-      // Use the direction indicated by the exit portal if it exists, otherwise continue in the same direction.
-      direction: portal.getDirection() ?? nextStep.direction,
+      // Direction precedence is as follows:
+      // - direction defined by exit portal
+      // - direction defined by entry portal
+      // - direction beam was traveling when it reached the entry portal
+      direction: portal.getDirection() ?? portalState.entryPortal.getDirection() ?? nextStep.direction,
       insertAbove: portal,
       point: portal.parent.center,
       state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal)),

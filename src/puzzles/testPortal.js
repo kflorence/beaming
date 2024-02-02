@@ -67,7 +67,7 @@ export default {
         {
           items: [
             {
-              direction: 3,
+              direction: 0,
               type: 'Portal'
             }
           ],
