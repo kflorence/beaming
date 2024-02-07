@@ -31260,7 +31260,7 @@ class Cache {
         this.#cache[key] = item;
     }
     get(key) {
-        return key ? this.#cache[key] : this.#cache;
+        return key === undefined ? this.#cache : this.#cache[key];
     }
     keys(key) {
         return Object.keys(this.#get(key));
