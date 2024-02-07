@@ -1,8 +1,7 @@
 import { Path, Point, Size } from 'paper'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection } from '../util'
-import { Beam } from './beam'
+import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection, getPointFrom } from '../util'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
 
@@ -64,7 +63,7 @@ export class Reflector extends movable(rotatable(Item)) {
       return nextStep.copy({ state: nextStep.state.copy(new StepState.Reflector(this)) })
     }
 
-    const point = Beam.getNextPoint(currentStep.point, nextStep.tile.parameters.inradius, directionTo)
+    const point = getPointFrom(currentStep.point, nextStep.tile.parameters.inradius, directionTo)
     return nextStep.copy({ direction: directionTo, point })
   }
 

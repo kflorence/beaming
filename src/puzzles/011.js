@@ -6,12 +6,9 @@ export default {
         {
           items: [
             {
-              type: 'Reflector'
+              direction: 3,
+              type: 'Portal'
             }
-          ],
-          modifiers: [
-            { type: 'Move' },
-            { type: 'Rotate' }
           ],
           type: 'Tile'
         },
@@ -21,7 +18,7 @@ export default {
         {
           items: [
             {
-              direction: 5,
+              direction: 4,
               type: 'Portal'
             }
           ],
@@ -34,12 +31,6 @@ export default {
         },
         { type: 'Tile' },
         {
-          items: [
-            {
-              direction: 5,
-              type: 'Portal'
-            }
-          ],
           type: 'Tile'
         },
         {
@@ -103,12 +94,6 @@ export default {
           type: 'Tile'
         },
         {
-          items: [
-            {
-              direction: 5,
-              type: 'Portal'
-            }
-          ],
           type: 'Tile'
         },
         { type: 'Tile' },
@@ -121,7 +106,7 @@ export default {
         {
           items: [
             {
-              direction: 5,
+              direction: 2,
               type: 'Portal'
             }
           ],
@@ -133,12 +118,9 @@ export default {
         {
           items: [
             {
-              type: 'Reflector'
+              direction: 0,
+              type: 'Portal'
             }
-          ],
-          modifiers: [
-            { type: 'Move' },
-            { type: 'Rotate' }
           ],
           type: 'Tile'
         }
