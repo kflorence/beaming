@@ -19,7 +19,7 @@ export class Cache {
   }
 
   get (key) {
-    return key ? this.#cache[key] : this.#cache
+    return key === undefined ? this.#cache : this.#cache[key]
   }
 
   keys (key) {
