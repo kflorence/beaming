@@ -1,6 +1,7 @@
 import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import pako from 'pako'
 import chroma from 'chroma-js'
+import { Point } from 'paper'
 
 const location = window.location
 
@@ -160,6 +161,13 @@ export function getPointBetween (pointA, pointB, length = (length) => length / 2
   return pointA.subtract(vector)
 }
 
+export function getPointFrom (point, length, direction) {
+  const vector = new Point(0, 0)
+  vector.length = length
+  vector.angle = getConvertedDirection(direction) * 60
+  return point.add(vector)
+}
+
 export function getOppositeDirection (direction) {
   return direction + (direction >= 3 ? -3 : 3)
 }
@@ -197,6 +205,12 @@ export function getTextElement (text) {
   span.classList.add('text')
   span.textContent = text.toString()
   return span
+}
+
+export function noop (value) {
+  if (value) {
+    return value
+  }
 }
 
 export function removeClass (className, ...elements) {

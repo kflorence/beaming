@@ -17,11 +17,12 @@ export class Move extends Modifier {
       return
     }
 
-    this.tile.beforeModify()
-
-    const mask = new Puzzle.Mask(this.tileFilter.bind(this), {
+    const mask = new Puzzle.Mask({
+      id: this.toString(),
       onTap: this.#maskOnTap.bind(this),
-      onUnmask: () => this.tile.afterModify()
+      onMask: () => this.tile.beforeModify(),
+      onUnmask: () => this.tile.afterModify(),
+      tileFilter: this.tileFilter.bind(this)
     })
 
     this.#mask = mask

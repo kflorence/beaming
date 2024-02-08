@@ -1,11 +1,9 @@
 import { Path, Point, Size } from 'paper'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection } from '../util'
-import { Beam } from './beam'
+import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection, getPointFrom } from '../util'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
-import { Collision } from '../collision'
 
 export class Reflector extends movable(rotatable(Item)) {
   #item
@@ -36,7 +34,7 @@ export class Reflector extends movable(rotatable(Item)) {
     return this.getSide(pointA) === this.getSide(pointB)
   }
 
-  onCollision ({ beam, collisions, collisionStep, currentStep, nextStep }) {
+  onCollision ({ beam, collision, collisions, collisionStep, currentStep, nextStep }) {
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
@@ -51,16 +49,11 @@ export class Reflector extends movable(rotatable(Item)) {
         // If there is also a beam collision in the list of collisions for this step, let that one resolve it
         return
       } else {
-        const collision = collisionStep.state.get(StepState.Collision)
-        // Updating the collision stored on collisionStep to use nextStep.point to ensure any beams hitting the same
-        // reflector will be collided with
-        return collisionStep.copy({
-          point: nextStep.point,
-          state: collisionStep.state.copy(new StepState.Collision(new Collision(
-            collision.index,
-            [nextStep.point],
-            collision.items
-          )))
+        // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
+        // same side of the reflector will collide with this beam.
+        return nextStep.copy({
+          done: true,
+          state: nextStep.state.copy(new StepState.Collision(collision.copy({ points: [nextStep.point] })))
         })
       }
     }
@@ -70,7 +63,7 @@ export class Reflector extends movable(rotatable(Item)) {
       return nextStep.copy({ state: nextStep.state.copy(new StepState.Reflector(this)) })
     }
 
-    const point = Beam.getNextPoint(currentStep.point, nextStep.tile.parameters.inradius, directionTo)
+    const point = getPointFrom(currentStep.point, nextStep.tile.parameters.inradius, directionTo)
     return nextStep.copy({ direction: directionTo, point })
   }
 

@@ -2,11 +2,13 @@ import { movable } from '../modifiers/move'
 import { Item } from '../item'
 import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
-import { getOppositeDirection } from '../util'
-import { Step, StepState } from '../step'
+import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
+import { coalesce, getOppositeDirection } from '../util'
 
 export class Portal extends movable(rotatable(Item)) {
+  #directions = {}
+
   constructor (tile, state) {
     // Only allow rotation if direction is defined
     super(tile, state, { rotatable: state.direction !== undefined })
@@ -24,6 +26,8 @@ export class Portal extends movable(rotatable(Item)) {
 
     const children = []
 
+    // TODO: consider adding an item with a gradient that fades to black at the center of the ellipse
+    // This will help distinguish visually that beams are entering/exiting a portal when there are multiple
     const ellipse = new Path.Ellipse({
       center: tile.center,
       radius: [width, height],
@@ -65,85 +69,129 @@ export class Portal extends movable(rotatable(Item)) {
     }
   }
 
-  // TODO: allow multiple beams to enter a portal.
-  // Collision should still occur between beams if one is entering and one is exiting.
-  onCollision ({ beam, collisionStep, currentStep, nextStep, puzzle }) {
+  get (direction) {
+    return this.#directions[direction]
+  }
+
+  onCollision ({ beam, currentStep, nextStep, puzzle }) {
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
+      const stepIndex = nextStep.index
+      const entryDirection = getOppositeDirection(nextStep.direction)
+      const existing = coalesce(this.get(entryDirection), { stepIndex })
+      if (existing.stepIndex < stepIndex) {
+        // Checking stepIndex to exclude cases where we are doing a re-evaluation of history.
+        console.debug(
+          this.toString(),
+          'ignoring beam trying to enter through a direction which is already occupied:',
+          entryDirection
+        )
+        return
+      }
+
       // Handle entry collision
-      return nextStep.copy({ insertAbove: this, state: nextStep.state.copy(new StepState.Portal(this)) })
+      return nextStep.copy({
+        insertAbove: this,
+        onAdd: () => this.update(entryDirection, { stepIndex }),
+        onRemove: () => this.update(entryDirection),
+        state: nextStep.state.copy(new StepState.Portal(this))
+      })
     } else if (portalState.exitPortal === this) {
       // Handle exit collision
       return nextStep.copy({ insertAbove: this })
     }
 
-    const direction = this.getDirection()
-    const matchingDirection = direction === undefined ? direction : getOppositeDirection(this.getDirection())
+    // Check for destination in beam state (matches on item ID and step index)
+    const stateId = [this.id, nextStep.index].join(':')
+    const destinationId = beam.getState().moves?.[stateId]
 
-    // Check for destination in beam state
-    const destinationId = beam.getState().collisions?.[this.id]
-
-    // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
+    // Find all valid destination portals
     const destinations = puzzle.getItems().filter((item) =>
       item.type === Item.Types.portal &&
-      !item.equals(this) && item.getDirection() === matchingDirection &&
-      (!destinationId || item.id === destinationId)
+      !item.equals(this) &&
+      // Portal must not already have a beam occupying the desired direction
+      !item.get(Portal.getExitDirection(nextStep, portalState.entryPortal, item)) &&
+      (destinationId === undefined || item.id === destinationId) &&
+      (
+        // Entry portals without defined direction can exit from any other portal.
+        this.getDirection() === undefined ||
+        // Exit portals without defined direction can be used by any entry portal.
+        item.getDirection() === undefined ||
+        // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
+        item.getDirection() === this.getDirection()
+      )
     )
 
     if (destinations.length === 0) {
-      console.debug('portal has no destinations, stopping')
-      // Nowhere to go
-      return collisionStep
+      console.debug(this.toString(), 'no valid destinations found')
+      // This will cause the beam to stop
+      return currentStep
     }
 
     if (destinations.length === 1) {
       // A single matching destination
-      return this.#step(destinations[0], nextStep, portalState)
+      return this.#getStep(beam, destinations[0], nextStep, portalState)
     } else {
-      const destinationTiles = destinations.map((portal) => portal.parent)
-
-      currentStep.tile.beforeModify()
-
       // Multiple matching destinations. User will need to pick one manually.
-      puzzle.mask(new Puzzle.Mask(
-        (tile) => {
-          // Include the portal tile and tiles which contain a matching destination
-          return !(this.parent === tile || destinationTiles.some((destinationTile) => destinationTile === tile))
-        },
+      const destinationTiles = destinations.map((portal) => portal.parent)
+      const mask = new Puzzle.Mask(
         {
           beam,
+          id: stateId,
+          onMask: () => currentStep.tile.beforeModify(),
           onTap: (puzzle, tile) => {
             const destination = destinations.find((portal) => portal.parent === tile)
             if (destination) {
-              beam.addStep(this.#step(destination, nextStep, portalState))
+              beam.addStep(this.#getStep(beam, destination, nextStep, portalState))
               beam.updateState((state) => {
-                if (!state.collisions) {
-                  state.collisions = {}
+                if (!state.moves) {
+                  state.moves = {}
                 }
                 // Store this decision in beam state
-                state.collisions[this.id] = destination.id
+                state.moves[stateId] = destination.id
               })
               puzzle.unmask()
             }
           },
-          onUnmask: () => {
-            currentStep.tile.afterModify()
+          onUnmask: () => currentStep.tile.afterModify(),
+          tileFilter: (tile) => {
+            // Include the portal tile and tiles which contain a matching destination
+            return !(this.parent === tile || destinationTiles.some((destinationTile) => destinationTile === tile))
           }
         }
-      ))
+      )
 
-      return new Step.Stop()
+      puzzle.mask(mask)
+
+      // This will cause the beam to stop
+      return currentStep
     }
   }
 
-  #step (portal, nextStep, portalState) {
+  update (direction, data) {
+    this.#directions[direction] = data
+  }
+
+  #getStep (beam, portal, nextStep, portalState) {
+    const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal)
+    const stepIndex = nextStep.index
     return nextStep.copy({
       connected: false,
-      direction: this.rotatable ? this.getDirection() : nextStep.direction,
+      direction,
       insertAbove: portal,
-      tile: portal.parent,
+      onAdd: () => portal.update(direction, { stepIndex }),
+      onRemove: () => portal.update(direction),
       point: portal.parent.center,
-      state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal))
+      state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal)),
+      tile: portal.parent
     })
+  }
+
+  static getExitDirection (step, entryPortal, exitPortal) {
+    // Direction precedence is as follows:
+    // - direction defined by exit portal
+    // - direction defined by entry portal
+    // - direction beam was traveling when it reached the entry portal
+    return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction
   }
 }
