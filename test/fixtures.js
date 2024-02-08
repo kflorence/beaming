@@ -28,8 +28,9 @@ class PuzzleFixture {
       '--disable-dev-shm-usage',
       '--disable-extensions',
       '--disable-gpu',
-      '--headless=new',
+      '--headless',
       '--ignore-certificate-errors',
+      '--no-sandbox',
       '--window-size=768,1024'
     )
 
