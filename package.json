@@ -20,7 +20,7 @@
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^120.0.1",
+    "chromedriver": "^121.0.0",
     "mocha": "^10.2.0",
     "parcel": "^2.9.3",
     "selenium-webdriver": "^4.16.0",
