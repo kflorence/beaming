@@ -95,6 +95,7 @@ export class State {
     this.#current = structuredClone(this.#original)
     this.#deltas = []
     this.#index = this.#lastIndex()
+    this.#selectedTile = undefined
 
     State.clearCache(this.getId())
 

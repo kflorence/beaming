@@ -161,6 +161,7 @@ export class Portal extends movable(rotatable(Item)) {
         }
       )
 
+      puzzle.updateSelectedTile(currentStep.tile)
       puzzle.mask(mask)
 
       // This will cause the beam to stop

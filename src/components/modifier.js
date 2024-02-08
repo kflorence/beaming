@@ -185,15 +185,20 @@ export class Modifier extends Stateful {
       options || {}
     )
 
-    this.disabled = options.disabled
+    if (!this.immutable) {
+      this.disabled = options.disabled
+    }
+
     this.name = options.name
     this.title = options.title
     this.selected = options.selected
 
-    this.#container.classList.toggle('disabled', this.disabled)
-    this.#container.classList.toggle('selected', this.selected)
-    this.element.textContent = this.name
-    this.element.title = this.title
+    if (this.#container) {
+      this.#container.classList.toggle('disabled', this.disabled)
+      this.#container.classList.toggle('selected', this.selected)
+      this.element.textContent = this.name
+      this.element.title = this.title
+    }
   }
 
   #maskOnTap (puzzle, tile) {

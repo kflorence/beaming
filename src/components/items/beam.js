@@ -96,7 +96,7 @@ export class Beam extends Item {
 
     step.index = this.#stepIndex = this.#steps.length - 1
 
-    if (!step.tile.items.some((item) => item === this)) {
+    if (!step.tile.items.some((item) => item.equals(this))) {
       // Add this beam to the tile item list so other beams can see it
       step.tile.addItem(this)
     }
@@ -681,9 +681,9 @@ export class Beam extends Item {
 
       console.debug(this.toString(), 'removed steps: ', deletedSteps)
 
-      // Remove beam from tiles it is being removed from
       const tiles = [...new Set(deletedSteps.map((step) => step.tile))]
-      tiles.forEach((tile) => tile.removeItem(this))
+      // Remove references to the beam in any tiles it is no longer in
+      tiles.filter((tile) => this.getSteps(tile).length === 0).forEach((tile) => tile.removeItem(this))
 
       deletedSteps.forEach((step) => step.onRemove(step))
 

@@ -5,7 +5,6 @@ export default {
         {
           items: [
             {
-              direction: 5,
               type: 'Portal'
             }
           ],
@@ -50,12 +49,12 @@ export default {
         {
           items: [
             {
-              direction: 2,
+              direction: 0,
               type: 'Portal'
             }
           ],
           modifiers: [
-            { type: 'Lock' }
+            { type: 'Rotate' }
           ],
           type: 'Tile'
         },
@@ -88,7 +87,7 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Rotate' }
+            { type: 'Lock' }
           ],
           type: 'Tile'
         },
@@ -110,5 +109,6 @@ export default {
   },
   solution: [
     { amount: 1, type: 'Connections' }
-  ]
+  ],
+  version: 1
 }

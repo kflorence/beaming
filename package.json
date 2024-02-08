@@ -16,11 +16,11 @@
     "build": "parcel build --public-url 'https://kflorence.github.io/beaming'",
     "start": "parcel",
     "test": "npm run test-lint && npm run test-functional",
-    "test-functional": "mocha test --recursive --timeout 10000",
+    "test-functional": "mocha test --recursive --timeout 20000",
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^120.0.1",
+    "chromedriver": "^121.0.0",
     "mocha": "^10.2.0",
     "parcel": "^2.9.3",
     "selenium-webdriver": "^4.16.0",

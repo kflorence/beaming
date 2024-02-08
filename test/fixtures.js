@@ -1,6 +1,11 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, until, WebElementCondition } = require('selenium-webdriver')
+const { Builder, By, Condition, logging, until } = require('selenium-webdriver')
+
+logging.installConsoleHandler()
+
+const logger = logging.getLogger('')
+logger.setLevel(logging.Level.DEBUG)
 
 class PuzzleFixture {
   driver
@@ -28,13 +33,17 @@ class PuzzleFixture {
       '--disable-dev-shm-usage',
       '--disable-extensions',
       '--disable-gpu',
-      '--headless=new',
+      '--headless',
       '--ignore-certificate-errors',
+      '--no-sandbox',
       '--window-size=768,1024'
     )
 
     console.log('Building driver...')
-    this.driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build()
+    this.driver = await new Builder()
+      .forBrowser('chrome')
+      .setChromeOptions(options)
+      .build()
 
     console.log(`Getting URL: ${this.url}`)
     await this.driver.get(this.url)
@@ -60,13 +69,21 @@ class PuzzleFixture {
     await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
   }
 
+  async isMasked () {
+    return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
+  }
+
+  async isNotMasked () {
+    return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
+  }
+
   async isSolved () {
-    return elementHasClass(this.elements.body, 'puzzle-solved')
+    return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-solved'))
   }
 
   async selectModifier (name) {
     const origin = this.#getModifier(name)
-    await this.driver.actions({ async: true }).move({ origin }).press().pause(500).release().perform()
+    await this.driver.actions({ async: true }).move({ origin }).press().pause(501).release().perform()
   }
 
   async #getModifier (name) {
@@ -77,9 +94,15 @@ class PuzzleFixture {
   static baseUrl = 'http://localhost:1234'
 }
 
-function elementHasClass (element, name) {
-  return new WebElementCondition('until element has class', function () {
+function untilElementHasClass (element, name) {
+  return new Condition('until element has class', function () {
     return element.getAttribute('class').then((classes) => classes.split(' ').some((className) => name === className))
+  })
+}
+
+function untilElementDoesNotHaveClass (element, name) {
+  return new Condition('until element does not have class', function () {
+    return element.getAttribute('class').then((classes) => classes.split(' ').every((className) => name !== className))
   })
 }
 

@@ -46,11 +46,13 @@ export class Tile extends Item {
 
   afterModify () {
     this.setStyle(this.selected ? 'selected' : 'default')
+    this.modifiers.forEach((modifier) => modifier.update({ disabled: false }))
   }
 
   beforeModify () {
     this.group.bringToFront()
     this.setStyle('edit')
+    this.modifiers.forEach((modifier) => modifier.update({ disabled: true }))
   }
 
   getState () {
