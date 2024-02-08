@@ -4,7 +4,7 @@ import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
-import { getOppositeDirection } from '../util'
+import { coalesce, getOppositeDirection } from '../util'
 
 export class Portal extends movable(rotatable(Item)) {
   #directions = {}
@@ -76,17 +76,23 @@ export class Portal extends movable(rotatable(Item)) {
   onCollision ({ beam, currentStep, nextStep, puzzle }) {
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
+      const stepIndex = nextStep.index
       const entryDirection = getOppositeDirection(nextStep.direction)
-      if (this.get(entryDirection)) {
-        // Trying to enter through a direction that is already occupied.
-        // Let beam.onCollision handle it.
+      const existing = coalesce(this.get(entryDirection), { stepIndex })
+      if (existing.stepIndex < stepIndex) {
+        // Checking stepIndex to exclude cases where we are doing a re-evaluation of history.
+        console.debug(
+          this.toString(),
+          'ignoring beam trying to enter through a direction which is already occupied:',
+          entryDirection
+        )
         return
       }
 
       // Handle entry collision
       return nextStep.copy({
         insertAbove: this,
-        onAdd: () => this.update(entryDirection, beam),
+        onAdd: () => this.update(entryDirection, { stepIndex }),
         onRemove: () => this.update(entryDirection),
         state: nextStep.state.copy(new StepState.Portal(this))
       })
@@ -162,17 +168,18 @@ export class Portal extends movable(rotatable(Item)) {
     }
   }
 
-  update (direction, beam) {
-    this.#directions[direction] = beam
+  update (direction, data) {
+    this.#directions[direction] = data
   }
 
   #getStep (beam, portal, nextStep, portalState) {
     const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal)
+    const stepIndex = nextStep.index
     return nextStep.copy({
       connected: false,
       direction,
       insertAbove: portal,
-      onAdd: () => portal.update(direction, beam),
+      onAdd: () => portal.update(direction, { stepIndex }),
       onRemove: () => portal.update(direction),
       point: portal.parent.center,
       state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal)),

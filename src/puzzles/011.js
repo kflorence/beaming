@@ -2,38 +2,28 @@ export default {
   layout: {
     tiles: [
       [
-        null,
         {
           items: [
             {
-              direction: 3,
+              direction: 5,
               type: 'Portal'
             }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         },
         {
-          type: 'Tile'
-        },
-        {
           items: [
             {
-              direction: 4,
+              direction: 5,
               type: 'Portal'
             }
           ],
-          type: 'Tile'
-        }
-      ],
-      [
-        {
-          type: 'Tile'
-        },
-        { type: 'Tile' },
-        {
-          type: 'Tile'
-        },
-        {
+          modifiers: [
+            { type: 'Lock' }
+          ],
           type: 'Tile'
         }
       ],
@@ -44,7 +34,7 @@ export default {
               openings: [
                 null,
                 null,
-                { color: 'blue', type: 'Beam' },
+                { color: 'blue', on: true, type: 'Beam' },
                 null,
                 null,
                 null
@@ -53,21 +43,22 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Rotate' },
-            { type: 'Toggle' }
+            { type: 'Immutable' }
           ],
           type: 'Tile'
         },
-        { type: 'Tile' },
         {
           items: [
             {
+              direction: 2,
               type: 'Portal'
             }
           ],
+          modifiers: [
+            { type: 'Lock' }
+          ],
           type: 'Tile'
         },
-        { type: 'Tile' },
         {
           items: [
             {
@@ -83,49 +74,39 @@ export default {
             }
           ],
           modifiers: [
-            { type: 'Rotate' },
-            { type: 'Toggle' }
+            { type: 'Immutable' }
           ],
           type: 'Tile'
         }
       ],
       [
         {
-          type: 'Tile'
-        },
-        {
-          type: 'Tile'
-        },
-        { type: 'Tile' },
-        {
-          type: 'Tile'
-        }
-      ],
-      [
-        null,
-        {
           items: [
             {
-              direction: 2,
+              direction: 5,
               type: 'Portal'
             }
+          ],
+          modifiers: [
+            { type: 'Rotate' }
           ],
           type: 'Tile'
         },
         {
-          type: 'Tile'
-        },
-        {
           items: [
             {
-              direction: 0,
+              direction: 5,
               type: 'Portal'
             }
+          ],
+          modifiers: [
+            { type: 'Lock' }
           ],
           type: 'Tile'
         }
       ]
-    ]
+    ],
+    type: 'even-r'
   },
   solution: [
     { amount: 1, type: 'Connections' }

@@ -348,8 +348,8 @@ export class Beam extends Item {
     if (!this.isOn()) {
       if (this.#steps.length) {
         console.debug(this.toString(), 'beam has been toggled off')
-        // Also reset any state changes from collision resolution
-        this.updateState((state) => { delete state.collisions })
+        // Also reset any state changes from user move decisions
+        this.updateState((state) => { delete state.moves })
         this.remove()
       }
       return
@@ -364,6 +364,16 @@ export class Beam extends Item {
       // Re-evaluate beginning at the step before the matched one
       this.done = false
       this.#stepIndex = Math.max(stepIndex - 1, 0)
+      return
+    }
+
+    if (this.isComplete()) {
+      const lastStep = this.getStep()
+
+      if (lastStep.state.get(StepState.Portal)?.entryPortal) {
+        // Check for valid exit portal
+        this.done = false
+      }
     }
   }
 
@@ -413,7 +423,7 @@ export class Beam extends Item {
     if (!tile) {
       console.debug(this.toString(), 'stopping due to out of bounds')
 
-      const collision = new Collision(0, [currentStep.point], [this])
+      const collision = new Collision(0, [currentStep.point], this)
       return this.updateStep(currentStepIndex, {
         done: true,
         state: new StepState(new StepState.Collision(collision))
@@ -507,16 +517,20 @@ export class Beam extends Item {
 
         return existingNextStep
       } else {
-        console.debug(this.toString(), 'is revising history')
+        console.debug(
+          this.toString(),
+          `is revising history at step index: ${nextStepIndex}`,
+          'existing step:',
+          existingNextStep,
+          'new step:',
+          nextStep
+        )
         this.#updateHistory(nextStepIndex)
-        // Ensure we have the correct path and segment index
-        nextStep.pathIndex = this.path.length - 1
-        nextStep.segmentIndex = this.path[nextStep.pathIndex].segments.length - 1
-        console.debug(this.toString(), 'revised next step:', nextStep)
       }
     }
 
-    if (currentStep.point.equals(nextStep.point)) {
+    if (currentStepIndex === this.#stepIndex && currentStep.point.equals(nextStep.point)) {
+      // Note: ensuring history has not been modified when evaluating next step vs current
       console.debug(this.toString(), 'next step point is same as current step point, stopping.', nextStep)
       return this.updateStep(currentStepIndex, nextStep.copy({ done: true }))
     }

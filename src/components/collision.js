@@ -2,7 +2,11 @@ import { StepState } from './step'
 
 export class Collision {
   constructor (index, points, beam, item) {
-    const items = [beam, item]
+    const items = [beam]
+
+    if (item !== undefined) {
+      items.push(item)
+    }
 
     this.beam = beam
     this.index = index
