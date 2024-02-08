@@ -29847,6 +29847,7 @@ class Puzzle {
         this.layers.mask.addChildren(tiles.map((tile)=>tile.group));
         if (mask.message) elements.message.textContent = mask.message;
         mask.onMask(this);
+        document.body.classList.add(Puzzle.Events.Mask);
     }
     select(id) {
         if (id !== undefined && id === this.#state?.getId()) // This ID is already selected
@@ -29863,6 +29864,7 @@ class Puzzle {
         this.#updateMessage(this.selectedTile);
         this.#mask.onUnmask(this);
         this.#mask = undefined;
+        document.body.classList.remove(Puzzle.Events.Mask);
         const mask = this.#maskQueue.pop();
         if (mask) // Evaluate after any current events have processed (e.g. beam updates from last mask)
         setTimeout(()=>this.mask(mask), 0);
@@ -30428,10 +30430,16 @@ class Tile extends (0, _item.Item) {
     }
     afterModify() {
         this.setStyle(this.selected ? "selected" : "default");
+        this.modifiers.forEach((modifier)=>modifier.update({
+                disabled: false
+            }));
     }
     beforeModify() {
         this.group.bringToFront();
         this.setStyle("edit");
+        this.modifiers.forEach((modifier)=>modifier.update({
+                disabled: true
+            }));
     }
     getState() {
         const state = {
@@ -30756,7 +30764,7 @@ class Filter extends (0, _move.movable)((0, _item.Item)) {
             (0, _util.getColorElement)(this.color)
         ];
     }
-    onCollision(beam, puzzle, { currentStep, nextStep }) {
+    onCollision({ currentStep, nextStep }) {
         // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
         return nextStep.copy(currentStep.state.has((0, _step.StepState).Filter) ? {
             colors: nextStep.colors.concat([
@@ -31033,14 +31041,16 @@ class Modifier extends (0, _stateful.Stateful) {
             name: this.name,
             title: this.title
         }, options || {});
-        this.disabled = options.disabled;
+        if (!this.immutable) this.disabled = options.disabled;
         this.name = options.name;
         this.title = options.title;
         this.selected = options.selected;
-        this.#container.classList.toggle("disabled", this.disabled);
-        this.#container.classList.toggle("selected", this.selected);
-        this.element.textContent = this.name;
-        this.element.title = this.title;
+        if (this.#container) {
+            this.#container.classList.toggle("disabled", this.disabled);
+            this.#container.classList.toggle("selected", this.selected);
+            this.element.textContent = this.name;
+            this.element.title = this.title;
+        }
     }
     #maskOnTap(puzzle, tile) {
         if (tile && tile !== this.tile) {
@@ -31584,6 +31594,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
                     return !(this.parent === tile || destinationTiles.some((destinationTile)=>destinationTile === tile));
                 }
             });
+            puzzle.updateSelectedTile(currentStep.tile);
             puzzle.mask(mask);
             // This will cause the beam to stop
             return currentStep;
@@ -32006,7 +32017,7 @@ class Beam extends (0, _item.Item) {
         step.pathIndex = this.path.length - 1;
         this.#steps.push(step);
         step.index = this.#stepIndex = this.#steps.length - 1;
-        if (!step.tile.items.some((item)=>item === this)) // Add this beam to the tile item list so other beams can see it
+        if (!step.tile.items.some((item)=>item.equals(this))) // Add this beam to the tile item list so other beams can see it
         step.tile.addItem(this);
         step.onAdd(step);
         console.debug(this.toString(), "added step", step);
@@ -32428,11 +32439,11 @@ class Beam extends (0, _item.Item) {
             this.path.splice(spliceIndex).forEach((item)=>item.remove());
             const deletedSteps = this.#steps.splice(stepIndex);
             console.debug(this.toString(), "removed steps: ", deletedSteps);
-            // Remove beam from tiles it is being removed from
             const tiles = [
                 ...new Set(deletedSteps.map((step)=>step.tile))
             ];
-            tiles.forEach((tile)=>tile.removeItem(this));
+            // Remove references to the beam in any tiles it is no longer in
+            tiles.filter((tile)=>this.getSteps(tile).length === 0).forEach((tile)=>tile.removeItem(this));
             deletedSteps.forEach((step)=>step.onRemove(step));
             this.done = false;
             this.#stepIndex = stepIndex - 1;
@@ -32857,6 +32868,7 @@ class State {
         this.#current = structuredClone(this.#original);
         this.#deltas = [];
         this.#index = this.#lastIndex();
+        this.#selectedTile = undefined;
         State.clearCache(this.getId());
         this.#updateCache();
     }
@@ -34600,7 +34612,6 @@ exports.default = {
                 {
                     items: [
                         {
-                            direction: 5,
                             type: "Portal"
                         }
                     ],
@@ -34655,13 +34666,13 @@ exports.default = {
                 {
                     items: [
                         {
-                            direction: 2,
+                            direction: 0,
                             type: "Portal"
                         }
                     ],
                     modifiers: [
                         {
-                            type: "Lock"
+                            type: "Rotate"
                         }
                     ],
                     type: "Tile"
@@ -34701,7 +34712,7 @@ exports.default = {
                     ],
                     modifiers: [
                         {
-                            type: "Rotate"
+                            type: "Lock"
                         }
                     ],
                     type: "Tile"
@@ -34729,7 +34740,8 @@ exports.default = {
             amount: 1,
             type: "Connections"
         }
-    ]
+    ],
+    version: 1
 };
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eIpMB":[function(require,module,exports) {
