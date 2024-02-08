@@ -156,6 +156,8 @@ export class Puzzle {
     }
 
     mask.onMask(this)
+
+    document.body.classList.add(Puzzle.Events.Mask)
   }
 
   select (id) {
@@ -178,6 +180,8 @@ export class Puzzle {
     this.#updateMessage(this.selectedTile)
     this.#mask.onUnmask(this)
     this.#mask = undefined
+
+    document.body.classList.remove(Puzzle.Events.Mask)
 
     const mask = this.#maskQueue.pop()
     if (mask) {

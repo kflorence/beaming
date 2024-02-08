@@ -11,7 +11,9 @@ describe('Puzzle 011', function () {
   it('should be solved', async function () {
     await puzzle.clickTile(1, 1)
     await puzzle.clickModifier('rotate', { times: 2 })
+    await puzzle.isMasked()
     await puzzle.clickTile(2, 1)
+    await puzzle.isNotMasked()
 
     await puzzle.clickTile(1, 1)
     await puzzle.selectModifier('rotate')
