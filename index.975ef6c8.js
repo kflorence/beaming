@@ -655,6 +655,7 @@ parcelHelpers.export(exports, "getColorElements", ()=>getColorElements);
 parcelHelpers.export(exports, "getDistance", ()=>getDistance);
 parcelHelpers.export(exports, "getIconElement", ()=>getIconElement);
 parcelHelpers.export(exports, "getPointBetween", ()=>getPointBetween);
+parcelHelpers.export(exports, "getPointFrom", ()=>getPointFrom);
 parcelHelpers.export(exports, "getOppositeDirection", ()=>getOppositeDirection);
 // Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
 // first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
@@ -667,6 +668,7 @@ parcelHelpers.export(exports, "getConvertedDirection", ()=>getConvertedDirection
 parcelHelpers.export(exports, "getPosition", ()=>getPosition);
 parcelHelpers.export(exports, "getReflectedDirection", ()=>getReflectedDirection);
 parcelHelpers.export(exports, "getTextElement", ()=>getTextElement);
+parcelHelpers.export(exports, "noop", ()=>noop);
 parcelHelpers.export(exports, "removeClass", ()=>removeClass);
 parcelHelpers.export(exports, "subtractDirection", ()=>subtractDirection);
 parcelHelpers.export(exports, "uniqueBy", ()=>uniqueBy);
@@ -675,6 +677,7 @@ var _pako = require("pako");
 var _pakoDefault = parcelHelpers.interopDefault(_pako);
 var _chromaJs = require("chroma-js");
 var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _paper = require("paper");
 const location = window.location;
 const params = new URLSearchParams(location.search);
 const url = new URL(location);
@@ -791,6 +794,12 @@ function getPointBetween(pointA, pointB, length = (length)=>length / 2) {
     vector.length = typeof length === "function" ? length(vector.length) : length;
     return pointA.subtract(vector);
 }
+function getPointFrom(point, length, direction) {
+    const vector = new (0, _paper.Point)(0, 0);
+    vector.length = length;
+    vector.angle = getConvertedDirection(direction) * 60;
+    return point.add(vector);
+}
 function getOppositeDirection(direction) {
     return direction + (direction >= 3 ? -3 : 3);
 }
@@ -819,6 +828,9 @@ function getTextElement(text) {
     span.textContent = text.toString();
     return span;
 }
+function noop(value) {
+    if (value) return value;
+}
 function removeClass(className, ...elements) {
     elements.forEach((element)=>element.classList.remove(className));
 }
@@ -830,7 +842,7 @@ function uniqueBy(array, key) {
     return array.filter((value, index)=>!values.includes(value[key], index + 1));
 }
 
-},{"jsondiffpatch":"7GjiV","pako":"afBDp","chroma-js":"iVrwS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7GjiV":[function(require,module,exports) {
+},{"jsondiffpatch":"7GjiV","pako":"afBDp","chroma-js":"iVrwS","paper":"agkns","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7GjiV":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "DiffPatcher", ()=>(0, _diffpatcherJsDefault.default));
@@ -29699,6 +29711,7 @@ class Puzzle {
     selectedTile;
     solved = false;
     #beams;
+    #beamsUpdateDelay = 30;
     #collisions = {};
     #eventListeners = new (0, _eventListeners.EventListeners)({
         context: this
@@ -29706,6 +29719,7 @@ class Puzzle {
     #interact;
     #isUpdatingBeams = false;
     #mask;
+    #maskQueue = [];
     #solution;
     #state;
     #termini;
@@ -29802,6 +29816,9 @@ class Puzzle {
         }, style));
         this.layers.debug.addChild(circle);
     }
+    getBeamsUpdateDelay() {
+        return this.#beamsUpdateDelay;
+    }
     getItems(tile) {
         return (tile ? this.#tiles.filter((t)=>t === tile) : this.#tiles).flatMap((tile)=>tile.items);
     }
@@ -29817,14 +29834,19 @@ class Puzzle {
     }
     mask(mask) {
         if (this.#mask) {
-            console.error("Ignoring mask request due to existing mask", mask, this.#mask);
+            if (this.#mask.equals(mask)) {
+                console.debug(mask);
+                throw new Error(`Duplicate mask detected: ${mask.id}`);
+            }
+            this.#maskQueue.push(mask);
             return;
         }
         this.#mask = mask;
         // TODO animation?
-        const tiles = this.#tiles.filter(mask.filter).map((tile)=>new (0, _mask.Mask)(tile, typeof mask.configuration.style === "function" ? mask.configuration.style(tile) : mask.configuration.style));
+        const tiles = this.#tiles.filter(mask.tileFilter).map((tile)=>new (0, _mask.Mask)(tile, typeof mask.configuration.style === "function" ? mask.configuration.style(tile) : mask.configuration.style));
         this.layers.mask.addChildren(tiles.map((tile)=>tile.group));
-        if (mask.configuration.message) elements.message.textContent = mask.configuration.message;
+        if (mask.message) elements.message.textContent = mask.message;
+        mask.onMask(this);
     }
     select(id) {
         if (id !== undefined && id === this.#state?.getId()) // This ID is already selected
@@ -29837,10 +29859,13 @@ class Puzzle {
         this.#reload();
     }
     unmask() {
-        if (typeof this.#mask.onUnmask === "function") this.#mask.onUnmask(this);
-        this.#mask = undefined;
         this.layers.mask.removeChildren();
         this.#updateMessage(this.selectedTile);
+        this.#mask.onUnmask(this);
+        this.#mask = undefined;
+        const mask = this.#maskQueue.pop();
+        if (mask) // Evaluate after any current events have processed (e.g. beam updates from last mask)
+        setTimeout(()=>this.mask(mask), 0);
     }
     update() {
         if (!this.#mask && !this.#isUpdatingBeams) {
@@ -30075,7 +30100,7 @@ class Puzzle {
         if (this.debug) this.layers.debug.clear();
         beams.forEach((beam)=>beam.step(this));
         // Ensure the UI has a chance to update between loops
-        setTimeout(()=>this.#updateBeams(), 30);
+        setTimeout(()=>this.#updateBeams(), this.#beamsUpdateDelay);
     }
     #updateMessage(tile) {
         if (tile) {
@@ -30140,24 +30165,31 @@ class Puzzle {
         Updated: "puzzle-updated"
     });
     static Mask = class {
-        constructor(filter, configuration = {}){
-            configuration.style = configuration.style || {};
+        constructor(configuration = {}){
+            configuration.style ??= {};
             this.configuration = configuration;
-            this.filter = filter;
-            this.onTap = configuration.onTap;
-            this.onUnmask = configuration.onUnmask;
+            this.id = configuration.id;
+            this.message = configuration.message;
+            this.tileFilter = configuration.tileFilter ?? (0, _util.noop)(true);
+            this.onMask = configuration.onMask ?? (0, _util.noop);
+            this.onTap = configuration.onTap ?? (0, _util.noop);
+            this.onUnmask = configuration.onUnmask ?? (0, _util.noop);
+        }
+        equals(other) {
+            return this.id === other.id;
         }
     };
     // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
     static #connectedBeams = (item)=>item.type === (0, _item.Item).Types.beam && item.isConnected();
-    static #solvedMask = new Puzzle.Mask((tile)=>tile.items.some(Puzzle.#connectedBeams), {
+    static #solvedMask = new Puzzle.Mask({
         style: (tile)=>{
             const beams = tile.items.filter(Puzzle.#connectedBeams);
             const colors = beams.flatMap((beam)=>beam.getSteps(tile).flatMap((step)=>step.color));
             return {
                 fillColor: (0, _chromaJsDefault.default).average(colors).hex()
             };
-        }
+        },
+        tileFilter: (tile)=>tile.items.some(Puzzle.#connectedBeams)
     });
 }
 
@@ -30755,10 +30787,12 @@ class Move extends (0, _modifier.Modifier) {
         super.onTap(event);
         const items = this.tile.items.filter(Move.movable);
         if (this.#mask || !items.length) return;
-        this.tile.beforeModify();
-        const mask = new (0, _puzzle.Puzzle).Mask(this.tileFilter.bind(this), {
+        const mask = new (0, _puzzle.Puzzle).Mask({
+            id: this.toString(),
             onTap: this.#maskOnTap.bind(this),
-            onUnmask: ()=>this.tile.afterModify()
+            onMask: ()=>this.tile.beforeModify(),
+            onUnmask: ()=>this.tile.afterModify(),
+            tileFilter: this.tileFilter.bind(this)
         });
         this.#mask = mask;
         (0, _util.emitEvent)((0, _puzzle.Puzzle).Events.Mask, {
@@ -30965,9 +30999,11 @@ class Modifier extends (0, _stateful.Stateful) {
         this.update({
             selected: true
         });
-        this.tile.beforeModify();
-        const mask = this.#mask = new (0, _puzzle.Puzzle).Mask(this.#moveFilter.bind(this), {
-            onTap: this.#maskOnTap.bind(this)
+        const mask = this.#mask = new (0, _puzzle.Puzzle).Mask({
+            id: this.toString(),
+            onMask: ()=>this.tile.beforeModify(),
+            onTap: this.#maskOnTap.bind(this),
+            tileFilter: this.#moveFilter.bind(this)
         });
         this.dispatchEvent((0, _puzzle.Puzzle).Events.Mask, {
             mask
@@ -30983,6 +31019,12 @@ class Modifier extends (0, _stateful.Stateful) {
         this.detach();
         this.tile.removeModifier(this);
         this.tile = null;
+    }
+    toString() {
+        return [
+            this.name,
+            this.id
+        ].join(":");
     }
     update(options) {
         options = Object.assign({
@@ -31314,8 +31356,8 @@ class Step {
         this.index = index;
         this.insertAbove = insertAbove;
         // The onAdd and onRemove methods should be idempotent!
-        this.onAdd = onAdd ?? (()=>{});
-        this.onRemove = onRemove ?? (()=>{});
+        this.onAdd = onAdd ?? (0, _util.noop);
+        this.onRemove = onRemove ?? (0, _util.noop);
         this.point = point;
         this.pathIndex = pathIndex;
         this.segmentIndex = segmentIndex;
@@ -31328,9 +31370,6 @@ class Step {
     equals(step) {
         return (0, _util.deepEqual)(this, step);
     }
-    static Stop = class StepStop extends Step {
-        done = true;
-    };
 }
 class StepState {
     #cache = {};
@@ -31414,10 +31453,11 @@ var _move = require("../modifiers/move");
 var _item = require("../item");
 var _paper = require("paper");
 var _rotate = require("../modifiers/rotate");
-var _util = require("../util");
 var _step = require("../step");
 var _puzzle = require("../puzzle");
+var _util = require("../util");
 class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item))) {
+    #directions = {};
     constructor(tile, state){
         // Only allow rotation if direction is defined
         super(tile, state, {
@@ -31432,6 +31472,8 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
             strokeWidth: 2
         };
         const children = [];
+        // TODO: consider adding an item with a gradient that fades to black at the center of the ellipse
+        // This will help distinguish visually that beams are entering/exiting a portal when there are multiple
         const ellipse = new (0, _paper.Path).Ellipse({
             center: tile.center,
             radius: [
@@ -31469,73 +31511,113 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         if (this.rotatable) // Properly align items with hexagonal rotation
         this.rotateGroup(1);
     }
-    // TODO: allow multiple beams to enter a portal.
-    // Collision should still occur between beams if one is entering and one is exiting.
-    onCollision({ beam, collisionStep, currentStep, nextStep, puzzle }) {
+    get(direction) {
+        return this.#directions[direction];
+    }
+    onCollision({ beam, currentStep, nextStep, puzzle }) {
         const portalState = currentStep.state.get((0, _step.StepState).Portal);
-        if (!portalState) // Handle entry collision
-        return nextStep.copy({
-            insertAbove: this,
-            state: nextStep.state.copy(new (0, _step.StepState).Portal(this))
-        });
-        else if (portalState.exitPortal === this) // Handle exit collision
+        if (!portalState) {
+            const stepIndex = nextStep.index;
+            const entryDirection = (0, _util.getOppositeDirection)(nextStep.direction);
+            const existing = (0, _util.coalesce)(this.get(entryDirection), {
+                stepIndex
+            });
+            if (existing.stepIndex < stepIndex) {
+                // Checking stepIndex to exclude cases where we are doing a re-evaluation of history.
+                console.debug(this.toString(), "ignoring beam trying to enter through a direction which is already occupied:", entryDirection);
+                return;
+            }
+            // Handle entry collision
+            return nextStep.copy({
+                insertAbove: this,
+                onAdd: ()=>this.update(entryDirection, {
+                        stepIndex
+                    }),
+                onRemove: ()=>this.update(entryDirection),
+                state: nextStep.state.copy(new (0, _step.StepState).Portal(this))
+            });
+        } else if (portalState.exitPortal === this) // Handle exit collision
         return nextStep.copy({
             insertAbove: this
         });
-        const direction = this.getDirection();
-        const matchingDirection = direction === undefined ? direction : (0, _util.getOppositeDirection)(this.getDirection());
-        // Check for destination in beam state
-        const destinationId = beam.getState().collisions?.[this.id];
-        // Find all portals that match the opposite direction of this one (a.k.a the direction we are traveling).
-        const destinations = puzzle.getItems().filter((item)=>item.type === (0, _item.Item).Types.portal && !item.equals(this) && item.getDirection() === matchingDirection && (!destinationId || item.id === destinationId));
+        // Check for destination in beam state (matches on item ID and step index)
+        const stateId = [
+            this.id,
+            nextStep.index
+        ].join(":");
+        const destinationId = beam.getState().moves?.[stateId];
+        // Find all valid destination portals
+        const destinations = puzzle.getItems().filter((item)=>item.type === (0, _item.Item).Types.portal && !item.equals(this) && // Portal must not already have a beam occupying the desired direction
+            !item.get(Portal.getExitDirection(nextStep, portalState.entryPortal, item)) && (destinationId === undefined || item.id === destinationId) && // Entry portals without defined direction can exit from any other portal.
+            (this.getDirection() === undefined || // Exit portals without defined direction can be used by any entry portal.
+            item.getDirection() === undefined || // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
+            item.getDirection() === this.getDirection()));
         if (destinations.length === 0) {
-            console.debug("portal has no destinations, stopping");
-            // Nowhere to go
-            return collisionStep;
+            console.debug(this.toString(), "no valid destinations found");
+            // This will cause the beam to stop
+            return currentStep;
         }
         if (destinations.length === 1) // A single matching destination
-        return this.#step(destinations[0], nextStep, portalState);
+        return this.#getStep(beam, destinations[0], nextStep, portalState);
         else {
-            const destinationTiles = destinations.map((portal)=>portal.parent);
-            currentStep.tile.beforeModify();
             // Multiple matching destinations. User will need to pick one manually.
-            puzzle.mask(new (0, _puzzle.Puzzle).Mask((tile)=>{
-                // Include the portal tile and tiles which contain a matching destination
-                return !(this.parent === tile || destinationTiles.some((destinationTile)=>destinationTile === tile));
-            }, {
+            const destinationTiles = destinations.map((portal)=>portal.parent);
+            const mask = new (0, _puzzle.Puzzle).Mask({
                 beam,
+                id: stateId,
+                onMask: ()=>currentStep.tile.beforeModify(),
                 onTap: (puzzle, tile)=>{
                     const destination = destinations.find((portal)=>portal.parent === tile);
                     if (destination) {
-                        beam.addStep(this.#step(destination, nextStep, portalState));
+                        beam.addStep(this.#getStep(beam, destination, nextStep, portalState));
                         beam.updateState((state)=>{
-                            if (!state.collisions) state.collisions = {};
+                            if (!state.moves) state.moves = {};
                             // Store this decision in beam state
-                            state.collisions[this.id] = destination.id;
+                            state.moves[stateId] = destination.id;
                         });
                         puzzle.unmask();
                     }
                 },
-                onUnmask: ()=>{
-                    currentStep.tile.afterModify();
+                onUnmask: ()=>currentStep.tile.afterModify(),
+                tileFilter: (tile)=>{
+                    // Include the portal tile and tiles which contain a matching destination
+                    return !(this.parent === tile || destinationTiles.some((destinationTile)=>destinationTile === tile));
                 }
-            }));
-            return new (0, _step.Step).Stop();
+            });
+            puzzle.mask(mask);
+            // This will cause the beam to stop
+            return currentStep;
         }
     }
-    #step(portal, nextStep, portalState) {
+    update(direction, data) {
+        this.#directions[direction] = data;
+    }
+    #getStep(beam, portal, nextStep, portalState) {
+        const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal);
+        const stepIndex = nextStep.index;
         return nextStep.copy({
             connected: false,
-            direction: this.rotatable ? this.getDirection() : nextStep.direction,
+            direction,
             insertAbove: portal,
-            tile: portal.parent,
+            onAdd: ()=>portal.update(direction, {
+                    stepIndex
+                }),
+            onRemove: ()=>portal.update(direction),
             point: portal.parent.center,
-            state: nextStep.state.copy(new (0, _step.StepState).Portal(portalState.entryPortal, portal))
+            state: nextStep.state.copy(new (0, _step.StepState).Portal(portalState.entryPortal, portal)),
+            tile: portal.parent
         });
+    }
+    static getExitDirection(step, entryPortal, exitPortal) {
+        // Direction precedence is as follows:
+        // - direction defined by exit portal
+        // - direction defined by entry portal
+        // - direction beam was traveling when it reached the entry portal
+        return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction;
     }
 }
 
-},{"../modifiers/move":"iw6ob","../item":"klNFr","paper":"agkns","../modifiers/rotate":"dh5U5","../util":"92uDI","../step":"71fBe","../puzzle":"jIcx0","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dh5U5":[function(require,module,exports) {
+},{"../modifiers/move":"iw6ob","../item":"klNFr","paper":"agkns","../modifiers/rotate":"dh5U5","../step":"71fBe","../puzzle":"jIcx0","../util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dh5U5":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Rotate", ()=>Rotate);
@@ -31886,6 +31968,7 @@ class Beam extends (0, _item.Item) {
             },
             locked: true,
             strokeJoin: "round",
+            strokeCap: "round",
             strokeWidth: terminus.radius / 12
         };
     }
@@ -31912,9 +31995,8 @@ class Beam extends (0, _item.Item) {
             if (step.connected) points.unshift(previousStep.point);
             path.add(...points);
             this.path.push(path);
-            const index = step.insertAbove ? step.insertAbove.getIndex() + 1 : 0;
             // Unless specified in the state, the path will be inserted beneath all items
-            this.getLayer().insertChild(index, path);
+            this.getLayer().insertChild(this.#getItemIndex(step), path);
             // Reset the segmentIndex
             step.segmentIndex = 0;
         } else {
@@ -31926,7 +32008,7 @@ class Beam extends (0, _item.Item) {
         step.index = this.#stepIndex = this.#steps.length - 1;
         if (!step.tile.items.some((item)=>item === this)) // Add this beam to the tile item list so other beams can see it
         step.tile.addItem(this);
-        step.onAdd();
+        step.onAdd(step);
         console.debug(this.toString(), "added step", step);
         this.#onUpdate(this.#stepIndex);
         return step;
@@ -32027,19 +32109,19 @@ class Beam extends (0, _item.Item) {
             this.#stepIndex = Math.max(mergeWith.stepIndex - 1, 0);
         }
     }
-    onCollision({ beam, collision, collisionStep, currentStep, nextStep }) {
+    onCollision({ beam, collision, collisionStep, currentStep, nextStep, puzzle }) {
         const isSelf = beam.equals(this);
         console.debug(this.toString(), "evaluating collision with", isSelf ? "self" : beam.toString());
-        if (isSelf && this.#stepIndex < this.getLastStepIndex()) {
-            console.debug(this.toString(), "ignoring collision with self while re-evaluating history");
-            return;
-        }
-        if (!beam.isPending()) {
+        if (!beam.isOn()) {
             console.debug(this.toString(), "ignoring collision with inactive beam", beam.toString());
             return;
         }
-        if (beam.parent.equals(this.parent) && nextStep.direction === beam.startDirection()) {
+        if (beam.parent.equals(this.parent) && currentStep.index === 0) {
             console.debug(this.toString(), "ignoring collision with sibling beam", beam.toString());
+            return;
+        }
+        if (isSelf && this.#stepIndex < this.getLastStepIndex()) {
+            console.debug(this.toString(), "ignoring collision with self while re-evaluating history");
             return;
         }
         // Find the step with matching collision point
@@ -32052,8 +32134,7 @@ class Beam extends (0, _item.Item) {
             return;
         }
         // Note: we only want to evaluate this at the collision point, otherwise terminus connection is irrelevant.
-        const terminusConnection = step.state.get((0, _step.StepState).TerminusConnection);
-        if (terminusConnection && terminusConnection.terminus.equals(beam.parent)) {
+        if (step.state.get((0, _step.StepState).TerminusConnection)?.terminus.equals(beam.parent)) {
             console.debug(this.toString(), "ignoring collision with connected beam in parent terminus", beam.toString());
             return;
         }
@@ -32062,30 +32143,29 @@ class Beam extends (0, _item.Item) {
         if (reflector) {
             // Since every step goes to the center of the tile, we need to go one pixel back in the direction we came from
             // in order to properly test which side of the reflector the beams are on.
-            const stepPoint = Beam.getNextPoint(step.point, 1, (0, _util.getOppositeDirection)(step.direction));
-            const nextStepPoint = Beam.getNextPoint(currentStep.point, 1, (0, _util.getOppositeDirection)(currentStep.direction));
+            const stepPoint = (0, _util.getPointFrom)(step.point, 1, (0, _util.getOppositeDirection)(step.direction));
+            const nextStepPoint = (0, _util.getPointFrom)(currentStep.point, 1, (0, _util.getOppositeDirection)(currentStep.direction));
             if (!reflector.item.isSameSide(stepPoint, nextStepPoint)) {
                 console.debug(this.toString(), "ignoring collision with beam on opposite side of reflector", beam.toString());
                 return;
             }
         }
-        // The beams are traveling in different directions, it's a collision
-        if (step.direction !== nextStep.direction) {
+        const isSameDirection = step.direction === nextStep.direction;
+        if (currentStep.state.get((0, _step.StepState).Portal)?.exitPortal && !isSameDirection) {
+            console.debug(this.toString(), "ignoring collision with beam using same portal with different exit direction", beam.toString());
+            return;
+        }
+        if (!isSameDirection || isSelf) {
+            // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
             console.debug(beam.toString(), "has collided with", isSelf ? "self" : this.toString(), collision);
-            // When colliding with self, no need to update since the collisionStep will take care of it
-            if (!isSelf) {
-                const settings = {
-                    done: true,
-                    state: step.state.copy(new (0, _step.StepState).Collision(collision))
-                };
-                if (stepIndex < this.getLastStepIndex() && !step.state.has((0, _step.StepState).Collision)) {
-                    // History must be updated if the collision occurred on an earlier step.
-                    // If the step already contains a collision in its state, do not update history as that step may be part
-                    // of a collision loop and updating will cause the infinite loop to continue.
-                    this.#updateHistory(stepIndex);
-                    this.addStep(step.copy(settings));
-                } else this.updateStep(stepIndex, settings);
-            }
+            if (!isSelf) // Update beam at point of impact
+            this.update(stepIndex, {
+                done: true,
+                state: step.state.copy(new (0, _step.StepState).Collision(collision.mirror()))
+            });
+            else if (!isSameDirection) // For a collision with self, the update at point of impact will occur on the next update loop. This results in
+            // a better visualization of the collision which will result in an infinite looping animation.
+            this.update(stepIndex, puzzle.getBeamsUpdateDelay());
             return collisionStep.copy({
                 done: true,
                 // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
@@ -32118,9 +32198,9 @@ class Beam extends (0, _item.Item) {
         if (!this.isOn()) {
             if (this.#steps.length) {
                 console.debug(this.toString(), "beam has been toggled off");
-                // Also reset any state changes from collision resolution
+                // Also reset any state changes from user move decisions
                 this.updateState((state)=>{
-                    delete state.collisions;
+                    delete state.moves;
                 });
                 this.remove();
             }
@@ -32136,6 +32216,12 @@ class Beam extends (0, _item.Item) {
             // Re-evaluate beginning at the step before the matched one
             this.done = false;
             this.#stepIndex = Math.max(stepIndex - 1, 0);
+            return;
+        }
+        if (this.isComplete()) {
+            const lastStep = this.getStep();
+            if (lastStep.state.get((0, _step.StepState).Portal)?.entryPortal) // Check for valid exit portal
+            this.done = false;
         }
     }
     remove(stepIndex = 0) {
@@ -32166,7 +32252,7 @@ class Beam extends (0, _item.Item) {
         const currentStep = this.#steps[currentStepIndex];
         // On the first step, we have to take the rotation of the terminus into account
         const direction = currentStepIndex === 0 ? this.startDirection() : currentStep.direction;
-        const nextStepPoint = Beam.getNextPoint(currentStep.point, currentStep.tile.parameters.inradius, direction);
+        const nextStepPoint = (0, _util.getPointFrom)(currentStep.point, currentStep.tile.parameters.inradius, direction);
         // Use the midpoint between the previous and next step points to calculate which tile we are in.
         // This will ensure we consistently pick the same tile when the next step point is on the edge of two tiles.
         const tile = puzzle.getTile((0, _util.getPointBetween)(currentStep.point, nextStepPoint));
@@ -32175,9 +32261,7 @@ class Beam extends (0, _item.Item) {
             console.debug(this.toString(), "stopping due to out of bounds");
             const collision = new (0, _collision.Collision)(0, [
                 currentStep.point
-            ], [
-                this
-            ]);
+            ], this);
             return this.updateStep(currentStepIndex, {
                 done: true,
                 state: new (0, _step.StepState)(new (0, _step.StepState).Collision(collision))
@@ -32191,13 +32275,7 @@ class Beam extends (0, _item.Item) {
         const items = (0, _util.uniqueBy)(tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items), "id");
         console.debug(this.toString(), "collision items:", items);
         // See if there are any collisions along the path we plan to take
-        const collisions = this.#getCollisions(items, [
-            currentStep.point,
-            nextStep.point
-        ], puzzle).map((collision, index)=>new (0, _collision.Collision)(index, collision.points, [
-                this,
-                collision.item
-            ]));
+        const collisions = this.#getCollisions(items, currentStep, nextStep, puzzle).map((collision, index)=>new (0, _collision.Collision)(index, collision.points, this, collision.item));
         if (collisions.length) console.debug(this.toString(), "collisions:", collisions);
         let collisionStep;
         for(let collisionIndex = 0; collisionIndex < collisions.length; collisionIndex++){
@@ -32223,15 +32301,7 @@ class Beam extends (0, _item.Item) {
             });
             if (collisionStep instanceof (0, _step.Step)) break;
         }
-        if (collisionStep) {
-            // Allow collision resolvers to stop execution
-            if (collisionStep instanceof (0, _step.Step).Stop) {
-                this.done = true;
-                this.#onUpdate();
-                return collisionStep;
-            }
-            nextStep = collisionStep;
-        }
+        if (collisionStep) nextStep = collisionStep;
         // See if we need to change history
         if (existingNextStep) {
             // The next step we would take is the same as the step that already exists in history
@@ -32243,22 +32313,29 @@ class Beam extends (0, _item.Item) {
                 this.#onUpdate(this.#stepIndex);
                 return existingNextStep;
             } else {
-                console.debug(this.toString(), "is revising history");
+                console.debug(this.toString(), `is revising history at step index: ${nextStepIndex}`, "existing step:", existingNextStep, "new step:", nextStep);
                 this.#updateHistory(nextStepIndex);
-                // Ensure we have the correct path and segment index
-                nextStep.pathIndex = this.path.length - 1;
-                nextStep.segmentIndex = this.path[nextStep.pathIndex].segments.length - 1;
-                console.debug(this.toString(), "revised next step:", nextStep);
             }
         }
-        if (currentStep.point.equals(nextStep.point)) {
+        if (currentStepIndex === this.#stepIndex && currentStep.point.equals(nextStep.point)) {
+            // Note: ensuring history has not been modified when evaluating next step vs current
             console.debug(this.toString(), "next step point is same as current step point, stopping.", nextStep);
-            return this.updateStep(currentStepIndex, nextStep);
+            return this.updateStep(currentStepIndex, nextStep.copy({
+                done: true
+            }));
         }
         return this.addStep(nextStep);
     }
     toString() {
         return `[${this.type}:${this.id}:${(0, _chromaJsDefault.default)(this.getColor()).name()}]`;
+    }
+    update(stepIndex, settings = {}, timeout) {
+        if (typeof settings === "number") {
+            timeout = settings;
+            settings = {};
+        }
+        const update = this.#update.bind(this, stepIndex, settings, timeout);
+        return timeout === undefined ? update() : setTimeout(update, timeout);
     }
     updateState(updater, dispatchEvent = true) {
         return this.parent.updateState((state)=>updater(state.openings[this.#direction]), dispatchEvent);
@@ -32266,17 +32343,19 @@ class Beam extends (0, _item.Item) {
     updateStep(stepIndex, settings) {
         const step = this.getStep(stepIndex);
         if (step) {
-            // Handle (stepIndex, updater(step))
-            if (typeof settings === "function") settings = settings(step, stepIndex);
-            const updatedStep = settings instanceof (0, _step.Step) ? settings : step.copy(settings);
+            const updatedStep = this.#getUpdatedStep(step, settings);
             this.#steps[stepIndex] = updatedStep;
-            updatedStep.onAdd();
+            updatedStep.onAdd(updatedStep);
             console.debug(this.toString(), "updated step at index", stepIndex, "from", step, "to", updatedStep);
             this.#onUpdate(stepIndex);
             return updatedStep;
         }
     }
-    #getCollisions(items, segments, puzzle) {
+    #getCollisions(items, currentStep, nextStep, puzzle) {
+        const segments = [
+            currentStep.point,
+            nextStep.point
+        ];
         const path = new (0, _paper.Path)({
             segments
         });
@@ -32286,8 +32365,8 @@ class Beam extends (0, _item.Item) {
             const intersections = path.getIntersections(item.getCompoundPath(), // Ignore first point from self which will always collide
             (curveLocation)=>!(item === this && curveLocation.point.equals(firstPoint)));
             points.push(...new Set(intersections.map((intersection)=>intersection.point)));
-            // Handle the edge case of colliding with a beam with a single, isolated path item. This will happen in the
-            // case of a portal exit collision, for example.
+            // Handle the edge case of colliding with a beam with a single, isolated path item.
+            // This will happen in the case of a portal exit collision, for example.
             if (!points.length && item.type === (0, _item.Item).Types.beam && item !== this) points.push(...item.getSteps().map((step)=>step.point).filter((point)=>segments.some((segment)=>(0, _util.fuzzyEquals)(point, segment))));
             // Sort collision points by distance from origin point (closest collision points first)
             points.sort((0, _util.getDistance)(firstPoint));
@@ -32308,6 +32387,19 @@ class Beam extends (0, _item.Item) {
             return a.item.sortOrder - b.item.sortOrder;
             return distance;
         });
+    }
+    #getItemIndex(step) {
+        return step.insertAbove ? step.insertAbove.getIndex() + 1 : 0;
+    }
+    #getUpdatedStep(step, settings) {
+        if (typeof settings === "function") settings = settings(step);
+        return settings instanceof (0, _step.Step) ? settings : step.copy(settings);
+    }
+    #update(stepIndex, settings) {
+        if (stepIndex < this.getLastStepIndex()) {
+            const step = this.#updateHistory(stepIndex);
+            this.addStep(this.#getUpdatedStep(step, settings));
+        } else this.updateStep(stepIndex, settings);
     }
     #onUpdate(stepIndex) {
         const lastStepIndex = this.getLastStepIndex();
@@ -32341,18 +32433,12 @@ class Beam extends (0, _item.Item) {
                 ...new Set(deletedSteps.map((step)=>step.tile))
             ];
             tiles.forEach((tile)=>tile.removeItem(this));
-            deletedSteps.forEach((step)=>step.onRemove());
+            deletedSteps.forEach((step)=>step.onRemove(step));
             this.done = false;
             this.#stepIndex = stepIndex - 1;
             this.#onUpdate(this.#stepIndex);
         }
         return step;
-    }
-    static getNextPoint(point, length, direction) {
-        const vector = new (0, _paper.Point)(0, 0);
-        vector.length = length;
-        vector.angle = (0, _util.getConvertedDirection)(direction) * 60;
-        return point.add(vector);
     }
     static CacheKeys = Object.freeze({
         MergeWith: "mergeWith"
@@ -32372,21 +32458,37 @@ parcelHelpers.export(exports, "Collision", ()=>Collision);
 parcelHelpers.export(exports, "CollisionMergeWith", ()=>CollisionMergeWith);
 var _step = require("./step");
 class Collision {
-    constructor(index, points, items){
+    constructor(index, points, beam, item){
+        const items = [
+            beam
+        ];
+        if (item !== undefined) items.push(item);
+        this.beam = beam;
         this.index = index;
         // The item that was collided with
-        this.item = items[1];
+        this.item = item;
         this.itemIds = items.map((item)=>item.id);
         this.items = items;
         // The first collision point
         this.point = points[0];
         this.points = points;
+        // Check if the collision is with self
+        this.withSelf = beam.equals(item);
+    }
+    copy(settings) {
+        return new Collision(settings.index ?? this.index, settings.points ?? this.points, settings.beam ?? this.beam, settings.item ?? this.item);
     }
     equals(other) {
-        return other && other.point.equals(this.point) && other.items.length === this.items.length && other.items.every((item)=>this.has(item));
+        return other && other.point.equals(this.point) && other.items.every((item)=>this.has(item));
     }
-    has(beam) {
-        return this.itemIds.includes(beam.id);
+    has(item) {
+        return this.itemIds.includes(item.id);
+    }
+    mirror() {
+        return this.copy({
+            beam: this.item,
+            item: this.beam
+        });
     }
 }
 class CollisionMergeWith {
@@ -32407,10 +32509,8 @@ var _paper = require("paper");
 var _item = require("../item");
 var _rotate = require("../modifiers/rotate");
 var _util = require("../util");
-var _beam = require("./beam");
 var _move = require("../modifiers/move");
 var _step = require("../step");
-var _collision = require("../collision");
 class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item))) {
     #item;
     constructor(tile, state){
@@ -32435,7 +32535,7 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
     isSameSide(pointA, pointB) {
         return this.getSide(pointA) === this.getSide(pointB);
     }
-    onCollision({ beam, collisions, collisionStep, currentStep, nextStep }) {
+    onCollision({ beam, collision, collisions, collisionStep, currentStep, nextStep }) {
         const directionFrom = (0, _util.getOppositeDirection)(currentStep.direction);
         const directionTo = (0, _util.getReflectedDirection)(directionFrom, this.rotation);
         if (directionTo === currentStep.direction) {
@@ -32446,23 +32546,22 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
             console.debug(beam.toString(), "stopping due to reflection back at self");
             if (collisions.some((collision)=>collision.item.type === (0, _item.Item).Types.beam)) // If there is also a beam collision in the list of collisions for this step, let that one resolve it
             return;
-            else {
-                const collision = collisionStep.state.get((0, _step.StepState).Collision);
-                // Updating the collision stored on collisionStep to use nextStep.point to ensure any beams hitting the same
-                // reflector will be collided with
-                return collisionStep.copy({
-                    point: nextStep.point,
-                    state: collisionStep.state.copy(new (0, _step.StepState).Collision(new (0, _collision.Collision)(collision.index, [
+            else // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
+            // same side of the reflector will collide with this beam.
+            return nextStep.copy({
+                done: true,
+                state: nextStep.state.copy(new (0, _step.StepState).Collision(collision.copy({
+                    points: [
                         nextStep.point
-                    ], collision.items)))
-                });
-            }
+                    ]
+                })))
+            });
         }
         // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state
         if (!currentStep.state.has((0, _step.StepState).Reflector)) return nextStep.copy({
             state: nextStep.state.copy(new (0, _step.StepState).Reflector(this))
         });
-        const point = (0, _beam.Beam).getNextPoint(currentStep.point, nextStep.tile.parameters.inradius, directionTo);
+        const point = (0, _util.getPointFrom)(currentStep.point, nextStep.tile.parameters.inradius, directionTo);
         return nextStep.copy({
             direction: directionTo,
             point
@@ -32484,7 +32583,7 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
     }
 }
 
-},{"paper":"agkns","../item":"klNFr","../modifiers/rotate":"dh5U5","../util":"92uDI","./beam":"9UvIU","../modifiers/move":"iw6ob","../step":"71fBe","../collision":"bFbGC","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b5rvi":[function(require,module,exports) {
+},{"paper":"agkns","../item":"klNFr","../modifiers/rotate":"dh5U5","../util":"92uDI","../modifiers/move":"iw6ob","../step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"b5rvi":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Wall", ()=>Wall);
@@ -32918,6 +33017,8 @@ var _009 = require("./009");
 var _009Default = parcelHelpers.interopDefault(_009);
 var _010 = require("./010");
 var _010Default = parcelHelpers.interopDefault(_010);
+var _011 = require("./011");
+var _011Default = parcelHelpers.interopDefault(_011);
 // These are just for testing purposes
 // They won't show up in the list but are accessible via URL
 var _testLayout = require("./testLayout");
@@ -32940,6 +33041,7 @@ const configuration = Object.fromEntries(Object.entries({
     "008": (0, _008Default.default),
     "009": (0, _009Default.default),
     "010": (0, _010Default.default),
+    "011": (0, _011Default.default),
     test_infinite_loop: (0, _testInfiniteLoopDefault.default),
     test_layout: (0, _testLayoutDefault.default),
     test_portal: (0, _testPortalDefault.default),
@@ -32981,7 +33083,7 @@ Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id)=>[
     ]));
 Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id)=>!Puzzles.hidden.has(id)));
 
-},{"./001":"fFJlx","./002":"iwEDq","./003":"8NuwS","./004":"8Jptv","./005":"1WhBP","./006":"lXm4P","./007":"pMRyK","./008":"9O2JN","./009":"2195c","./010":"1xAcZ","./testLayout":"eIpMB","./testPortal":"hADKv","./testReflector":"7SJ0Z","./testInfiniteLoop":"9KcvT","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fFJlx":[function(require,module,exports) {
+},{"./001":"fFJlx","./002":"iwEDq","./003":"8NuwS","./004":"8Jptv","./005":"1WhBP","./006":"lXm4P","./007":"pMRyK","./008":"9O2JN","./009":"2195c","./010":"1xAcZ","./011":"cYQp6","./testLayout":"eIpMB","./testPortal":"hADKv","./testReflector":"7SJ0Z","./testInfiniteLoop":"9KcvT","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fFJlx":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 exports.default = {
@@ -34488,22 +34590,153 @@ exports.default = {
     ]
 };
 
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cYQp6":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+exports.default = {
+    layout: {
+        tiles: [
+            [
+                {
+                    items: [
+                        {
+                            direction: 5,
+                            type: "Portal"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Lock"
+                        }
+                    ],
+                    type: "Tile"
+                },
+                {
+                    items: [
+                        {
+                            direction: 5,
+                            type: "Portal"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Lock"
+                        }
+                    ],
+                    type: "Tile"
+                }
+            ],
+            [
+                {
+                    items: [
+                        {
+                            openings: [
+                                null,
+                                null,
+                                {
+                                    color: "blue",
+                                    on: true,
+                                    type: "Beam"
+                                },
+                                null,
+                                null,
+                                null
+                            ],
+                            type: "Terminus"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Immutable"
+                        }
+                    ],
+                    type: "Tile"
+                },
+                {
+                    items: [
+                        {
+                            direction: 2,
+                            type: "Portal"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Lock"
+                        }
+                    ],
+                    type: "Tile"
+                },
+                {
+                    items: [
+                        {
+                            openings: [
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                {
+                                    color: "blue",
+                                    type: "Beam"
+                                }
+                            ],
+                            type: "Terminus"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Immutable"
+                        }
+                    ],
+                    type: "Tile"
+                }
+            ],
+            [
+                {
+                    items: [
+                        {
+                            direction: 5,
+                            type: "Portal"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Rotate"
+                        }
+                    ],
+                    type: "Tile"
+                },
+                {
+                    items: [
+                        {
+                            direction: 5,
+                            type: "Portal"
+                        }
+                    ],
+                    modifiers: [
+                        {
+                            type: "Lock"
+                        }
+                    ],
+                    type: "Tile"
+                }
+            ]
+        ],
+        type: "even-r"
+    },
+    solution: [
+        {
+            amount: 1,
+            type: "Connections"
+        }
+    ]
+};
+
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eIpMB":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 const layout = [
     [
-        "x",
-        "x",
-        "o",
-        "o",
-        "x",
-        "x"
-    ],
-    [
-        "x",
-        "x",
-        "x",
         "o",
         "x",
         "x",
@@ -34512,8 +34745,25 @@ const layout = [
     [
         "x",
         "x",
+        "x",
+        "x"
+    ],
+    [
+        "x",
+        "x",
+        "x",
+        "x",
+        "x"
+    ],
+    [
+        "x",
+        "x",
+        "x",
+        "x"
+    ],
+    [
         "o",
-        "o",
+        "x",
         "x",
         "x"
     ]
@@ -34522,8 +34772,7 @@ exports.default = {
     layout: {
         tiles: layout.map((column)=>column.map((item)=>item === "x" ? {
                     type: "Tile"
-                } : null)),
-        type: "even-r"
+                } : null))
     },
     solution: [
         {
@@ -34684,7 +34933,7 @@ exports.default = {
                 {
                     items: [
                         {
-                            direction: 3,
+                            direction: 0,
                             type: "Portal"
                         }
                     ],
