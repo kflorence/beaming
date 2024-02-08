@@ -5,7 +5,7 @@ const { Builder, By, Condition, logging, until } = require('selenium-webdriver')
 logging.installConsoleHandler()
 
 const logger = logging.getLogger('')
-logger.setLevel(logging.Level.ALL)
+logger.setLevel(logging.Level.DEBUG)
 
 class PuzzleFixture {
   driver
