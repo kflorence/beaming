@@ -1,0 +1,93 @@
+{
+  "layout": {
+    "tiles": [
+      [
+        null,
+        null,
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ],
+      [
+        null,
+        null,
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        null,
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        null,
+        null,
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ]
+    ],
+    "type": "even-r"
+  },
+  "solution": [
+    {
+      "amount": 1,
+      "type": "Connections"
+    }
+  ]
+}

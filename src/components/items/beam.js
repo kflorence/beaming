@@ -556,6 +556,8 @@ export class Beam extends Item {
   updateStep (stepIndex, settings) {
     const step = this.getStep(stepIndex)
     if (step) {
+      // Update is essentially: remove, update, add
+      step.onRemove()
       const updatedStep = this.#getUpdatedStep(step, settings)
       this.#steps[stepIndex] = updatedStep
       updatedStep.onAdd(updatedStep)

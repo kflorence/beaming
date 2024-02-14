@@ -10,6 +10,7 @@ const puzzles = {
   '009': require('./009.json'),
   '010': require('./010.json'),
   '011': require('./011.json'),
+  '012': require('./012.json'),
   test_infinite_loop: require('./test/infiniteLoop.json'),
   test_layout: require('./test/layout'),
   test_portal: require('./test/portal.json'),
