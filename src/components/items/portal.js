@@ -103,7 +103,10 @@ export class Portal extends movable(rotatable(Item)) {
 
     // Check for destination in beam state (matches on item ID and step index)
     const stateId = [this.id, nextStep.index].join(':')
-    const destinationId = beam.getState().moves?.[stateId]
+    const destinationId = beam.getState().portal?.[stateId]?.destinationId
+    if (destinationId !== undefined) {
+      console.debug(this.toString(), `matching on destinationId from state: ${destinationId}`)
+    }
 
     // Find all valid destination portals
     const destinations = puzzle.getItems().filter((item) =>
@@ -130,7 +133,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (destinations.length === 1) {
       // A single matching destination
-      return this.#getStep(beam, destinations[0], nextStep, portalState)
+      return this.#getStep(beam, destinations[0], nextStep, portalState, stateId)
     } else {
       // Multiple matching destinations. User will need to pick one manually.
       const destinationTiles = destinations.map((portal) => portal.parent)
@@ -142,14 +145,7 @@ export class Portal extends movable(rotatable(Item)) {
           onTap: (puzzle, tile) => {
             const destination = destinations.find((portal) => portal.parent === tile)
             if (destination) {
-              beam.addStep(this.#getStep(beam, destination, nextStep, portalState))
-              beam.updateState((state) => {
-                if (!state.moves) {
-                  state.moves = {}
-                }
-                // Store this decision in beam state
-                state.moves[stateId] = destination.id
-              })
+              beam.addStep(this.#getStep(beam, destination, nextStep, portalState, stateId))
               puzzle.unmask()
             }
           },
@@ -173,15 +169,27 @@ export class Portal extends movable(rotatable(Item)) {
     this.#directions[direction] = data
   }
 
-  #getStep (beam, portal, nextStep, portalState) {
+  #getStep (beam, portal, nextStep, portalState, stateId) {
     const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal)
     const stepIndex = nextStep.index
     return nextStep.copy({
       connected: false,
       direction,
       insertAbove: portal,
-      onAdd: () => portal.update(direction, { stepIndex }),
-      onRemove: () => portal.update(direction),
+      onAdd: () => {
+        portal.update(direction, { stepIndex })
+        beam.updateState((state) => {
+          if (!state.portal) {
+            state.portal = {}
+          }
+          // Store this decision in beam state
+          state.portal[stateId] = { destinationId: portal.id }
+        })
+      },
+      onRemove: () => {
+        beam.updateState((state) => { delete state.portal[stateId] })
+        portal.update(direction)
+      },
       point: portal.parent.center,
       state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal)),
       tile: portal.parent

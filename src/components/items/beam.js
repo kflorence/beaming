@@ -348,8 +348,6 @@ export class Beam extends Item {
     if (!this.isOn()) {
       if (this.#steps.length) {
         console.debug(this.toString(), 'beam has been toggled off')
-        // Also reset any state changes from user move decisions
-        this.updateState((state) => { delete state.moves })
         this.remove()
       }
       return
