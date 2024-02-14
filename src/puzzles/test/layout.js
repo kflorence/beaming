@@ -1,3 +1,4 @@
+// TODO: this file can be removed when the puzzle editor is created
 const layout = [
   ['o', 'x', 'x', 'x'],
   ['x', 'x', 'x', 'x'],

@@ -2,5 +2,6 @@
 !.gitattributes
 !.gitignore
 !.github
+!.nvmrc
 dist
 node_modules
