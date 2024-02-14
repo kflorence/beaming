@@ -1,40 +1,20 @@
-import _001 from './001'
-import _002 from './002'
-import _003 from './003'
-import _004 from './004'
-import _005 from './005'
-import _006 from './006'
-import _007 from './007'
-import _008 from './008'
-import _009 from './009'
-import _010 from './010'
-import _011 from './011'
-
-// These are just for testing purposes
-// They won't show up in the list but are accessible via URL
-import testLayout from './testLayout'
-import testPortal from './testPortal'
-import testReflector from './testReflector'
-import testInfiniteLoop from './testInfiniteLoop'
-
-// Ensure puzzle configuration is valid JSON
-const configuration = Object.fromEntries(Object.entries({
-  '001': _001,
-  '002': _002,
-  '003': _003,
-  '004': _004,
-  '005': _005,
-  '006': _006,
-  '007': _007,
-  '008': _008,
-  '009': _009,
-  '010': _010,
-  '011': _011,
-  test_infinite_loop: testInfiniteLoop,
-  test_layout: testLayout,
-  test_portal: testPortal,
-  test_reflector: testReflector
-}).map(([k, v]) => [k, JSON.parse(JSON.stringify(v))]))
+const puzzles = {
+  '001': require('./001.json'),
+  '002': require('./002.json'),
+  '003': require('./003.json'),
+  '004': require('./004.json'),
+  '005': require('./005.json'),
+  '006': require('./006.json'),
+  '007': require('./007.json'),
+  '008': require('./008.json'),
+  '009': require('./009.json'),
+  '010': require('./010.json'),
+  '011': require('./011.json'),
+  test_infinite_loop: require('./test/infiniteLoop.json'),
+  test_layout: require('./test/layout'),
+  test_portal: require('./test/portal.json'),
+  test_reflector: require('./test/reflector.json')
+}
 
 function traverse (ids, id, amount) {
   const index = ids.indexOf(id)
@@ -52,8 +32,8 @@ class PuzzleGroup {
 
   get (id) {
     if (this.has(id)) {
-      // Note: deep cloning configuration to prevent mutation
-      return structuredClone(configuration[id])
+      // Note: deep cloning puzzles to prevent mutation
+      return structuredClone(puzzles[id])
     }
   }
 
@@ -70,8 +50,8 @@ class PuzzleGroup {
   }
 }
 
-export const Puzzles = new PuzzleGroup(Object.keys(configuration).sort())
+export const Puzzles = new PuzzleGroup(Object.keys(puzzles).sort())
 
 Puzzles.hidden = new PuzzleGroup(Puzzles.ids.filter((id) => id.startsWith('test_')))
-Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id) => [id, configuration[id].title || id]))
+Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id) => [id, puzzles[id].title || id]))
 Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id) => !Puzzles.hidden.has(id)))

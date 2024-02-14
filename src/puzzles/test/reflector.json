@@ -1,0 +1,91 @@
+{
+  "layout": {
+    "tiles": [
+      [
+        {
+          "items": [
+            {
+              "color": "red",
+              "openings": [
+                null,
+                null,
+                null,
+                {
+                  "on": true,
+                  "type": "Beam"
+                },
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "items": [
+            {
+              "type": "Reflector"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            }
+          ],
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "items": [
+            {
+              "color": "green",
+              "openings": [
+                null,
+                {
+                  "on": true,
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
+            {
+              "color": "blue",
+              "openings": [
+                {
+                  "on": true,
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "type": "Tile"
+        }
+      ]
+    ]
+  },
+  "solution": [
+    {
+      "amount": 999,
+      "type": "Connections"
+    }
+  ]
+}
