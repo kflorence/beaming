@@ -44,7 +44,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     children.push(ring)
 
-    if (this.rotatable) {
+    if (this.direction !== undefined) {
       const pointer = new Path({
         closed: true,
         opacity: 0.25,
@@ -63,7 +63,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     this.group.addChildren(children)
 
-    if (this.rotatable) {
+    if (this.direction !== undefined) {
       // Properly align items with hexagonal rotation
       this.rotateGroup(1)
     }
@@ -102,18 +102,19 @@ export class Portal extends movable(rotatable(Item)) {
 
     // Find all valid exit portals
     const validExitPortals = puzzle.getItems().filter((item) =>
-      item.type === Item.Types.portal && !item.equals(this) && (
+      // Is a portal
+      item.type === Item.Types.portal &&
+      // But not the entry portal
+      !item.equals(this) &&
+      // There is no other beam occupying the portal at the exit direction
+      !item.get(Portal.getExitDirection(nextStep, this, item)) && (
         // Entry portals without defined direction can exit from any other portal.
         this.getDirection() === undefined ||
         // Exit portals without defined direction can be used by any entry portal.
         item.getDirection() === undefined ||
         // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
         item.getDirection() === this.getDirection()
-      ) &&
-      // Don't allow the user to select an exit portal that already has a beam entering at the same direction.
-      // FIXME: this is currently allowing a beam to merge into itself infinite times.
-      // Maybe just simplify portals to now allow merging of beams, and move that functionality into a separate item.
-      !item.get(Portal.getExitDirection(nextStep, this, item))?.state.get(StepState.Portal)?.entryPortal?.equals(item)
+      )
     )
 
     if (validExitPortals.length === 0) {
@@ -123,22 +124,23 @@ export class Portal extends movable(rotatable(Item)) {
     }
 
     // Check for existing exitPortalId in beam state for this step
-    const exitPortalId = beam.getState().steps?.[nextStep.index]?.portal?.[this.id]
+    const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id]
     if (exitPortalId !== undefined) {
-      console.debug(this.toString(), `matching on exitPortalId from beam step state: ${exitPortalId}`)
+      console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
     }
 
     const exitPortal = validExitPortals.length === 1
       ? validExitPortals[0]
       : validExitPortals.find((item) => item.id === exitPortalId)
 
-    console.log(validExitPortals)
     if (exitPortal) {
+      console.debug(this.toString(), 'exit portal:', exitPortal)
       // A single matching destination
       return this.#getStep(beam, nextStep, exitPortal)
     } else {
+      console.debug(this.toString(), 'found multiple valid exit portals:', validExitPortals)
       // Multiple matching destinations. User will need to pick one manually.
-      const destinationTiles = validExitPortals.map((portal) => portal.parent)
+      const validTiles = validExitPortals.map((portal) => portal.parent)
       const mask = new Puzzle.Mask(
         {
           beam,
@@ -153,8 +155,8 @@ export class Portal extends movable(rotatable(Item)) {
           },
           onUnmask: () => currentStep.tile.afterModify(),
           tileFilter: (tile) => {
-            // Include the portal tile and tiles which contain a matching destination
-            return !(this.parent === tile || destinationTiles.some((destinationTile) => destinationTile === tile))
+            // Mask any invalid tiles. Exclude the entry portal tile
+            return !(tile.equals(this.parent) || validTiles.some((validTile) => validTile.equals(tile)))
           }
         }
       )
@@ -165,6 +167,13 @@ export class Portal extends movable(rotatable(Item)) {
       // This will cause the beam to stop
       return currentStep
     }
+  }
+
+  onMove () {
+    super.onMove()
+
+    // Invalidate directions cache
+    this.#directions = {}
   }
 
   update (direction, data) {
@@ -180,12 +189,12 @@ export class Portal extends movable(rotatable(Item)) {
       onAdd: (step) => {
         exitPortal.update(direction, step)
         // Store this decision in beam state and generate a matching delta
-        beam.updateState((state) => (((state.steps ??= {})[step.index] ??= {}).portal = { [this.id]: exitPortal.id }))
+        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }))
       },
       onRemove: (step) => {
         // Remove any associated beam state, but don't generate a delta.
         // If the step is being removed, a delta for that action was most likely created elsewhere already.
-        beam.updateState((state) => { delete state.steps[step.index].portal }, false)
+        beam.updateState((state) => { delete state.steps[step.index] }, false)
         exitPortal.update(direction)
       },
       point: exitPortal.parent.center,

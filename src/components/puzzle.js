@@ -134,6 +134,7 @@ export class Puzzle {
         throw new Error(`Duplicate mask detected: ${mask.id}`)
       }
 
+      console.debug('adding mask to queue', mask)
       this.#maskQueue.push(mask)
       return
     }
@@ -176,6 +177,7 @@ export class Puzzle {
   }
 
   unmask () {
+    console.debug('unmask', this.#mask)
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
     this.#mask.onUnmask(this)
@@ -185,6 +187,7 @@ export class Puzzle {
 
     const mask = this.#maskQueue.pop()
     if (mask) {
+      console.debug('processing next mask in queue', mask)
       // Evaluate after any current events have processed (e.g. beam updates from last mask)
       setTimeout(() => this.mask(mask), 0)
     }
@@ -215,10 +218,12 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
-  updateState () {
-    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+  updateState (keepDelta = true) {
+    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }), keepDelta)
     this.#updateActions()
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    if (keepDelta) {
+      emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    }
   }
 
   #addLayers () {
@@ -439,8 +444,8 @@ export class Puzzle {
       : undefined
 
     this.updateSelectedTile(selectedTile)
+    this.updateState(false)
     this.update()
-    this.#updateActions()
   }
 
   #teardown () {

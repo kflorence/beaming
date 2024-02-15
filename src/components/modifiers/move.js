@@ -32,7 +32,7 @@ export class Move extends Modifier {
 
   moveFilter (tile) {
     // Filter out tiles that contain no movable items
-    return super.moveFilter(tile) || !tile.items.some((item) => item.movable)
+    return super.moveFilter(tile) || !tile.items.some(Move.movable)
   }
 
   moveItems (tile) {
@@ -89,10 +89,9 @@ export class Move extends Modifier {
 export const movable = (SuperClass) => class MovableItem extends SuperClass {
   movable
 
-  constructor (parent, configuration) {
+  constructor (parent, state) {
     super(...arguments)
-
-    this.movable = configuration.movable !== false
+    this.movable = !this.immutable && state.movable !== false
   }
 
   move (tile) {

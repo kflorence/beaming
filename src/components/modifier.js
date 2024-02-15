@@ -3,6 +3,7 @@ import { Puzzle } from './puzzle'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
+import { Item } from './item'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -99,8 +100,10 @@ export class Modifier extends Stateful {
   }
 
   moveFilter (tile) {
-    // Filter out immutable tiles
-    return tile.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable)
+    // Mask immutable tiles
+    return tile.modifiers.some(Modifier.immutable) ||
+      // Mask tiles that only contain immutable items
+      tile.items.every(Item.immutable)
   }
 
   onDeselected () {
@@ -115,10 +118,8 @@ export class Modifier extends Stateful {
       this.onToggle(event)
     } else {
       this.#down = true
-      if (
-        !this.#mask &&
-        !this.tile.modifiers.some((modifier) => [Modifier.Types.immutable, Modifier.Types.lock].includes(modifier.type))
-      ) {
+      if (!this.#mask && !this.tile.modifiers.some(Modifier.immovable)) {
+        // No active mask and modifiers are not immovable
         this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime)
       }
     }
@@ -233,6 +234,10 @@ export class Modifier extends Stateful {
     }
   }
 
+  static immovable (modifier) {
+    return Modifier.immovableTypes.includes(modifier.type)
+  }
+
   static immutable (modifier) {
     return modifier.type === Modifier.Types.immutable
   }
@@ -251,4 +256,6 @@ export class Modifier extends Stateful {
     'swap',
     'toggle'
   ].map((type) => [type, capitalize(type)])))
+
+  static immovableTypes = [Modifier.Types.immutable, Modifier.Types.lock]
 }

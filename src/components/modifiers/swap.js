@@ -1,6 +1,5 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
-import { Item } from '../item'
 
 export class Swap extends Move {
   name = 'swap_horiz'
@@ -20,7 +19,12 @@ export class Swap extends Move {
   }
 
   tileFilter (tile) {
-    // Filter out immutable tiles and tiles without items
-    return tile.modifiers.some(Modifier.immutable) || !tile.items.filter((item) => item.type !== Item.Types.beam).length
+    // Never mask current tile
+    return !tile.equals(this.tile) && (
+      // Mask immutable tiles
+      tile.modifiers.some(Modifier.immutable) ||
+      // Mask tiles that don't contain any movable items
+      !tile.items.some(Move.movable)
+    )
   }
 }

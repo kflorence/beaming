@@ -6,7 +6,8 @@ export class Item extends Stateful {
   center
   data
   group
-  id = Item.uniqueId++
+  id
+  immutable
   // Whether the item can be clicked on
   locked
   parent
@@ -14,8 +15,13 @@ export class Item extends Stateful {
   type
 
   constructor (parent, state, configuration) {
+    // Retain ID from state if it exists, otherwise generate a new one
+    state.id ??= Item.uniqueId++
+
     super(state)
 
+    this.id = state.id
+    this.immutable ??= state?.immutable ?? false
     this.type = state?.type ?? configuration?.type
     if (this.type === undefined) {
       console.debug(`[Item:${this.id}]`, state)
@@ -79,6 +85,10 @@ export class Item extends Stateful {
   }
 
   update () {}
+
+  static immutable (item) {
+    return item.immutable
+  }
 
   static Types = Object.freeze(Object.fromEntries([
     'beam',

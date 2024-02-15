@@ -34,7 +34,6 @@
             },
             {
               "directions": [4],
-              "rotatable": false,
               "type": "Wall"
             }
           ],
@@ -43,28 +42,31 @@
         {
           "items": [
             {
-              "color": ["blue", "red"],
               "openings": [
+                null,
+                null,
                 {
+                  "color": "blue",
+                  "on": true,
                   "type": "Beam"
                 },
+                null,
+                null,
                 {
-                  "type": "Beam"
-                },
-                {
-                  "type": "Beam"
-                },
-                {
-                  "type": "Beam"
-                },
-                {
-                  "type": "Beam"
-                },
-                {
+                  "color": "red",
+                  "on": true,
                   "type": "Beam"
                 }
               ],
               "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            },
+            {
+              "type": "Toggle"
             }
           ],
           "type": "Tile"
@@ -77,7 +79,6 @@
             },
             {
               "directions": [3],
-              "rotatable": false,
               "type": "Wall"
             }
           ],
@@ -104,8 +105,15 @@
             },
             {
               "directions": [3, 4, 5],
-              "rotatable": false,
               "type": "Wall"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            },
+            {
+              "type": "Swap"
             }
           ],
           "type": "Tile"
@@ -118,8 +126,15 @@
             },
             {
               "directions": [2, 3, 4],
-              "rotatable": false,
               "type": "Wall"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            },
+            {
+              "type": "Move"
             }
           ],
           "type": "Tile"
@@ -242,7 +257,7 @@
   },
   "solution": [
     {
-      "amount": 1,
+      "amount": 2,
       "type": "Connections"
     }
   ]

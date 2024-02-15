@@ -26,6 +26,9 @@ export class Beam extends Item {
   #steps = []
 
   constructor (terminus, state, configuration) {
+    // Exclude from modification
+    state.immutable = true
+
     super(...arguments)
 
     this.group = null
@@ -348,8 +351,6 @@ export class Beam extends Item {
     if (!this.isOn()) {
       if (this.#steps.length) {
         console.debug(this.toString(), 'beam has been toggled off')
-        // Delete any steps-related state. No delta necessary for this as it will be covered by toggle.
-        this.updateState((state) => { state.steps = {} }, false)
         this.remove()
       }
       return

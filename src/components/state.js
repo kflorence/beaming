@@ -120,7 +120,7 @@ export class State {
     }
   }
 
-  update (newState) {
+  update (newState, keepDelta = true) {
     const delta = jsonDiffPatch.diff(this.#current, newState)
     console.debug('delta', delta)
 
@@ -130,17 +130,20 @@ export class State {
     }
 
     // Handle updating after undoing
-    if (this.#index < this.#lastIndex()) {
+    if (keepDelta && this.#index < this.#lastIndex()) {
       // Remove all deltas after the current one
       this.#deltas.splice(this.#index + 1)
     }
 
     this.apply(delta)
 
-    // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-    // their stringified JSON representation and parsed before being applied.
-    // See:https://github.com/benjamine/jsondiffpatch/issues/34
-    this.#deltas.push(JSON.stringify(delta))
+    if (keepDelta) {
+      // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+      // their stringified JSON representation and parsed before being applied.
+      // See:https://github.com/benjamine/jsondiffpatch/issues/34
+      this.#deltas.push(JSON.stringify(delta))
+    }
+
     this.#index = this.#lastIndex()
 
     this.#updateCache()
