@@ -348,6 +348,8 @@ export class Beam extends Item {
     if (!this.isOn()) {
       if (this.#steps.length) {
         console.debug(this.toString(), 'beam has been toggled off')
+        // Delete any steps-related state. No delta necessary for this as it will be covered by toggle.
+        this.updateState((state) => { state.steps = {} }, false)
         this.remove()
       }
       return
@@ -557,7 +559,7 @@ export class Beam extends Item {
     const step = this.getStep(stepIndex)
     if (step) {
       // Update is essentially: remove, update, add
-      step.onRemove()
+      step.onRemove(step)
       const updatedStep = this.#getUpdatedStep(step, settings)
       this.#steps[stepIndex] = updatedStep
       updatedStep.onAdd(updatedStep)

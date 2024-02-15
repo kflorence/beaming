@@ -45,9 +45,13 @@ export class Move extends Modifier {
   }
 
   tileFilter (tile) {
-    // Filter out immutable tiles and tiles with items, except for the current tile
-    return tile.modifiers.some(Modifier.immutable) ||
-      (tile.items.filter((item) => item.type !== Item.Types.beam).length > 0 && !(tile === this.tile))
+    // Never mask current tile
+    return !tile.equals(this.tile) && (
+      // Mask immutable tiles
+      tile.modifiers.some(Modifier.immutable) ||
+      // Mask tiles that contain any items we don't ignore
+      tile.items.some((item) => !Move.ignoreItemTypes.includes(item.type))
+    )
   }
 
   #maskOnTap (puzzle, tile) {
@@ -73,6 +77,8 @@ export class Move extends Modifier {
   static movable (item) {
     return item.movable
   }
+
+  static ignoreItemTypes = [Item.Types.beam, Item.Types.wall]
 }
 
 /**

@@ -16,7 +16,12 @@ export class Item extends Stateful {
   constructor (parent, state, configuration) {
     super(state)
 
-    this.type = state?.type || configuration?.type
+    this.type = state?.type ?? configuration?.type
+    if (this.type === undefined) {
+      console.debug(`[Item:${this.id}]`, state)
+      throw new Error('Item must have type defined')
+    }
+
     this.data = Object.assign({ id: this.id, type: this.type }, configuration?.data || {})
     this.locked = configuration?.locked !== false
 

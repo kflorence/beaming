@@ -76,10 +76,9 @@ export class Portal extends movable(rotatable(Item)) {
   onCollision ({ beam, currentStep, nextStep, puzzle }) {
     const portalState = currentStep.state.get(StepState.Portal)
     if (!portalState) {
-      const stepIndex = nextStep.index
       const entryDirection = getOppositeDirection(nextStep.direction)
-      const existing = coalesce(this.get(entryDirection), { stepIndex })
-      if (existing.stepIndex < stepIndex) {
+      const existing = coalesce(this.get(entryDirection), nextStep)
+      if (existing.index < nextStep.index) {
         // Checking stepIndex to exclude cases where we are doing a re-evaluation of history.
         console.debug(
           this.toString(),
@@ -92,7 +91,7 @@ export class Portal extends movable(rotatable(Item)) {
       // Handle entry collision
       return nextStep.copy({
         insertAbove: this,
-        onAdd: () => this.update(entryDirection, { stepIndex }),
+        onAdd: (step) => this.update(entryDirection, step),
         onRemove: () => this.update(entryDirection),
         state: nextStep.state.copy(new StepState.Portal(this))
       })
@@ -101,51 +100,54 @@ export class Portal extends movable(rotatable(Item)) {
       return nextStep.copy({ insertAbove: this })
     }
 
-    // Check for destination in beam state (matches on item ID and step index)
-    const stateId = [this.id, nextStep.index].join(':')
-    const destinationId = beam.getState().portal?.[stateId]?.destinationId
-    if (destinationId !== undefined) {
-      console.debug(this.toString(), `matching on destinationId from state: ${destinationId}`)
-    }
-
-    // Find all valid destination portals
-    const destinations = puzzle.getItems().filter((item) =>
-      item.type === Item.Types.portal &&
-      !item.equals(this) &&
-      // Portal must not already have a beam occupying the desired direction
-      !item.get(Portal.getExitDirection(nextStep, portalState.entryPortal, item)) &&
-      (destinationId === undefined || item.id === destinationId) &&
-      (
+    // Find all valid exit portals
+    const validExitPortals = puzzle.getItems().filter((item) =>
+      item.type === Item.Types.portal && !item.equals(this) && (
         // Entry portals without defined direction can exit from any other portal.
         this.getDirection() === undefined ||
         // Exit portals without defined direction can be used by any entry portal.
         item.getDirection() === undefined ||
         // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
         item.getDirection() === this.getDirection()
-      )
+      ) &&
+      // Don't allow the user to select an exit portal that already has a beam entering at the same direction.
+      // FIXME: this is currently allowing a beam to merge into itself infinite times.
+      // Maybe just simplify portals to now allow merging of beams, and move that functionality into a separate item.
+      !item.get(Portal.getExitDirection(nextStep, this, item))?.state.get(StepState.Portal)?.entryPortal?.equals(item)
     )
 
-    if (destinations.length === 0) {
-      console.debug(this.toString(), 'no valid destinations found')
+    if (validExitPortals.length === 0) {
+      console.debug(this.toString(), 'no valid exit portals found')
       // This will cause the beam to stop
       return currentStep
     }
 
-    if (destinations.length === 1) {
+    // Check for existing exitPortalId in beam state for this step
+    const exitPortalId = beam.getState().steps?.[nextStep.index]?.portal?.[this.id]
+    if (exitPortalId !== undefined) {
+      console.debug(this.toString(), `matching on exitPortalId from beam step state: ${exitPortalId}`)
+    }
+
+    const exitPortal = validExitPortals.length === 1
+      ? validExitPortals[0]
+      : validExitPortals.find((item) => item.id === exitPortalId)
+
+    console.log(validExitPortals)
+    if (exitPortal) {
       // A single matching destination
-      return this.#getStep(beam, destinations[0], nextStep, portalState, stateId)
+      return this.#getStep(beam, nextStep, exitPortal)
     } else {
       // Multiple matching destinations. User will need to pick one manually.
-      const destinationTiles = destinations.map((portal) => portal.parent)
+      const destinationTiles = validExitPortals.map((portal) => portal.parent)
       const mask = new Puzzle.Mask(
         {
           beam,
-          id: stateId,
+          id: this.id,
           onMask: () => currentStep.tile.beforeModify(),
           onTap: (puzzle, tile) => {
-            const destination = destinations.find((portal) => portal.parent === tile)
-            if (destination) {
-              beam.addStep(this.#getStep(beam, destination, nextStep, portalState, stateId))
+            const exitPortal = validExitPortals.find((portal) => portal.parent === tile)
+            if (exitPortal) {
+              beam.addStep(this.#getStep(beam, nextStep, exitPortal))
               puzzle.unmask()
             }
           },
@@ -157,7 +159,7 @@ export class Portal extends movable(rotatable(Item)) {
         }
       )
 
-      puzzle.updateSelectedTile(currentStep.tile)
+      puzzle.updateSelectedTile(null)
       puzzle.mask(mask)
 
       // This will cause the beam to stop
@@ -169,30 +171,26 @@ export class Portal extends movable(rotatable(Item)) {
     this.#directions[direction] = data
   }
 
-  #getStep (beam, portal, nextStep, portalState, stateId) {
-    const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal)
-    const stepIndex = nextStep.index
+  #getStep (beam, nextStep, exitPortal) {
+    const direction = Portal.getExitDirection(nextStep, this, exitPortal)
     return nextStep.copy({
       connected: false,
       direction,
-      insertAbove: portal,
-      onAdd: () => {
-        portal.update(direction, { stepIndex })
-        beam.updateState((state) => {
-          if (!state.portal) {
-            state.portal = {}
-          }
-          // Store this decision in beam state
-          state.portal[stateId] = { destinationId: portal.id }
-        })
+      insertAbove: exitPortal,
+      onAdd: (step) => {
+        exitPortal.update(direction, step)
+        // Store this decision in beam state and generate a matching delta
+        beam.updateState((state) => (((state.steps ??= {})[step.index] ??= {}).portal = { [this.id]: exitPortal.id }))
       },
-      onRemove: () => {
-        beam.updateState((state) => { delete state.portal[stateId] })
-        portal.update(direction)
+      onRemove: (step) => {
+        // Remove any associated beam state, but don't generate a delta.
+        // If the step is being removed, a delta for that action was most likely created elsewhere already.
+        beam.updateState((state) => { delete state.steps[step.index].portal }, false)
+        exitPortal.update(direction)
       },
-      point: portal.parent.center,
-      state: nextStep.state.copy(new StepState.Portal(portalState.entryPortal, portal)),
-      tile: portal.parent
+      point: exitPortal.parent.center,
+      state: nextStep.state.copy(new StepState.Portal(this, exitPortal)),
+      tile: exitPortal.parent
     })
   }
 
