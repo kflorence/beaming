@@ -29,7 +29,6 @@
         {
           "items": [
             {
-              "direction": 2,
               "type": "Portal"
             },
             {
@@ -47,14 +46,12 @@
                 null,
                 {
                   "color": "blue",
-                  "on": true,
                   "type": "Beam"
                 },
                 null,
                 null,
                 {
                   "color": "red",
-                  "on": true,
                   "type": "Beam"
                 }
               ],
@@ -74,7 +71,6 @@
         {
           "items": [
             {
-              "direction": 5,
               "type": "Portal"
             },
             {
@@ -87,11 +83,6 @@
       ],
       [
         {
-          "items": [
-            {
-              "type": "Portal"
-            }
-          ],
           "type": "Tile"
         },
         {
@@ -143,48 +134,6 @@
           "type": "Tile"
         },
         {
-          "items": [
-            {
-              "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Move"
-            }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "rotation": 2,
-              "type": "Reflector"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Rotate"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        null,
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
           "type": "Tile"
         }
       ],
@@ -212,15 +161,17 @@
           "modifiers": [
             {
               "type": "Lock"
-            },
-            {
-              "type": "Toggle"
             }
           ],
           "type": "Tile"
         },
+        {
+          "type": "Tile"
+        },
         null,
-        null,
+        {
+          "type": "Tile"
+        },
         {
           "items": [
             {
@@ -241,11 +192,24 @@
           "modifiers": [
             {
               "type": "Lock"
-            },
-            {
-              "type": "Toggle"
             }
           ],
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "type": "Tile"
+        },
+        {
+          "type": "Tile"
+        },
+        null,
+        null,
+        {
           "type": "Tile"
         },
         {

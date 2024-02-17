@@ -100,63 +100,56 @@ export class Portal extends movable(rotatable(Item)) {
       return nextStep.copy({ insertAbove: this })
     }
 
-    // Find all valid exit portals
-    const validExitPortals = puzzle.getItems().filter((item) =>
-      // Is a portal
-      item.type === Item.Types.portal &&
-      // But not the entry portal
-      !item.equals(this) &&
-      // There is no other beam occupying the portal at the exit direction
-      !item.get(Portal.getExitDirection(nextStep, this, item)) && (
-        // Entry portals without defined direction can exit from any other portal.
-        this.getDirection() === undefined ||
-        // Exit portals without defined direction can be used by any entry portal.
-        item.getDirection() === undefined ||
-        // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
-        item.getDirection() === this.getDirection()
-      )
-    )
+    const exitPortals = this.#getExitPortals(puzzle, beam, nextStep)
 
-    if (validExitPortals.length === 0) {
+    if (exitPortals.length === 0) {
       console.debug(this.toString(), 'no valid exit portals found')
       // This will cause the beam to stop
       return currentStep
-    }
-
-    // Check for existing exitPortalId in beam state for this step
-    const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id]
-    if (exitPortalId !== undefined) {
-      console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
-    }
-
-    const exitPortal = validExitPortals.length === 1
-      ? validExitPortals[0]
-      : validExitPortals.find((item) => item.id === exitPortalId)
-
-    if (exitPortal) {
-      console.debug(this.toString(), 'exit portal:', exitPortal)
-      // A single matching destination
+    } else if (exitPortals.length === 1) {
+      const exitPortal = exitPortals[0]
+      console.debug(this.toString(), 'single exit portal matched:', exitPortal)
       return this.#getStep(beam, nextStep, exitPortal)
     } else {
-      console.debug(this.toString(), 'found multiple valid exit portals:', validExitPortals)
       // Multiple matching destinations. User will need to pick one manually.
-      const validTiles = validExitPortals.map((portal) => portal.parent)
+      console.debug(this.toString(), 'found multiple valid exit portals:', exitPortals)
+      // Cache exit portals for use in mask
+      const data = { exitPortals }
       const mask = new Puzzle.Mask(
         {
-          beam,
           id: this.id,
           onMask: () => currentStep.tile.beforeModify(),
           onTap: (puzzle, tile) => {
-            const exitPortal = validExitPortals.find((portal) => portal.parent === tile)
+            const exitPortal = data.exitPortals.find((portal) => portal.parent === tile)
             if (exitPortal) {
               beam.addStep(this.#getStep(beam, nextStep, exitPortal))
               puzzle.unmask()
             }
           },
           onUnmask: () => currentStep.tile.afterModify(),
+          onUpdate: () => {
+            // State may have changed, fetch portals again
+            const exitPortals = this.#getExitPortals(puzzle, beam, nextStep)
+            if (exitPortals.length === 0) {
+              console.debug(this.toString(), 'mask onUpdate: no valid exit portals found')
+              // Cancel the mask
+              // This will also cause the beam to stop
+              return false
+            } else if (exitPortals.length === 1) {
+              const exitPortal = exitPortals[0]
+              console.debug(this.toString(), 'mask onUpdate: single portal matched:', exitPortal)
+              beam.addStep(this.#getStep(beam, nextStep, exitPortal))
+              // Cancel the mask
+              return false
+            } else {
+              console.debug(this.toString(), 'mask onUpdate: exit portals:', exitPortals)
+              data.exitPortals = exitPortals
+            }
+          },
           tileFilter: (tile) => {
             // Mask any invalid tiles. Exclude the entry portal tile
-            return !(tile.equals(this.parent) || validTiles.some((validTile) => validTile.equals(tile)))
+            return !(tile.equals(this.parent) ||
+              data.exitPortals.map((portal) => portal.parent).some((validTile) => validTile.equals(tile)))
           }
         }
       )
@@ -178,6 +171,38 @@ export class Portal extends movable(rotatable(Item)) {
 
   update (direction, data) {
     this.#directions[direction] = data
+  }
+
+  #getExitPortals (puzzle, beam, nextStep) {
+    const exitPortals = puzzle.getItems().filter((item) =>
+      // Is a portal
+      item.type === Item.Types.portal &&
+      // But not the entry portal
+      !item.equals(this) &&
+      // There is no other beam occupying the portal at the exit direction
+      !item.get(Portal.getExitDirection(nextStep, this, item)) && (
+        // Entry portals without defined direction can exit from any other portal.
+        this.getDirection() === undefined ||
+        // Exit portals without defined direction can be used by any entry portal.
+        item.getDirection() === undefined ||
+        // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
+        item.getDirection() === this.getDirection()
+      )
+    )
+
+    if (exitPortals.length > 1) {
+      // Check for existing exitPortalId in beam state for this step
+      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id]
+      if (exitPortalId !== undefined) {
+        console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
+        const existing = exitPortals.find((item) => item.id === exitPortalId)
+        if (existing) {
+          return [existing]
+        }
+      }
+    }
+
+    return exitPortals
   }
 
   #getStep (beam, nextStep, exitPortal) {

@@ -189,7 +189,13 @@ export class Puzzle {
     if (mask) {
       console.debug('processing next mask in queue', mask)
       // Evaluate after any current events have processed (e.g. beam updates from last mask)
-      setTimeout(() => this.mask(mask), 0)
+      setTimeout(() => {
+        // Allow mask to update since state may have changed since it was queued
+        // If onUpdate returns false the mask will not be applied
+        if (mask.onUpdate() !== false) {
+          this.mask(mask)
+        }
+      })
     }
   }
 
@@ -637,6 +643,7 @@ export class Puzzle {
       this.onMask = configuration.onMask ?? noop
       this.onTap = configuration.onTap ?? noop
       this.onUnmask = configuration.onUnmask ?? noop
+      this.onUpdate = configuration.onUpdate ?? noop
     }
 
     equals (other) {
