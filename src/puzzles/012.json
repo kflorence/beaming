@@ -5,21 +5,9 @@
         null,
         null,
         {
-          "items": [
-            {
-              "direction": 3,
-              "type": "Portal"
-            }
-          ],
           "type": "Tile"
         },
         {
-          "items": [
-            {
-              "direction": 4,
-              "type": "Portal"
-            }
-          ],
           "type": "Tile"
         }
       ],
@@ -29,10 +17,9 @@
         {
           "items": [
             {
-              "type": "Portal"
-            },
-            {
-              "directions": [4],
+              "directions": [
+                4
+              ],
               "type": "Wall"
             }
           ],
@@ -41,17 +28,30 @@
         {
           "items": [
             {
+              "on": true,
               "openings": [
-                null,
-                null,
+                {
+                  "color": "red",
+                  "type": "Beam"
+                },
                 {
                   "color": "blue",
                   "type": "Beam"
                 },
-                null,
-                null,
                 {
                   "color": "red",
+                  "type": "Beam"
+                },
+                {
+                  "color": "blue",
+                  "type": "Beam"
+                },
+                {
+                  "color": "red",
+                  "type": "Beam"
+                },
+                {
+                  "color": "blue",
                   "type": "Beam"
                 }
               ],
@@ -60,10 +60,10 @@
           ],
           "modifiers": [
             {
-              "type": "Rotate"
+              "type": "Lock"
             },
             {
-              "type": "Toggle"
+              "type": "Rotate"
             }
           ],
           "type": "Tile"
@@ -71,10 +71,9 @@
         {
           "items": [
             {
-              "type": "Portal"
-            },
-            {
-              "directions": [3],
+              "directions": [
+                3
+              ],
               "type": "Wall"
             }
           ],
@@ -83,9 +82,27 @@
       ],
       [
         {
-          "type": "Tile"
-        },
-        {
+          "items": [
+            {
+              "openings": [
+                null,
+                {
+                  "color": "blue",
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
           "type": "Tile"
         },
         {
@@ -93,18 +110,37 @@
             {
               "direction": 1,
               "type": "Portal"
-            },
-            {
-              "directions": [3, 4, 5],
-              "type": "Wall"
             }
           ],
           "modifiers": [
             {
-              "type": "Rotate"
-            },
+              "type": "Lock"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
             {
-              "type": "Swap"
+              "directions": [
+                3,
+                4,
+                5
+              ],
+              "type": "Wall"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
+            {
+              "directions": [
+                2,
+                3,
+                4
+              ],
+              "type": "Wall"
             }
           ],
           "type": "Tile"
@@ -114,48 +150,6 @@
             {
               "direction": 0,
               "type": "Portal"
-            },
-            {
-              "directions": [2, 3, 4],
-              "type": "Wall"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Rotate"
-            },
-            {
-              "type": "Move"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "openings": [
-                {
-                  "color": "blue",
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
             }
           ],
           "modifiers": [
@@ -166,17 +160,9 @@
           "type": "Tile"
         },
         {
-          "type": "Tile"
-        },
-        null,
-        {
-          "type": "Tile"
-        },
-        {
           "items": [
             {
               "openings": [
-                null,
                 {
                   "color": "red",
                   "type": "Beam"
@@ -184,6 +170,85 @@
                 null,
                 null,
                 null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
+          "type": "Tile"
+        }
+      ],
+      [
+        {
+          "items": [
+            {
+              "direction": 1,
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Move"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
+            {
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Immutable"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
+            {
+              "openings": [
+                null,
+                {
+                  "color": "blue",
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
+          "type": "Tile"
+        },
+        null,
+        {
+          "items": [
+            {
+              "openings": [
+                {
+                  "color": "red",
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null,
                 null
               ],
               "type": "Terminus"
@@ -197,22 +262,110 @@
           "type": "Tile"
         },
         {
+          "items": [
+            {
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Immutable"
+            }
+          ],
+          "type": "Tile"
+        },
+        {
+          "items": [
+            {
+              "direction": 0,
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Move"
+            }
+          ],
           "type": "Tile"
         }
       ],
       [
         {
+          "items": [
+            {
+              "openings": [
+                null,
+                {
+                  "color": "blue",
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
           "type": "Tile"
         },
         {
+          "items": [
+            {
+              "direction": 1,
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            }
+          ],
           "type": "Tile"
         },
         null,
         null,
         {
+          "items": [
+            {
+              "direction": 0,
+              "type": "Portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Rotate"
+            }
+          ],
           "type": "Tile"
         },
         {
+          "items": [
+            {
+              "openings": [
+                {
+                  "color": "red",
+                  "type": "Beam"
+                },
+                null,
+                null,
+                null,
+                null,
+                null
+              ],
+              "type": "Terminus"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
           "type": "Tile"
         }
       ]
@@ -221,7 +374,7 @@
   },
   "solution": [
     {
-      "amount": 2,
+      "amount": 6,
       "type": "Connections"
     }
   ]

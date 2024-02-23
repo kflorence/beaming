@@ -124,7 +124,8 @@ export class Tile extends Item {
 
   update () {
     super.update()
-    this.#ui.indicator.opacity = this.modifiers.length ? 1 : 0
+    // Display the indicator if the tile contains non-immutable modifiers
+    this.#ui.indicator.opacity = this.modifiers.filter((modifier) => !modifier.immutable).length ? 1 : 0
   }
 
   static parameters (height) {
