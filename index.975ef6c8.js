@@ -29838,6 +29838,7 @@ class Puzzle {
                 console.debug(mask);
                 throw new Error(`Duplicate mask detected: ${mask.id}`);
             }
+            console.debug("adding mask to queue", mask);
             this.#maskQueue.push(mask);
             return;
         }
@@ -29860,14 +29861,22 @@ class Puzzle {
         this.#reload();
     }
     unmask() {
+        console.debug("unmask", this.#mask);
         this.layers.mask.removeChildren();
         this.#updateMessage(this.selectedTile);
         this.#mask.onUnmask(this);
         this.#mask = undefined;
         document.body.classList.remove(Puzzle.Events.Mask);
         const mask = this.#maskQueue.pop();
-        if (mask) // Evaluate after any current events have processed (e.g. beam updates from last mask)
-        setTimeout(()=>this.mask(mask), 0);
+        if (mask) {
+            console.debug("processing next mask in queue", mask);
+            // Evaluate after any current events have processed (e.g. beam updates from last mask)
+            setTimeout(()=>{
+                // Allow mask to update since state may have changed since it was queued
+                // If onUpdate returns false the mask will not be applied
+                if (mask.onUpdate() !== false) this.mask(mask);
+            });
+        }
     }
     update() {
         if (!this.#mask && !this.#isUpdatingBeams) {
@@ -29884,12 +29893,12 @@ class Puzzle {
         if (tile && tile !== previouslySelectedTile) tile.onSelected(previouslySelectedTile);
         return previouslySelectedTile;
     }
-    updateState() {
+    updateState(keepDelta = true) {
         this.#state.update(Object.assign(this.#state.getCurrent(), {
             layout: this.layout.getState()
-        }));
+        }), keepDelta);
         this.#updateActions();
-        (0, _util.emitEvent)(Puzzle.Events.Updated, {
+        if (keepDelta) (0, _util.emitEvent)(Puzzle.Events.Updated, {
             state: this.#state
         });
     }
@@ -29996,8 +30005,7 @@ class Puzzle {
         if (id) this.select(id);
     }
     #redo() {
-        this.#state.redo();
-        this.#reload();
+        if (this.#state.redo()) this.#reload();
     }
     #reload() {
         this.error = false;
@@ -30012,8 +30020,7 @@ class Puzzle {
         (0, _paperDefault.default).project.clear();
     }
     #reset() {
-        this.#state.reset();
-        this.#reload();
+        if (this.#state.reset()) this.#reload();
     }
     #resize() {
         const { width, height } = elements.main.getBoundingClientRect();
@@ -30036,8 +30043,8 @@ class Puzzle {
         const selectedTileId = this.#state.getSelectedTile();
         const selectedTile = selectedTileId ? this.layout.getTileByOffset(new (0, _offset.OffsetCoordinates)(...selectedTileId.split(","))) : undefined;
         this.updateSelectedTile(selectedTile);
+        this.updateState(false);
         this.update();
-        this.#updateActions();
     }
     #teardown() {
         document.body.classList.remove(...Object.values(Puzzle.Events));
@@ -30054,11 +30061,11 @@ class Puzzle {
         this.#collisions = {};
         this.#isUpdatingBeams = false;
         this.#mask = undefined;
+        this.#maskQueue = [];
         this.#termini = [];
     }
     #undo() {
-        this.#state.undo();
-        this.#reload();
+        if (this.#state.undo()) this.#reload();
     }
     #updateActions() {
         const id = this.#state.getId();
@@ -30069,6 +30076,7 @@ class Puzzle {
         const disable = [];
         if (!this.#state.canUndo()) disable.push(elements.undo);
         if (!this.#state.canRedo()) disable.push(elements.redo);
+        if (!this.#state.canReset()) disable.push(elements.reset);
         if (!(0, _puzzles.Puzzles).visible.has(id)) {
             // Custom puzzle
             elements.puzzleId.value = "";
@@ -30176,6 +30184,7 @@ class Puzzle {
             this.onMask = configuration.onMask ?? (0, _util.noop);
             this.onTap = configuration.onTap ?? (0, _util.noop);
             this.onUnmask = configuration.onUnmask ?? (0, _util.noop);
+            this.onUpdate = configuration.onUpdate ?? (0, _util.noop);
         }
         equals(other) {
             return this.id === other.id;
@@ -30498,7 +30507,8 @@ class Tile extends (0, _item.Item) {
     }
     update() {
         super.update();
-        this.#ui.indicator.opacity = this.modifiers.length ? 1 : 0;
+        // Display the indicator if the tile contains non-immutable modifiers
+        this.#ui.indicator.opacity = this.modifiers.filter((modifier)=>!modifier.immutable).length ? 1 : 0;
     }
     static parameters(height) {
         const circumradius = height / 2;
@@ -30587,15 +30597,24 @@ class Item extends (0, _stateful.Stateful) {
     center;
     data;
     group;
-    id = Item.uniqueId++;
+    id;
+    immutable;
     // Whether the item can be clicked on
     locked;
     parent;
     sortOrder = 100;
     type;
     constructor(parent, state, configuration){
+        // Retain ID from state if it exists, otherwise generate a new one
+        state.id ??= Item.uniqueId++;
         super(state);
-        this.type = state?.type || configuration?.type;
+        this.id = state.id;
+        this.immutable ??= state?.immutable ?? false;
+        this.type = state?.type ?? configuration?.type;
+        if (this.type === undefined) {
+            console.debug(`[Item:${this.id}]`, state);
+            throw new Error("Item must have type defined");
+        }
         this.data = Object.assign({
             id: this.id,
             type: this.type
@@ -30643,6 +30662,9 @@ class Item extends (0, _stateful.Stateful) {
         return `[${this.type}:${this.id}]`;
     }
     update() {}
+    static immutable(item) {
+        return item.immutable;
+    }
     static Types = Object.freeze(Object.fromEntries([
         "beam",
         "collision",
@@ -30700,27 +30722,27 @@ var _terminus = require("./items/terminus");
 var _reflector = require("./items/reflector");
 var _wall = require("./items/wall");
 var _item = require("./item");
-function itemFactory(parent, configuration) {
+function itemFactory(parent, state, configuration) {
     let item;
-    switch(configuration.type){
+    switch(state.type){
         case (0, _item.Item).Types.filter:
-            item = new (0, _filter.Filter)(parent, configuration);
+            item = new (0, _filter.Filter)(...arguments);
             break;
         case (0, _item.Item).Types.portal:
-            item = new (0, _portal.Portal)(parent, configuration);
+            item = new (0, _portal.Portal)(...arguments);
             break;
         case (0, _item.Item).Types.terminus:
-            item = new (0, _terminus.Terminus)(parent, configuration);
+            item = new (0, _terminus.Terminus)(...arguments);
             break;
         case (0, _item.Item).Types.reflector:
-            item = new (0, _reflector.Reflector)(parent, configuration);
+            item = new (0, _reflector.Reflector)(...arguments);
             break;
         case (0, _item.Item).Types.wall:
-            item = new (0, _wall.Wall)(parent, configuration);
+            item = new (0, _wall.Wall)(...arguments);
             break;
         default:
-            console.error("Ignoring item with unknown type:", configuration.type);
-            break;
+            console.debug("itemFactory", state);
+            throw new Error(`Cannot create item with unknown type: ${state.type}`);
     }
     if (item) item.onInitialization();
     return item;
@@ -30809,7 +30831,7 @@ class Move extends (0, _modifier.Modifier) {
     }
     moveFilter(tile) {
         // Filter out tiles that contain no movable items
-        return super.moveFilter(tile) || !tile.items.some((item)=>item.movable);
+        return super.moveFilter(tile) || !tile.items.some(Move.movable);
     }
     moveItems(tile) {
         const items = this.tile.items.filter(Move.movable);
@@ -30825,8 +30847,10 @@ class Move extends (0, _modifier.Modifier) {
         };
     }
     tileFilter(tile) {
-        // Filter out immutable tiles and tiles with items, except for the current tile
-        return tile.modifiers.some((0, _modifier.Modifier).immutable) || tile.items.filter((item)=>item.type !== (0, _item.Item).Types.beam).length > 0 && !(tile === this.tile);
+        // Never mask current tile
+        return !tile.equals(this.tile) && // Mask immutable tiles
+        (tile.modifiers.some((0, _modifier.Modifier).immutable) || // Mask tiles that contain any items we don't ignore
+        tile.items.some((item)=>!Move.ignoreItemTypes.includes(item.type)));
     }
     #maskOnTap(puzzle, tile) {
         if (tile) {
@@ -30848,12 +30872,16 @@ class Move extends (0, _modifier.Modifier) {
     static movable(item) {
         return item.movable;
     }
+    static ignoreItemTypes = [
+        (0, _item.Item).Types.beam,
+        (0, _item.Item).Types.wall
+    ];
 }
 const movable = (SuperClass)=>class MovableItem extends SuperClass {
         movable;
-        constructor(parent, configuration){
+        constructor(parent, state){
             super(...arguments);
-            this.movable = configuration.movable !== false;
+            this.movable = !this.immutable && state.movable !== false;
         }
         move(tile) {
             this.parent.removeItem(this);
@@ -30878,6 +30906,7 @@ var _puzzle = require("./puzzle");
 var _stateful = require("./stateful");
 var _eventListeners = require("./eventListeners");
 var _interact = require("./interact");
+var _item = require("./item");
 const modifiersImmutable = document.getElementById("modifiers-immutable");
 const modifiersMutable = document.getElementById("modifiers-mutable");
 const navigator = window.navigator;
@@ -30967,8 +30996,9 @@ class Modifier extends (0, _stateful.Stateful) {
         this.tile = tile;
     }
     moveFilter(tile) {
-        // Filter out immutable tiles
-        return tile.modifiers.some((modifier)=>modifier.type === Modifier.Types.immutable);
+        // Mask immutable tiles
+        return tile.modifiers.some(Modifier.immutable) || // Mask tiles that only contain immutable items
+        tile.items.every((0, _item.Item).immutable);
     }
     onDeselected() {
         this.update({
@@ -30982,10 +31012,8 @@ class Modifier extends (0, _stateful.Stateful) {
         this.onToggle(event);
         else {
             this.#down = true;
-            if (!this.#mask && !this.tile.modifiers.some((modifier)=>[
-                    Modifier.Types.immutable,
-                    Modifier.Types.lock
-                ].includes(modifier.type))) this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime);
+            if (!this.#mask && !this.tile.modifiers.some(Modifier.immovable)) // No active mask and modifiers are not immovable
+            this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime);
         }
     }
     onPointerUp(event) {
@@ -31079,6 +31107,9 @@ class Modifier extends (0, _stateful.Stateful) {
         const selectedModifier = document.querySelector(".modifiers .selected");
         if (selectedModifier) selectedModifier.dispatchEvent(new CustomEvent("deselected"));
     }
+    static immovable(modifier) {
+        return Modifier.immovableTypes.includes(modifier.type);
+    }
     static immutable(modifier) {
         return modifier.type === Modifier.Types.immutable;
     }
@@ -31098,9 +31129,13 @@ class Modifier extends (0, _stateful.Stateful) {
             type,
             (0, _util.capitalize)(type)
         ])));
+    static immovableTypes = [
+        Modifier.Types.immutable,
+        Modifier.Types.lock
+    ];
 }
 
-},{"./util":"92uDI","./puzzle":"jIcx0","./stateful":"2njM8","./eventListeners":"8T0Qv","./interact":"fHNCq","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8T0Qv":[function(require,module,exports) {
+},{"./util":"92uDI","./puzzle":"jIcx0","./stateful":"2njM8","./eventListeners":"8T0Qv","./interact":"fHNCq","./item":"klNFr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8T0Qv":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "EventListeners", ()=>EventListeners);
@@ -31502,7 +31537,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
             style
         });
         children.push(ring);
-        if (this.rotatable) {
+        if (this.direction !== undefined) {
             const pointer = new (0, _paper.Path)({
                 closed: true,
                 opacity: 0.25,
@@ -31518,7 +31553,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
             children.unshift(pointer);
         }
         this.group.addChildren(children);
-        if (this.rotatable) // Properly align items with hexagonal rotation
+        if (this.direction !== undefined) // Properly align items with hexagonal rotation
         this.rotateGroup(1);
     }
     get(direction) {
@@ -31527,12 +31562,9 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
     onCollision({ beam, currentStep, nextStep, puzzle }) {
         const portalState = currentStep.state.get((0, _step.StepState).Portal);
         if (!portalState) {
-            const stepIndex = nextStep.index;
             const entryDirection = (0, _util.getOppositeDirection)(nextStep.direction);
-            const existing = (0, _util.coalesce)(this.get(entryDirection), {
-                stepIndex
-            });
-            if (existing.stepIndex < stepIndex) {
+            const existing = (0, _util.coalesce)(this.get(entryDirection), nextStep);
+            if (existing.index < nextStep.index) {
                 // Checking stepIndex to exclude cases where we are doing a re-evaluation of history.
                 console.debug(this.toString(), "ignoring beam trying to enter through a direction which is already occupied:", entryDirection);
                 return;
@@ -31540,9 +31572,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
             // Handle entry collision
             return nextStep.copy({
                 insertAbove: this,
-                onAdd: ()=>this.update(entryDirection, {
-                        stepIndex
-                    }),
+                onAdd: (step)=>this.update(entryDirection, step),
                 onRemove: ()=>this.update(entryDirection),
                 state: nextStep.state.copy(new (0, _step.StepState).Portal(this))
             });
@@ -31550,73 +31580,116 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         return nextStep.copy({
             insertAbove: this
         });
-        // Check for destination in beam state (matches on item ID and step index)
-        const stateId = [
-            this.id,
-            nextStep.index
-        ].join(":");
-        const destinationId = beam.getState().moves?.[stateId];
-        // Find all valid destination portals
-        const destinations = puzzle.getItems().filter((item)=>item.type === (0, _item.Item).Types.portal && !item.equals(this) && // Portal must not already have a beam occupying the desired direction
-            !item.get(Portal.getExitDirection(nextStep, portalState.entryPortal, item)) && (destinationId === undefined || item.id === destinationId) && // Entry portals without defined direction can exit from any other portal.
-            (this.getDirection() === undefined || // Exit portals without defined direction can be used by any entry portal.
-            item.getDirection() === undefined || // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
-            item.getDirection() === this.getDirection()));
-        if (destinations.length === 0) {
-            console.debug(this.toString(), "no valid destinations found");
+        const exitPortals = this.#getExitPortals(puzzle, beam, nextStep);
+        if (exitPortals.length === 0) {
+            console.debug(this.toString(), "no valid exit portals found");
             // This will cause the beam to stop
             return currentStep;
-        }
-        if (destinations.length === 1) // A single matching destination
-        return this.#getStep(beam, destinations[0], nextStep, portalState);
-        else {
+        } else if (exitPortals.length === 1) {
+            const exitPortal = exitPortals[0];
+            console.debug(this.toString(), "single exit portal matched:", exitPortal);
+            return this.#getStep(beam, nextStep, exitPortal);
+        } else {
             // Multiple matching destinations. User will need to pick one manually.
-            const destinationTiles = destinations.map((portal)=>portal.parent);
+            console.debug(this.toString(), "found multiple valid exit portals:", exitPortals);
+            // Cache exit portals for use in mask
+            const data = {
+                exitPortals
+            };
             const mask = new (0, _puzzle.Puzzle).Mask({
-                beam,
-                id: stateId,
+                id: this.id,
                 onMask: ()=>currentStep.tile.beforeModify(),
                 onTap: (puzzle, tile)=>{
-                    const destination = destinations.find((portal)=>portal.parent === tile);
-                    if (destination) {
-                        beam.addStep(this.#getStep(beam, destination, nextStep, portalState));
-                        beam.updateState((state)=>{
-                            if (!state.moves) state.moves = {};
-                            // Store this decision in beam state
-                            state.moves[stateId] = destination.id;
-                        });
+                    const exitPortal = data.exitPortals.find((portal)=>portal.parent === tile);
+                    if (exitPortal) {
+                        beam.addStep(this.#getStep(beam, nextStep, exitPortal));
                         puzzle.unmask();
                     }
                 },
                 onUnmask: ()=>currentStep.tile.afterModify(),
+                onUpdate: ()=>{
+                    // State may have changed, fetch portals again
+                    const exitPortals = this.#getExitPortals(puzzle, beam, nextStep);
+                    if (exitPortals.length === 0) {
+                        console.debug(this.toString(), "mask onUpdate: no valid exit portals found");
+                        // Cancel the mask
+                        // This will also cause the beam to stop
+                        return false;
+                    } else if (exitPortals.length === 1) {
+                        const exitPortal = exitPortals[0];
+                        console.debug(this.toString(), "mask onUpdate: single portal matched:", exitPortal);
+                        beam.addStep(this.#getStep(beam, nextStep, exitPortal));
+                        // Cancel the mask
+                        return false;
+                    } else {
+                        console.debug(this.toString(), "mask onUpdate: exit portals:", exitPortals);
+                        data.exitPortals = exitPortals;
+                    }
+                },
                 tileFilter: (tile)=>{
-                    // Include the portal tile and tiles which contain a matching destination
-                    return !(this.parent === tile || destinationTiles.some((destinationTile)=>destinationTile === tile));
+                    // Mask any invalid tiles. Exclude the entry portal tile
+                    return !(tile.equals(this.parent) || data.exitPortals.map((portal)=>portal.parent).some((validTile)=>validTile.equals(tile)));
                 }
             });
-            puzzle.updateSelectedTile(currentStep.tile);
+            puzzle.updateSelectedTile(null);
             puzzle.mask(mask);
             // This will cause the beam to stop
             return currentStep;
         }
     }
+    onMove() {
+        super.onMove();
+        // Invalidate directions cache
+        this.#directions = {};
+    }
     update(direction, data) {
         this.#directions[direction] = data;
     }
-    #getStep(beam, portal, nextStep, portalState) {
-        const direction = Portal.getExitDirection(nextStep, portalState.entryPortal, portal);
-        const stepIndex = nextStep.index;
+    #getExitPortals(puzzle, beam, nextStep) {
+        const exitPortals = puzzle.getItems().filter((item)=>// Is a portal
+            item.type === (0, _item.Item).Types.portal && // But not the entry portal
+            !item.equals(this) && // There is no other beam occupying the portal at the exit direction
+            !item.get(Portal.getExitDirection(nextStep, this, item)) && // Entry portals without defined direction can exit from any other portal.
+            (this.getDirection() === undefined || // Exit portals without defined direction can be used by any entry portal.
+            item.getDirection() === undefined || // Exit portals with a defined direction can only be used by entry portals with the same defined direction.
+            item.getDirection() === this.getDirection()));
+        if (exitPortals.length > 1) {
+            // Check for existing exitPortalId in beam state for this step
+            const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id];
+            if (exitPortalId !== undefined) {
+                console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`);
+                const existing = exitPortals.find((item)=>item.id === exitPortalId);
+                if (existing) return [
+                    existing
+                ];
+            }
+        }
+        return exitPortals;
+    }
+    #getStep(beam, nextStep, exitPortal) {
+        const direction = Portal.getExitDirection(nextStep, this, exitPortal);
         return nextStep.copy({
             connected: false,
             direction,
-            insertAbove: portal,
-            onAdd: ()=>portal.update(direction, {
-                    stepIndex
-                }),
-            onRemove: ()=>portal.update(direction),
-            point: portal.parent.center,
-            state: nextStep.state.copy(new (0, _step.StepState).Portal(portalState.entryPortal, portal)),
-            tile: portal.parent
+            insertAbove: exitPortal,
+            onAdd: (step)=>{
+                exitPortal.update(direction, step);
+                // Store this decision in beam state and generate a matching delta
+                beam.updateState((state)=>(state.steps ??= {})[step.index] = {
+                        [this.id]: exitPortal.id
+                    });
+            },
+            onRemove: (step)=>{
+                // Remove any associated beam state, but don't generate a delta.
+                // If the step is being removed, a delta for that action was most likely created elsewhere already.
+                beam.updateState((state)=>{
+                    delete state.steps[step.index];
+                }, false);
+                exitPortal.update(direction);
+            },
+            point: exitPortal.parent.center,
+            state: nextStep.state.copy(new (0, _step.StepState).Portal(this, exitPortal)),
+            tile: exitPortal.parent
         });
     }
     static getExitDirection(step, entryPortal, exitPortal) {
@@ -31678,7 +31751,7 @@ const rotatable = (SuperClass)=>class RotatableItem extends SuperClass {
         constructor(parent, state, configuration = {}){
             super(...arguments);
             this.direction = (0, _util.coalesce)(state.direction, configuration.direction);
-            this.rotatable = (0, _util.coalesce)(true, state.rotatable, configuration.rotatable);
+            this.rotatable = !this.immutable && (0, _util.coalesce)(true, state.rotatable, configuration.rotatable);
             this.rotationDegrees = (0, _util.coalesce)(60, state.rotationDegrees, configuration.rotationDegrees);
             this.rotation = (0, _util.coalesce)(0, state.rotation, configuration.rotation) % this.getMaxRotation();
         }
@@ -31697,9 +31770,10 @@ const rotatable = (SuperClass)=>class RotatableItem extends SuperClass {
             this.rotateGroup(this.direction);
         }
         rotateGroup(rotation) {
-            if (this.rotatable) this.group.rotate(rotation * this.rotationDegrees, this.center);
+            this.group.rotate(rotation * this.rotationDegrees, this.center);
         }
         rotate(clockwise) {
+            if (!this.rotatable) return;
             const rotation = clockwise === false ? -1 : 1;
             this.rotation = (rotation + this.rotation) % this.getMaxRotation();
             this.updateState((state)=>{
@@ -31734,7 +31808,7 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
         const color = (0, _chromaJsDefault.default).average(colors.length ? colors : Array.isArray(state.color) ? state.color : [
             state.color
         ]).hex();
-        const openings = state.openings.map((state, direction)=>state ? new Terminus.#Opening(state.color || color, direction, state.connected, state.on) : state).filter((opening)=>opening);
+        const openings = state.openings.map((opening, direction)=>opening ? new Terminus.#Opening(opening.color ?? color, direction, opening.connected, opening.on ?? state.on) : opening).filter((opening)=>opening);
         this.#ui = Terminus.ui(tile, color, openings);
         this.group.addChildren([
             ...this.#ui.openings,
@@ -31937,7 +32011,7 @@ const toggleable = (SuperClass)=>class ToggleableItem extends SuperClass {
         toggled;
         constructor(parent, configuration){
             super(...arguments);
-            this.toggleable = configuration.toggleable !== false;
+            this.toggleable = !this.immutable && configuration.toggleable !== false;
         }
         onToggle() {}
         toggle(toggled) {
@@ -31968,6 +32042,8 @@ class Beam extends (0, _item.Item) {
     #stepIndex = -1;
     #steps = [];
     constructor(terminus, state, configuration){
+        // Exclude from modification
+        state.immutable = true;
         super(...arguments);
         this.group = null;
         this.#direction = configuration.direction;
@@ -32036,7 +32112,7 @@ class Beam extends (0, _item.Item) {
     getColorElements(tile) {
         // Show color elements for merged beams
         const step = this.getSteps(tile).find((step)=>step.state.has((0, _step.StepState).MergeWith));
-        return step ? (0, _util.getColorElements)(step.color) : [];
+        return step ? (0, _util.getColorElements)(step.colors) : [];
     }
     getCompoundPath() {
         return new (0, _paper.CompoundPath)({
@@ -32161,11 +32237,13 @@ class Beam extends (0, _item.Item) {
                 return;
             }
         }
-        const isSameDirection = step.direction === nextStep.direction;
-        if (currentStep.state.get((0, _step.StepState).Portal)?.exitPortal && !isSameDirection) {
-            console.debug(this.toString(), "ignoring collision with beam using same portal with different exit direction", beam.toString());
+        // Check for a portal on either beam
+        const portal = currentStep.state.get((0, _step.StepState).Portal) ?? step.state.get((0, _step.StepState).Portal);
+        if (portal) {
+            console.debug(this.toString(), "ignoring collision with beam using same portal", beam.toString());
             return;
         }
+        const isSameDirection = step.direction === nextStep.direction;
         if (!isSameDirection || isSelf) {
             // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
             console.debug(beam.toString(), "has collided with", isSelf ? "self" : this.toString(), collision);
@@ -32209,10 +32287,6 @@ class Beam extends (0, _item.Item) {
         if (!this.isOn()) {
             if (this.#steps.length) {
                 console.debug(this.toString(), "beam has been toggled off");
-                // Also reset any state changes from user move decisions
-                this.updateState((state)=>{
-                    delete state.moves;
-                });
                 this.remove();
             }
             return;
@@ -32354,6 +32428,8 @@ class Beam extends (0, _item.Item) {
     updateStep(stepIndex, settings) {
         const step = this.getStep(stepIndex);
         if (step) {
+            // Update is essentially: remove, update, add
+            step.onRemove(step);
             const updatedStep = this.#getUpdatedStep(step, settings);
             this.#steps[stepIndex] = updatedStep;
             updatedStep.onAdd(updatedStep);
@@ -32606,6 +32682,8 @@ var _move = require("../modifiers/move");
 class Wall extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item))) {
     sortOrder = 1;
     constructor(tile, state){
+        // Exclude from modification by default
+        state.immutable ??= true;
         super(tile, state, {
             rotationDegrees: 60
         });
@@ -32701,7 +32779,6 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Swap", ()=>Swap);
 var _move = require("./move");
 var _modifier = require("../modifier");
-var _item = require("../item");
 class Swap extends (0, _move.Move) {
     name = "swap_horiz";
     title = "Swap";
@@ -32722,12 +32799,14 @@ class Swap extends (0, _move.Move) {
         };
     }
     tileFilter(tile) {
-        // Filter out immutable tiles and tiles without items
-        return tile.modifiers.some((0, _modifier.Modifier).immutable) || !tile.items.filter((item)=>item.type !== (0, _item.Item).Types.beam).length;
+        // Never mask current tile
+        return !tile.equals(this.tile) && // Mask immutable tiles
+        (tile.modifiers.some((0, _modifier.Modifier).immutable) || // Mask tiles that don't contain any movable items
+        !tile.items.some((0, _move.Move).movable));
     }
 }
 
-},{"./move":"iw6ob","../modifier":"bQhih","../item":"klNFr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dOejK":[function(require,module,exports) {
+},{"./move":"iw6ob","../modifier":"bQhih","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dOejK":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Mask", ()=>Mask);
@@ -32823,6 +32902,9 @@ class State {
     canRedo() {
         return this.#index < this.#lastIndex();
     }
+    canReset() {
+        return this.#deltas.length > 0;
+    }
     canUndo() {
         return this.#index >= 0;
     }
@@ -32856,21 +32938,22 @@ class State {
         return this.#deltas.length;
     }
     redo() {
-        const nextIndex = this.#index + 1;
-        if (nextIndex <= this.#lastIndex()) {
-            this.#current = structuredClone(this.#original);
-            this.#deltas.filter((delta, index)=>index <= nextIndex).forEach((delta)=>this.apply(delta));
-            this.#index = nextIndex;
-            this.#updateCache();
-        }
+        if (!this.canRedo()) return;
+        this.#index++;
+        this.#current = structuredClone(this.#original);
+        this.#deltas.filter((delta, index)=>index <= this.#index).forEach((delta)=>this.apply(delta));
+        this.#updateCache();
+        return true;
     }
     reset() {
+        if (!this.canReset()) return;
         this.#current = structuredClone(this.#original);
         this.#deltas = [];
         this.#index = this.#lastIndex();
         this.#selectedTile = undefined;
         State.clearCache(this.getId());
         this.#updateCache();
+        return true;
     }
     setSelectedTile(tile) {
         const id = tile?.coordinates.offset.toString();
@@ -32880,28 +32963,29 @@ class State {
         }
     }
     undo() {
-        const previousIndex = this.#index - 1;
-        if (previousIndex >= -1) {
-            this.#current = structuredClone(this.#original);
-            this.#deltas.filter((delta, index)=>index <= previousIndex).forEach((delta)=>this.apply(delta));
-            this.#index = previousIndex;
-            this.#updateCache();
-        }
+        if (!this.canUndo()) return;
+        this.#index--;
+        this.#current = structuredClone(this.#original);
+        this.#deltas.filter((delta, index)=>index <= this.#index).forEach((delta)=>this.apply(delta));
+        this.#updateCache();
+        return true;
     }
-    update(newState) {
+    update(newState, keepDelta = true) {
         const delta = (0, _util.jsonDiffPatch).diff(this.#current, newState);
         console.debug("delta", delta);
         if (delta === undefined) // Nothing to do
         return;
-        // Handle updating after undoing
-        if (this.#index < this.#lastIndex()) // Remove all deltas after the current one
-        this.#deltas.splice(this.#index + 1);
         this.apply(delta);
-        // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-        // their stringified JSON representation and parsed before being applied.
-        // See:https://github.com/benjamine/jsondiffpatch/issues/34
-        this.#deltas.push(JSON.stringify(delta));
-        this.#index = this.#lastIndex();
+        if (keepDelta) {
+            // Handle updating after undoing
+            if (this.#index < this.#lastIndex()) // Remove all deltas after the current one
+            this.#deltas.splice(this.#index + 1);
+            // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+            // their stringified JSON representation and parsed before being applied.
+            // See:https://github.com/benjamine/jsondiffpatch/issues/34
+            this.#deltas.push(JSON.stringify(delta));
+            this.#index = this.#lastIndex();
+        }
         this.#updateCache();
     }
     #key(key) {
@@ -33021,6 +33105,7 @@ const puzzles = {
     "009": require("6305a2004246bb2"),
     "010": require("da10656096d2af94"),
     "011": require("ac22c67945d4fda9"),
+    "012": require("fe6acb01757b24c8"),
     test_infinite_loop: require("85499c36fcf7a4eb"),
     test_layout: require("de475d1b852df9bb"),
     test_portal: require("41bc05d099929c0d"),
@@ -33059,7 +33144,7 @@ Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id)=>[
     ]));
 Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id)=>!Puzzles.hidden.has(id)));
 
-},{"388f1e0e9ef404f1":"aW13h","c78ae468f341d769":"7g0cm","970871732d2a157b":"iaK6p","bc9e0c5f7c5d01e4":"ljdPP","f3e72dc0ddab4b01":"1cnyP","5dcf17593d7a4bf0":"aIJrc","a02b60cdc8a431e2":"2F0gb","ade4d10630f08956":"1bhn7","6305a2004246bb2":"2icw5","da10656096d2af94":"b93JV","ac22c67945d4fda9":"6ZkNx","85499c36fcf7a4eb":"fUqeV","de475d1b852df9bb":"9Zi8W","41bc05d099929c0d":"4XdFs","255f7590a7448490":"eKsSY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aW13h":[function(require,module,exports) {
+},{"388f1e0e9ef404f1":"aW13h","c78ae468f341d769":"7g0cm","970871732d2a157b":"iaK6p","bc9e0c5f7c5d01e4":"ljdPP","f3e72dc0ddab4b01":"1cnyP","5dcf17593d7a4bf0":"aIJrc","a02b60cdc8a431e2":"2F0gb","ade4d10630f08956":"1bhn7","6305a2004246bb2":"2icw5","da10656096d2af94":"b93JV","ac22c67945d4fda9":"6ZkNx","fe6acb01757b24c8":"IvGia","85499c36fcf7a4eb":"fUqeV","de475d1b852df9bb":"9Zi8W","41bc05d099929c0d":"4XdFs","255f7590a7448490":"eKsSY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aW13h":[function(require,module,exports) {
 module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Toggle"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
 
 },{}],"7g0cm":[function(require,module,exports) {
@@ -33092,6 +33177,9 @@ module.exports = JSON.parse('{"layout":{"tiles":[[{"modifiers":[{"type":"Immutab
 },{}],"6ZkNx":[function(require,module,exports) {
 module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"openings":[null,null,{"color":"blue","on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"openings":[null,null,null,null,null,{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
+},{}],"IvGia":[function(require,module,exports) {
+module.exports = JSON.parse('{"layout":{"tiles":[[null,null,{"type":"Tile"},{"type":"Tile"}],[null,null,{"items":[{"directions":[4],"type":"Wall"}],"type":"Tile"},{"items":[{"on":true,"openings":[{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"items":[{"directions":[3],"type":"Wall"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"directions":[3,4,5],"type":"Wall"}],"type":"Tile"},{"items":[{"directions":[2,3,4],"type":"Wall"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},null,{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},null,null,{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":6,"type":"Connections"}]}');
+
 },{}],"fUqeV":[function(require,module,exports) {
 module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"red","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,null,{"on":true,"type":"Beam"}],"type":"Terminus"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[null,{"items":[{"rotation":4,"type":"Reflector"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"on":true,"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"type":"Tile"}]]},"solution":[{"amount":100,"type":"Connections"}]}');
 
@@ -33102,32 +33190,39 @@ parcelHelpers.defineInteropFlag(exports);
 const layout = [
     [
         "o",
-        "x",
-        "x",
-        "x"
-    ],
-    [
-        "x",
-        "x",
-        "x",
-        "x"
-    ],
-    [
-        "x",
-        "x",
-        "x",
-        "x",
-        "x"
-    ],
-    [
-        "x",
-        "x",
+        "o",
         "x",
         "x"
     ],
     [
         "o",
+        "o",
         "x",
+        "x",
+        "x"
+    ],
+    [
+        "x",
+        "x",
+        "x",
+        "x",
+        "x",
+        "x"
+    ],
+    [
+        "x",
+        "x",
+        "x",
+        "o",
+        "x",
+        "x",
+        "x"
+    ],
+    [
+        "x",
+        "x",
+        "o",
+        "o",
         "x",
         "x"
     ]
@@ -33136,7 +33231,8 @@ exports.default = {
     layout: {
         tiles: layout.map((column)=>column.map((item)=>item === "x" ? {
                     type: "Tile"
-                } : null))
+                } : null)),
+        type: "even-r"
     },
     solution: [
         {
