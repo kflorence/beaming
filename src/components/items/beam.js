@@ -128,7 +128,7 @@ export class Beam extends Item {
   getColorElements (tile) {
     // Show color elements for merged beams
     const step = this.getSteps(tile).find((step) => step.state.has(StepState.MergeWith))
-    return step ? getColorElements(step.color) : []
+    return step ? getColorElements(step.colors) : []
   }
 
   getCompoundPath () {
@@ -287,16 +287,14 @@ export class Beam extends Item {
       }
     }
 
-    const isSameDirection = step.direction === nextStep.direction
-    if (currentStep.state.get(StepState.Portal)?.exitPortal && !isSameDirection) {
-      console.debug(
-        this.toString(),
-        'ignoring collision with beam using same portal with different exit direction',
-        beam.toString()
-      )
+    // Check for a portal on either beam
+    const portal = currentStep.state.get(StepState.Portal) ?? step.state.get(StepState.Portal)
+    if (portal) {
+      console.debug(this.toString(), 'ignoring collision with beam using same portal', beam.toString())
       return
     }
 
+    const isSameDirection = step.direction === nextStep.direction
     if (!isSameDirection || isSelf) {
       // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)

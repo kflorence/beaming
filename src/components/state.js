@@ -41,6 +41,10 @@ export class State {
     return this.#index < this.#lastIndex()
   }
 
+  canReset () {
+    return this.#deltas.length > 0
+  }
+
   canUndo () {
     return this.#index >= 0
   }
@@ -82,16 +86,24 @@ export class State {
   }
 
   redo () {
-    const nextIndex = this.#index + 1
-    if (nextIndex <= this.#lastIndex()) {
-      this.#current = structuredClone(this.#original)
-      this.#deltas.filter((delta, index) => index <= nextIndex).forEach((delta) => this.apply(delta))
-      this.#index = nextIndex
-      this.#updateCache()
+    if (!this.canRedo()) {
+      return
     }
+
+    this.#index++
+    this.#current = structuredClone(this.#original)
+    this.#deltas.filter((delta, index) => index <= this.#index).forEach((delta) => this.apply(delta))
+
+    this.#updateCache()
+
+    return true
   }
 
   reset () {
+    if (!this.canReset()) {
+      return
+    }
+
     this.#current = structuredClone(this.#original)
     this.#deltas = []
     this.#index = this.#lastIndex()
@@ -100,6 +112,8 @@ export class State {
     State.clearCache(this.getId())
 
     this.#updateCache()
+
+    return true
   }
 
   setSelectedTile (tile) {
@@ -111,13 +125,17 @@ export class State {
   }
 
   undo () {
-    const previousIndex = this.#index - 1
-    if (previousIndex >= -1) {
-      this.#current = structuredClone(this.#original)
-      this.#deltas.filter((delta, index) => index <= previousIndex).forEach((delta) => this.apply(delta))
-      this.#index = previousIndex
-      this.#updateCache()
+    if (!this.canUndo()) {
+      return
     }
+
+    this.#index--
+    this.#current = structuredClone(this.#original)
+    this.#deltas.filter((delta, index) => index <= this.#index).forEach((delta) => this.apply(delta))
+
+    this.#updateCache()
+
+    return true
   }
 
   update (newState, keepDelta = true) {
@@ -129,22 +147,21 @@ export class State {
       return
     }
 
-    // Handle updating after undoing
-    if (keepDelta && this.#index < this.#lastIndex()) {
-      // Remove all deltas after the current one
-      this.#deltas.splice(this.#index + 1)
-    }
-
     this.apply(delta)
 
     if (keepDelta) {
+      // Handle updating after undoing
+      if (this.#index < this.#lastIndex()) {
+        // Remove all deltas after the current one
+        this.#deltas.splice(this.#index + 1)
+      }
+
       // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
       // their stringified JSON representation and parsed before being applied.
       // See:https://github.com/benjamine/jsondiffpatch/issues/34
       this.#deltas.push(JSON.stringify(delta))
+      this.#index = this.#lastIndex()
     }
-
-    this.#index = this.#lastIndex()
 
     this.#updateCache()
   }

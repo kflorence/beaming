@@ -393,8 +393,9 @@ export class Puzzle {
   }
 
   #redo () {
-    this.#state.redo()
-    this.#reload()
+    if (this.#state.redo()) {
+      this.#reload()
+    }
   }
 
   #reload () {
@@ -415,8 +416,9 @@ export class Puzzle {
   }
 
   #reset () {
-    this.#state.reset()
-    this.#reload()
+    if (this.#state.reset()) {
+      this.#reload()
+    }
   }
 
   #resize () {
@@ -471,12 +473,14 @@ export class Puzzle {
     this.#collisions = {}
     this.#isUpdatingBeams = false
     this.#mask = undefined
+    this.#maskQueue = []
     this.#termini = []
   }
 
   #undo () {
-    this.#state.undo()
-    this.#reload()
+    if (this.#state.undo()) {
+      this.#reload()
+    }
   }
 
   #updateActions () {
@@ -496,6 +500,10 @@ export class Puzzle {
 
     if (!this.#state.canRedo()) {
       disable.push(elements.redo)
+    }
+
+    if (!this.#state.canReset()) {
+      disable.push(elements.reset)
     }
 
     if (!Puzzles.visible.has(id)) {
