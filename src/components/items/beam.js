@@ -26,6 +26,9 @@ export class Beam extends Item {
   #steps = []
 
   constructor (terminus, state, configuration) {
+    // Exclude from modification
+    state.immutable = true
+
     super(...arguments)
 
     this.group = null
@@ -125,7 +128,7 @@ export class Beam extends Item {
   getColorElements (tile) {
     // Show color elements for merged beams
     const step = this.getSteps(tile).find((step) => step.state.has(StepState.MergeWith))
-    return step ? getColorElements(step.color) : []
+    return step ? getColorElements(step.colors) : []
   }
 
   getCompoundPath () {
@@ -284,16 +287,14 @@ export class Beam extends Item {
       }
     }
 
-    const isSameDirection = step.direction === nextStep.direction
-    if (currentStep.state.get(StepState.Portal)?.exitPortal && !isSameDirection) {
-      console.debug(
-        this.toString(),
-        'ignoring collision with beam using same portal with different exit direction',
-        beam.toString()
-      )
+    // Check for a portal on either beam
+    const portal = currentStep.state.get(StepState.Portal) ?? step.state.get(StepState.Portal)
+    if (portal) {
+      console.debug(this.toString(), 'ignoring collision with beam using same portal', beam.toString())
       return
     }
 
+    const isSameDirection = step.direction === nextStep.direction
     if (!isSameDirection || isSelf) {
       // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
@@ -348,8 +349,6 @@ export class Beam extends Item {
     if (!this.isOn()) {
       if (this.#steps.length) {
         console.debug(this.toString(), 'beam has been toggled off')
-        // Also reset any state changes from user move decisions
-        this.updateState((state) => { delete state.moves })
         this.remove()
       }
       return
@@ -558,6 +557,8 @@ export class Beam extends Item {
   updateStep (stepIndex, settings) {
     const step = this.getStep(stepIndex)
     if (step) {
+      // Update is essentially: remove, update, add
+      step.onRemove(step)
       const updatedStep = this.#getUpdatedStep(step, settings)
       this.#steps[stepIndex] = updatedStep
       updatedStep.onAdd(updatedStep)

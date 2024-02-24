@@ -22,15 +22,15 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       colors.length ? colors : (Array.isArray(state.color) ? state.color : [state.color])
     ).hex()
 
-    const openings = state.openings.map((state, direction) =>
-      state
+    const openings = state.openings.map((opening, direction) =>
+      opening
         ? new Terminus.#Opening(
-          state.color || color,
+          opening.color ?? color,
           direction,
-          state.connected,
-          state.on
+          opening.connected,
+          opening.on ?? state.on
         )
-        : state
+        : opening
     ).filter((opening) => opening)
 
     this.#ui = Terminus.ui(tile, color, openings)

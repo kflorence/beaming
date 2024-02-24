@@ -8,7 +8,11 @@ export class Wall extends movable(rotatable(Item)) {
   sortOrder = 1
 
   constructor (tile, state) {
+    // Exclude from modification by default
+    state.immutable ??= true
+
     super(tile, state, { rotationDegrees: 60 })
+
     const walls = Wall.item(tile, state)
     this.group.addChildren(walls)
   }

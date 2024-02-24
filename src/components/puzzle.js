@@ -134,6 +134,7 @@ export class Puzzle {
         throw new Error(`Duplicate mask detected: ${mask.id}`)
       }
 
+      console.debug('adding mask to queue', mask)
       this.#maskQueue.push(mask)
       return
     }
@@ -176,6 +177,7 @@ export class Puzzle {
   }
 
   unmask () {
+    console.debug('unmask', this.#mask)
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
     this.#mask.onUnmask(this)
@@ -185,8 +187,15 @@ export class Puzzle {
 
     const mask = this.#maskQueue.pop()
     if (mask) {
+      console.debug('processing next mask in queue', mask)
       // Evaluate after any current events have processed (e.g. beam updates from last mask)
-      setTimeout(() => this.mask(mask), 0)
+      setTimeout(() => {
+        // Allow mask to update since state may have changed since it was queued
+        // If onUpdate returns false the mask will not be applied
+        if (mask.onUpdate() !== false) {
+          this.mask(mask)
+        }
+      })
     }
   }
 
@@ -215,10 +224,12 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
-  updateState () {
-    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+  updateState (keepDelta = true) {
+    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }), keepDelta)
     this.#updateActions()
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    if (keepDelta) {
+      emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    }
   }
 
   #addLayers () {
@@ -382,8 +393,9 @@ export class Puzzle {
   }
 
   #redo () {
-    this.#state.redo()
-    this.#reload()
+    if (this.#state.redo()) {
+      this.#reload()
+    }
   }
 
   #reload () {
@@ -404,8 +416,9 @@ export class Puzzle {
   }
 
   #reset () {
-    this.#state.reset()
-    this.#reload()
+    if (this.#state.reset()) {
+      this.#reload()
+    }
   }
 
   #resize () {
@@ -439,8 +452,8 @@ export class Puzzle {
       : undefined
 
     this.updateSelectedTile(selectedTile)
+    this.updateState(false)
     this.update()
-    this.#updateActions()
   }
 
   #teardown () {
@@ -460,12 +473,14 @@ export class Puzzle {
     this.#collisions = {}
     this.#isUpdatingBeams = false
     this.#mask = undefined
+    this.#maskQueue = []
     this.#termini = []
   }
 
   #undo () {
-    this.#state.undo()
-    this.#reload()
+    if (this.#state.undo()) {
+      this.#reload()
+    }
   }
 
   #updateActions () {
@@ -485,6 +500,10 @@ export class Puzzle {
 
     if (!this.#state.canRedo()) {
       disable.push(elements.redo)
+    }
+
+    if (!this.#state.canReset()) {
+      disable.push(elements.reset)
     }
 
     if (!Puzzles.visible.has(id)) {
@@ -632,6 +651,7 @@ export class Puzzle {
       this.onMask = configuration.onMask ?? noop
       this.onTap = configuration.onTap ?? noop
       this.onUnmask = configuration.onUnmask ?? noop
+      this.onUpdate = configuration.onUpdate ?? noop
     }
 
     equals (other) {

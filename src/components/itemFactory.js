@@ -5,28 +5,28 @@ import { Reflector } from './items/reflector'
 import { Wall } from './items/wall'
 import { Item } from './item'
 
-export function itemFactory (parent, configuration) {
+export function itemFactory (parent, state, configuration) {
   let item
 
-  switch (configuration.type) {
+  switch (state.type) {
     case Item.Types.filter:
-      item = new Filter(parent, configuration)
+      item = new Filter(...arguments)
       break
     case Item.Types.portal:
-      item = new Portal(parent, configuration)
+      item = new Portal(...arguments)
       break
     case Item.Types.terminus:
-      item = new Terminus(parent, configuration)
+      item = new Terminus(...arguments)
       break
     case Item.Types.reflector:
-      item = new Reflector(parent, configuration)
+      item = new Reflector(...arguments)
       break
     case Item.Types.wall:
-      item = new Wall(parent, configuration)
+      item = new Wall(...arguments)
       break
     default:
-      console.error('Ignoring item with unknown type:', configuration.type)
-      break
+      console.debug('itemFactory', state)
+      throw new Error(`Cannot create item with unknown type: ${state.type}`)
   }
 
   if (item) {

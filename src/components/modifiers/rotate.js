@@ -51,7 +51,7 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     super(...arguments)
 
     this.direction = coalesce(state.direction, configuration.direction)
-    this.rotatable = coalesce(true, state.rotatable, configuration.rotatable)
+    this.rotatable = !this.immutable && coalesce(true, state.rotatable, configuration.rotatable)
     this.rotationDegrees = coalesce(60, state.rotationDegrees, configuration.rotationDegrees)
     this.rotation = coalesce(0, state.rotation, configuration.rotation) % this.getMaxRotation()
   }
@@ -80,12 +80,14 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
   }
 
   rotateGroup (rotation) {
-    if (this.rotatable) {
-      this.group.rotate(rotation * this.rotationDegrees, this.center)
-    }
+    this.group.rotate(rotation * this.rotationDegrees, this.center)
   }
 
   rotate (clockwise) {
+    if (!this.rotatable) {
+      return
+    }
+
     const rotation = clockwise === false ? -1 : 1
 
     this.rotation = (rotation + this.rotation) % this.getMaxRotation()

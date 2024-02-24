@@ -54,7 +54,7 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
   constructor (parent, configuration) {
     super(...arguments)
 
-    this.toggleable = configuration.toggleable !== false
+    this.toggleable = !this.immutable && configuration.toggleable !== false
   }
 
   onToggle () {}
