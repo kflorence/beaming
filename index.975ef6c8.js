@@ -30909,7 +30909,6 @@ var _interact = require("./interact");
 var _item = require("./item");
 const modifiersImmutable = document.getElementById("modifiers-immutable");
 const modifiersMutable = document.getElementById("modifiers-mutable");
-const navigator = window.navigator;
 let uniqueId = 0;
 class Modifier extends (0, _stateful.Stateful) {
     #container;
@@ -31031,7 +31030,7 @@ class Modifier extends (0, _stateful.Stateful) {
     }
     onSelected() {
         Modifier.deselect();
-        navigator.vibrate((0, _interact.Interact).vibratePattern);
+        (0, _interact.Interact).vibrate();
         this.update({
             selected: true
         });
@@ -31049,7 +31048,7 @@ class Modifier extends (0, _stateful.Stateful) {
         this.selected = false;
     }
     onToggle() {
-        navigator.vibrate((0, _interact.Interact).vibratePattern);
+        (0, _interact.Interact).vibrate();
     }
     remove() {
         this.detach();
@@ -31170,6 +31169,7 @@ var _paper = require("paper");
 var _paperDefault = parcelHelpers.interopDefault(_paper);
 var _cache = require("./cache");
 var _eventListeners = require("./eventListeners");
+const navigator = window.navigator;
 class Interact {
     #bounds;
     #cache = new (0, _cache.Cache)(Object.values(Interact.CacheKeys));
@@ -31312,6 +31312,11 @@ class Interact {
     static point(event) {
         return new (0, _paper.Point)(event.clientX, event.clientY);
     }
+    static vibrate(pattern = 25) {
+        if (Interact.canVibrate) navigator.vibrate(pattern);
+    }
+    // WebKit does not support vibration
+    static canVibrate = typeof navigator.vibrate === "function";
     static CacheKeys = Object.freeze({
         Down: "down",
         Move: "move",
@@ -31324,7 +31329,6 @@ class Interact {
     });
     static maxZoom = 2;
     static minZoom = 0.5;
-    static vibratePattern = 25;
 }
 
 },{"paper":"agkns","./cache":"dDiTO","./eventListeners":"8T0Qv","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dDiTO":[function(require,module,exports) {
