@@ -144,6 +144,8 @@ body > header {
   position: relative;
   /* Prevent Chrome from trying to open search on tap in mobile. */
   user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
   z-index: 1;
 }
 
@@ -298,6 +300,8 @@ main {
     'GRAD' 0,
     'opsz' 24;
   user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
   vertical-align: middle;
 }
 
@@ -308,6 +312,8 @@ main {
     'GRAD' 0,
     'opsz' 24;
   user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
 }
 
 .menu {
@@ -351,6 +357,8 @@ main {
 
 .modifiers {
   user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
 }
 
 .puzzle-error .flex-left,
