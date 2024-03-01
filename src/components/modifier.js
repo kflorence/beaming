@@ -7,7 +7,6 @@ import { Item } from './item'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
-const navigator = window.navigator
 
 let uniqueId = 0
 
@@ -148,7 +147,7 @@ export class Modifier extends Stateful {
   onSelected () {
     Modifier.deselect()
 
-    navigator.vibrate(Interact.vibratePattern)
+    Interact.vibrate()
 
     this.update({ selected: true })
 
@@ -167,7 +166,7 @@ export class Modifier extends Stateful {
   }
 
   onToggle () {
-    navigator.vibrate(Interact.vibratePattern)
+    Interact.vibrate()
   }
 
   remove () {

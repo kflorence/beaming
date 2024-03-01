@@ -2,6 +2,8 @@ import paper, { Point } from 'paper'
 import { Cache } from './cache'
 import { EventListeners } from './eventListeners'
 
+const navigator = window.navigator
+
 export class Interact {
   #bounds
   #cache = new Cache(Object.values(Interact.CacheKeys))
@@ -162,6 +164,15 @@ export class Interact {
     return new Point(event.clientX, event.clientY)
   }
 
+  static vibrate (pattern = 25) {
+    if (Interact.canVibrate) {
+      navigator.vibrate(pattern)
+    }
+  }
+
+  // WebKit does not support vibration
+  static canVibrate = typeof navigator.vibrate === 'function'
+
   static CacheKeys = Object.freeze({
     Down: 'down',
     Move: 'move',
@@ -176,5 +187,4 @@ export class Interact {
 
   static maxZoom = 2
   static minZoom = 0.5
-  static vibratePattern = 25
 }
