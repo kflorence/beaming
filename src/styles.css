@@ -188,6 +188,12 @@ main {
   justify-content: center;
 }
 
+#logo {
+  margin: 2em 0 1em 0;
+  max-width: 480px;
+  width: 75%;
+}
+
 #message {
   align-items: center;
   display: flex;

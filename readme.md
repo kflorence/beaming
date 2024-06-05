@@ -1,3 +1,5 @@
+<img alt="Beaming Logo" src="src/images/logo-white.svg" width="480px" />
+
 # Beaming
 
 Beaming is a free, open source puzzle game that involves directing beams through a hexagonal grid. The rules and
