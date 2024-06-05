@@ -1,6 +1,6 @@
-<div style="text-align: center">
-  <img alt="Beaming Logo" src="src/images/logo-white.svg" width="480px" />
-</div>
+<p align="center">
+  <img alt="Beaming Logo" src="src/images/logo-white.svg" width="320px" />
+</p>
 
 # Beaming
 
