@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Beaming Logo" src="src/images/logo-white.svg" width="320px" />
+  <img alt="Beaming Logo" src="src/images/logo.svg" width="320px" />
 </p>
 
 # Beaming
