@@ -16,7 +16,7 @@ export class Item extends Stateful {
 
   constructor (parent, state, configuration) {
     // Retain ID from state if it exists, otherwise generate a new one
-    state.id ??= Item.uniqueId++
+    state.id ??= Item.uniqueId()
 
     super(state)
 
@@ -102,7 +102,7 @@ export class Item extends Stateful {
     'wall'
   ].map((type) => [type, capitalize(type)])))
 
-  // This should be stable per puzzle as state refers to it
-  // Note that IDs will change if the puzzle configuration changes
-  static uniqueId = 0
+  static uniqueId () {
+    return crypto.randomUUID().split('-')[0]
+  }
 }

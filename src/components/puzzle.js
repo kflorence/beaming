@@ -429,9 +429,6 @@ export class Puzzle {
   }
 
   #setup () {
-    // Reset the item IDs, so they are unique per-puzzle
-    Item.uniqueId = 0
-
     const { layout, message, solution } = this.#state.getCurrent()
 
     this.layout = new Layout(layout)
