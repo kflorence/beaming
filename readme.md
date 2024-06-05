@@ -1,6 +1,4 @@
-<p align="center">
-  <img alt="Beaming Logo" src="src/images/logo.svg" width="320px" />
-</p>
+<p align="center"><a href="https://kflorence.github.io/beaming/" target="_blank"><img alt="Beaming Logo" src="https://raw.githubusercontent.com/kflorence/beaming/main/src/images/logo.svg" width="320px" /></a></p>
 
 # Beaming
 
