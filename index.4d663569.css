@@ -181,6 +181,12 @@ main {
   display: none;
 }
 
+#logo {
+  width: 75%;
+  max-width: 480px;
+  margin: 2em 0 1em;
+}
+
 #message {
   align-items: center;
   line-height: 1em;
