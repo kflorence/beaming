@@ -20,15 +20,15 @@
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^121.0.0",
-    "mocha": "^10.2.0",
-    "parcel": "^2.9.3",
-    "selenium-webdriver": "^4.16.0",
+    "chromedriver": "^125.0.3",
+    "mocha": "^10.4.0",
+    "parcel": "^2.12.0",
+    "selenium-webdriver": "^4.21.0",
     "standard": "^17.1.0",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "@types/chroma-js": "^2.4.3",
+    "@types/chroma-js": "^2.4.4",
     "chroma-js": "^2.4.2",
     "jsondiffpatch": "^0.6.0",
     "pako": "^2.1.0",
