@@ -30047,8 +30047,6 @@ class Puzzle {
         (0, _paperDefault.default).view.viewSize = new (0, _paper.Size)(width, height);
     }
     #setup() {
-        // Reset the item IDs, so they are unique per-puzzle
-        (0, _item.Item).uniqueId = 0;
         const { layout, message, solution } = this.#state.getCurrent();
         this.layout = new (0, _layout.Layout)(layout);
         this.message = message;
@@ -30624,7 +30622,7 @@ class Item extends (0, _stateful.Stateful) {
     type;
     constructor(parent, state, configuration){
         // Retain ID from state if it exists, otherwise generate a new one
-        state.id ??= Item.uniqueId++;
+        state.id ??= Item.uniqueId();
         super(state);
         this.id = state.id;
         this.immutable ??= state?.immutable ?? false;
@@ -30697,9 +30695,9 @@ class Item extends (0, _stateful.Stateful) {
             type,
             (0, _util.capitalize)(type)
         ])));
-    // This should be stable per puzzle as state refers to it
-    // Note that IDs will change if the puzzle configuration changes
-    static uniqueId = 0;
+    static uniqueId() {
+        return crypto.randomUUID().split("-")[0];
+    }
 }
 
 },{"./util":"92uDI","paper":"agkns","./stateful":"2njM8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2njM8":[function(require,module,exports) {
