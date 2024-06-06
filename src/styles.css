@@ -223,7 +223,6 @@ main {
 
 #solution {
   align-items: center;
-  border-right: 1px solid #ddd;
   cursor: default;
   display: flex;
   line-height: 24px;
