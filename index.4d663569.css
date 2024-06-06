@@ -216,7 +216,6 @@ main {
 
 #solution {
   cursor: default;
-  border-right: 1px solid #ddd;
   align-items: center;
   line-height: 24px;
   list-style: none;
