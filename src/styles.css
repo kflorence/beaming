@@ -214,7 +214,8 @@ main {
 #message {
   align-items: center;
   display: flex;
-  line-height: 1em;
+  line-height: 24px;
+  padding: 1em;
   text-wrap: nowrap;
 }
 
@@ -342,10 +343,13 @@ main {
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+  min-height: 24px;
+  overflow: hidden;
   user-select: none;
+  vertical-align: middle;
+  width: 24px;
   /* For iOS/Safari. */
   -webkit-user-select: none;
-  vertical-align: middle;
 }
 
 .material-symbols-outlined.fill {
@@ -430,11 +434,11 @@ main {
 @media (max-width: 518px) {
   body > header,
   body > footer {
-    border-radius: 0;
     flex-wrap: wrap;
   }
 
   body > header {
+    border-radius: 0;
     top: 0;
   }
 
