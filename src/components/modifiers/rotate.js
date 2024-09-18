@@ -1,5 +1,6 @@
 import { Modifier } from '../modifier'
 import { addDirection, coalesce } from '../util'
+import { Icons } from '../icons'
 
 export class Rotate extends Modifier {
   clockwise
@@ -34,7 +35,7 @@ export class Rotate extends Modifier {
     this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
   }
 
-  static Names = Object.freeze({ left: 'rotate_left', right: 'rotate_right ' })
+  static Names = Object.freeze({ left: Icons.RotateLeft.name, right: Icons.RotateRight.name })
 }
 
 /**

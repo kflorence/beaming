@@ -2,11 +2,12 @@ import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
 import { Item } from '../item'
+import { Icons } from '../icons'
 
 export class Move extends Modifier {
   #mask
 
-  name = 'drag_pan'
+  name = Icons.Move.name
   title = 'Move'
 
   onTap (event) {

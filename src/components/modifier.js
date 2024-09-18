@@ -4,6 +4,7 @@ import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
+import { Icons } from './icons'
 
 const modifiersImmutable = document.getElementById('modifiers-immutable')
 const modifiersMutable = document.getElementById('modifiers-mutable')
@@ -90,6 +91,10 @@ export class Modifier extends Stateful {
 
   equals (other) {
     return other instanceof Modifier && this.id === other.id
+  }
+
+  getSymbol () {
+    return Icons.ByName[this.name]
   }
 
   move (tile) {

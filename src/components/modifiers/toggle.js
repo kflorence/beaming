@@ -1,4 +1,5 @@
 import { Modifier } from '../modifier'
+import { Icons } from '../icons'
 
 export class Toggle extends Modifier {
   on
@@ -8,6 +9,7 @@ export class Toggle extends Modifier {
     super(...arguments)
 
     this.on = on || false
+    this.name = Toggle.Names[this.on ? 'on' : 'off']
 
     this.tile.items.forEach((item) => {
       item.toggled = this.on
@@ -15,7 +17,6 @@ export class Toggle extends Modifier {
   }
 
   attach () {
-    this.name = Toggle.Names[this.on ? 'on' : 'off']
     super.attach()
   }
 
@@ -37,7 +38,7 @@ export class Toggle extends Modifier {
     this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
-  static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
+  static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
 }
 
 /**

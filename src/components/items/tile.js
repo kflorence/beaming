@@ -5,6 +5,7 @@ import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
+  icons = []
   selected = false
 
   #ui
@@ -20,7 +21,7 @@ export class Tile extends Item {
     this.parameters = parameters
     this.styles = this.#ui.styles
 
-    this.group.addChildren([this.#ui.hexagon, this.#ui.indicator])
+    this.group.addChildren([this.#ui.hexagon])
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
@@ -35,12 +36,12 @@ export class Tile extends Item {
   }
 
   addItem (item) {
-    this.items.unshift(item)
+    this.items.push(item)
     this.update()
   }
 
   addModifier (modifier) {
-    this.modifiers.unshift(modifier)
+    this.modifiers.push(modifier)
     this.update()
   }
 
@@ -69,6 +70,7 @@ export class Tile extends Item {
       state.modifiers = modifiers
     }
 
+    // noinspection JSValidateTypes
     return state
   }
 
@@ -124,8 +126,15 @@ export class Tile extends Item {
 
   update () {
     super.update()
-    // Display the indicator if the tile contains non-immutable modifiers
-    this.#ui.indicator.opacity = this.modifiers.filter((modifier) => !modifier.immutable).length ? 1 : 0
+
+    // Update tile modifier icons
+    const icons = this.modifiers.map((modifier, index) => {
+      const position = getPointBetween(this.#ui.hexagon.segments[index].point, this.center, (length) => length / 3)
+      return modifier.getSymbol().place(position, { fillColor: '#ccc' })
+    })
+
+    this.group.removeChildren(1)
+    this.group.addChildren(icons)
   }
 
   static parameters (height) {
@@ -169,16 +178,16 @@ export class Tile extends Item {
       style: styles.default
     })
 
-    const indicator = new Path.RegularPolygon({
-      center: getPointBetween(hexagon.segments[1].point, center, (length) => length / 3),
-      data: { collidable: false },
-      opacity: 0,
-      radius: parameters.circumradius / 16,
-      sides: 6,
-      style: { fillColor: '#ccc' }
-    })
+    // const indicator = new Path.RegularPolygon({
+    //   center: getPointBetween(hexagon.segments[1].point, center, (length) => length / 3),
+    //   data: { collidable: false },
+    //   opacity: 0,
+    //   radius: parameters.circumradius / 16,
+    //   sides: 6,
+    //   style: { fillColor: '#ccc' }
+    // })
 
-    return { center, hexagon, indicator, styles }
+    return { center, hexagon, styles }
   }
 
   static Events = Object.freeze({

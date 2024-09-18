@@ -138,9 +138,11 @@ body > footer,
 body > header {
   align-items: stretch;
   background-color: white;
-  box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
   display: flex;
-  min-height: 3.5em;
+  margin: 0 auto;
+  overflow: hidden;
   position: relative;
   /* Prevent Chrome from trying to open search on tap in mobile. */
   user-select: none;
@@ -150,15 +152,30 @@ body > header {
 }
 
 body > header {
-  border-bottom: 1px solid #999;
+  left: 0;
+  margin-inline: auto;
+  position: absolute;
+  right: 0;
+  top: 1em;
+  width: fit-content;
 }
 
 body > footer {
-  border-top: 1px solid #999;
+  bottom: 1em;
+  left: 0;
+  margin-inline: auto;
+  position: absolute;
+  right: 0;
+  width: fit-content;
 }
 
 main {
   flex: auto;
+}
+
+#actions {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 #doorbell.doorbell-inline #doorbell-container {
@@ -198,27 +215,44 @@ main {
   align-items: center;
   display: flex;
   line-height: 1em;
+  text-wrap: nowrap;
 }
 
 #puzzle-id {
-  background-color: white;
+  appearance: none;
   border: none;
   border-left: 1px solid #ddd;
   cursor: pointer;
   font-size: 1em;
   font-weight: bold;
-  padding: 1em;
+  padding: 1em 2em 1em 1em;
+}
+
+#puzzle-id:hover {
+  background-color: #eee;
 }
 
 #puzzle-id:focus-visible {
   background-color: #333;
   color: white;
+  fill: white;
   outline: none;
+}
+
+#puzzle-id:focus-visible + svg {
+  fill: white;
 }
 
 #selector {
   align-items: stretch;
   display: flex;
+  position: relative;
+}
+
+#selector svg {
+  position: absolute;
+  right: 0.75rem;
+  top: calc(50% - 5px);
 }
 
 #solution {
@@ -231,6 +265,10 @@ main {
 
 #solution .icon {
   margin-left: 0.5em;
+}
+
+#symbols {
+  display: none;
 }
 
 #version {
@@ -336,6 +374,7 @@ main {
   display: flex;
   padding: 1em;
 }
+
 .menu.non-interactive li,
 .menu li.non-interactive {
   cursor: default;
@@ -388,10 +427,15 @@ main {
   padding: 0 0.25em;
 }
 
-@media (max-width: 425px) {
+@media (max-width: 518px) {
   body > header,
   body > footer {
+    border-radius: 0;
     flex-wrap: wrap;
+  }
+
+  body > header {
+    top: 0;
   }
 
   body > header .flex-left,
@@ -402,6 +446,10 @@ main {
   body > header .flex-center {
     border-top: 1px solid #ddd;
     order: 1;
+  }
+
+  #actions {
+    border: 0;
   }
 }
 
