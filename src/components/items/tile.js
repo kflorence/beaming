@@ -130,7 +130,7 @@ export class Tile extends Item {
     // Update tile modifier icons
     const icons = this.modifiers.map((modifier, index) => {
       const position = getPointBetween(this.#ui.hexagon.segments[index].point, this.center, (length) => length / 3)
-      return modifier.getSymbol().place(position, { fillColor: '#ccc' })
+      return modifier.getSymbol().place(position, { fillColor: modifier.immutable ? '#ccc' : '#333' })
     })
 
     this.group.removeChildren(1)

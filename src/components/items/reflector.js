@@ -68,8 +68,8 @@ export class Reflector extends movable(rotatable(Item)) {
   }
 
   static item (tile, color) {
-    const length = tile.parameters.circumradius
     const width = tile.parameters.circumradius / 12
+    const length = tile.parameters.circumradius - (width * 2)
     const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
     const size = new Size(width, length)
 
