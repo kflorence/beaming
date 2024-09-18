@@ -25,4 +25,3 @@ export class Symbol {
     return this.definition.place(position)
   }
 }
-
