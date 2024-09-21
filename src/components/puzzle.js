@@ -25,6 +25,7 @@ const elements = Object.freeze({
   puzzleId: document.getElementById('puzzle-id'),
   redo: document.getElementById('redo'),
   reset: document.getElementById('reset'),
+  tileMessage: document.getElementById('tile-message'),
   undo: document.getElementById('undo'),
   title: document.querySelector('title')
 })
@@ -212,6 +213,7 @@ export class Puzzle {
     this.selectedTile = tile
     this.#state.setSelectedTile(tile)
     this.#updateMessage(tile)
+    this.#updateModifiers(tile)
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -556,15 +558,20 @@ export class Puzzle {
   }
 
   #updateMessage (tile) {
+    elements.message.textContent = this.message
+    elements.tileMessage.textContent = ''
+
     if (tile) {
       // Check to see if tile has any color elements that need to be displayed
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
         .find((colorElements) => colorElements.length > 0) || []
-      elements.message.replaceChildren(...colorElements)
-    } else {
-      elements.message.textContent = this.message || 'Select a tile'
+      elements.tileMessage.replaceChildren(...colorElements)
     }
+  }
+
+  #updateModifiers (tile) {
+
   }
 
   static Collision = class {

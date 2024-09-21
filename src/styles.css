@@ -136,16 +136,17 @@ dialog footer ul li:first-child {
 
 body > footer,
 body > header {
-  align-items: stretch;
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
-  display: flex;
   margin: 0 auto;
+  max-width: calc(100% - 2em);
+  min-width: fit-content;
   overflow: hidden;
-  position: relative;
+  position: absolute;
   /* Prevent Chrome from trying to open search on tap in mobile. */
   user-select: none;
+  width: fit-content;
   /* For iOS/Safari. */
   -webkit-user-select: none;
   z-index: 1;
@@ -153,20 +154,22 @@ body > header {
 
 body > header {
   left: 0;
-  margin-inline: auto;
-  position: absolute;
   right: 0;
   top: 1em;
-  width: fit-content;
 }
 
 body > footer {
+  display: flex;
   bottom: 1em;
+  flex-direction: column;
   left: 0;
-  margin-inline: auto;
-  position: absolute;
   right: 0;
-  width: fit-content;
+}
+
+body > footer:has(> *:empty) {
+  display: none;
+  /*noinspection CssInvalidPropertyValue*/
+  transition: all 0.2s allow-discrete;
 }
 
 main {
@@ -205,6 +208,12 @@ main {
   justify-content: center;
 }
 
+#header-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 #logo {
   margin: 2em 0 1em 0;
   max-width: 320px;
@@ -212,11 +221,16 @@ main {
 }
 
 #message {
-  align-items: center;
+  border-top: 1px solid #ddd;
+}
+
+#modifiers {
   display: flex;
-  line-height: 24px;
-  padding: 1em;
-  text-wrap: nowrap;
+  justify-content: center;
+}
+
+#modifiers-locked {
+  border-right: 1px solid #ddd;
 }
 
 #puzzle-id {
@@ -270,6 +284,10 @@ main {
 
 #symbols {
   display: none;
+}
+
+#tile-message {
+  border-bottom: 1px solid #ddd;
 }
 
 #version {
@@ -403,6 +421,29 @@ main {
   color: white;
 }
 
+.message {
+  align-items: center;
+  background-color: #eee;
+  border-top: 1px solid #ddd;
+  display: flex;
+  flex: 100%;
+  justify-content: center;
+  line-height: 24px;
+  min-height: 24px;
+  padding: 1em;
+  /*noinspection CssInvalidPropertyValue*/
+  transition: all 0.2s allow-discrete;
+}
+
+.message:empty {
+  border: 0;
+  display: none;
+  height: 0;
+  min-height: 0;
+  opacity: 0;
+  padding: 0;
+}
+
 .modifiers {
   user-select: none;
   /* For iOS/Safari. */
@@ -431,10 +472,17 @@ main {
   padding: 0 0.25em;
 }
 
-@media (max-width: 518px) {
+@media (max-width: 600px) {
   body > header,
   body > footer {
-    flex-wrap: wrap;
+    /*flex-wrap: wrap;*/
+    max-width: 100%;
+    width: 100%;
+  }
+
+  body > footer {
+    border-radius: 0;
+    bottom: 0;
   }
 
   body > header {
@@ -449,6 +497,7 @@ main {
 
   body > header .flex-center {
     border-top: 1px solid #ddd;
+    flex: 100%;
     order: 1;
   }
 
@@ -460,5 +509,15 @@ main {
 @media (max-width: 1024px) {
   dialog {
     width: 100%;
+  }
+}
+
+/*noinspection CssInvalidAtRule*/
+@starting-style {
+  .message {
+    height: 0;
+    min-height: 0;
+    opacity: 0;
+    padding: 0;
   }
 }
