@@ -40,6 +40,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.color = color
     this.openings = openings
     this.radius = this.#ui.radius
+    this.toggled = openings.some((opening) => opening.on)
 
     // Needs to be last since it references 'this'
     this.beams = openings.map((opening) => new Beam(this, state.openings[opening.direction], opening))

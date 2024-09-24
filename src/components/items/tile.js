@@ -3,6 +3,7 @@ import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
 import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
+import { Modifier } from '../modifier'
 
 export class Tile extends Item {
   icons = []
@@ -74,6 +75,10 @@ export class Tile extends Item {
     return state
   }
 
+  hasLock () {
+    return this.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)
+  }
+
   onTap (event) {
     console.debug(this.coordinates.offset.toString(), this)
     this.items.forEach((item) => item.onTap(event))
@@ -83,7 +88,6 @@ export class Tile extends Item {
     this.selected = false
     this.#ui.hexagon.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
-    this.modifiers.forEach((modifier) => modifier.detach())
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
   }
@@ -93,7 +97,6 @@ export class Tile extends Item {
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
-    this.modifiers.forEach((modifier) => modifier.attach())
   }
 
   removeItem (item) {
@@ -128,13 +131,14 @@ export class Tile extends Item {
     super.update()
 
     // Update tile modifier icons
-    const icons = this.modifiers.map((modifier, index) => {
+    this.icons = this.modifiers.map((modifier, index) => {
       const position = getPointBetween(this.#ui.hexagon.segments[index].point, this.center, (length) => length / 3)
       return modifier.getSymbol().place(position, { fillColor: modifier.immutable ? '#ccc' : '#333' })
     })
 
+    // Everything after child 0 (hexagon) is an icon
     this.group.removeChildren(1)
-    this.group.addChildren(icons)
+    this.group.addChildren(this.icons)
   }
 
   static parameters (height) {
@@ -177,15 +181,6 @@ export class Tile extends Item {
       sides: 6,
       style: styles.default
     })
-
-    // const indicator = new Path.RegularPolygon({
-    //   center: getPointBetween(hexagon.segments[1].point, center, (length) => length / 3),
-    //   data: { collidable: false },
-    //   opacity: 0,
-    //   radius: parameters.circumradius / 16,
-    //   sides: 6,
-    //   style: { fillColor: '#ccc' }
-    // })
 
     return { center, hexagon, styles }
   }

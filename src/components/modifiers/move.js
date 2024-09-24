@@ -56,16 +56,14 @@ export class Move extends Modifier {
   }
 
   #maskOnTap (puzzle, tile) {
+    puzzle.unmask()
+
     if (tile) {
       const data = this.moveItems(tile)
 
-      puzzle.updateState()
       puzzle.updateSelectedTile(tile)
-      puzzle.unmask()
 
       this.dispatchEvent(Modifier.Events.Invoked, data)
-    } else {
-      puzzle.unmask()
     }
 
     this.#mask = undefined

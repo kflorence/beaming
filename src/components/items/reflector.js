@@ -45,17 +45,18 @@ export class Reflector extends movable(rotatable(Item)) {
 
     if (directionTo === directionFrom) {
       console.debug(beam.toString(), 'stopping due to reflection back at self')
-      if (collisions.some((collision) => collision.item.type === Item.Types.beam)) {
-        // If there is also a beam collision in the list of collisions for this step, let that one resolve it
-        return
-      } else {
-        // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
-        // same side of the reflector will collide with this beam.
-        return nextStep.copy({
-          done: true,
-          state: nextStep.state.copy(new StepState.Collision(collision.copy({ points: [nextStep.point] })))
-        })
-      }
+      // Unsure why this rule was here, but it was causing a bug when re-evaluating history
+      // if (collisions.some((collision) => collision.item.type === Item.Types.beam)) {
+      //   // If there is also a beam collision in the list of collisions for this step, let that one resolve it
+      //   return
+      // } else {
+      // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
+      // same side of the reflector will collide with this beam.
+      return nextStep.copy({
+        done: true,
+        state: nextStep.state.copy(new StepState.Collision(collision.copy({ points: [nextStep.point] })))
+      })
+      // }
     }
 
     // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state

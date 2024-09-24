@@ -213,15 +213,21 @@ export class Puzzle {
     this.selectedTile = tile
     this.#state.setSelectedTile(tile)
     this.#updateMessage(tile)
-    this.#updateModifiers(tile)
+    this.#updateModifiers(tile, previouslySelectedTile)
+
+    this.layout.modifiers.forEach((modifier) => modifier.detach())
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
+      previouslySelectedTile.modifiers.forEach((modifier) => modifier.detach())
       previouslySelectedTile.onDeselected(tile)
     }
 
     if (tile && tile !== previouslySelectedTile) {
       tile.onSelected(previouslySelectedTile)
+      tile.modifiers.forEach((modifier) => modifier.attach(tile))
     }
+
+    this.layout.modifiers.forEach((modifier) => modifier.attach(tile))
 
     return previouslySelectedTile
   }
@@ -319,7 +325,17 @@ export class Puzzle {
   }
 
   #onModifierInvoked (event) {
+    const modifier = event.detail.modifier
     const tile = event.detail.tile
+
+    if (!modifier.parent && tile.hasLock()) {
+      // Lock the modifier to the tile
+      console.debug('locking modifier to tile', modifier, tile)
+      this.layout.removeModifier(modifier)
+      modifier.move(tile)
+    }
+
+    this.updateState()
 
     this.#beams
       // Update beams in the tile being modified first
@@ -563,14 +579,15 @@ export class Puzzle {
 
     if (tile) {
       // Check to see if tile has any color elements that need to be displayed
+      // Note: these will only be displayed if the tile contains an item with more than one color
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
-        .find((colorElements) => colorElements.length > 0) || []
+        .find((colorElements) => colorElements.length > 1) || []
       elements.tileMessage.replaceChildren(...colorElements)
     }
   }
 
-  #updateModifiers (tile) {
+  #updateModifiers (tile, previouslySelectedTile) {
 
   }
 

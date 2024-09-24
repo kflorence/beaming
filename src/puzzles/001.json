@@ -80,6 +80,11 @@
               "type": "Terminus"
             }
           ],
+          "modifiers": [
+            {
+              "type": "Lock"
+            }
+          ],
           "type": "Tile"
         }
       ]

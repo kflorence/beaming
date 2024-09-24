@@ -166,11 +166,12 @@ body > footer {
   right: 0;
 }
 
-body > footer:has(> *:empty) {
-  display: none;
-  /*noinspection CssInvalidPropertyValue*/
-  transition: all 0.2s allow-discrete;
-}
+/* this is not working correctly. re-evaluate solution */
+/*body > footer:has(> *:empty) {*/
+/*  display: none;*/
+/*  !*noinspection CssInvalidPropertyValue*!*/
+/*  transition: all 0.2s allow-discrete;*/
+/*}*/
 
 main {
   flex: auto;

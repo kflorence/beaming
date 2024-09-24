@@ -109,7 +109,8 @@ export class Portal extends movable(rotatable(Item)) {
     } else if (exitPortals.length === 1) {
       const exitPortal = exitPortals[0]
       console.debug(this.toString(), 'single exit portal matched:', exitPortal)
-      return this.#getStep(beam, nextStep, exitPortal)
+      // Since no user choice was made, don't store this decision as a delta (move)
+      return this.#getStep(beam, nextStep, exitPortal, false)
     } else {
       // Multiple matching destinations. User will need to pick one manually.
       console.debug(this.toString(), 'found multiple valid exit portals:', exitPortals)
@@ -205,7 +206,7 @@ export class Portal extends movable(rotatable(Item)) {
     return exitPortals
   }
 
-  #getStep (beam, nextStep, exitPortal) {
+  #getStep (beam, nextStep, exitPortal, keepDelta = true) {
     const direction = Portal.getExitDirection(nextStep, this, exitPortal)
     return nextStep.copy({
       connected: false,
@@ -214,7 +215,7 @@ export class Portal extends movable(rotatable(Item)) {
       onAdd: (step) => {
         exitPortal.update(direction, step)
         // Store this decision in beam state and generate a matching delta
-        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }))
+        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }), keepDelta)
       },
       onRemove: (step) => {
         // Remove any associated beam state, but don't generate a delta.
