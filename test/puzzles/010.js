@@ -13,14 +13,10 @@ describe('Puzzle 010', function () {
     await puzzle.clickModifier('move')
     await puzzle.clickTile(2, 4)
 
-    await puzzle.clickTile(1, 1)
-    await puzzle.selectModifier('move')
     await puzzle.clickTile(1, 5)
     await puzzle.clickModifier('move')
     await puzzle.clickTile(0, 5)
 
-    await puzzle.clickTile(1, 5)
-    await puzzle.selectModifier('move')
     await puzzle.clickTile(1, 0)
     await puzzle.clickModifier('move')
     await puzzle.clickTile(2, 5)

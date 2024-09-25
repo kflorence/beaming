@@ -75,7 +75,6 @@ export class Tile extends Item {
   }
 
   onTap (event) {
-    console.debug(this.coordinates.offset.toString(), this)
     this.items.forEach((item) => item.onTap(event))
   }
 
@@ -88,6 +87,7 @@ export class Tile extends Item {
   }
 
   onSelected (deselectedTile) {
+    console.debug(this.toString(), 'selected')
     this.selected = true
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
@@ -119,7 +119,7 @@ export class Tile extends Item {
   }
 
   toString () {
-    return this.coordinates.offset.toString()
+    return `[${this.type}:${this.coordinates.offset.toString()}]`
   }
 
   update () {

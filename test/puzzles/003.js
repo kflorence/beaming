@@ -9,10 +9,11 @@ describe('Puzzle 003', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(2, 1)
-    await puzzle.selectModifier('rotate')
     await puzzle.clickTile(2, 0)
     await puzzle.clickModifier('rotate')
+
+    await puzzle.clickTile(0, 0)
+    await puzzle.clickModifier('rotate', { times: 3 })
 
     assert(await puzzle.isSolved())
   })
