@@ -205,6 +205,14 @@ main {
   justify-content: center;
 }
 
+#footer-message {
+  border-bottom: 1px solid #ddd;
+}
+
+#header-message {
+  border-top: 1px solid #ddd;
+}
+
 #header-navigation {
   display: flex;
   flex-wrap: wrap;
@@ -215,10 +223,6 @@ main {
   margin: 2em 0 1em 0;
   max-width: 320px;
   width: 75%;
-}
-
-#message {
-  border-top: 1px solid #ddd;
 }
 
 #modifiers {
@@ -277,10 +281,6 @@ main {
 
 #symbols {
   display: none;
-}
-
-#tile-message {
-  border-bottom: 1px solid #ddd;
 }
 
 #version {
@@ -417,7 +417,6 @@ main {
 .message {
   align-items: center;
   background-color: #eee;
-  border-top: 1px solid #ddd;
   display: flex;
   flex: 100%;
   justify-content: center;

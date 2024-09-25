@@ -14,7 +14,10 @@ export class Symbol {
     if (!this.definition) {
       const element = document.getElementById(this.id)
       const item = paper.project.importSVG(element)
+      // By default, symbols will be excluded from beam collisions
       item.data.collidable = false
+      // By default, symbols cannot be clicked on
+      item.locked = true
       this.definition = new SymbolDefinition(item)
     }
 

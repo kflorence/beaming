@@ -15,6 +15,7 @@ import { StepState } from './step'
 import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
+import { Tile } from './items/tile'
 
 const elements = Object.freeze({
   footer: document.getElementById('footer'),
@@ -331,9 +332,14 @@ export class Puzzle {
     const tile = event.detail.tile
 
     if (
+      // Modifier does not belong to a tile
       !modifier.parent &&
+      // Tile has a lock modifier
       tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock) &&
-      !tile.modifiers.some((other) => other.type === modifier.type)
+      // Tile does not already have a modifier of this type
+      !tile.modifiers.some((other) => other.type === modifier.type) &&
+      // Tile has less than the maximum number of modifiers
+      tile.modifiers.length < Tile.MaxModifiers
     ) {
       console.debug('locking modifier to tile', modifier, tile)
       this.layout.removeModifier(modifier)

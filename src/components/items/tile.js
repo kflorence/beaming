@@ -185,6 +185,8 @@ export class Tile extends Item {
     Selected: 'tile-selected'
   })
 
+  static MaxModifiers = 6
+
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:
     // https://github.com/paperjs/paper.js/issues/2049

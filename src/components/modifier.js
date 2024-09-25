@@ -4,6 +4,7 @@ import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
 import { Icons } from './icons'
+import { Tile } from './items/tile'
 
 const modifiers = document.getElementById('modifiers')
 
@@ -45,13 +46,20 @@ export class Modifier extends Stateful {
       this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable) ||
       // The tile has no interactable items
       !this.tile?.items.some((item) => item.type !== Item.Types.beam) ||
-      // The tile contains another modifier of this type already
-      this.tile?.modifiers.some((modifier) => modifier.type === this.type && modifier.id !== this.id)
+      (
+        // The tile being attached to is not this modifier's parent
+        !this.tile?.equals(this.parent) && (
+          // The tile contains another modifier of this type already
+          this.tile.modifiers.some((modifier) => modifier.type === this.type) ||
+          // The tile already contains the max number of modifiers
+          this.tile?.modifiers.length === Tile.MaxModifiers
+        )
+      )
 
     const li = this.#container = document.createElement('li')
 
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
-    li.dataset.id = this.id
+    li.dataset.id = this.id.toString()
 
     const span = this.element = document.createElement('span')
 
