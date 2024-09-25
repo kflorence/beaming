@@ -40,68 +40,68 @@
       <details>
         <summary>The Basics</summary>
         <p>
-          The core gameplay involves selecting a hexagonal tile, which will bring up a toolbar at the bottom of the
-          screen that contains <em>actions</em> that can be used to manipulate the items in the puzzle. The solution
+          The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
+          screen that contains <em>actions</em> that can be used to manipulate items in the puzzle. The solution
           for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
           of the screen.
         </p>
+        <h4>Actions and Attributes</h4>
         <p>
-          When looking at the toolbar, you will notice there are two sets of icons on the left and right sides. From
-          here on I will refer to the set of icons on the left side as <em>attributes</em> and on the right side as
-          <em>actions</em>. Attributes define behaviors which belong to a tile. They cannot be interacted with, they are
-          strictly informational. Actions define behaviors which belong to the items inside a tile. A tile which
-          contains at least one <em>action</em> or <em>attribute</em> will have a small, hexagonal indicator displayed
-          towards the top of the tile.
+          The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
+          Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
+          belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
+          when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
+          can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
+          situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
         </p>
-        <p>The <em>actions</em> on the right side of the toolbar can be interacted with in the following ways:</p>
+        <h4>Interaction</h4>
+        <p>
+          In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
+          then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
+          which are listed below and expanded upon in the <em>Actions</em> section below:
+        </p>
         <ul>
           <li>
-            By tapping on them. This will execute the action on the items in the currently selected tile.
+            <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
+            tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
+            either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside of the
+            puzzle area.
           </li>
           <li>
-            By pressing and holding them. This will select the action, if it is valid to do so, which allows it to be
-            moved to another, valid tile. Different actions will have different requirements about which tiles they can
-            be moved to.
-          </li>
-          <li>
-            By swiping them (pressing and holding while moving the finger outside the action button). This will toggle
-            the action, if it is valid to do so. This is currently only applicable to the Rotate action, in order to
-            change the direction of rotation.
+            <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
+            the pointer outside of the action, to toggle between states. For example, the <em>Rotate</em> action can be
+            swiped to change the applied direction of rotation.
           </li>
         </ul>
-        <p>
-          Some actions utilize a <em>mask</em> which covers invalid tiles (they will appear darkened). While a mask is
-          active, the action can be cancelled by clicking or tapping outside the puzzle area or on the currently
-          selected tile.
-        </p>
       </details>
       <details>
         <summary>Attributes</summary>
         <p>
-          As previously mentioned in <em>The Basics</em> above, <em>attributes</em> are the icons on the left-hand side
-          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
+          As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
+          indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
         </p>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Immutable">block</span> - Immutable</summary>
           <p>
-            The tile, and the items within the tile, cannot be modified in any way. If there are any <em>actions</em>
-            on the tile, they cannot be interacted with either.
+            The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
+            disabled.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Locked">lock</span> - Locked</summary>
           <p>
-            The <em>actions</em> on the right-hand side of the toolbar can be used, but they cannot be selected, and
-            therefore cannot be moved to other tiles. Locked tiles can still receive <em>actions</em> from other tiles,
-            but they will become locked once moved onto a locked tile.
+            Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
+            available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
+            further actions will be available for the tile.
           </p>
         </details>
       </details>
       <details>
         <summary>Actions</summary>
         <p>
-          As previously mentioned in <em>The Basics</em> above, <em>actions</em> are the icons on the right-hand side
-          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
+          As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
+          and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
+          learn more about it.
         </p>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Toggle">toggle_on</span> - Toggle</summary>
@@ -114,27 +114,28 @@
           <summary><span class="fill material-symbols-outlined" title="Rotate">rotate_left</span> - Rotate</summary>
           <p>
             Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
-            (either clockwise or counter-clockwise).
+            (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
+            the direction of the applied rotation.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Move">drag_pan</span> - Move</summary>
           <p>
             Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
-            of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
+            of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Swap">swap_horiz</span> - Swap</summary>
           <p>
             Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
-            items in a valid tile of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
+            items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
           </p>
         </details>
       </details>
       <details id="help">
         <summary>Help</summary>
-        <h3>Feedback</h3>
+        <h4>Feedback</h4>
         <p>
           If you have a suggestion or encounter any problem, please use the form below to report them. Email address is
           optional, but you can include it if you want to get a response back.
