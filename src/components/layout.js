@@ -4,6 +4,7 @@ import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
 import { getConvertedDirection } from './util'
 import { Stateful } from './stateful'
+import { modifierFactory } from './modifierFactory'
 
 export class Layout extends Stateful {
   #tilesByAxial = []
@@ -11,6 +12,7 @@ export class Layout extends Stateful {
 
   items = []
   layers = {}
+  modifiers = []
   tiles = []
   tileSize = 120
 
@@ -27,8 +29,14 @@ export class Layout extends Stateful {
     const height = tiles.length * parameters.width
     const startingOffsetY = center.y - (height / 2)
 
+    // noinspection JSValidateTypes
     this.layers.tiles = new Layer()
+    // noinspection JSValidateTypes
     this.layers.items = new Layer()
+
+    this.modifiers = (state.modifiers || [])
+      .map((state) => modifierFactory(null, state))
+      .filter((modifier) => modifier !== undefined)
 
     // Find the widest row
     const widestRow = tiles.reduce((current, row, index) => {
@@ -97,17 +105,31 @@ export class Layout extends Stateful {
   }
 
   getState () {
+    const state = { type: this.type }
+
     // Tiles are defined by offset in the puzzle state
-    return Object.assign(super.getState(), {
-      tiles: this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
-    })
+    state.tiles = this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
+    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    if (modifiers.length) {
+      state.modifiers = modifiers
+    }
+
+    return state
   }
 
   getNeighboringTile (axial, direction) {
     return this.getTileByAxial(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
   }
 
+  removeModifier (modifier) {
+    const index = this.modifiers.indexOf(modifier)
+    if (index >= 0) {
+      this.modifiers.splice(index, 1)
+    }
+  }
+
   teardown () {
+    this.modifiers.forEach((modifier) => modifier.detach())
     Object.values(this.layers).forEach((layer) => layer.removeChildren())
   }
 

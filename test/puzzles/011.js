@@ -15,8 +15,6 @@ describe('Puzzle 011', function () {
     await puzzle.clickTile(2, 1)
     await puzzle.isNotMasked()
 
-    await puzzle.clickTile(1, 1)
-    await puzzle.selectModifier('rotate')
     await puzzle.clickTile(2, 0)
     await puzzle.clickModifier('rotate', { times: 3 })
 

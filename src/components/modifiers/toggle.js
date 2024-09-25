@@ -1,4 +1,5 @@
 import { Modifier } from '../modifier'
+import { Icons } from '../icons'
 
 export class Toggle extends Modifier {
   on
@@ -8,15 +9,19 @@ export class Toggle extends Modifier {
     super(...arguments)
 
     this.on = on || false
-
-    this.tile.items.forEach((item) => {
-      item.toggled = this.on
-    })
+    this.name = this.getName()
   }
 
-  attach () {
-    this.name = Toggle.Names[this.on ? 'on' : 'off']
-    super.attach()
+  attach (tile) {
+    super.attach(tile)
+    // Consider the modifier toggled if there is at least one toggled item in the tile
+    // TODO: refactor to be 'toggled' everywhere
+    this.on = this.tile?.items.some((item) => item.on || item.toggled)
+    this.update({ name: this.getName() })
+  }
+
+  getName () {
+    return Toggle.Names[this.on ? 'on' : 'off']
   }
 
   moveFilter (tile) {
@@ -32,12 +37,12 @@ export class Toggle extends Modifier {
     const items = this.tile.items.filter((item) => item.toggleable)
     items.forEach((item) => item.toggle(this.on))
 
-    this.update({ name: Toggle.Names[this.on ? 'on' : 'off'] })
+    this.update({ name: this.getName() })
 
     this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
-  static Names = Object.freeze({ on: 'toggle_on', off: 'toggle_off ' })
+  static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
 }
 
 /**
@@ -55,6 +60,7 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     super(...arguments)
 
     this.toggleable = !this.immutable && configuration.toggleable !== false
+    this.toggled = this.toggleable && configuration.toggled
   }
 
   onToggle () {}

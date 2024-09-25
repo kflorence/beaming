@@ -40,68 +40,92 @@
       <details>
         <summary>The Basics</summary>
         <p>
-          The core gameplay involves selecting a hexagonal tile, which will bring up a toolbar at the bottom of the
-          screen that contains <em>actions</em> that can be used to manipulate the items in the puzzle. The solution
+          The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
+          screen that contains <em>actions</em> that can be used to manipulate items in the puzzle. The solution
           for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
           of the screen.
         </p>
+        <h4>Actions and Attributes</h4>
         <p>
-          When looking at the toolbar, you will notice there are two sets of icons on the left and right sides. From
-          here on I will refer to the set of icons on the left side as <em>attributes</em> and on the right side as
-          <em>actions</em>. Attributes define behaviors which belong to a tile. They cannot be interacted with, they are
-          strictly informational. Actions define behaviors which belong to the items inside a tile. A tile which
-          contains at least one <em>action</em> or <em>attribute</em> will have a small, hexagonal indicator displayed
-          towards the top of the tile.
+          The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
+          Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
+          belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
+          when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
+          can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
+          situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
         </p>
-        <p>The <em>actions</em> on the right side of the toolbar can be interacted with in the following ways:</p>
+        <h4>Interaction</h4>
+        <p>
+          In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
+          then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
+          which are listed below and expanded upon in the <em>Actions</em> section below:
+        </p>
         <ul>
           <li>
-            By tapping on them. This will execute the action on the items in the currently selected tile.
+            <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
+            tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
+            either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside of the
+            puzzle area.
           </li>
           <li>
-            By pressing and holding them. This will select the action, if it is valid to do so, which allows it to be
-            moved to another, valid tile. Different actions will have different requirements about which tiles they can
-            be moved to.
-          </li>
-          <li>
-            By swiping them (pressing and holding while moving the finger outside the action button). This will toggle
-            the action, if it is valid to do so. This is currently only applicable to the Rotate action, in order to
-            change the direction of rotation.
+            <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
+            the pointer outside of the action, to toggle between states. For example, the <em>Rotate</em> action can be
+            swiped to change the applied direction of rotation.
           </li>
         </ul>
+      </details>
+      <details>
+        <summary>Solutions</summary>
         <p>
-          Some actions utilize a <em>mask</em> which covers invalid tiles (they will appear darkened). While a mask is
-          active, the action can be cancelled by clicking or tapping outside the puzzle area or on the currently
-          selected tile.
+          As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
+          and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
+          require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
+          more about it.
         </p>
+        <details>
+          <summary><span class="fill material-symbols-outlined" title="Immutable">link</span> - Connections</summary>
+          <p>
+            A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
+            of the same color.
+          </p>
+        </details>
+        <details>
+          <summary><span class="fill material-symbols-outlined" title="Locked">stacks</span> - Moves</summary>
+          <p>
+            A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
+            some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
+            multiple potential exit portals, the resulting decision will result in an additional move.
+          </p>
+        </details>
       </details>
       <details>
         <summary>Attributes</summary>
         <p>
-          As previously mentioned in <em>The Basics</em> above, <em>attributes</em> are the icons on the left-hand side
-          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
+          As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
+          indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
         </p>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Immutable">block</span> - Immutable</summary>
           <p>
-            The tile, and the items within the tile, cannot be modified in any way. If there are any <em>actions</em>
-            on the tile, they cannot be interacted with either.
+            The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
+            disabled.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Locked">lock</span> - Locked</summary>
           <p>
-            The <em>actions</em> on the right-hand side of the toolbar can be used, but they cannot be selected, and
-            therefore cannot be moved to other tiles. Locked tiles can still receive <em>actions</em> from other tiles,
-            but they will become locked once moved onto a locked tile.
+            Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
+            available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
+            further actions will be available for the tile.
           </p>
         </details>
       </details>
       <details>
         <summary>Actions</summary>
         <p>
-          As previously mentioned in <em>The Basics</em> above, <em>actions</em> are the icons on the right-hand side
-          of the toolbar at the bottom of the screen. Click or tap on an icon below to learn more about it.
+          As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
+          and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
+          learn more about it.
         </p>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Toggle">toggle_on</span> - Toggle</summary>
@@ -114,27 +138,28 @@
           <summary><span class="fill material-symbols-outlined" title="Rotate">rotate_left</span> - Rotate</summary>
           <p>
             Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
-            (either clockwise or counter-clockwise).
+            (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
+            the direction of the applied rotation.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Move">drag_pan</span> - Move</summary>
           <p>
             Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
-            of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
+            of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
           </p>
         </details>
         <details>
           <summary><span class="fill material-symbols-outlined" title="Swap">swap_horiz</span> - Swap</summary>
           <p>
             Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
-            items in a valid tile of your choice. This action utilizes a <em>mask</em> for selecting the valid tile.
+            items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
           </p>
         </details>
       </details>
       <details id="help">
         <summary>Help</summary>
-        <h3>Feedback</h3>
+        <h4>Feedback</h4>
         <p>
           If you have a suggestion or encounter any problem, please use the form below to report them. Email address is
           optional, but you can include it if you want to get a response back.
@@ -175,38 +200,47 @@
       </footer>
     </dialog>
     <header>
-      <div class="flex-left">
-        <ul class="menu">
-          <li class="haptic" id="info"><span class="material-symbols-outlined" title="Information">info</span></li>
-        </ul>
-        <label id="selector"><select id="puzzle-id" name="id"><option value="">---</option></select></label>
+      <div id="header-navigation">
+        <div class="flex-left">
+          <ul class="menu">
+            <li class="haptic" id="info"><span class="material-symbols-outlined" title="Information">info</span></li>
+          </ul>
+          <label id="selector">
+            <select id="puzzle-id" name="id"><option value="">---</option></select>
+            <svg height="10px" width="10px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
+          </label>
+        </div>
+        <div class="flex-center">
+          <ul id="actions" class="menu">
+            <li id="previous"><span class="material-symbols-outlined" title="Previous Puzzle">navigate_before</span></li>
+            <li id="undo"><span class="material-symbols-outlined" title="Undo">undo</span></li>
+            <li id="reset"><span class="material-symbols-outlined" title="Reset">device_reset</span></li>
+            <li id="redo"><span class="material-symbols-outlined" title="Redo">redo</span></li>
+            <li id="next"><span class="material-symbols-outlined" title="Next Puzzle">navigate_next</span></li>
+          </ul>
+        </div>
+        <div class="flex-right"><ul id="solution" class="menu non-interactive"></ul></div>
       </div>
-      <div class="flex-center">
-        <ul id="actions" class="menu">
-          <li id="previous"><span class="material-symbols-outlined" title="Previous Puzzle">navigate_before</span></li>
-          <li id="undo"><span class="material-symbols-outlined" title="Undo">undo</span></li>
-          <li id="reset"><span class="material-symbols-outlined" title="Reset">device_reset</span></li>
-          <li id="redo"><span class="material-symbols-outlined" title="Redo">redo</span></li>
-          <li id="next"><span class="material-symbols-outlined" title="Next Puzzle">navigate_next</span></li>
-        </ul>
-      </div>
-      <div class="flex-right"><ul id="solution" class="menu non-interactive"></ul></div>
+      <div id="header-message" class="message"></div>
     </header>
     <main id="main">
       <div id="error" class="material-symbols-outlined" title="Error">error</div>
       <canvas id="puzzle">Your browser does not support the HTML5 canvas tag.</canvas>
     </main>
     <footer id="footer">
-      <div class="flex-left">
-        <ul id="modifiers-immutable" class="menu modifiers"></ul>
-      </div>
-      <div class="flex-center">
-        <div id="message"></div>
-      </div>
-      <div class="flex-right">
-        <ul id="modifiers-mutable" class="menu modifiers"></ul>
-      </div>
+      <div id="footer-message" class="message"></div>
+      <ul id="modifiers" class="menu modifiers"></ul>
     </footer>
+    <div id="symbols">
+      <svg id="icon-immutable" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q54 0 104-17.5t92-50.5L228-676q-33 42-50.5 92T160-480q0 134 93 227t227 93Zm252-124q33-42 50.5-92T800-480q0-134-93-227t-227-93q-54 0-104 17.5T284-732l448 448Z"/></svg>
+      <svg id="icon-lock" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/></svg>
+      <svg id="icon-move" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80 310-250l57-57 73 73v-206H235l73 72-58 58L80-480l169-169 57 57-72 72h206v-206l-73 73-57-57 170-170 170 170-57 57-73-73v206h205l-73-72 58-58 170 170-170 170-57-57 73-73H520v205l72-73 58 58L480-80Z"/></svg>
+      <svg id="icon-rotate-left" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-80q-50-5-96-24.5T256-156l56-58q29 21 61.5 34t66.5 18v82Zm80 0v-82q104-15 172-93.5T760-438q0-117-81.5-198.5T480-718h-8l64 64-56 56-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-438q0 137-91 238.5T520-80ZM198-214q-32-42-51.5-88T122-398h82q5 34 18 66.5t34 61.5l-58 56Zm-76-264q6-51 25-98t51-86l58 56q-21 29-34 61.5T204-478h-82Z"/></svg>
+      <svg id="icon-rotate-right" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M522-80v-82q34-5 66.5-18t61.5-34l56 58q-42 32-88 51.5T522-80Zm-80 0Q304-98 213-199.5T122-438q0-75 28.5-140.5t77-114q48.5-48.5 114-77T482-798h6l-62-62 56-58 160 160-160 160-56-56 64-64h-8q-117 0-198.5 81.5T202-438q0 104 68 182.5T442-162v82Zm322-134-58-56q21-29 34-61.5t18-66.5h82q-5 50-24.5 96T764-214Zm76-264h-82q-5-34-18-66.5T706-606l58-56q32 39 51 86t25 98Z"/></svg>
+      <svg id="icon-swap" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-160 80-360l200-200 56 57-103 103h287v80H233l103 103-56 57Zm400-240-56-57 103-103H440v-80h287L624-743l56-57 200 200-200 200Z"/></svg>
+      <svg id="icon-toggle-off" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-240q-100 0-170-70T40-480q0-100 70-170t170-70h400q100 0 170 70t70 170q0 100-70 170t-170 70H280Zm0-120q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Z"/></svg>
+      <svg id="icon-toggle-on" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-240q-100 0-170-70T40-480q0-100 70-170t170-70h400q100 0 170 70t70 170q0 100-70 170t-170 70H280Zm400-120q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Z"/></svg>
+    </div>
   </body>
   <script type="module" src="index.js"></script>
 </html>

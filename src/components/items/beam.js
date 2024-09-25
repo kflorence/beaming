@@ -299,16 +299,19 @@ export class Beam extends Item {
       // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
 
-      if (!isSelf) {
-        // Update beam at point of impact
-        this.update(stepIndex, {
-          done: true,
-          state: step.state.copy(new StepState.Collision(collision.mirror()))
-        })
-      } else if (!isSameDirection) {
-        // For a collision with self, the update at point of impact will occur on the next update loop. This results in
-        // a better visualization of the collision which will result in an infinite looping animation.
-        this.update(stepIndex, puzzle.getBeamsUpdateDelay())
+      if (!step.state.get(StepState.Collision)?.point.equals(collision.point)) {
+        // No need to update if there is already an existing collision at this same point
+        if (!isSelf) {
+          // Update beam at point of impact
+          this.update(stepIndex, {
+            done: true,
+            state: step.state.copy(new StepState.Collision(collision.mirror()))
+          })
+        } else if (!isSameDirection) {
+          // For a collision with self, the update at point of impact will occur on the next update loop. This results in
+          // a better visualization of the collision which will result in an infinite looping animation.
+          this.update(stepIndex, puzzle.getBeamsUpdateDelay())
+        }
       }
 
       return collisionStep.copy({

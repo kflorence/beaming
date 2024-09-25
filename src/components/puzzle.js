@@ -15,10 +15,13 @@ import { StepState } from './step'
 import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
+import { Tile } from './items/tile'
 
 const elements = Object.freeze({
+  footer: document.getElementById('footer'),
+  footerMessage: document.getElementById('footer-message'),
+  headerMessage: document.getElementById('header-message'),
   main: document.getElementById('main'),
-  message: document.getElementById('message'),
   next: document.getElementById('next'),
   previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
@@ -153,7 +156,7 @@ export class Puzzle {
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
 
     if (mask.message) {
-      elements.message.textContent = mask.message
+      elements.headerMessage.textContent = mask.message
     }
 
     mask.onMask(this)
@@ -212,6 +215,7 @@ export class Puzzle {
     this.selectedTile = tile
     this.#state.setSelectedTile(tile)
     this.#updateMessage(tile)
+    this.#updateModifiers(tile, previouslySelectedTile)
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -241,6 +245,13 @@ export class Puzzle {
       this.layers.collisions,
       this.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
+  }
+
+  #getModifiers (tile) {
+    // Sort by ID to ensure they always appear in the same order regardless of ownership
+    return this.layout.modifiers.concat(tile?.modifiers || [])
+      .filter((modifier) => !modifier.immutable)
+      .sort((a, b) => a.id - b.id)
   }
 
   #next () {
@@ -301,7 +312,7 @@ export class Puzzle {
     }
 
     message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
-    elements.message.textContent = message
+    elements.headerMessage.textContent = message
     document.body.classList.add(Puzzle.Events.Error)
   }
 
@@ -317,7 +328,29 @@ export class Puzzle {
   }
 
   #onModifierInvoked (event) {
+    const modifier = event.detail.modifier
     const tile = event.detail.tile
+
+    if (
+      // Modifier does not belong to a tile
+      !modifier.parent &&
+      // Tile has a lock modifier
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock) &&
+      // Tile does not already have a modifier of this type
+      !tile.modifiers.some((other) => other.type === modifier.type) &&
+      // Tile has less than the maximum number of modifiers
+      tile.modifiers.length < Tile.MaxModifiers
+    ) {
+      console.debug('locking modifier to tile', modifier, tile)
+      this.layout.removeModifier(modifier)
+      modifier.move(tile)
+      // Disable any other attached modifiers of this type to prevent duplicate locking
+      this.#getModifiers(tile)
+        .filter((other) => other.type === modifier.type && other.id !== modifier.id)
+        .forEach((other) => other.update({ disabled: true }))
+    }
+
+    this.updateState()
 
     this.#beams
       // Update beams in the tile being modified first
@@ -342,11 +375,11 @@ export class Puzzle {
     this.mask(Puzzle.#solvedMask)
 
     const span = document.createElement('span')
-    span.classList.add('material-symbols-outlined')
+    span.classList.add(Puzzle.ClassNames.Icon)
     span.textContent = 'celebration'
     span.title = 'Solved!'
 
-    elements.message.replaceChildren(span)
+    elements.headerMessage.replaceChildren(span)
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -487,7 +520,7 @@ export class Puzzle {
     // Update browser title
     elements.title.textContent = `Beaming: Puzzle ${title}`
 
-    removeClass('disabled', ...Array.from(document.querySelectorAll('#actions li')))
+    removeClass(Puzzle.ClassNames.Disabled, ...Array.from(document.querySelectorAll('#actions li')))
 
     const disable = []
 
@@ -517,7 +550,7 @@ export class Puzzle {
       }
     }
 
-    addClass('disabled', ...disable)
+    addClass(Puzzle.ClassNames.Disabled, ...disable)
   }
 
   #updateDropdown () {
@@ -556,15 +589,26 @@ export class Puzzle {
   }
 
   #updateMessage (tile) {
+    elements.headerMessage.textContent = this.message
+    elements.footerMessage.replaceChildren()
+
     if (tile) {
       // Check to see if tile has any color elements that need to be displayed
+      // Note: these will only be displayed if the tile contains an item with more than one color
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
-        .find((colorElements) => colorElements.length > 0) || []
-      elements.message.replaceChildren(...colorElements)
-    } else {
-      elements.message.textContent = this.message || 'Select a tile'
+        .find((colorElements) => colorElements.length > 1) || []
+      elements.footerMessage.replaceChildren(...colorElements)
     }
+  }
+
+  #updateModifiers (tile, previouslySelectedTile) {
+    this.#getModifiers(previouslySelectedTile).forEach((modifier) => modifier.detach())
+
+    const modifiers = this.#getModifiers(tile)
+    modifiers.forEach((modifier) => modifier.attach(tile))
+
+    elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0)
   }
 
   static Collision = class {
@@ -628,6 +672,12 @@ export class Puzzle {
       return [rounded.x, rounded.y].join(',')
     }
   }
+
+  static ClassNames = Object.freeze({
+    Active: 'active',
+    Disabled: 'disabled',
+    Icon: 'material-symbols-outlined'
+  })
 
   static Events = Object.freeze({
     Error: 'puzzle-error',

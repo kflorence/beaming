@@ -50,7 +50,7 @@ class PuzzleFixture {
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
-    this.elements.modifiers = await this.driver.findElement(By.id('modifiers-mutable'))
+    this.elements.modifiers = await this.driver.findElement(By.id('modifiers'))
   }
 
   async clickModifier (name, options = {}) {
@@ -81,14 +81,9 @@ class PuzzleFixture {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-solved'))
   }
 
-  async selectModifier (name) {
-    const origin = this.#getModifier(name)
-    await this.driver.actions({ async: true }).move({ origin }).press().pause(501).release().perform()
-  }
-
   async #getModifier (name) {
     await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
-    return await this.driver.findElement(By.className(`modifier-${name}`))
+    return await this.driver.findElement(By.css(`.modifier-${name}:not(.disabled)`))
   }
 
   static baseUrl = 'http://localhost:1234'

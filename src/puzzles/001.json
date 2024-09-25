@@ -20,11 +20,6 @@
               "type": "Terminus"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
           "type": "Tile"
         },
         {
@@ -63,9 +58,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Toggle"
             }
           ],
@@ -88,11 +80,6 @@
               "type": "Terminus"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
           "type": "Tile"
         }
       ]
@@ -104,5 +91,6 @@
       "amount": 1,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

@@ -5,6 +5,7 @@ import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
+  icons = []
   selected = false
 
   #ui
@@ -20,7 +21,7 @@ export class Tile extends Item {
     this.parameters = parameters
     this.styles = this.#ui.styles
 
-    this.group.addChildren([this.#ui.hexagon, this.#ui.indicator])
+    this.group.addChildren([this.#ui.hexagon])
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
@@ -35,12 +36,12 @@ export class Tile extends Item {
   }
 
   addItem (item) {
-    this.items.unshift(item)
+    this.items.push(item)
     this.update()
   }
 
   addModifier (modifier) {
-    this.modifiers.unshift(modifier)
+    this.modifiers.push(modifier)
     this.update()
   }
 
@@ -69,11 +70,11 @@ export class Tile extends Item {
       state.modifiers = modifiers
     }
 
+    // noinspection JSValidateTypes
     return state
   }
 
   onTap (event) {
-    console.debug(this.coordinates.offset.toString(), this)
     this.items.forEach((item) => item.onTap(event))
   }
 
@@ -81,17 +82,16 @@ export class Tile extends Item {
     this.selected = false
     this.#ui.hexagon.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
-    this.modifiers.forEach((modifier) => modifier.detach())
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
   }
 
   onSelected (deselectedTile) {
+    console.debug(this.toString(), 'selected')
     this.selected = true
     this.group.bringToFront()
     this.#ui.hexagon.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
-    this.modifiers.forEach((modifier) => modifier.attach())
   }
 
   removeItem (item) {
@@ -119,13 +119,21 @@ export class Tile extends Item {
   }
 
   toString () {
-    return this.coordinates.offset.toString()
+    return `[${this.type}:${this.coordinates.offset.toString()}]`
   }
 
   update () {
     super.update()
-    // Display the indicator if the tile contains non-immutable modifiers
-    this.#ui.indicator.opacity = this.modifiers.filter((modifier) => !modifier.immutable).length ? 1 : 0
+
+    // Update tile modifier icons
+    this.icons = this.modifiers.map((modifier, index) => {
+      const position = getPointBetween(this.#ui.hexagon.segments[index].point, this.center, (length) => length / 3)
+      return modifier.getSymbol().place(position, { fillColor: modifier.immutable ? '#ccc' : '#333' })
+    })
+
+    // Everything after child 0 (hexagon) is an icon
+    this.group.removeChildren(1)
+    this.group.addChildren(this.icons)
   }
 
   static parameters (height) {
@@ -169,22 +177,15 @@ export class Tile extends Item {
       style: styles.default
     })
 
-    const indicator = new Path.RegularPolygon({
-      center: getPointBetween(hexagon.segments[1].point, center, (length) => length / 3),
-      data: { collidable: false },
-      opacity: 0,
-      radius: parameters.circumradius / 16,
-      sides: 6,
-      style: { fillColor: '#ccc' }
-    })
-
-    return { center, hexagon, indicator, styles }
+    return { center, hexagon, styles }
   }
 
   static Events = Object.freeze({
     Deselected: 'tile-deselected',
     Selected: 'tile-selected'
   })
+
+  static MaxModifiers = 6
 
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:

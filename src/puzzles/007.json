@@ -1,5 +1,10 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "type": "Move"
+      }
+    ],
     "tiles": [
       [
         {
@@ -184,11 +189,6 @@
               "type": "Reflector"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Move"
-            }
-          ],
           "type": "Tile"
         },
         {
@@ -236,9 +236,9 @@
       "type": "Connections"
     },
     {
-      "amount": 6,
+      "amount": 4,
       "type": "Moves"
     }
   ],
-  "version": 1
+  "version": 2
 }

@@ -1,8 +1,9 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
+import { Icons } from '../icons'
 
 export class Swap extends Move {
-  name = 'swap_horiz'
+  name = Icons.Swap.name
   title = 'Swap'
 
   moveItems (tile) {

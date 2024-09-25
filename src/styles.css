@@ -136,29 +136,47 @@ dialog footer ul li:first-child {
 
 body > footer,
 body > header {
-  align-items: stretch;
   background-color: white;
-  box-shadow: 0 0 0.75rem 0.5rem rgba(0, 0, 0, 0.25);
-  display: flex;
-  min-height: 3.5em;
-  position: relative;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
+  margin: 0 auto;
+  max-width: calc(100% - 2em);
+  min-width: fit-content;
+  overflow: hidden;
+  position: absolute;
   /* Prevent Chrome from trying to open search on tap in mobile. */
   user-select: none;
+  width: fit-content;
   /* For iOS/Safari. */
   -webkit-user-select: none;
   z-index: 1;
 }
 
 body > header {
-  border-bottom: 1px solid #999;
+  left: 0;
+  right: 0;
+  top: 1em;
 }
 
 body > footer {
-  border-top: 1px solid #999;
+  display: none;
+  bottom: 1em;
+  flex-direction: column;
+  left: 0;
+  right: 0;
+}
+
+body > footer.active {
+  display: flex;
 }
 
 main {
   flex: auto;
+}
+
+#actions {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 #doorbell.doorbell-inline #doorbell-container {
@@ -181,10 +199,23 @@ main {
 #error {
   align-items: center;
   color: #666;
-  cursor: not-allowed;
   display: none;
   height: 100%;
   font-size: 6em;
+  justify-content: center;
+}
+
+#footer-message {
+  border-bottom: 1px solid #ddd;
+}
+
+#header-message {
+  border-top: 1px solid #ddd;
+}
+
+#header-navigation {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -194,31 +225,46 @@ main {
   width: 75%;
 }
 
-#message {
-  align-items: center;
+#modifiers {
   display: flex;
-  line-height: 1em;
+  justify-content: center;
 }
 
 #puzzle-id {
-  background-color: white;
+  appearance: none;
   border: none;
   border-left: 1px solid #ddd;
   cursor: pointer;
   font-size: 1em;
   font-weight: bold;
-  padding: 1em;
+  padding: 1em 2em 1em 1em;
+}
+
+#puzzle-id:hover {
+  background-color: #eee;
 }
 
 #puzzle-id:focus-visible {
   background-color: #333;
   color: white;
+  fill: white;
   outline: none;
+}
+
+#puzzle-id:focus-visible + svg {
+  fill: white;
 }
 
 #selector {
   align-items: stretch;
   display: flex;
+  position: relative;
+}
+
+#selector svg {
+  position: absolute;
+  right: 0.75rem;
+  top: calc(50% - 5px);
 }
 
 #solution {
@@ -231,6 +277,10 @@ main {
 
 #solution .icon {
   margin-left: 0.5em;
+}
+
+#symbols {
+  display: none;
 }
 
 #version {
@@ -304,10 +354,13 @@ main {
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+  min-height: 24px;
+  overflow: hidden;
   user-select: none;
+  vertical-align: middle;
+  width: 24px;
   /* For iOS/Safari. */
   -webkit-user-select: none;
-  vertical-align: middle;
 }
 
 .material-symbols-outlined.fill {
@@ -336,6 +389,7 @@ main {
   display: flex;
   padding: 1em;
 }
+
 .menu.non-interactive li,
 .menu li.non-interactive {
   cursor: default;
@@ -360,6 +414,21 @@ main {
   color: white;
 }
 
+.message {
+  align-items: center;
+  background-color: #eee;
+  display: flex;
+  flex: 100%;
+  justify-content: center;
+  line-height: 24px;
+  min-height: 24px;
+  padding: 1em;
+}
+
+.message:empty {
+  display: none;
+}
+
 .modifiers {
   user-select: none;
   /* For iOS/Safari. */
@@ -381,17 +450,33 @@ main {
 }
 
 .puzzle-solved #puzzle {
-  cursor: not-allowed;
+  cursor: default;
+}
+
+.puzzle-solved footer {
+  display: none;
 }
 
 .text {
   padding: 0 0.25em;
 }
 
-@media (max-width: 425px) {
+@media (max-width: 600px) {
   body > header,
   body > footer {
-    flex-wrap: wrap;
+    /*flex-wrap: wrap;*/
+    max-width: 100%;
+    width: 100%;
+  }
+
+  body > footer {
+    border-radius: 0;
+    bottom: 0;
+  }
+
+  body > header {
+    border-radius: 0;
+    top: 0;
   }
 
   body > header .flex-left,
@@ -401,7 +486,12 @@ main {
 
   body > header .flex-center {
     border-top: 1px solid #ddd;
+    flex: 100%;
     order: 1;
+  }
+
+  #actions {
+    border: 0;
   }
 }
 

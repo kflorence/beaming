@@ -1,5 +1,19 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "type": "Move"
+      },
+      {
+        "type": "Move"
+      },
+      {
+        "type": "Rotate"
+      },
+      {
+        "type": "Rotate"
+      }
+    ],
     "tiles": [
       [
         null,
@@ -192,11 +206,6 @@
               "type": "Portal"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Move"
-            }
-          ],
           "type": "Tile"
         },
         {
@@ -279,11 +288,6 @@
             {
               "direction": 0,
               "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Move"
             }
           ],
           "type": "Tile"
@@ -321,11 +325,6 @@
               "type": "Portal"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Rotate"
-            }
-          ],
           "type": "Tile"
         },
         null,
@@ -335,11 +334,6 @@
             {
               "direction": 0,
               "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Rotate"
             }
           ],
           "type": "Tile"
@@ -377,5 +371,6 @@
       "amount": 6,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }
