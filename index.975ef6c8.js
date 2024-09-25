@@ -677,6 +677,7 @@ parcelHelpers.export(exports, "noop", ()=>noop);
 parcelHelpers.export(exports, "removeClass", ()=>removeClass);
 parcelHelpers.export(exports, "subtractDirection", ()=>subtractDirection);
 parcelHelpers.export(exports, "uniqueBy", ()=>uniqueBy);
+parcelHelpers.export(exports, "uniqueId", ()=>uniqueId);
 var _jsondiffpatch = require("jsondiffpatch");
 var _pako = require("pako");
 var _pakoDefault = parcelHelpers.interopDefault(_pako);
@@ -846,8 +847,11 @@ function uniqueBy(array, key) {
     const values = array.map((value)=>value[key]);
     return array.filter((value, index)=>!values.includes(value[key], index + 1));
 }
+function uniqueId() {
+    return crypto.randomUUID().split("-")[0];
+}
 
-},{"jsondiffpatch":"7GjiV","pako":"afBDp","chroma-js":"iVrwS","paper":"agkns","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7GjiV":[function(require,module,exports) {
+},{"jsondiffpatch":"7GjiV","pako":"afBDp","chroma-js":"bnCL0","paper":"agkns","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7GjiV":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "DiffPatcher", ()=>(0, _diffpatcherJsDefault.default));
@@ -7231,2348 +7235,2607 @@ var pako = {
     constants: constants_1
 };
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iVrwS":[function(require,module,exports) {
-/**
- * chroma.js - JavaScript library for color conversions
- *
- * Copyright (c) 2011-2019, Gregor Aisch
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. The name Gregor Aisch may not be used to endorse or promote products
- * derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL GREGOR AISCH OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
- * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * -------------------------------------------------------
- *
- * chroma.js includes colors from colorbrewer2.org, which are released under
- * the following license:
- *
- * Copyright (c) 2002 Cynthia Brewer, Mark Harrower,
- * and The Pennsylvania State University.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific
- * language governing permissions and limitations under the License.
- *
- * ------------------------------------------------------
- *
- * Named colors are taken from X11 Color Names.
- * http://www.w3.org/TR/css3-color/#svg-color
- *
- * @preserve
- */ (function(global, factory) {
-    module.exports = factory();
-})(this, function() {
-    "use strict";
-    var limit$2 = function(x, min, max) {
-        if (min === void 0) min = 0;
-        if (max === void 0) max = 1;
-        return x < min ? min : x > max ? max : x;
-    };
-    var limit$1 = limit$2;
-    var clip_rgb$3 = function(rgb) {
-        rgb._clipped = false;
-        rgb._unclipped = rgb.slice(0);
-        for(var i = 0; i <= 3; i++){
-            if (i < 3) {
-                if (rgb[i] < 0 || rgb[i] > 255) rgb._clipped = true;
-                rgb[i] = limit$1(rgb[i], 0, 255);
-            } else if (i === 3) rgb[i] = limit$1(rgb[i], 0, 1);
-        }
-        return rgb;
-    };
-    // ported from jQuery's $.type
-    var classToType = {};
-    for(var i$1 = 0, list$1 = [
-        "Boolean",
-        "Number",
-        "String",
-        "Function",
-        "Array",
-        "Date",
-        "RegExp",
-        "Undefined",
-        "Null"
-    ]; i$1 < list$1.length; i$1 += 1){
-        var name = list$1[i$1];
-        classToType["[object " + name + "]"] = name.toLowerCase();
-    }
-    var type$p = function(obj) {
-        return classToType[Object.prototype.toString.call(obj)] || "object";
-    };
-    var type$o = type$p;
-    var unpack$B = function(args, keyOrder) {
-        if (keyOrder === void 0) keyOrder = null;
-        // if called with more than 3 arguments, we return the arguments
-        if (args.length >= 3) return Array.prototype.slice.call(args);
-        // with less than 3 args we check if first arg is object
-        // and use the keyOrder string to extract and sort properties
-        if (type$o(args[0]) == "object" && keyOrder) return keyOrder.split("").filter(function(k) {
-            return args[0][k] !== undefined;
-        }).map(function(k) {
-            return args[0][k];
-        });
-        // otherwise we just return the first argument
-        // (which we suppose is an array of args)
-        return args[0];
-    };
-    var type$n = type$p;
-    var last$4 = function(args) {
-        if (args.length < 2) return null;
-        var l = args.length - 1;
-        if (type$n(args[l]) == "string") return args[l].toLowerCase();
-        return null;
-    };
-    var PI$2 = Math.PI;
-    var utils = {
-        clip_rgb: clip_rgb$3,
-        limit: limit$2,
-        type: type$p,
-        unpack: unpack$B,
-        last: last$4,
-        PI: PI$2,
-        TWOPI: PI$2 * 2,
-        PITHIRD: PI$2 / 3,
-        DEG2RAD: PI$2 / 180,
-        RAD2DEG: 180 / PI$2
-    };
-    var input$h = {
-        format: {},
-        autodetect: []
-    };
-    var last$3 = utils.last;
-    var clip_rgb$2 = utils.clip_rgb;
-    var type$m = utils.type;
-    var _input = input$h;
-    var Color$D = function Color() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var me = this;
-        if (type$m(args[0]) === "object" && args[0].constructor && args[0].constructor === this.constructor) // the argument is already a Color instance
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bnCL0":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _chromaJs = require("./src/chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+// feel free to comment out anything to rollup
+// a smaller chroma.js built
+// io --> convert colors
+var _indexJs = require("./src/io/cmyk/index.js");
+var _indexJs1 = require("./src/io/css/index.js");
+var _indexJs2 = require("./src/io/gl/index.js");
+var _indexJs3 = require("./src/io/hcg/index.js");
+var _indexJs4 = require("./src/io/hex/index.js");
+var _indexJs5 = require("./src/io/hsi/index.js");
+var _indexJs6 = require("./src/io/hsl/index.js");
+var _indexJs7 = require("./src/io/hsv/index.js");
+var _indexJs8 = require("./src/io/lab/index.js");
+var _indexJs9 = require("./src/io/lch/index.js");
+var _indexJs10 = require("./src/io/named/index.js");
+var _indexJs11 = require("./src/io/num/index.js");
+var _indexJs12 = require("./src/io/rgb/index.js");
+var _indexJs13 = require("./src/io/temp/index.js");
+var _indexJs14 = require("./src/io/oklab/index.js");
+var _indexJs15 = require("./src/io/oklch/index.js");
+// operators --> modify existing Colors
+var _alphaJs = require("./src/ops/alpha.js");
+var _clippedJs = require("./src/ops/clipped.js");
+var _darkenJs = require("./src/ops/darken.js");
+var _getJs = require("./src/ops/get.js");
+var _luminanceJs = require("./src/ops/luminance.js");
+var _mixJs = require("./src/ops/mix.js");
+var _premultiplyJs = require("./src/ops/premultiply.js");
+var _saturateJs = require("./src/ops/saturate.js");
+var _setJs = require("./src/ops/set.js");
+var _shadeJs = require("./src/ops/shade.js");
+// interpolators
+var _rgbJs = require("./src/interpolator/rgb.js");
+var _lrgbJs = require("./src/interpolator/lrgb.js");
+var _labJs = require("./src/interpolator/lab.js");
+var _lchJs = require("./src/interpolator/lch.js");
+var _numJs = require("./src/interpolator/num.js");
+var _hcgJs = require("./src/interpolator/hcg.js");
+var _hsiJs = require("./src/interpolator/hsi.js");
+var _hslJs = require("./src/interpolator/hsl.js");
+var _hsvJs = require("./src/interpolator/hsv.js");
+var _oklabJs = require("./src/interpolator/oklab.js");
+var _oklchJs = require("./src/interpolator/oklch.js");
+// generators -- > create new colors
+var _averageJs = require("./src/generator/average.js");
+var _averageJsDefault = parcelHelpers.interopDefault(_averageJs);
+var _bezierJs = require("./src/generator/bezier.js");
+var _bezierJsDefault = parcelHelpers.interopDefault(_bezierJs);
+var _blendJs = require("./src/generator/blend.js");
+var _blendJsDefault = parcelHelpers.interopDefault(_blendJs);
+var _cubehelixJs = require("./src/generator/cubehelix.js");
+var _cubehelixJsDefault = parcelHelpers.interopDefault(_cubehelixJs);
+var _mixJs1 = require("./src/generator/mix.js");
+var _mixJsDefault = parcelHelpers.interopDefault(_mixJs1);
+var _randomJs = require("./src/generator/random.js");
+var _randomJsDefault = parcelHelpers.interopDefault(_randomJs);
+var _scaleJs = require("./src/generator/scale.js");
+var _scaleJsDefault = parcelHelpers.interopDefault(_scaleJs);
+// other utility methods
+var _analyzeJs = require("./src/utils/analyze.js");
+var _contrastJs = require("./src/utils/contrast.js");
+var _contrastJsDefault = parcelHelpers.interopDefault(_contrastJs);
+var _deltaEJs = require("./src/utils/delta-e.js");
+var _deltaEJsDefault = parcelHelpers.interopDefault(_deltaEJs);
+var _distanceJs = require("./src/utils/distance.js");
+var _distanceJsDefault = parcelHelpers.interopDefault(_distanceJs);
+var _validJs = require("./src/utils/valid.js");
+var _validJsDefault = parcelHelpers.interopDefault(_validJs);
+var _inputJs = require("./src/io/input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+// scale
+var _scalesJs = require("./src/utils/scales.js");
+var _scalesJsDefault = parcelHelpers.interopDefault(_scalesJs);
+// colors
+var _w3Cx11Js = require("./src/colors/w3cx11.js");
+var _w3Cx11JsDefault = parcelHelpers.interopDefault(_w3Cx11Js);
+var _colorbrewerJs = require("./src/colors/colorbrewer.js");
+var _colorbrewerJsDefault = parcelHelpers.interopDefault(_colorbrewerJs);
+Object.assign((0, _chromaJsDefault.default), {
+    average: (0, _averageJsDefault.default),
+    bezier: (0, _bezierJsDefault.default),
+    blend: (0, _blendJsDefault.default),
+    cubehelix: (0, _cubehelixJsDefault.default),
+    mix: (0, _mixJsDefault.default),
+    interpolate: (0, _mixJsDefault.default),
+    random: (0, _randomJsDefault.default),
+    scale: (0, _scaleJsDefault.default),
+    analyze: (0, _analyzeJs.analyze),
+    contrast: (0, _contrastJsDefault.default),
+    deltaE: (0, _deltaEJsDefault.default),
+    distance: (0, _distanceJsDefault.default),
+    limits: (0, _analyzeJs.limits),
+    valid: (0, _validJsDefault.default),
+    scales: (0, _scalesJsDefault.default),
+    input: (0, _inputJsDefault.default),
+    colors: (0, _w3Cx11JsDefault.default),
+    brewer: (0, _colorbrewerJsDefault.default)
+});
+exports.default = (0, _chromaJsDefault.default);
+
+},{"./src/chroma.js":"jNNC2","./src/io/cmyk/index.js":"bsZcA","./src/io/css/index.js":"jXc7O","./src/io/gl/index.js":"aAjbI","./src/io/hcg/index.js":"tBkG3","./src/io/hex/index.js":"dNTHS","./src/io/hsi/index.js":"kYSQw","./src/io/hsl/index.js":"jIO0h","./src/io/hsv/index.js":"4uLhg","./src/io/lab/index.js":"gMW4F","./src/io/lch/index.js":"eOUqb","./src/io/named/index.js":"9P6ya","./src/io/num/index.js":"kAJcC","./src/io/rgb/index.js":"2XQ0e","./src/io/temp/index.js":"3benl","./src/io/oklab/index.js":"beksD","./src/io/oklch/index.js":"cH6m3","./src/ops/alpha.js":"9kEpd","./src/ops/clipped.js":"55Kk5","./src/ops/darken.js":"g8H5C","./src/ops/get.js":"dVaYT","./src/ops/luminance.js":"9NQik","./src/ops/mix.js":"5KlJS","./src/ops/premultiply.js":"mcoWa","./src/ops/saturate.js":"dwlfr","./src/ops/set.js":"bLPTP","./src/ops/shade.js":"eBxqt","./src/interpolator/rgb.js":"3Mpwf","./src/interpolator/lrgb.js":"jVlXN","./src/interpolator/lab.js":"5Usm2","./src/interpolator/lch.js":"1wkzn","./src/interpolator/num.js":"63PvC","./src/interpolator/hcg.js":"4510n","./src/interpolator/hsi.js":"kJ0St","./src/interpolator/hsl.js":"4r9Np","./src/interpolator/hsv.js":"lNNWW","./src/interpolator/oklab.js":"h4nc8","./src/interpolator/oklch.js":"1CTmB","./src/generator/average.js":"27RYU","./src/generator/bezier.js":"boRft","./src/generator/blend.js":"1MBHJ","./src/generator/cubehelix.js":"247pR","./src/generator/mix.js":"hPOrz","./src/generator/random.js":"cS4dQ","./src/generator/scale.js":"gBPPh","./src/utils/analyze.js":"hJPw4","./src/utils/contrast.js":"103co","./src/utils/delta-e.js":"hKJFm","./src/utils/distance.js":"3CIrA","./src/utils/valid.js":"i7AZI","./src/io/input.js":"2ncJk","./src/utils/scales.js":"fP9EO","./src/colors/w3cx11.js":"ks5NN","./src/colors/colorbrewer.js":"9uaXl","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jNNC2":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("./Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _versionJs = require("./version.js");
+const chroma = (...args)=>{
+    return new chroma.Color(...args);
+};
+chroma.Color = (0, _colorJsDefault.default);
+chroma.version = (0, _versionJs.version);
+exports.default = chroma;
+
+},{"./Color.js":"86WNB","./version.js":"jvI9M","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"86WNB":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("./utils/index.js");
+var _inputJs = require("./io/input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+class Color {
+    constructor(...args){
+        const me = this;
+        if ((0, _indexJs.type)(args[0]) === "object" && args[0].constructor && args[0].constructor === this.constructor) // the argument is already a Color instance
         return args[0];
         // last argument could be the mode
-        var mode = last$3(args);
-        var autodetect = false;
+        let mode = (0, _indexJs.last)(args);
+        let autodetect = false;
         if (!mode) {
             autodetect = true;
-            if (!_input.sorted) {
-                _input.autodetect = _input.autodetect.sort(function(a, b) {
-                    return b.p - a.p;
-                });
-                _input.sorted = true;
+            if (!(0, _inputJsDefault.default).sorted) {
+                (0, _inputJsDefault.default).autodetect = (0, _inputJsDefault.default).autodetect.sort((a, b)=>b.p - a.p);
+                (0, _inputJsDefault.default).sorted = true;
             }
             // auto-detect format
-            for(var i = 0, list = _input.autodetect; i < list.length; i += 1){
-                var chk = list[i];
-                mode = chk.test.apply(chk, args);
+            for (let chk of (0, _inputJsDefault.default).autodetect){
+                mode = chk.test(...args);
                 if (mode) break;
             }
         }
-        if (_input.format[mode]) {
-            var rgb = _input.format[mode].apply(null, autodetect ? args : args.slice(0, -1));
-            me._rgb = clip_rgb$2(rgb);
+        if ((0, _inputJsDefault.default).format[mode]) {
+            const rgb = (0, _inputJsDefault.default).format[mode].apply(null, autodetect ? args : args.slice(0, -1));
+            me._rgb = (0, _indexJs.clip_rgb)(rgb);
         } else throw new Error("unknown format: " + args);
         // add alpha channel
         if (me._rgb.length === 3) me._rgb.push(1);
-    };
-    Color$D.prototype.toString = function toString() {
-        if (type$m(this.hex) == "function") return this.hex();
-        return "[" + this._rgb.join(",") + "]";
-    };
-    var Color_1 = Color$D;
-    var chroma$k = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(chroma$k.Color, [
-            null
-        ].concat(args)));
-    };
-    chroma$k.Color = Color_1;
-    chroma$k.version = "2.4.2";
-    var chroma_1 = chroma$k;
-    var unpack$A = utils.unpack;
-    var max$2 = Math.max;
-    var rgb2cmyk$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$A(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        r = r / 255;
-        g = g / 255;
-        b = b / 255;
-        var k = 1 - max$2(r, max$2(g, b));
-        var f = k < 1 ? 1 / (1 - k) : 0;
-        var c = (1 - r - k) * f;
-        var m = (1 - g - k) * f;
-        var y = (1 - b - k) * f;
-        return [
-            c,
-            m,
-            y,
-            k
-        ];
-    };
-    var rgb2cmyk_1 = rgb2cmyk$1;
-    var unpack$z = utils.unpack;
-    var cmyk2rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$z(args, "cmyk");
-        var c = args[0];
-        var m = args[1];
-        var y = args[2];
-        var k = args[3];
-        var alpha = args.length > 4 ? args[4] : 1;
-        if (k === 1) return [
-            0,
-            0,
-            0,
-            alpha
-        ];
-        return [
-            c >= 1 ? 0 : 255 * (1 - c) * (1 - k),
-            m >= 1 ? 0 : 255 * (1 - m) * (1 - k),
-            y >= 1 ? 0 : 255 * (1 - y) * (1 - k),
-            alpha
-        ];
-    };
-    var cmyk2rgb_1 = cmyk2rgb;
-    var chroma$j = chroma_1;
-    var Color$C = Color_1;
-    var input$g = input$h;
-    var unpack$y = utils.unpack;
-    var type$l = utils.type;
-    var rgb2cmyk = rgb2cmyk_1;
-    Color$C.prototype.cmyk = function() {
-        return rgb2cmyk(this._rgb);
-    };
-    chroma$j.cmyk = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$C, [
-            null
-        ].concat(args, [
-            "cmyk"
-        ])));
-    };
-    input$g.format.cmyk = cmyk2rgb_1;
-    input$g.autodetect.push({
-        p: 2,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$y(args, "cmyk");
-            if (type$l(args) === "array" && args.length === 4) return "cmyk";
-        }
+    }
+    toString() {
+        if ((0, _indexJs.type)(this.hex) == "function") return this.hex();
+        return `[${this._rgb.join(",")}]`;
+    }
+}
+exports.default = Color;
+
+},{"./utils/index.js":"FsUmr","./io/input.js":"2ncJk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"FsUmr":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "clip_rgb", ()=>(0, _clipRgbJsDefault.default));
+parcelHelpers.export(exports, "limit", ()=>(0, _limitJsDefault.default));
+parcelHelpers.export(exports, "type", ()=>(0, _typeJsDefault.default));
+parcelHelpers.export(exports, "unpack", ()=>(0, _unpackJsDefault.default));
+parcelHelpers.export(exports, "last", ()=>(0, _lastJsDefault.default));
+parcelHelpers.export(exports, "PI", ()=>PI);
+parcelHelpers.export(exports, "TWOPI", ()=>TWOPI);
+parcelHelpers.export(exports, "PITHIRD", ()=>PITHIRD);
+parcelHelpers.export(exports, "DEG2RAD", ()=>DEG2RAD);
+parcelHelpers.export(exports, "RAD2DEG", ()=>RAD2DEG);
+parcelHelpers.export(exports, "min", ()=>min);
+parcelHelpers.export(exports, "max", ()=>max);
+var _clipRgbJs = require("./clip_rgb.js");
+var _clipRgbJsDefault = parcelHelpers.interopDefault(_clipRgbJs);
+var _limitJs = require("./limit.js");
+var _limitJsDefault = parcelHelpers.interopDefault(_limitJs);
+var _typeJs = require("./type.js");
+var _typeJsDefault = parcelHelpers.interopDefault(_typeJs);
+var _unpackJs = require("./unpack.js");
+var _unpackJsDefault = parcelHelpers.interopDefault(_unpackJs);
+var _lastJs = require("./last.js");
+var _lastJsDefault = parcelHelpers.interopDefault(_lastJs);
+const { PI, min, max } = Math;
+const TWOPI = PI * 2;
+const PITHIRD = PI / 3;
+const DEG2RAD = PI / 180;
+const RAD2DEG = 180 / PI;
+
+},{"./clip_rgb.js":"kUWBW","./limit.js":"2kV17","./type.js":"dsbh4","./unpack.js":"lNpBW","./last.js":"5nHuQ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kUWBW":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _limitJs = require("./limit.js");
+var _limitJsDefault = parcelHelpers.interopDefault(_limitJs);
+exports.default = (rgb)=>{
+    rgb._clipped = false;
+    rgb._unclipped = rgb.slice(0);
+    for(let i = 0; i <= 3; i++){
+        if (i < 3) {
+            if (rgb[i] < 0 || rgb[i] > 255) rgb._clipped = true;
+            rgb[i] = (0, _limitJsDefault.default)(rgb[i], 0, 255);
+        } else if (i === 3) rgb[i] = (0, _limitJsDefault.default)(rgb[i], 0, 1);
+    }
+    return rgb;
+};
+
+},{"./limit.js":"2kV17","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2kV17":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("./index.js");
+exports.default = (x, low = 0, high = 1)=>{
+    return (0, _indexJs.min)((0, _indexJs.max)(low, x), high);
+};
+
+},{"./index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dsbh4":[function(require,module,exports) {
+// ported from jQuery's $.type
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>function(obj) {
+        return classToType[Object.prototype.toString.call(obj)] || "object";
     });
-    var unpack$x = utils.unpack;
-    var last$2 = utils.last;
-    var rnd = function(a) {
-        return Math.round(a * 100) / 100;
-    };
-    /*
-     * supported arguments:
-     * - hsl2css(h,s,l)
-     * - hsl2css(h,s,l,a)
-     * - hsl2css([h,s,l], mode)
-     * - hsl2css([h,s,l,a], mode)
-     * - hsl2css({h,s,l,a}, mode)
-     */ var hsl2css$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var hsla = unpack$x(args, "hsla");
-        var mode = last$2(args) || "lsa";
-        hsla[0] = rnd(hsla[0] || 0);
-        hsla[1] = rnd(hsla[1] * 100) + "%";
-        hsla[2] = rnd(hsla[2] * 100) + "%";
-        if (mode === "hsla" || hsla.length > 3 && hsla[3] < 1) {
-            hsla[3] = hsla.length > 3 ? hsla[3] : 1;
-            mode = "hsla";
-        } else hsla.length = 3;
-        return mode + "(" + hsla.join(",") + ")";
-    };
-    var hsl2css_1 = hsl2css$1;
-    var unpack$w = utils.unpack;
-    /*
-     * supported arguments:
-     * - rgb2hsl(r,g,b)
-     * - rgb2hsl(r,g,b,a)
-     * - rgb2hsl([r,g,b])
-     * - rgb2hsl([r,g,b,a])
-     * - rgb2hsl({r,g,b,a})
-     */ var rgb2hsl$3 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$w(args, "rgba");
-        var r = args[0];
-        var g = args[1];
-        var b = args[2];
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        var min = Math.min(r, g, b);
-        var max = Math.max(r, g, b);
-        var l = (max + min) / 2;
-        var s, h;
-        if (max === min) {
-            s = 0;
-            h = Number.NaN;
-        } else s = l < 0.5 ? (max - min) / (max + min) : (max - min) / (2 - max - min);
-        if (r == max) h = (g - b) / (max - min);
-        else if (g == max) h = 2 + (b - r) / (max - min);
-        else if (b == max) h = 4 + (r - g) / (max - min);
-        h *= 60;
-        if (h < 0) h += 360;
-        if (args.length > 3 && args[3] !== undefined) return [
-            h,
-            s,
-            l,
-            args[3]
-        ];
-        return [
-            h,
-            s,
-            l
-        ];
-    };
-    var rgb2hsl_1 = rgb2hsl$3;
-    var unpack$v = utils.unpack;
-    var last$1 = utils.last;
-    var hsl2css = hsl2css_1;
-    var rgb2hsl$2 = rgb2hsl_1;
-    var round$6 = Math.round;
-    /*
-     * supported arguments:
-     * - rgb2css(r,g,b)
-     * - rgb2css(r,g,b,a)
-     * - rgb2css([r,g,b], mode)
-     * - rgb2css([r,g,b,a], mode)
-     * - rgb2css({r,g,b,a}, mode)
-     */ var rgb2css$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var rgba = unpack$v(args, "rgba");
-        var mode = last$1(args) || "rgb";
-        if (mode.substr(0, 3) == "hsl") return hsl2css(rgb2hsl$2(rgba), mode);
-        rgba[0] = round$6(rgba[0]);
-        rgba[1] = round$6(rgba[1]);
-        rgba[2] = round$6(rgba[2]);
-        if (mode === "rgba" || rgba.length > 3 && rgba[3] < 1) {
-            rgba[3] = rgba.length > 3 ? rgba[3] : 1;
-            mode = "rgba";
-        }
-        return mode + "(" + rgba.slice(0, mode === "rgb" ? 3 : 4).join(",") + ")";
-    };
-    var rgb2css_1 = rgb2css$1;
-    var unpack$u = utils.unpack;
-    var round$5 = Math.round;
-    var hsl2rgb$1 = function() {
-        var assign;
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$u(args, "hsl");
-        var h = args[0];
-        var s = args[1];
-        var l = args[2];
-        var r, g, b;
-        if (s === 0) r = g = b = l * 255;
-        else {
-            var t3 = [
-                0,
-                0,
-                0
-            ];
-            var c = [
-                0,
-                0,
-                0
-            ];
-            var t2 = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            var t1 = 2 * l - t2;
-            var h_ = h / 360;
-            t3[0] = h_ + 1 / 3;
-            t3[1] = h_;
-            t3[2] = h_ - 1 / 3;
-            for(var i = 0; i < 3; i++){
-                if (t3[i] < 0) t3[i] += 1;
-                if (t3[i] > 1) t3[i] -= 1;
-                if (6 * t3[i] < 1) c[i] = t1 + (t2 - t1) * 6 * t3[i];
-                else if (2 * t3[i] < 1) c[i] = t2;
-                else if (3 * t3[i] < 2) c[i] = t1 + (t2 - t1) * (2 / 3 - t3[i]) * 6;
-                else c[i] = t1;
-            }
-            assign = [
-                round$5(c[0] * 255),
-                round$5(c[1] * 255),
-                round$5(c[2] * 255)
-            ], r = assign[0], g = assign[1], b = assign[2];
-        }
-        if (args.length > 3) // keep alpha channel
-        return [
-            r,
-            g,
-            b,
-            args[3]
-        ];
-        return [
-            r,
-            g,
-            b,
-            1
-        ];
-    };
-    var hsl2rgb_1 = hsl2rgb$1;
-    var hsl2rgb = hsl2rgb_1;
-    var input$f = input$h;
-    var RE_RGB = /^rgb\(\s*(-?\d+),\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/;
-    var RE_RGBA = /^rgba\(\s*(-?\d+),\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([01]|[01]?\.\d+)\)$/;
-    var RE_RGB_PCT = /^rgb\(\s*(-?\d+(?:\.\d+)?)%,\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*\)$/;
-    var RE_RGBA_PCT = /^rgba\(\s*(-?\d+(?:\.\d+)?)%,\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*,\s*([01]|[01]?\.\d+)\)$/;
-    var RE_HSL = /^hsl\(\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*\)$/;
-    var RE_HSLA = /^hsla\(\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*,\s*([01]|[01]?\.\d+)\)$/;
-    var round$4 = Math.round;
-    var css2rgb$1 = function(css) {
-        css = css.toLowerCase().trim();
-        var m;
-        if (input$f.format.named) try {
-            return input$f.format.named(css);
-        } catch (e) {
-        // eslint-disable-next-line
-        }
-        // rgb(250,20,0)
-        if (m = css.match(RE_RGB)) {
-            var rgb = m.slice(1, 4);
-            for(var i = 0; i < 3; i++)rgb[i] = +rgb[i];
-            rgb[3] = 1; // default alpha
-            return rgb;
-        }
-        // rgba(250,20,0,0.4)
-        if (m = css.match(RE_RGBA)) {
-            var rgb$1 = m.slice(1, 5);
-            for(var i$1 = 0; i$1 < 4; i$1++)rgb$1[i$1] = +rgb$1[i$1];
-            return rgb$1;
-        }
-        // rgb(100%,0%,0%)
-        if (m = css.match(RE_RGB_PCT)) {
-            var rgb$2 = m.slice(1, 4);
-            for(var i$2 = 0; i$2 < 3; i$2++)rgb$2[i$2] = round$4(rgb$2[i$2] * 2.55);
-            rgb$2[3] = 1; // default alpha
-            return rgb$2;
-        }
-        // rgba(100%,0%,0%,0.4)
-        if (m = css.match(RE_RGBA_PCT)) {
-            var rgb$3 = m.slice(1, 5);
-            for(var i$3 = 0; i$3 < 3; i$3++)rgb$3[i$3] = round$4(rgb$3[i$3] * 2.55);
-            rgb$3[3] = +rgb$3[3];
-            return rgb$3;
-        }
-        // hsl(0,100%,50%)
-        if (m = css.match(RE_HSL)) {
-            var hsl = m.slice(1, 4);
-            hsl[1] *= 0.01;
-            hsl[2] *= 0.01;
-            var rgb$4 = hsl2rgb(hsl);
-            rgb$4[3] = 1;
-            return rgb$4;
-        }
-        // hsla(0,100%,50%,0.5)
-        if (m = css.match(RE_HSLA)) {
-            var hsl$1 = m.slice(1, 4);
-            hsl$1[1] *= 0.01;
-            hsl$1[2] *= 0.01;
-            var rgb$5 = hsl2rgb(hsl$1);
-            rgb$5[3] = +m[4]; // default alpha = 1
-            return rgb$5;
-        }
-    };
-    css2rgb$1.test = function(s) {
-        return RE_RGB.test(s) || RE_RGBA.test(s) || RE_RGB_PCT.test(s) || RE_RGBA_PCT.test(s) || RE_HSL.test(s) || RE_HSLA.test(s);
-    };
-    var css2rgb_1 = css2rgb$1;
-    var chroma$i = chroma_1;
-    var Color$B = Color_1;
-    var input$e = input$h;
-    var type$k = utils.type;
-    var rgb2css = rgb2css_1;
-    var css2rgb = css2rgb_1;
-    Color$B.prototype.css = function(mode) {
-        return rgb2css(this._rgb, mode);
-    };
-    chroma$i.css = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$B, [
-            null
-        ].concat(args, [
-            "css"
-        ])));
-    };
-    input$e.format.css = css2rgb;
-    input$e.autodetect.push({
-        p: 5,
-        test: function(h) {
-            var rest = [], len = arguments.length - 1;
-            while(len-- > 0)rest[len] = arguments[len + 1];
-            if (!rest.length && type$k(h) === "string" && css2rgb.test(h)) return "css";
-        }
-    });
-    var Color$A = Color_1;
-    var chroma$h = chroma_1;
-    var input$d = input$h;
-    var unpack$t = utils.unpack;
-    input$d.format.gl = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var rgb = unpack$t(args, "rgba");
-        rgb[0] *= 255;
-        rgb[1] *= 255;
-        rgb[2] *= 255;
+const classToType = {};
+for (let name of [
+    "Boolean",
+    "Number",
+    "String",
+    "Function",
+    "Array",
+    "Date",
+    "RegExp",
+    "Undefined",
+    "Null"
+])classToType[`[object ${name}]`] = name.toLowerCase();
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lNpBW":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _typeJs = require("./type.js");
+var _typeJsDefault = parcelHelpers.interopDefault(_typeJs);
+exports.default = (args, keyOrder = null)=>{
+    // if called with more than 3 arguments, we return the arguments
+    if (args.length >= 3) return Array.prototype.slice.call(args);
+    // with less than 3 args we check if first arg is object
+    // and use the keyOrder string to extract and sort properties
+    if ((0, _typeJsDefault.default)(args[0]) == "object" && keyOrder) return keyOrder.split("").filter((k)=>args[0][k] !== undefined).map((k)=>args[0][k]);
+    // otherwise we just return the first argument
+    // (which we suppose is an array of args)
+    return args[0];
+};
+
+},{"./type.js":"dsbh4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5nHuQ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _typeJs = require("./type.js");
+var _typeJsDefault = parcelHelpers.interopDefault(_typeJs);
+exports.default = (args)=>{
+    if (args.length < 2) return null;
+    const l = args.length - 1;
+    if ((0, _typeJsDefault.default)(args[l]) == "string") return args[l].toLowerCase();
+    return null;
+};
+
+},{"./type.js":"dsbh4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2ncJk":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+exports.default = {
+    format: {},
+    autodetect: []
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jvI9M":[function(require,module,exports) {
+// this gets updated automatically
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "version", ()=>version);
+const version = "2.6.0";
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bsZcA":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+var _cmyk2RgbJs = require("./cmyk2rgb.js");
+var _cmyk2RgbJsDefault = parcelHelpers.interopDefault(_cmyk2RgbJs);
+var _rgb2CmykJs = require("./rgb2cmyk.js");
+var _rgb2CmykJsDefault = parcelHelpers.interopDefault(_rgb2CmykJs);
+(0, _colorJsDefault.default).prototype.cmyk = function() {
+    return (0, _rgb2CmykJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).cmyk = (...args)=>new (0, _colorJsDefault.default)(...args, "cmyk");
+(0, _inputJsDefault.default).format.cmyk = (0, _cmyk2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 2,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "cmyk");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 4) return "cmyk";
+    }
+});
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","../../utils/index.js":"FsUmr","./cmyk2rgb.js":"af4Ez","./rgb2cmyk.js":"3TQAo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"af4Ez":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const cmyk2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "cmyk");
+    const [c, m, y, k] = args;
+    const alpha = args.length > 4 ? args[4] : 1;
+    if (k === 1) return [
+        0,
+        0,
+        0,
+        alpha
+    ];
+    return [
+        c >= 1 ? 0 : 255 * (1 - c) * (1 - k),
+        m >= 1 ? 0 : 255 * (1 - m) * (1 - k),
+        y >= 1 ? 0 : 255 * (1 - y) * (1 - k),
+        alpha
+    ];
+};
+exports.default = cmyk2rgb;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3TQAo":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { max } = Math;
+const rgb2cmyk = (...args)=>{
+    let [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    r = r / 255;
+    g = g / 255;
+    b = b / 255;
+    const k = 1 - max(r, max(g, b));
+    const f = k < 1 ? 1 / (1 - k) : 0;
+    const c = (1 - r - k) * f;
+    const m = (1 - g - k) * f;
+    const y = (1 - b - k) * f;
+    return [
+        c,
+        m,
+        y,
+        k
+    ];
+};
+exports.default = rgb2cmyk;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jXc7O":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+var _rgb2CssJs = require("./rgb2css.js");
+var _rgb2CssJsDefault = parcelHelpers.interopDefault(_rgb2CssJs);
+var _css2RgbJs = require("./css2rgb.js");
+var _css2RgbJsDefault = parcelHelpers.interopDefault(_css2RgbJs);
+(0, _colorJsDefault.default).prototype.css = function(mode) {
+    return (0, _rgb2CssJsDefault.default)(this._rgb, mode);
+};
+(0, _chromaJsDefault.default).css = (...args)=>new (0, _colorJsDefault.default)(...args, "css");
+(0, _inputJsDefault.default).format.css = (0, _css2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 5,
+    test: (h, ...rest)=>{
+        if (!rest.length && (0, _indexJs.type)(h) === "string" && (0, _css2RgbJsDefault.default).test(h)) return "css";
+    }
+});
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","../../utils/index.js":"FsUmr","./rgb2css.js":"eOa9j","./css2rgb.js":"akXOj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eOa9j":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _hsl2CssJs = require("./hsl2css.js");
+var _hsl2CssJsDefault = parcelHelpers.interopDefault(_hsl2CssJs);
+var _rgb2HslJs = require("../hsl/rgb2hsl.js");
+var _rgb2HslJsDefault = parcelHelpers.interopDefault(_rgb2HslJs);
+const { round } = Math;
+/*
+ * supported arguments:
+ * - rgb2css(r,g,b)
+ * - rgb2css(r,g,b,a)
+ * - rgb2css([r,g,b], mode)
+ * - rgb2css([r,g,b,a], mode)
+ * - rgb2css({r,g,b,a}, mode)
+ */ const rgb2css = (...args)=>{
+    const rgba = (0, _indexJs.unpack)(args, "rgba");
+    let mode = (0, _indexJs.last)(args) || "rgb";
+    if (mode.substr(0, 3) == "hsl") return (0, _hsl2CssJsDefault.default)((0, _rgb2HslJsDefault.default)(rgba), mode);
+    rgba[0] = round(rgba[0]);
+    rgba[1] = round(rgba[1]);
+    rgba[2] = round(rgba[2]);
+    if (mode === "rgba" || rgba.length > 3 && rgba[3] < 1) {
+        rgba[3] = rgba.length > 3 ? rgba[3] : 1;
+        mode = "rgba";
+    }
+    return `${mode}(${rgba.slice(0, mode === "rgb" ? 3 : 4).join(",")})`;
+};
+exports.default = rgb2css;
+
+},{"../../utils/index.js":"FsUmr","./hsl2css.js":"9ztCv","../hsl/rgb2hsl.js":"htYyX","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9ztCv":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const rnd = (a)=>Math.round(a * 100) / 100;
+/*
+ * supported arguments:
+ * - hsl2css(h,s,l)
+ * - hsl2css(h,s,l,a)
+ * - hsl2css([h,s,l], mode)
+ * - hsl2css([h,s,l,a], mode)
+ * - hsl2css({h,s,l,a}, mode)
+ */ const hsl2css = (...args)=>{
+    const hsla = (0, _indexJs.unpack)(args, "hsla");
+    let mode = (0, _indexJs.last)(args) || "lsa";
+    hsla[0] = rnd(hsla[0] || 0);
+    hsla[1] = rnd(hsla[1] * 100) + "%";
+    hsla[2] = rnd(hsla[2] * 100) + "%";
+    if (mode === "hsla" || hsla.length > 3 && hsla[3] < 1) {
+        hsla[3] = hsla.length > 3 ? hsla[3] : 1;
+        mode = "hsla";
+    } else hsla.length = 3;
+    return `${mode}(${hsla.join(",")})`;
+};
+exports.default = hsl2css;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"htYyX":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+/*
+ * supported arguments:
+ * - rgb2hsl(r,g,b)
+ * - rgb2hsl(r,g,b,a)
+ * - rgb2hsl([r,g,b])
+ * - rgb2hsl([r,g,b,a])
+ * - rgb2hsl({r,g,b,a})
+ */ const rgb2hsl = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "rgba");
+    let [r, g, b] = args;
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const minRgb = (0, _indexJs.min)(r, g, b);
+    const maxRgb = (0, _indexJs.max)(r, g, b);
+    const l = (maxRgb + minRgb) / 2;
+    let s, h;
+    if (maxRgb === minRgb) {
+        s = 0;
+        h = Number.NaN;
+    } else s = l < 0.5 ? (maxRgb - minRgb) / (maxRgb + minRgb) : (maxRgb - minRgb) / (2 - maxRgb - minRgb);
+    if (r == maxRgb) h = (g - b) / (maxRgb - minRgb);
+    else if (g == maxRgb) h = 2 + (b - r) / (maxRgb - minRgb);
+    else if (b == maxRgb) h = 4 + (r - g) / (maxRgb - minRgb);
+    h *= 60;
+    if (h < 0) h += 360;
+    if (args.length > 3 && args[3] !== undefined) return [
+        h,
+        s,
+        l,
+        args[3]
+    ];
+    return [
+        h,
+        s,
+        l
+    ];
+};
+exports.default = rgb2hsl;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"akXOj":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _hsl2RgbJs = require("../hsl/hsl2rgb.js");
+var _hsl2RgbJsDefault = parcelHelpers.interopDefault(_hsl2RgbJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+const RE_RGB = /^rgb\(\s*(-?\d+),\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/;
+const RE_RGBA = /^rgba\(\s*(-?\d+),\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([01]|[01]?\.\d+)\)$/;
+const RE_RGB_PCT = /^rgb\(\s*(-?\d+(?:\.\d+)?)%,\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*\)$/;
+const RE_RGBA_PCT = /^rgba\(\s*(-?\d+(?:\.\d+)?)%,\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*,\s*([01]|[01]?\.\d+)\)$/;
+const RE_HSL = /^hsl\(\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*\)$/;
+const RE_HSLA = /^hsla\(\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)%\s*,\s*(-?\d+(?:\.\d+)?)%\s*,\s*([01]|[01]?\.\d+)\)$/;
+const { round } = Math;
+const css2rgb = (css)=>{
+    css = css.toLowerCase().trim();
+    let m;
+    if ((0, _inputJsDefault.default).format.named) try {
+        return (0, _inputJsDefault.default).format.named(css);
+    // eslint-disable-next-line
+    } catch (e) {}
+    // rgb(250,20,0)
+    if (m = css.match(RE_RGB)) {
+        const rgb = m.slice(1, 4);
+        for(let i = 0; i < 3; i++)rgb[i] = +rgb[i];
+        rgb[3] = 1; // default alpha
         return rgb;
-    };
-    chroma$h.gl = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$A, [
-            null
-        ].concat(args, [
-            "gl"
-        ])));
-    };
-    Color$A.prototype.gl = function() {
-        var rgb = this._rgb;
-        return [
-            rgb[0] / 255,
-            rgb[1] / 255,
-            rgb[2] / 255,
-            rgb[3]
+    }
+    // rgba(250,20,0,0.4)
+    if (m = css.match(RE_RGBA)) {
+        const rgb = m.slice(1, 5);
+        for(let i = 0; i < 4; i++)rgb[i] = +rgb[i];
+        return rgb;
+    }
+    // rgb(100%,0%,0%)
+    if (m = css.match(RE_RGB_PCT)) {
+        const rgb = m.slice(1, 4);
+        for(let i = 0; i < 3; i++)rgb[i] = round(rgb[i] * 2.55);
+        rgb[3] = 1; // default alpha
+        return rgb;
+    }
+    // rgba(100%,0%,0%,0.4)
+    if (m = css.match(RE_RGBA_PCT)) {
+        const rgb = m.slice(1, 5);
+        for(let i = 0; i < 3; i++)rgb[i] = round(rgb[i] * 2.55);
+        rgb[3] = +rgb[3];
+        return rgb;
+    }
+    // hsl(0,100%,50%)
+    if (m = css.match(RE_HSL)) {
+        const hsl = m.slice(1, 4);
+        hsl[1] *= 0.01;
+        hsl[2] *= 0.01;
+        const rgb = (0, _hsl2RgbJsDefault.default)(hsl);
+        rgb[3] = 1;
+        return rgb;
+    }
+    // hsla(0,100%,50%,0.5)
+    if (m = css.match(RE_HSLA)) {
+        const hsl = m.slice(1, 4);
+        hsl[1] *= 0.01;
+        hsl[2] *= 0.01;
+        const rgb = (0, _hsl2RgbJsDefault.default)(hsl);
+        rgb[3] = +m[4]; // default alpha = 1
+        return rgb;
+    }
+};
+css2rgb.test = (s)=>{
+    return RE_RGB.test(s) || RE_RGBA.test(s) || RE_RGB_PCT.test(s) || RE_RGBA_PCT.test(s) || RE_HSL.test(s) || RE_HSLA.test(s);
+};
+exports.default = css2rgb;
+
+},{"../hsl/hsl2rgb.js":"dv6uz","../input.js":"2ncJk","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dv6uz":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { round } = Math;
+const hsl2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "hsl");
+    const [h, s, l] = args;
+    let r, g, b;
+    if (s === 0) r = g = b = l * 255;
+    else {
+        const t3 = [
+            0,
+            0,
+            0
         ];
-    };
-    var unpack$s = utils.unpack;
-    var rgb2hcg$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$s(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var min = Math.min(r, g, b);
-        var max = Math.max(r, g, b);
-        var delta = max - min;
-        var c = delta * 100 / 255;
-        var _g = min / (255 - delta) * 100;
-        var h;
-        if (delta === 0) h = Number.NaN;
-        else {
-            if (r === max) h = (g - b) / delta;
-            if (g === max) h = 2 + (b - r) / delta;
-            if (b === max) h = 4 + (r - g) / delta;
-            h *= 60;
-            if (h < 0) h += 360;
-        }
-        return [
-            h,
-            c,
-            _g
+        const c = [
+            0,
+            0,
+            0
         ];
-    };
-    var rgb2hcg_1 = rgb2hcg$1;
-    var unpack$r = utils.unpack;
-    var floor$3 = Math.floor;
-    /*
-     * this is basically just HSV with some minor tweaks
-     *
-     * hue.. [0..360]
-     * chroma .. [0..1]
-     * grayness .. [0..1]
-     */ var hcg2rgb = function() {
-        var assign, assign$1, assign$2, assign$3, assign$4, assign$5;
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$r(args, "hcg");
-        var h = args[0];
-        var c = args[1];
-        var _g = args[2];
-        var r, g, b;
-        _g = _g * 255;
-        var _c = c * 255;
-        if (c === 0) r = g = b = _g;
-        else {
-            if (h === 360) h = 0;
-            if (h > 360) h -= 360;
-            if (h < 0) h += 360;
-            h /= 60;
-            var i = floor$3(h);
-            var f = h - i;
-            var p = _g * (1 - c);
-            var q = p + _c * (1 - f);
-            var t = p + _c * f;
-            var v = p + _c;
-            switch(i){
-                case 0:
-                    assign = [
-                        v,
-                        t,
-                        p
-                    ], r = assign[0], g = assign[1], b = assign[2];
-                    break;
-                case 1:
-                    assign$1 = [
-                        q,
-                        v,
-                        p
-                    ], r = assign$1[0], g = assign$1[1], b = assign$1[2];
-                    break;
-                case 2:
-                    assign$2 = [
-                        p,
-                        v,
-                        t
-                    ], r = assign$2[0], g = assign$2[1], b = assign$2[2];
-                    break;
-                case 3:
-                    assign$3 = [
-                        p,
-                        q,
-                        v
-                    ], r = assign$3[0], g = assign$3[1], b = assign$3[2];
-                    break;
-                case 4:
-                    assign$4 = [
-                        t,
-                        p,
-                        v
-                    ], r = assign$4[0], g = assign$4[1], b = assign$4[2];
-                    break;
-                case 5:
-                    assign$5 = [
-                        v,
-                        p,
-                        q
-                    ], r = assign$5[0], g = assign$5[1], b = assign$5[2];
-                    break;
-            }
+        const t2 = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const t1 = 2 * l - t2;
+        const h_ = h / 360;
+        t3[0] = h_ + 1 / 3;
+        t3[1] = h_;
+        t3[2] = h_ - 1 / 3;
+        for(let i = 0; i < 3; i++){
+            if (t3[i] < 0) t3[i] += 1;
+            if (t3[i] > 1) t3[i] -= 1;
+            if (6 * t3[i] < 1) c[i] = t1 + (t2 - t1) * 6 * t3[i];
+            else if (2 * t3[i] < 1) c[i] = t2;
+            else if (3 * t3[i] < 2) c[i] = t1 + (t2 - t1) * (2 / 3 - t3[i]) * 6;
+            else c[i] = t1;
         }
-        return [
-            r,
-            g,
-            b,
-            args.length > 3 ? args[3] : 1
+        [r, g, b] = [
+            round(c[0] * 255),
+            round(c[1] * 255),
+            round(c[2] * 255)
         ];
-    };
-    var hcg2rgb_1 = hcg2rgb;
-    var unpack$q = utils.unpack;
-    var type$j = utils.type;
-    var chroma$g = chroma_1;
-    var Color$z = Color_1;
-    var input$c = input$h;
-    var rgb2hcg = rgb2hcg_1;
-    Color$z.prototype.hcg = function() {
-        return rgb2hcg(this._rgb);
-    };
-    chroma$g.hcg = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$z, [
-            null
-        ].concat(args, [
-            "hcg"
-        ])));
-    };
-    input$c.format.hcg = hcg2rgb_1;
-    input$c.autodetect.push({
-        p: 1,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$q(args, "hcg");
-            if (type$j(args) === "array" && args.length === 3) return "hcg";
-        }
-    });
-    var unpack$p = utils.unpack;
-    var last = utils.last;
-    var round$3 = Math.round;
-    var rgb2hex$2 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$p(args, "rgba");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var a = ref[3];
-        var mode = last(args) || "auto";
-        if (a === undefined) a = 1;
-        if (mode === "auto") mode = a < 1 ? "rgba" : "rgb";
-        r = round$3(r);
-        g = round$3(g);
-        b = round$3(b);
-        var u = r << 16 | g << 8 | b;
-        var str = "000000" + u.toString(16); //#.toUpperCase();
-        str = str.substr(str.length - 6);
-        var hxa = "0" + round$3(a * 255).toString(16);
-        hxa = hxa.substr(hxa.length - 2);
-        switch(mode.toLowerCase()){
-            case "rgba":
-                return "#" + str + hxa;
-            case "argb":
-                return "#" + hxa + str;
-            default:
-                return "#" + str;
-        }
-    };
-    var rgb2hex_1 = rgb2hex$2;
-    var RE_HEX = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-    var RE_HEXA = /^#?([A-Fa-f0-9]{8}|[A-Fa-f0-9]{4})$/;
-    var hex2rgb$1 = function(hex) {
-        if (hex.match(RE_HEX)) {
-            // remove optional leading #
-            if (hex.length === 4 || hex.length === 7) hex = hex.substr(1);
-            // expand short-notation to full six-digit
-            if (hex.length === 3) {
-                hex = hex.split("");
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-            }
-            var u = parseInt(hex, 16);
-            var r = u >> 16;
-            var g = u >> 8 & 0xFF;
-            var b = u & 0xFF;
-            return [
-                r,
-                g,
-                b,
-                1
-            ];
-        }
-        // match rgba hex format, eg #FF000077
-        if (hex.match(RE_HEXA)) {
-            if (hex.length === 5 || hex.length === 9) // remove optional leading #
-            hex = hex.substr(1);
-            // expand short-notation to full eight-digit
-            if (hex.length === 4) {
-                hex = hex.split("");
-                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
-            }
-            var u$1 = parseInt(hex, 16);
-            var r$1 = u$1 >> 24 & 0xFF;
-            var g$1 = u$1 >> 16 & 0xFF;
-            var b$1 = u$1 >> 8 & 0xFF;
-            var a = Math.round((u$1 & 0xFF) / 0xFF * 100) / 100;
-            return [
-                r$1,
-                g$1,
-                b$1,
-                a
-            ];
-        }
-        // we used to check for css colors here
-        // if _input.css? and rgb = _input.css hex
-        //     return rgb
-        throw new Error("unknown hex color: " + hex);
-    };
-    var hex2rgb_1 = hex2rgb$1;
-    var chroma$f = chroma_1;
-    var Color$y = Color_1;
-    var type$i = utils.type;
-    var input$b = input$h;
-    var rgb2hex$1 = rgb2hex_1;
-    Color$y.prototype.hex = function(mode) {
-        return rgb2hex$1(this._rgb, mode);
-    };
-    chroma$f.hex = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$y, [
-            null
-        ].concat(args, [
-            "hex"
-        ])));
-    };
-    input$b.format.hex = hex2rgb_1;
-    input$b.autodetect.push({
-        p: 4,
-        test: function(h) {
-            var rest = [], len = arguments.length - 1;
-            while(len-- > 0)rest[len] = arguments[len + 1];
-            if (!rest.length && type$i(h) === "string" && [
-                3,
-                4,
-                5,
-                6,
-                7,
-                8,
-                9
-            ].indexOf(h.length) >= 0) return "hex";
-        }
-    });
-    var unpack$o = utils.unpack;
-    var TWOPI$2 = utils.TWOPI;
-    var min$2 = Math.min;
-    var sqrt$4 = Math.sqrt;
-    var acos = Math.acos;
-    var rgb2hsi$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        /*
-        borrowed from here:
-        http://hummer.stanford.edu/museinfo/doc/examples/humdrum/keyscape2/rgb2hsi.cpp
-        */ var ref = unpack$o(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        var h;
-        var min_ = min$2(r, g, b);
-        var i = (r + g + b) / 3;
-        var s = i > 0 ? 1 - min_ / i : 0;
-        if (s === 0) h = NaN;
-        else {
-            h = (r - g + (r - b)) / 2;
-            h /= sqrt$4((r - g) * (r - g) + (r - b) * (g - b));
-            h = acos(h);
-            if (b > g) h = TWOPI$2 - h;
-            h /= TWOPI$2;
-        }
-        return [
-            h * 360,
-            s,
-            i
-        ];
-    };
-    var rgb2hsi_1 = rgb2hsi$1;
-    var unpack$n = utils.unpack;
-    var limit = utils.limit;
-    var TWOPI$1 = utils.TWOPI;
-    var PITHIRD = utils.PITHIRD;
-    var cos$4 = Math.cos;
-    /*
-     * hue [0..360]
-     * saturation [0..1]
-     * intensity [0..1]
-     */ var hsi2rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        /*
-        borrowed from here:
-        http://hummer.stanford.edu/museinfo/doc/examples/humdrum/keyscape2/hsi2rgb.cpp
-        */ args = unpack$n(args, "hsi");
-        var h = args[0];
-        var s = args[1];
-        var i = args[2];
-        var r, g, b;
-        if (isNaN(h)) h = 0;
-        if (isNaN(s)) s = 0;
-        // normalize hue
+    }
+    if (args.length > 3) // keep alpha channel
+    return [
+        r,
+        g,
+        b,
+        args[3]
+    ];
+    return [
+        r,
+        g,
+        b,
+        1
+    ];
+};
+exports.default = hsl2rgb;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aAjbI":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+(0, _inputJsDefault.default).format.gl = (...args)=>{
+    const rgb = (0, _indexJs.unpack)(args, "rgba");
+    rgb[0] *= 255;
+    rgb[1] *= 255;
+    rgb[2] *= 255;
+    return rgb;
+};
+(0, _chromaJsDefault.default).gl = (...args)=>new (0, _colorJsDefault.default)(...args, "gl");
+(0, _colorJsDefault.default).prototype.gl = function() {
+    const rgb = this._rgb;
+    return [
+        rgb[0] / 255,
+        rgb[1] / 255,
+        rgb[2] / 255,
+        rgb[3]
+    ];
+};
+
+},{"../../Color.js":"86WNB","../../chroma.js":"jNNC2","../input.js":"2ncJk","../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"tBkG3":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _hcg2RgbJs = require("./hcg2rgb.js");
+var _hcg2RgbJsDefault = parcelHelpers.interopDefault(_hcg2RgbJs);
+var _rgb2HcgJs = require("./rgb2hcg.js");
+var _rgb2HcgJsDefault = parcelHelpers.interopDefault(_rgb2HcgJs);
+(0, _colorJsDefault.default).prototype.hcg = function() {
+    return (0, _rgb2HcgJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).hcg = (...args)=>new (0, _colorJsDefault.default)(...args, "hcg");
+(0, _inputJsDefault.default).format.hcg = (0, _hcg2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 1,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "hcg");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "hcg";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./hcg2rgb.js":"9r55O","./rgb2hcg.js":"haUz3","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9r55O":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { floor } = Math;
+/*
+ * this is basically just HSV with some minor tweaks
+ *
+ * hue.. [0..360]
+ * chroma .. [0..1]
+ * grayness .. [0..1]
+ */ const hcg2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "hcg");
+    let [h, c, _g] = args;
+    let r, g, b;
+    _g = _g * 255;
+    const _c = c * 255;
+    if (c === 0) r = g = b = _g;
+    else {
+        if (h === 360) h = 0;
         if (h > 360) h -= 360;
         if (h < 0) h += 360;
-        h /= 360;
-        if (h < 1 / 3) {
-            b = (1 - s) / 3;
-            r = (1 + s * cos$4(TWOPI$1 * h) / cos$4(PITHIRD - TWOPI$1 * h)) / 3;
-            g = 1 - (b + r);
-        } else if (h < 2 / 3) {
-            h -= 1 / 3;
-            r = (1 - s) / 3;
-            g = (1 + s * cos$4(TWOPI$1 * h) / cos$4(PITHIRD - TWOPI$1 * h)) / 3;
-            b = 1 - (r + g);
-        } else {
-            h -= 2 / 3;
-            g = (1 - s) / 3;
-            b = (1 + s * cos$4(TWOPI$1 * h) / cos$4(PITHIRD - TWOPI$1 * h)) / 3;
-            r = 1 - (g + b);
+        h /= 60;
+        const i = floor(h);
+        const f = h - i;
+        const p = _g * (1 - c);
+        const q = p + _c * (1 - f);
+        const t = p + _c * f;
+        const v = p + _c;
+        switch(i){
+            case 0:
+                [r, g, b] = [
+                    v,
+                    t,
+                    p
+                ];
+                break;
+            case 1:
+                [r, g, b] = [
+                    q,
+                    v,
+                    p
+                ];
+                break;
+            case 2:
+                [r, g, b] = [
+                    p,
+                    v,
+                    t
+                ];
+                break;
+            case 3:
+                [r, g, b] = [
+                    p,
+                    q,
+                    v
+                ];
+                break;
+            case 4:
+                [r, g, b] = [
+                    t,
+                    p,
+                    v
+                ];
+                break;
+            case 5:
+                [r, g, b] = [
+                    v,
+                    p,
+                    q
+                ];
+                break;
         }
-        r = limit(i * r * 3);
-        g = limit(i * g * 3);
-        b = limit(i * b * 3);
-        return [
-            r * 255,
-            g * 255,
-            b * 255,
-            args.length > 3 ? args[3] : 1
-        ];
-    };
-    var hsi2rgb_1 = hsi2rgb;
-    var unpack$m = utils.unpack;
-    var type$h = utils.type;
-    var chroma$e = chroma_1;
-    var Color$x = Color_1;
-    var input$a = input$h;
-    var rgb2hsi = rgb2hsi_1;
-    Color$x.prototype.hsi = function() {
-        return rgb2hsi(this._rgb);
-    };
-    chroma$e.hsi = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$x, [
-            null
-        ].concat(args, [
-            "hsi"
-        ])));
-    };
-    input$a.format.hsi = hsi2rgb_1;
-    input$a.autodetect.push({
-        p: 2,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$m(args, "hsi");
-            if (type$h(args) === "array" && args.length === 3) return "hsi";
-        }
-    });
-    var unpack$l = utils.unpack;
-    var type$g = utils.type;
-    var chroma$d = chroma_1;
-    var Color$w = Color_1;
-    var input$9 = input$h;
-    var rgb2hsl$1 = rgb2hsl_1;
-    Color$w.prototype.hsl = function() {
-        return rgb2hsl$1(this._rgb);
-    };
-    chroma$d.hsl = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$w, [
-            null
-        ].concat(args, [
-            "hsl"
-        ])));
-    };
-    input$9.format.hsl = hsl2rgb_1;
-    input$9.autodetect.push({
-        p: 2,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$l(args, "hsl");
-            if (type$g(args) === "array" && args.length === 3) return "hsl";
-        }
-    });
-    var unpack$k = utils.unpack;
-    var min$1 = Math.min;
-    var max$1 = Math.max;
-    /*
-     * supported arguments:
-     * - rgb2hsv(r,g,b)
-     * - rgb2hsv([r,g,b])
-     * - rgb2hsv({r,g,b})
-     */ var rgb2hsl = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$k(args, "rgb");
-        var r = args[0];
-        var g = args[1];
-        var b = args[2];
-        var min_ = min$1(r, g, b);
-        var max_ = max$1(r, g, b);
-        var delta = max_ - min_;
-        var h, s, v;
-        v = max_ / 255.0;
-        if (max_ === 0) {
-            h = Number.NaN;
-            s = 0;
-        } else {
-            s = delta / max_;
-            if (r === max_) h = (g - b) / delta;
-            if (g === max_) h = 2 + (b - r) / delta;
-            if (b === max_) h = 4 + (r - g) / delta;
-            h *= 60;
-            if (h < 0) h += 360;
-        }
-        return [
-            h,
-            s,
-            v
-        ];
-    };
-    var rgb2hsv$1 = rgb2hsl;
-    var unpack$j = utils.unpack;
-    var floor$2 = Math.floor;
-    var hsv2rgb = function() {
-        var assign, assign$1, assign$2, assign$3, assign$4, assign$5;
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$j(args, "hsv");
-        var h = args[0];
-        var s = args[1];
-        var v = args[2];
-        var r, g, b;
-        v *= 255;
-        if (s === 0) r = g = b = v;
-        else {
-            if (h === 360) h = 0;
-            if (h > 360) h -= 360;
-            if (h < 0) h += 360;
-            h /= 60;
-            var i = floor$2(h);
-            var f = h - i;
-            var p = v * (1 - s);
-            var q = v * (1 - s * f);
-            var t = v * (1 - s * (1 - f));
-            switch(i){
-                case 0:
-                    assign = [
-                        v,
-                        t,
-                        p
-                    ], r = assign[0], g = assign[1], b = assign[2];
-                    break;
-                case 1:
-                    assign$1 = [
-                        q,
-                        v,
-                        p
-                    ], r = assign$1[0], g = assign$1[1], b = assign$1[2];
-                    break;
-                case 2:
-                    assign$2 = [
-                        p,
-                        v,
-                        t
-                    ], r = assign$2[0], g = assign$2[1], b = assign$2[2];
-                    break;
-                case 3:
-                    assign$3 = [
-                        p,
-                        q,
-                        v
-                    ], r = assign$3[0], g = assign$3[1], b = assign$3[2];
-                    break;
-                case 4:
-                    assign$4 = [
-                        t,
-                        p,
-                        v
-                    ], r = assign$4[0], g = assign$4[1], b = assign$4[2];
-                    break;
-                case 5:
-                    assign$5 = [
-                        v,
-                        p,
-                        q
-                    ], r = assign$5[0], g = assign$5[1], b = assign$5[2];
-                    break;
-            }
-        }
-        return [
-            r,
-            g,
-            b,
-            args.length > 3 ? args[3] : 1
-        ];
-    };
-    var hsv2rgb_1 = hsv2rgb;
-    var unpack$i = utils.unpack;
-    var type$f = utils.type;
-    var chroma$c = chroma_1;
-    var Color$v = Color_1;
-    var input$8 = input$h;
-    var rgb2hsv = rgb2hsv$1;
-    Color$v.prototype.hsv = function() {
-        return rgb2hsv(this._rgb);
-    };
-    chroma$c.hsv = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$v, [
-            null
-        ].concat(args, [
-            "hsv"
-        ])));
-    };
-    input$8.format.hsv = hsv2rgb_1;
-    input$8.autodetect.push({
-        p: 2,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$i(args, "hsv");
-            if (type$f(args) === "array" && args.length === 3) return "hsv";
-        }
-    });
-    var labConstants = {
-        // Corresponds roughly to RGB brighter/darker
-        Kn: 18,
-        // D65 standard referent
-        Xn: 0.950470,
-        Yn: 1,
-        Zn: 1.088830,
-        t0: 0.137931034,
-        t1: 0.206896552,
-        t2: 0.12841855,
-        t3: 0.008856452
-    };
-    var LAB_CONSTANTS$3 = labConstants;
-    var unpack$h = utils.unpack;
-    var pow$a = Math.pow;
-    var rgb2lab$2 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$h(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var ref$1 = rgb2xyz(r, g, b);
-        var x = ref$1[0];
-        var y = ref$1[1];
-        var z = ref$1[2];
-        var l = 116 * y - 16;
-        return [
-            l < 0 ? 0 : l,
-            500 * (x - y),
-            200 * (y - z)
-        ];
-    };
-    var rgb_xyz = function(r) {
-        if ((r /= 255) <= 0.04045) return r / 12.92;
-        return pow$a((r + 0.055) / 1.055, 2.4);
-    };
-    var xyz_lab = function(t) {
-        if (t > LAB_CONSTANTS$3.t3) return pow$a(t, 1 / 3);
-        return t / LAB_CONSTANTS$3.t2 + LAB_CONSTANTS$3.t0;
-    };
-    var rgb2xyz = function(r, g, b) {
-        r = rgb_xyz(r);
-        g = rgb_xyz(g);
-        b = rgb_xyz(b);
-        var x = xyz_lab((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / LAB_CONSTANTS$3.Xn);
-        var y = xyz_lab((0.2126729 * r + 0.7151522 * g + 0.0721750 * b) / LAB_CONSTANTS$3.Yn);
-        var z = xyz_lab((0.0193339 * r + 0.1191920 * g + 0.9503041 * b) / LAB_CONSTANTS$3.Zn);
-        return [
-            x,
-            y,
-            z
-        ];
-    };
-    var rgb2lab_1 = rgb2lab$2;
-    var LAB_CONSTANTS$2 = labConstants;
-    var unpack$g = utils.unpack;
-    var pow$9 = Math.pow;
-    /*
-     * L* [0..100]
-     * a [-100..100]
-     * b [-100..100]
-     */ var lab2rgb$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$g(args, "lab");
-        var l = args[0];
-        var a = args[1];
-        var b = args[2];
-        var x, y, z, r, g, b_;
-        y = (l + 16) / 116;
-        x = isNaN(a) ? y : y + a / 500;
-        z = isNaN(b) ? y : y - b / 200;
-        y = LAB_CONSTANTS$2.Yn * lab_xyz(y);
-        x = LAB_CONSTANTS$2.Xn * lab_xyz(x);
-        z = LAB_CONSTANTS$2.Zn * lab_xyz(z);
-        r = xyz_rgb(3.2404542 * x - 1.5371385 * y - 0.4985314 * z); // D65 -> sRGB
-        g = xyz_rgb(-0.969266 * x + 1.8760108 * y + 0.0415560 * z);
-        b_ = xyz_rgb(0.0556434 * x - 0.2040259 * y + 1.0572252 * z);
-        return [
-            r,
-            g,
-            b_,
-            args.length > 3 ? args[3] : 1
-        ];
-    };
-    var xyz_rgb = function(r) {
-        return 255 * (r <= 0.00304 ? 12.92 * r : 1.055 * pow$9(r, 1 / 2.4) - 0.055);
-    };
-    var lab_xyz = function(t) {
-        return t > LAB_CONSTANTS$2.t1 ? t * t * t : LAB_CONSTANTS$2.t2 * (t - LAB_CONSTANTS$2.t0);
-    };
-    var lab2rgb_1 = lab2rgb$1;
-    var unpack$f = utils.unpack;
-    var type$e = utils.type;
-    var chroma$b = chroma_1;
-    var Color$u = Color_1;
-    var input$7 = input$h;
-    var rgb2lab$1 = rgb2lab_1;
-    Color$u.prototype.lab = function() {
-        return rgb2lab$1(this._rgb);
-    };
-    chroma$b.lab = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$u, [
-            null
-        ].concat(args, [
-            "lab"
-        ])));
-    };
-    input$7.format.lab = lab2rgb_1;
-    input$7.autodetect.push({
-        p: 2,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$f(args, "lab");
-            if (type$e(args) === "array" && args.length === 3) return "lab";
-        }
-    });
-    var unpack$e = utils.unpack;
-    var RAD2DEG = utils.RAD2DEG;
-    var sqrt$3 = Math.sqrt;
-    var atan2$2 = Math.atan2;
-    var round$2 = Math.round;
-    var lab2lch$2 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$e(args, "lab");
-        var l = ref[0];
-        var a = ref[1];
-        var b = ref[2];
-        var c = sqrt$3(a * a + b * b);
-        var h = (atan2$2(b, a) * RAD2DEG + 360) % 360;
-        if (round$2(c * 10000) === 0) h = Number.NaN;
-        return [
-            l,
-            c,
-            h
-        ];
-    };
-    var lab2lch_1 = lab2lch$2;
-    var unpack$d = utils.unpack;
-    var rgb2lab = rgb2lab_1;
-    var lab2lch$1 = lab2lch_1;
-    var rgb2lch$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$d(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var ref$1 = rgb2lab(r, g, b);
-        var l = ref$1[0];
-        var a = ref$1[1];
-        var b_ = ref$1[2];
-        return lab2lch$1(l, a, b_);
-    };
-    var rgb2lch_1 = rgb2lch$1;
-    var unpack$c = utils.unpack;
-    var DEG2RAD = utils.DEG2RAD;
-    var sin$3 = Math.sin;
-    var cos$3 = Math.cos;
-    var lch2lab$2 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        /*
-        Convert from a qualitative parameter h and a quantitative parameter l to a 24-bit pixel.
-        These formulas were invented by David Dalrymple to obtain maximum contrast without going
-        out of gamut if the parameters are in the range 0-1.
+    }
+    return [
+        r,
+        g,
+        b,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = hcg2rgb;
 
-        A saturation multiplier was added by Gregor Aisch
-        */ var ref = unpack$c(args, "lch");
-        var l = ref[0];
-        var c = ref[1];
-        var h = ref[2];
-        if (isNaN(h)) h = 0;
-        h = h * DEG2RAD;
-        return [
-            l,
-            cos$3(h) * c,
-            sin$3(h) * c
-        ];
-    };
-    var lch2lab_1 = lch2lab$2;
-    var unpack$b = utils.unpack;
-    var lch2lab$1 = lch2lab_1;
-    var lab2rgb = lab2rgb_1;
-    var lch2rgb$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$b(args, "lch");
-        var l = args[0];
-        var c = args[1];
-        var h = args[2];
-        var ref = lch2lab$1(l, c, h);
-        var L = ref[0];
-        var a = ref[1];
-        var b_ = ref[2];
-        var ref$1 = lab2rgb(L, a, b_);
-        var r = ref$1[0];
-        var g = ref$1[1];
-        var b = ref$1[2];
-        return [
-            r,
-            g,
-            b,
-            args.length > 3 ? args[3] : 1
-        ];
-    };
-    var lch2rgb_1 = lch2rgb$1;
-    var unpack$a = utils.unpack;
-    var lch2rgb = lch2rgb_1;
-    var hcl2rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var hcl = unpack$a(args, "hcl").reverse();
-        return lch2rgb.apply(void 0, hcl);
-    };
-    var hcl2rgb_1 = hcl2rgb;
-    var unpack$9 = utils.unpack;
-    var type$d = utils.type;
-    var chroma$a = chroma_1;
-    var Color$t = Color_1;
-    var input$6 = input$h;
-    var rgb2lch = rgb2lch_1;
-    Color$t.prototype.lch = function() {
-        return rgb2lch(this._rgb);
-    };
-    Color$t.prototype.hcl = function() {
-        return rgb2lch(this._rgb).reverse();
-    };
-    chroma$a.lch = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$t, [
-            null
-        ].concat(args, [
-            "lch"
-        ])));
-    };
-    chroma$a.hcl = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$t, [
-            null
-        ].concat(args, [
-            "hcl"
-        ])));
-    };
-    input$6.format.lch = lch2rgb_1;
-    input$6.format.hcl = hcl2rgb_1;
-    [
-        "lch",
-        "hcl"
-    ].forEach(function(m) {
-        return input$6.autodetect.push({
-            p: 2,
-            test: function() {
-                var args = [], len = arguments.length;
-                while(len--)args[len] = arguments[len];
-                args = unpack$9(args, m);
-                if (type$d(args) === "array" && args.length === 3) return m;
-            }
-        });
-    });
-    /**
-    	X11 color names
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"haUz3":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const rgb2hcg = (...args)=>{
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    const minRgb = (0, _indexJs.min)(r, g, b);
+    const maxRgb = (0, _indexJs.max)(r, g, b);
+    const delta = maxRgb - minRgb;
+    const c = delta * 100 / 255;
+    const _g = minRgb / (255 - delta) * 100;
+    let h;
+    if (delta === 0) h = Number.NaN;
+    else {
+        if (r === maxRgb) h = (g - b) / delta;
+        if (g === maxRgb) h = 2 + (b - r) / delta;
+        if (b === maxRgb) h = 4 + (r - g) / delta;
+        h *= 60;
+        if (h < 0) h += 360;
+    }
+    return [
+        h,
+        c,
+        _g
+    ];
+};
+exports.default = rgb2hcg;
 
-    	http://www.w3.org/TR/css3-color/#svg-color
-    */ var w3cx11$1 = {
-        aliceblue: "#f0f8ff",
-        antiquewhite: "#faebd7",
-        aqua: "#00ffff",
-        aquamarine: "#7fffd4",
-        azure: "#f0ffff",
-        beige: "#f5f5dc",
-        bisque: "#ffe4c4",
-        black: "#000000",
-        blanchedalmond: "#ffebcd",
-        blue: "#0000ff",
-        blueviolet: "#8a2be2",
-        brown: "#a52a2a",
-        burlywood: "#deb887",
-        cadetblue: "#5f9ea0",
-        chartreuse: "#7fff00",
-        chocolate: "#d2691e",
-        coral: "#ff7f50",
-        cornflower: "#6495ed",
-        cornflowerblue: "#6495ed",
-        cornsilk: "#fff8dc",
-        crimson: "#dc143c",
-        cyan: "#00ffff",
-        darkblue: "#00008b",
-        darkcyan: "#008b8b",
-        darkgoldenrod: "#b8860b",
-        darkgray: "#a9a9a9",
-        darkgreen: "#006400",
-        darkgrey: "#a9a9a9",
-        darkkhaki: "#bdb76b",
-        darkmagenta: "#8b008b",
-        darkolivegreen: "#556b2f",
-        darkorange: "#ff8c00",
-        darkorchid: "#9932cc",
-        darkred: "#8b0000",
-        darksalmon: "#e9967a",
-        darkseagreen: "#8fbc8f",
-        darkslateblue: "#483d8b",
-        darkslategray: "#2f4f4f",
-        darkslategrey: "#2f4f4f",
-        darkturquoise: "#00ced1",
-        darkviolet: "#9400d3",
-        deeppink: "#ff1493",
-        deepskyblue: "#00bfff",
-        dimgray: "#696969",
-        dimgrey: "#696969",
-        dodgerblue: "#1e90ff",
-        firebrick: "#b22222",
-        floralwhite: "#fffaf0",
-        forestgreen: "#228b22",
-        fuchsia: "#ff00ff",
-        gainsboro: "#dcdcdc",
-        ghostwhite: "#f8f8ff",
-        gold: "#ffd700",
-        goldenrod: "#daa520",
-        gray: "#808080",
-        green: "#008000",
-        greenyellow: "#adff2f",
-        grey: "#808080",
-        honeydew: "#f0fff0",
-        hotpink: "#ff69b4",
-        indianred: "#cd5c5c",
-        indigo: "#4b0082",
-        ivory: "#fffff0",
-        khaki: "#f0e68c",
-        laserlemon: "#ffff54",
-        lavender: "#e6e6fa",
-        lavenderblush: "#fff0f5",
-        lawngreen: "#7cfc00",
-        lemonchiffon: "#fffacd",
-        lightblue: "#add8e6",
-        lightcoral: "#f08080",
-        lightcyan: "#e0ffff",
-        lightgoldenrod: "#fafad2",
-        lightgoldenrodyellow: "#fafad2",
-        lightgray: "#d3d3d3",
-        lightgreen: "#90ee90",
-        lightgrey: "#d3d3d3",
-        lightpink: "#ffb6c1",
-        lightsalmon: "#ffa07a",
-        lightseagreen: "#20b2aa",
-        lightskyblue: "#87cefa",
-        lightslategray: "#778899",
-        lightslategrey: "#778899",
-        lightsteelblue: "#b0c4de",
-        lightyellow: "#ffffe0",
-        lime: "#00ff00",
-        limegreen: "#32cd32",
-        linen: "#faf0e6",
-        magenta: "#ff00ff",
-        maroon: "#800000",
-        maroon2: "#7f0000",
-        maroon3: "#b03060",
-        mediumaquamarine: "#66cdaa",
-        mediumblue: "#0000cd",
-        mediumorchid: "#ba55d3",
-        mediumpurple: "#9370db",
-        mediumseagreen: "#3cb371",
-        mediumslateblue: "#7b68ee",
-        mediumspringgreen: "#00fa9a",
-        mediumturquoise: "#48d1cc",
-        mediumvioletred: "#c71585",
-        midnightblue: "#191970",
-        mintcream: "#f5fffa",
-        mistyrose: "#ffe4e1",
-        moccasin: "#ffe4b5",
-        navajowhite: "#ffdead",
-        navy: "#000080",
-        oldlace: "#fdf5e6",
-        olive: "#808000",
-        olivedrab: "#6b8e23",
-        orange: "#ffa500",
-        orangered: "#ff4500",
-        orchid: "#da70d6",
-        palegoldenrod: "#eee8aa",
-        palegreen: "#98fb98",
-        paleturquoise: "#afeeee",
-        palevioletred: "#db7093",
-        papayawhip: "#ffefd5",
-        peachpuff: "#ffdab9",
-        peru: "#cd853f",
-        pink: "#ffc0cb",
-        plum: "#dda0dd",
-        powderblue: "#b0e0e6",
-        purple: "#800080",
-        purple2: "#7f007f",
-        purple3: "#a020f0",
-        rebeccapurple: "#663399",
-        red: "#ff0000",
-        rosybrown: "#bc8f8f",
-        royalblue: "#4169e1",
-        saddlebrown: "#8b4513",
-        salmon: "#fa8072",
-        sandybrown: "#f4a460",
-        seagreen: "#2e8b57",
-        seashell: "#fff5ee",
-        sienna: "#a0522d",
-        silver: "#c0c0c0",
-        skyblue: "#87ceeb",
-        slateblue: "#6a5acd",
-        slategray: "#708090",
-        slategrey: "#708090",
-        snow: "#fffafa",
-        springgreen: "#00ff7f",
-        steelblue: "#4682b4",
-        tan: "#d2b48c",
-        teal: "#008080",
-        thistle: "#d8bfd8",
-        tomato: "#ff6347",
-        turquoise: "#40e0d0",
-        violet: "#ee82ee",
-        wheat: "#f5deb3",
-        white: "#ffffff",
-        whitesmoke: "#f5f5f5",
-        yellow: "#ffff00",
-        yellowgreen: "#9acd32"
-    };
-    var w3cx11_1 = w3cx11$1;
-    var Color$s = Color_1;
-    var input$5 = input$h;
-    var type$c = utils.type;
-    var w3cx11 = w3cx11_1;
-    var hex2rgb = hex2rgb_1;
-    var rgb2hex = rgb2hex_1;
-    Color$s.prototype.name = function() {
-        var hex = rgb2hex(this._rgb, "rgb");
-        for(var i = 0, list = Object.keys(w3cx11); i < list.length; i += 1){
-            var n = list[i];
-            if (w3cx11[n] === hex) return n.toLowerCase();
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dNTHS":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../../utils/index.js");
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _hex2RgbJs = require("./hex2rgb.js");
+var _hex2RgbJsDefault = parcelHelpers.interopDefault(_hex2RgbJs);
+var _rgb2HexJs = require("./rgb2hex.js");
+var _rgb2HexJsDefault = parcelHelpers.interopDefault(_rgb2HexJs);
+(0, _colorJsDefault.default).prototype.hex = function(mode) {
+    return (0, _rgb2HexJsDefault.default)(this._rgb, mode);
+};
+(0, _chromaJsDefault.default).hex = (...args)=>new (0, _colorJsDefault.default)(...args, "hex");
+(0, _inputJsDefault.default).format.hex = (0, _hex2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 4,
+    test: (h, ...rest)=>{
+        if (!rest.length && (0, _indexJs.type)(h) === "string" && [
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+        ].indexOf(h.length) >= 0) return "hex";
+    }
+});
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../../utils/index.js":"FsUmr","../input.js":"2ncJk","./hex2rgb.js":"a9jpQ","./rgb2hex.js":"3c37q","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"a9jpQ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+const RE_HEX = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+const RE_HEXA = /^#?([A-Fa-f0-9]{8}|[A-Fa-f0-9]{4})$/;
+const hex2rgb = (hex)=>{
+    if (hex.match(RE_HEX)) {
+        // remove optional leading #
+        if (hex.length === 4 || hex.length === 7) hex = hex.substr(1);
+        // expand short-notation to full six-digit
+        if (hex.length === 3) {
+            hex = hex.split("");
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
         }
-        return hex;
-    };
-    input$5.format.named = function(name) {
-        name = name.toLowerCase();
-        if (w3cx11[name]) return hex2rgb(w3cx11[name]);
-        throw new Error("unknown color name: " + name);
-    };
-    input$5.autodetect.push({
-        p: 5,
-        test: function(h) {
-            var rest = [], len = arguments.length - 1;
-            while(len-- > 0)rest[len] = arguments[len + 1];
-            if (!rest.length && type$c(h) === "string" && w3cx11[h.toLowerCase()]) return "named";
-        }
-    });
-    var unpack$8 = utils.unpack;
-    var rgb2num$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$8(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        return (r << 16) + (g << 8) + b;
-    };
-    var rgb2num_1 = rgb2num$1;
-    var type$b = utils.type;
-    var num2rgb = function(num) {
-        if (type$b(num) == "number" && num >= 0 && num <= 0xFFFFFF) {
-            var r = num >> 16;
-            var g = num >> 8 & 0xFF;
-            var b = num & 0xFF;
-            return [
-                r,
-                g,
-                b,
-                1
-            ];
-        }
-        throw new Error("unknown num color: " + num);
-    };
-    var num2rgb_1 = num2rgb;
-    var chroma$9 = chroma_1;
-    var Color$r = Color_1;
-    var input$4 = input$h;
-    var type$a = utils.type;
-    var rgb2num = rgb2num_1;
-    Color$r.prototype.num = function() {
-        return rgb2num(this._rgb);
-    };
-    chroma$9.num = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$r, [
-            null
-        ].concat(args, [
-            "num"
-        ])));
-    };
-    input$4.format.num = num2rgb_1;
-    input$4.autodetect.push({
-        p: 5,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            if (args.length === 1 && type$a(args[0]) === "number" && args[0] >= 0 && args[0] <= 0xFFFFFF) return "num";
-        }
-    });
-    var chroma$8 = chroma_1;
-    var Color$q = Color_1;
-    var input$3 = input$h;
-    var unpack$7 = utils.unpack;
-    var type$9 = utils.type;
-    var round$1 = Math.round;
-    Color$q.prototype.rgb = function(rnd) {
-        if (rnd === void 0) rnd = true;
-        if (rnd === false) return this._rgb.slice(0, 3);
-        return this._rgb.slice(0, 3).map(round$1);
-    };
-    Color$q.prototype.rgba = function(rnd) {
-        if (rnd === void 0) rnd = true;
-        return this._rgb.slice(0, 4).map(function(v, i) {
-            return i < 3 ? rnd === false ? v : round$1(v) : v;
-        });
-    };
-    chroma$8.rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$q, [
-            null
-        ].concat(args, [
-            "rgb"
-        ])));
-    };
-    input$3.format.rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var rgba = unpack$7(args, "rgba");
-        if (rgba[3] === undefined) rgba[3] = 1;
-        return rgba;
-    };
-    input$3.autodetect.push({
-        p: 3,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$7(args, "rgba");
-            if (type$9(args) === "array" && (args.length === 3 || args.length === 4 && type$9(args[3]) == "number" && args[3] >= 0 && args[3] <= 1)) return "rgb";
-        }
-    });
-    /*
-     * Based on implementation by Neil Bartlett
-     * https://github.com/neilbartlett/color-temperature
-     */ var log$1 = Math.log;
-    var temperature2rgb$1 = function(kelvin) {
-        var temp = kelvin / 100;
-        var r, g, b;
-        if (temp < 66) {
-            r = 255;
-            g = temp < 6 ? 0 : -155.25485562709179 - 0.44596950469579133 * (g = temp - 2) + 104.49216199393888 * log$1(g);
-            b = temp < 20 ? 0 : -254.76935184120902 + 0.8274096064007395 * (b = temp - 10) + 115.67994401066147 * log$1(b);
-        } else {
-            r = 351.97690566805693 + 0.114206453784165 * (r = temp - 55) - 40.25366309332127 * log$1(r);
-            g = 325.4494125711974 + 0.07943456536662342 * (g = temp - 50) - 28.0852963507957 * log$1(g);
-            b = 255;
-        }
+        const u = parseInt(hex, 16);
+        const r = u >> 16;
+        const g = u >> 8 & 0xff;
+        const b = u & 0xff;
         return [
             r,
             g,
             b,
             1
         ];
-    };
-    var temperature2rgb_1 = temperature2rgb$1;
-    /*
-     * Based on implementation by Neil Bartlett
-     * https://github.com/neilbartlett/color-temperature
-     **/ var temperature2rgb = temperature2rgb_1;
-    var unpack$6 = utils.unpack;
-    var round = Math.round;
-    var rgb2temperature$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var rgb = unpack$6(args, "rgb");
-        var r = rgb[0], b = rgb[2];
-        var minTemp = 1000;
-        var maxTemp = 40000;
-        var eps = 0.4;
-        var temp;
-        while(maxTemp - minTemp > eps){
-            temp = (maxTemp + minTemp) * 0.5;
-            var rgb$1 = temperature2rgb(temp);
-            if (rgb$1[2] / rgb$1[0] >= b / r) maxTemp = temp;
-            else minTemp = temp;
-        }
-        return round(temp);
-    };
-    var rgb2temperature_1 = rgb2temperature$1;
-    var chroma$7 = chroma_1;
-    var Color$p = Color_1;
-    var input$2 = input$h;
-    var rgb2temperature = rgb2temperature_1;
-    Color$p.prototype.temp = Color$p.prototype.kelvin = Color$p.prototype.temperature = function() {
-        return rgb2temperature(this._rgb);
-    };
-    chroma$7.temp = chroma$7.kelvin = chroma$7.temperature = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$p, [
-            null
-        ].concat(args, [
-            "temp"
-        ])));
-    };
-    input$2.format.temp = input$2.format.kelvin = input$2.format.temperature = temperature2rgb_1;
-    var unpack$5 = utils.unpack;
-    var cbrt = Math.cbrt;
-    var pow$8 = Math.pow;
-    var sign$1 = Math.sign;
-    var rgb2oklab$2 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        // OKLab color space implementation taken from
-        // https://bottosson.github.io/posts/oklab/
-        var ref = unpack$5(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var ref$1 = [
-            rgb2lrgb(r / 255),
-            rgb2lrgb(g / 255),
-            rgb2lrgb(b / 255)
-        ];
-        var lr = ref$1[0];
-        var lg = ref$1[1];
-        var lb = ref$1[2];
-        var l = cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
-        var m = cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
-        var s = cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
-        return [
-            0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
-            1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
-            0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
-        ];
-    };
-    var rgb2oklab_1 = rgb2oklab$2;
-    function rgb2lrgb(c) {
-        var abs = Math.abs(c);
-        if (abs < 0.04045) return c / 12.92;
-        return (sign$1(c) || 1) * pow$8((abs + 0.055) / 1.055, 2.4);
     }
-    var unpack$4 = utils.unpack;
-    var pow$7 = Math.pow;
-    var sign = Math.sign;
-    /*
-     * L* [0..100]
-     * a [-100..100]
-     * b [-100..100]
-     */ var oklab2rgb$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$4(args, "lab");
-        var L = args[0];
-        var a = args[1];
-        var b = args[2];
-        var l = pow$7(L + 0.3963377774 * a + 0.2158037573 * b, 3);
-        var m = pow$7(L - 0.1055613458 * a - 0.0638541728 * b, 3);
-        var s = pow$7(L - 0.0894841775 * a - 1.291485548 * b, 3);
-        return [
-            255 * lrgb2rgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
-            255 * lrgb2rgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
-            255 * lrgb2rgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
-            args.length > 3 ? args[3] : 1
-        ];
-    };
-    var oklab2rgb_1 = oklab2rgb$1;
-    function lrgb2rgb(c) {
-        var abs = Math.abs(c);
-        if (abs > 0.0031308) return (sign(c) || 1) * (1.055 * pow$7(abs, 1 / 2.4) - 0.055);
-        return c * 12.92;
-    }
-    var unpack$3 = utils.unpack;
-    var type$8 = utils.type;
-    var chroma$6 = chroma_1;
-    var Color$o = Color_1;
-    var input$1 = input$h;
-    var rgb2oklab$1 = rgb2oklab_1;
-    Color$o.prototype.oklab = function() {
-        return rgb2oklab$1(this._rgb);
-    };
-    chroma$6.oklab = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$o, [
-            null
-        ].concat(args, [
-            "oklab"
-        ])));
-    };
-    input$1.format.oklab = oklab2rgb_1;
-    input$1.autodetect.push({
-        p: 3,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack$3(args, "oklab");
-            if (type$8(args) === "array" && args.length === 3) return "oklab";
+    // match rgba hex format, eg #FF000077
+    if (hex.match(RE_HEXA)) {
+        if (hex.length === 5 || hex.length === 9) // remove optional leading #
+        hex = hex.substr(1);
+        // expand short-notation to full eight-digit
+        if (hex.length === 4) {
+            hex = hex.split("");
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
         }
-    });
-    var unpack$2 = utils.unpack;
-    var rgb2oklab = rgb2oklab_1;
-    var lab2lch = lab2lch_1;
-    var rgb2oklch$1 = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        var ref = unpack$2(args, "rgb");
-        var r = ref[0];
-        var g = ref[1];
-        var b = ref[2];
-        var ref$1 = rgb2oklab(r, g, b);
-        var l = ref$1[0];
-        var a = ref$1[1];
-        var b_ = ref$1[2];
-        return lab2lch(l, a, b_);
-    };
-    var rgb2oklch_1 = rgb2oklch$1;
-    var unpack$1 = utils.unpack;
-    var lch2lab = lch2lab_1;
-    var oklab2rgb = oklab2rgb_1;
-    var oklch2rgb = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        args = unpack$1(args, "lch");
-        var l = args[0];
-        var c = args[1];
-        var h = args[2];
-        var ref = lch2lab(l, c, h);
-        var L = ref[0];
-        var a = ref[1];
-        var b_ = ref[2];
-        var ref$1 = oklab2rgb(L, a, b_);
-        var r = ref$1[0];
-        var g = ref$1[1];
-        var b = ref$1[2];
+        const u = parseInt(hex, 16);
+        const r = u >> 24 & 0xff;
+        const g = u >> 16 & 0xff;
+        const b = u >> 8 & 0xff;
+        const a = Math.round((u & 0xff) / 0xff * 100) / 100;
         return [
             r,
             g,
             b,
-            args.length > 3 ? args[3] : 1
+            a
         ];
-    };
-    var oklch2rgb_1 = oklch2rgb;
-    var unpack = utils.unpack;
-    var type$7 = utils.type;
-    var chroma$5 = chroma_1;
-    var Color$n = Color_1;
-    var input = input$h;
-    var rgb2oklch = rgb2oklch_1;
-    Color$n.prototype.oklch = function() {
-        return rgb2oklch(this._rgb);
-    };
-    chroma$5.oklch = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        return new (Function.prototype.bind.apply(Color$n, [
-            null
-        ].concat(args, [
-            "oklch"
-        ])));
-    };
-    input.format.oklch = oklch2rgb_1;
-    input.autodetect.push({
-        p: 3,
-        test: function() {
-            var args = [], len = arguments.length;
-            while(len--)args[len] = arguments[len];
-            args = unpack(args, "oklch");
-            if (type$7(args) === "array" && args.length === 3) return "oklch";
+    }
+    // we used to check for css colors here
+    // if _input.css? and rgb = _input.css hex
+    //     return rgb
+    throw new Error(`unknown hex color: ${hex}`);
+};
+exports.default = hex2rgb;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3c37q":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { round } = Math;
+const rgb2hex = (...args)=>{
+    let [r, g, b, a] = (0, _indexJs.unpack)(args, "rgba");
+    let mode = (0, _indexJs.last)(args) || "auto";
+    if (a === undefined) a = 1;
+    if (mode === "auto") mode = a < 1 ? "rgba" : "rgb";
+    r = round(r);
+    g = round(g);
+    b = round(b);
+    const u = r << 16 | g << 8 | b;
+    let str = "000000" + u.toString(16); //#.toUpperCase();
+    str = str.substr(str.length - 6);
+    let hxa = "0" + round(a * 255).toString(16);
+    hxa = hxa.substr(hxa.length - 2);
+    switch(mode.toLowerCase()){
+        case "rgba":
+            return `#${str}${hxa}`;
+        case "argb":
+            return `#${hxa}${str}`;
+        default:
+            return `#${str}`;
+    }
+};
+exports.default = rgb2hex;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kYSQw":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _hsi2RgbJs = require("./hsi2rgb.js");
+var _hsi2RgbJsDefault = parcelHelpers.interopDefault(_hsi2RgbJs);
+var _rgb2HsiJs = require("./rgb2hsi.js");
+var _rgb2HsiJsDefault = parcelHelpers.interopDefault(_rgb2HsiJs);
+(0, _colorJsDefault.default).prototype.hsi = function() {
+    return (0, _rgb2HsiJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).hsi = (...args)=>new (0, _colorJsDefault.default)(...args, "hsi");
+(0, _inputJsDefault.default).format.hsi = (0, _hsi2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 2,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "hsi");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "hsi";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./hsi2rgb.js":"kMU9W","./rgb2hsi.js":"g5Gcy","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kMU9W":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { cos } = Math;
+/*
+ * hue [0..360]
+ * saturation [0..1]
+ * intensity [0..1]
+ */ const hsi2rgb = (...args)=>{
+    /*
+    borrowed from here:
+    http://hummer.stanford.edu/museinfo/doc/examples/humdrum/keyscape2/hsi2rgb.cpp
+    */ args = (0, _indexJs.unpack)(args, "hsi");
+    let [h, s, i] = args;
+    let r, g, b;
+    if (isNaN(h)) h = 0;
+    if (isNaN(s)) s = 0;
+    // normalize hue
+    if (h > 360) h -= 360;
+    if (h < 0) h += 360;
+    h /= 360;
+    if (h < 1 / 3) {
+        b = (1 - s) / 3;
+        r = (1 + s * cos((0, _indexJs.TWOPI) * h) / cos((0, _indexJs.PITHIRD) - (0, _indexJs.TWOPI) * h)) / 3;
+        g = 1 - (b + r);
+    } else if (h < 2 / 3) {
+        h -= 1 / 3;
+        r = (1 - s) / 3;
+        g = (1 + s * cos((0, _indexJs.TWOPI) * h) / cos((0, _indexJs.PITHIRD) - (0, _indexJs.TWOPI) * h)) / 3;
+        b = 1 - (r + g);
+    } else {
+        h -= 2 / 3;
+        g = (1 - s) / 3;
+        b = (1 + s * cos((0, _indexJs.TWOPI) * h) / cos((0, _indexJs.PITHIRD) - (0, _indexJs.TWOPI) * h)) / 3;
+        r = 1 - (g + b);
+    }
+    r = (0, _indexJs.limit)(i * r * 3);
+    g = (0, _indexJs.limit)(i * g * 3);
+    b = (0, _indexJs.limit)(i * b * 3);
+    return [
+        r * 255,
+        g * 255,
+        b * 255,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = hsi2rgb;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"g5Gcy":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { min, sqrt, acos } = Math;
+const rgb2hsi = (...args)=>{
+    /*
+    borrowed from here:
+    http://hummer.stanford.edu/museinfo/doc/examples/humdrum/keyscape2/rgb2hsi.cpp
+    */ let [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    let h;
+    const min_ = min(r, g, b);
+    const i = (r + g + b) / 3;
+    const s = i > 0 ? 1 - min_ / i : 0;
+    if (s === 0) h = NaN;
+    else {
+        h = (r - g + (r - b)) / 2;
+        h /= sqrt((r - g) * (r - g) + (r - b) * (g - b));
+        h = acos(h);
+        if (b > g) h = (0, _indexJs.TWOPI) - h;
+        h /= (0, _indexJs.TWOPI);
+    }
+    return [
+        h * 360,
+        s,
+        i
+    ];
+};
+exports.default = rgb2hsi;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jIO0h":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _hsl2RgbJs = require("./hsl2rgb.js");
+var _hsl2RgbJsDefault = parcelHelpers.interopDefault(_hsl2RgbJs);
+var _rgb2HslJs = require("./rgb2hsl.js");
+var _rgb2HslJsDefault = parcelHelpers.interopDefault(_rgb2HslJs);
+(0, _colorJsDefault.default).prototype.hsl = function() {
+    return (0, _rgb2HslJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).hsl = (...args)=>new (0, _colorJsDefault.default)(...args, "hsl");
+(0, _inputJsDefault.default).format.hsl = (0, _hsl2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 2,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "hsl");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "hsl";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./hsl2rgb.js":"dv6uz","./rgb2hsl.js":"htYyX","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4uLhg":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _hsv2RgbJs = require("./hsv2rgb.js");
+var _hsv2RgbJsDefault = parcelHelpers.interopDefault(_hsv2RgbJs);
+var _rgb2HsvJs = require("./rgb2hsv.js");
+var _rgb2HsvJsDefault = parcelHelpers.interopDefault(_rgb2HsvJs);
+(0, _colorJsDefault.default).prototype.hsv = function() {
+    return (0, _rgb2HsvJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).hsv = (...args)=>new (0, _colorJsDefault.default)(...args, "hsv");
+(0, _inputJsDefault.default).format.hsv = (0, _hsv2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 2,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "hsv");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "hsv";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./hsv2rgb.js":"8eknv","./rgb2hsv.js":"lPOIi","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8eknv":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { floor } = Math;
+const hsv2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "hsv");
+    let [h, s, v] = args;
+    let r, g, b;
+    v *= 255;
+    if (s === 0) r = g = b = v;
+    else {
+        if (h === 360) h = 0;
+        if (h > 360) h -= 360;
+        if (h < 0) h += 360;
+        h /= 60;
+        const i = floor(h);
+        const f = h - i;
+        const p = v * (1 - s);
+        const q = v * (1 - s * f);
+        const t = v * (1 - s * (1 - f));
+        switch(i){
+            case 0:
+                [r, g, b] = [
+                    v,
+                    t,
+                    p
+                ];
+                break;
+            case 1:
+                [r, g, b] = [
+                    q,
+                    v,
+                    p
+                ];
+                break;
+            case 2:
+                [r, g, b] = [
+                    p,
+                    v,
+                    t
+                ];
+                break;
+            case 3:
+                [r, g, b] = [
+                    p,
+                    q,
+                    v
+                ];
+                break;
+            case 4:
+                [r, g, b] = [
+                    t,
+                    p,
+                    v
+                ];
+                break;
+            case 5:
+                [r, g, b] = [
+                    v,
+                    p,
+                    q
+                ];
+                break;
         }
+    }
+    return [
+        r,
+        g,
+        b,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = hsv2rgb;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lPOIi":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { min, max } = Math;
+/*
+ * supported arguments:
+ * - rgb2hsv(r,g,b)
+ * - rgb2hsv([r,g,b])
+ * - rgb2hsv({r,g,b})
+ */ const rgb2hsl = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "rgb");
+    let [r, g, b] = args;
+    const min_ = min(r, g, b);
+    const max_ = max(r, g, b);
+    const delta = max_ - min_;
+    let h, s, v;
+    v = max_ / 255.0;
+    if (max_ === 0) {
+        h = Number.NaN;
+        s = 0;
+    } else {
+        s = delta / max_;
+        if (r === max_) h = (g - b) / delta;
+        if (g === max_) h = 2 + (b - r) / delta;
+        if (b === max_) h = 4 + (r - g) / delta;
+        h *= 60;
+        if (h < 0) h += 360;
+    }
+    return [
+        h,
+        s,
+        v
+    ];
+};
+exports.default = rgb2hsl;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gMW4F":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _lab2RgbJs = require("./lab2rgb.js");
+var _lab2RgbJsDefault = parcelHelpers.interopDefault(_lab2RgbJs);
+var _rgb2LabJs = require("./rgb2lab.js");
+var _rgb2LabJsDefault = parcelHelpers.interopDefault(_rgb2LabJs);
+(0, _colorJsDefault.default).prototype.lab = function() {
+    return (0, _rgb2LabJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).lab = (...args)=>new (0, _colorJsDefault.default)(...args, "lab");
+(0, _inputJsDefault.default).format.lab = (0, _lab2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 2,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "lab");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "lab";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./lab2rgb.js":"dOvRZ","./rgb2lab.js":"fXI7U","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dOvRZ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _labConstantsJs = require("./lab-constants.js");
+var _labConstantsJsDefault = parcelHelpers.interopDefault(_labConstantsJs);
+var _indexJs = require("../../utils/index.js");
+const { pow } = Math;
+/*
+ * L* [0..100]
+ * a [-100..100]
+ * b [-100..100]
+ */ const lab2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "lab");
+    const [l, a, b] = args;
+    let x, y, z, r, g, b_;
+    y = (l + 16) / 116;
+    x = isNaN(a) ? y : y + a / 500;
+    z = isNaN(b) ? y : y - b / 200;
+    y = (0, _labConstantsJsDefault.default).Yn * lab_xyz(y);
+    x = (0, _labConstantsJsDefault.default).Xn * lab_xyz(x);
+    z = (0, _labConstantsJsDefault.default).Zn * lab_xyz(z);
+    r = xyz_rgb(3.2404542 * x - 1.5371385 * y - 0.4985314 * z); // D65 -> sRGB
+    g = xyz_rgb(-0.969266 * x + 1.8760108 * y + 0.041556 * z);
+    b_ = xyz_rgb(0.0556434 * x - 0.2040259 * y + 1.0572252 * z);
+    return [
+        r,
+        g,
+        b_,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+const xyz_rgb = (r)=>{
+    return 255 * (r <= 0.00304 ? 12.92 * r : 1.055 * pow(r, 1 / 2.4) - 0.055);
+};
+const lab_xyz = (t)=>{
+    return t > (0, _labConstantsJsDefault.default).t1 ? t * t * t : (0, _labConstantsJsDefault.default).t2 * (t - (0, _labConstantsJsDefault.default).t0);
+};
+exports.default = lab2rgb;
+
+},{"./lab-constants.js":"gfMpf","../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gfMpf":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+exports.default = {
+    // Corresponds roughly to RGB brighter/darker
+    Kn: 18,
+    // D65 standard referent
+    Xn: 0.95047,
+    Yn: 1,
+    Zn: 1.08883,
+    t0: 0.137931034,
+    t1: 0.206896552,
+    t2: 0.12841855,
+    t3: 0.008856452 // t1 * t1 * t1
+};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fXI7U":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _labConstantsJs = require("./lab-constants.js");
+var _labConstantsJsDefault = parcelHelpers.interopDefault(_labConstantsJs);
+var _indexJs = require("../../utils/index.js");
+const { pow } = Math;
+const rgb2lab = (...args)=>{
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    const [x, y, z] = rgb2xyz(r, g, b);
+    const l = 116 * y - 16;
+    return [
+        l < 0 ? 0 : l,
+        500 * (x - y),
+        200 * (y - z)
+    ];
+};
+const rgb_xyz = (r)=>{
+    if ((r /= 255) <= 0.04045) return r / 12.92;
+    return pow((r + 0.055) / 1.055, 2.4);
+};
+const xyz_lab = (t)=>{
+    if (t > (0, _labConstantsJsDefault.default).t3) return pow(t, 1 / 3);
+    return t / (0, _labConstantsJsDefault.default).t2 + (0, _labConstantsJsDefault.default).t0;
+};
+const rgb2xyz = (r, g, b)=>{
+    r = rgb_xyz(r);
+    g = rgb_xyz(g);
+    b = rgb_xyz(b);
+    const x = xyz_lab((0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / (0, _labConstantsJsDefault.default).Xn);
+    const y = xyz_lab((0.2126729 * r + 0.7151522 * g + 0.072175 * b) / (0, _labConstantsJsDefault.default).Yn);
+    const z = xyz_lab((0.0193339 * r + 0.119192 * g + 0.9503041 * b) / (0, _labConstantsJsDefault.default).Zn);
+    return [
+        x,
+        y,
+        z
+    ];
+};
+exports.default = rgb2lab;
+
+},{"./lab-constants.js":"gfMpf","../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eOUqb":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _lch2RgbJs = require("./lch2rgb.js");
+var _lch2RgbJsDefault = parcelHelpers.interopDefault(_lch2RgbJs);
+var _hcl2RgbJs = require("./hcl2rgb.js");
+var _hcl2RgbJsDefault = parcelHelpers.interopDefault(_hcl2RgbJs);
+var _rgb2LchJs = require("./rgb2lch.js");
+var _rgb2LchJsDefault = parcelHelpers.interopDefault(_rgb2LchJs);
+(0, _colorJsDefault.default).prototype.lch = function() {
+    return (0, _rgb2LchJsDefault.default)(this._rgb);
+};
+(0, _colorJsDefault.default).prototype.hcl = function() {
+    return (0, _rgb2LchJsDefault.default)(this._rgb).reverse();
+};
+(0, _chromaJsDefault.default).lch = (...args)=>new (0, _colorJsDefault.default)(...args, "lch");
+(0, _chromaJsDefault.default).hcl = (...args)=>new (0, _colorJsDefault.default)(...args, "hcl");
+(0, _inputJsDefault.default).format.lch = (0, _lch2RgbJsDefault.default);
+(0, _inputJsDefault.default).format.hcl = (0, _hcl2RgbJsDefault.default);
+[
+    "lch",
+    "hcl"
+].forEach((m)=>(0, _inputJsDefault.default).autodetect.push({
+        p: 2,
+        test: (...args)=>{
+            args = (0, _indexJs.unpack)(args, m);
+            if ((0, _indexJs.type)(args) === "array" && args.length === 3) return m;
+        }
+    }));
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./lch2rgb.js":"8WnhP","./hcl2rgb.js":"bZxDS","./rgb2lch.js":"k0ohY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8WnhP":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _lch2LabJs = require("./lch2lab.js");
+var _lch2LabJsDefault = parcelHelpers.interopDefault(_lch2LabJs);
+var _lab2RgbJs = require("../lab/lab2rgb.js");
+var _lab2RgbJsDefault = parcelHelpers.interopDefault(_lab2RgbJs);
+const lch2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "lch");
+    const [l, c, h] = args;
+    const [L, a, b_] = (0, _lch2LabJsDefault.default)(l, c, h);
+    const [r, g, b] = (0, _lab2RgbJsDefault.default)(L, a, b_);
+    return [
+        r,
+        g,
+        b,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = lch2rgb;
+
+},{"../../utils/index.js":"FsUmr","./lch2lab.js":"dlfqJ","../lab/lab2rgb.js":"dOvRZ","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dlfqJ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { sin, cos } = Math;
+const lch2lab = (...args)=>{
+    /*
+    Convert from a qualitative parameter h and a quantitative parameter l to a 24-bit pixel.
+    These formulas were invented by David Dalrymple to obtain maximum contrast without going
+    out of gamut if the parameters are in the range 0-1.
+
+    A saturation multiplier was added by Gregor Aisch
+    */ let [l, c, h] = (0, _indexJs.unpack)(args, "lch");
+    if (isNaN(h)) h = 0;
+    h = h * (0, _indexJs.DEG2RAD);
+    return [
+        l,
+        cos(h) * c,
+        sin(h) * c
+    ];
+};
+exports.default = lch2lab;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bZxDS":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _lch2RgbJs = require("./lch2rgb.js");
+var _lch2RgbJsDefault = parcelHelpers.interopDefault(_lch2RgbJs);
+const hcl2rgb = (...args)=>{
+    const hcl = (0, _indexJs.unpack)(args, "hcl").reverse();
+    return (0, _lch2RgbJsDefault.default)(...hcl);
+};
+exports.default = hcl2rgb;
+
+},{"../../utils/index.js":"FsUmr","./lch2rgb.js":"8WnhP","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k0ohY":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _rgb2LabJs = require("../lab/rgb2lab.js");
+var _rgb2LabJsDefault = parcelHelpers.interopDefault(_rgb2LabJs);
+var _lab2LchJs = require("./lab2lch.js");
+var _lab2LchJsDefault = parcelHelpers.interopDefault(_lab2LchJs);
+const rgb2lch = (...args)=>{
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    const [l, a, b_] = (0, _rgb2LabJsDefault.default)(r, g, b);
+    return (0, _lab2LchJsDefault.default)(l, a, b_);
+};
+exports.default = rgb2lch;
+
+},{"../../utils/index.js":"FsUmr","../lab/rgb2lab.js":"fXI7U","./lab2lch.js":"k2mTo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"k2mTo":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { sqrt, atan2, round } = Math;
+const lab2lch = (...args)=>{
+    const [l, a, b] = (0, _indexJs.unpack)(args, "lab");
+    const c = sqrt(a * a + b * b);
+    let h = (atan2(b, a) * (0, _indexJs.RAD2DEG) + 360) % 360;
+    if (round(c * 10000) === 0) h = Number.NaN;
+    return [
+        l,
+        c,
+        h
+    ];
+};
+exports.default = lab2lch;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9P6ya":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+var _w3Cx11Js = require("../../colors/w3cx11.js");
+var _w3Cx11JsDefault = parcelHelpers.interopDefault(_w3Cx11Js);
+var _hex2RgbJs = require("../hex/hex2rgb.js");
+var _hex2RgbJsDefault = parcelHelpers.interopDefault(_hex2RgbJs);
+var _rgb2HexJs = require("../hex/rgb2hex.js");
+var _rgb2HexJsDefault = parcelHelpers.interopDefault(_rgb2HexJs);
+(0, _colorJsDefault.default).prototype.name = function() {
+    const hex = (0, _rgb2HexJsDefault.default)(this._rgb, "rgb");
+    for (let n of Object.keys((0, _w3Cx11JsDefault.default))){
+        if ((0, _w3Cx11JsDefault.default)[n] === hex) return n.toLowerCase();
+    }
+    return hex;
+};
+(0, _inputJsDefault.default).format.named = (name)=>{
+    name = name.toLowerCase();
+    if ((0, _w3Cx11JsDefault.default)[name]) return (0, _hex2RgbJsDefault.default)((0, _w3Cx11JsDefault.default)[name]);
+    throw new Error("unknown color name: " + name);
+};
+(0, _inputJsDefault.default).autodetect.push({
+    p: 5,
+    test: (h, ...rest)=>{
+        if (!rest.length && (0, _indexJs.type)(h) === "string" && (0, _w3Cx11JsDefault.default)[h.toLowerCase()]) return "named";
+    }
+});
+
+},{"../../Color.js":"86WNB","../input.js":"2ncJk","../../utils/index.js":"FsUmr","../../colors/w3cx11.js":"ks5NN","../hex/hex2rgb.js":"a9jpQ","../hex/rgb2hex.js":"3c37q","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"ks5NN":[function(require,module,exports) {
+/**
+	X11 color names
+
+	http://www.w3.org/TR/css3-color/#svg-color
+*/ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+const w3cx11 = {
+    aliceblue: "#f0f8ff",
+    antiquewhite: "#faebd7",
+    aqua: "#00ffff",
+    aquamarine: "#7fffd4",
+    azure: "#f0ffff",
+    beige: "#f5f5dc",
+    bisque: "#ffe4c4",
+    black: "#000000",
+    blanchedalmond: "#ffebcd",
+    blue: "#0000ff",
+    blueviolet: "#8a2be2",
+    brown: "#a52a2a",
+    burlywood: "#deb887",
+    cadetblue: "#5f9ea0",
+    chartreuse: "#7fff00",
+    chocolate: "#d2691e",
+    coral: "#ff7f50",
+    cornflowerblue: "#6495ed",
+    cornsilk: "#fff8dc",
+    crimson: "#dc143c",
+    cyan: "#00ffff",
+    darkblue: "#00008b",
+    darkcyan: "#008b8b",
+    darkgoldenrod: "#b8860b",
+    darkgray: "#a9a9a9",
+    darkgreen: "#006400",
+    darkgrey: "#a9a9a9",
+    darkkhaki: "#bdb76b",
+    darkmagenta: "#8b008b",
+    darkolivegreen: "#556b2f",
+    darkorange: "#ff8c00",
+    darkorchid: "#9932cc",
+    darkred: "#8b0000",
+    darksalmon: "#e9967a",
+    darkseagreen: "#8fbc8f",
+    darkslateblue: "#483d8b",
+    darkslategray: "#2f4f4f",
+    darkslategrey: "#2f4f4f",
+    darkturquoise: "#00ced1",
+    darkviolet: "#9400d3",
+    deeppink: "#ff1493",
+    deepskyblue: "#00bfff",
+    dimgray: "#696969",
+    dimgrey: "#696969",
+    dodgerblue: "#1e90ff",
+    firebrick: "#b22222",
+    floralwhite: "#fffaf0",
+    forestgreen: "#228b22",
+    fuchsia: "#ff00ff",
+    gainsboro: "#dcdcdc",
+    ghostwhite: "#f8f8ff",
+    gold: "#ffd700",
+    goldenrod: "#daa520",
+    gray: "#808080",
+    green: "#008000",
+    greenyellow: "#adff2f",
+    grey: "#808080",
+    honeydew: "#f0fff0",
+    hotpink: "#ff69b4",
+    indianred: "#cd5c5c",
+    indigo: "#4b0082",
+    ivory: "#fffff0",
+    khaki: "#f0e68c",
+    laserlemon: "#ffff54",
+    lavender: "#e6e6fa",
+    lavenderblush: "#fff0f5",
+    lawngreen: "#7cfc00",
+    lemonchiffon: "#fffacd",
+    lightblue: "#add8e6",
+    lightcoral: "#f08080",
+    lightcyan: "#e0ffff",
+    lightgoldenrod: "#fafad2",
+    lightgoldenrodyellow: "#fafad2",
+    lightgray: "#d3d3d3",
+    lightgreen: "#90ee90",
+    lightgrey: "#d3d3d3",
+    lightpink: "#ffb6c1",
+    lightsalmon: "#ffa07a",
+    lightseagreen: "#20b2aa",
+    lightskyblue: "#87cefa",
+    lightslategray: "#778899",
+    lightslategrey: "#778899",
+    lightsteelblue: "#b0c4de",
+    lightyellow: "#ffffe0",
+    lime: "#00ff00",
+    limegreen: "#32cd32",
+    linen: "#faf0e6",
+    magenta: "#ff00ff",
+    maroon: "#800000",
+    maroon2: "#7f0000",
+    maroon3: "#b03060",
+    mediumaquamarine: "#66cdaa",
+    mediumblue: "#0000cd",
+    mediumorchid: "#ba55d3",
+    mediumpurple: "#9370db",
+    mediumseagreen: "#3cb371",
+    mediumslateblue: "#7b68ee",
+    mediumspringgreen: "#00fa9a",
+    mediumturquoise: "#48d1cc",
+    mediumvioletred: "#c71585",
+    midnightblue: "#191970",
+    mintcream: "#f5fffa",
+    mistyrose: "#ffe4e1",
+    moccasin: "#ffe4b5",
+    navajowhite: "#ffdead",
+    navy: "#000080",
+    oldlace: "#fdf5e6",
+    olive: "#808000",
+    olivedrab: "#6b8e23",
+    orange: "#ffa500",
+    orangered: "#ff4500",
+    orchid: "#da70d6",
+    palegoldenrod: "#eee8aa",
+    palegreen: "#98fb98",
+    paleturquoise: "#afeeee",
+    palevioletred: "#db7093",
+    papayawhip: "#ffefd5",
+    peachpuff: "#ffdab9",
+    peru: "#cd853f",
+    pink: "#ffc0cb",
+    plum: "#dda0dd",
+    powderblue: "#b0e0e6",
+    purple: "#800080",
+    purple2: "#7f007f",
+    purple3: "#a020f0",
+    rebeccapurple: "#663399",
+    red: "#ff0000",
+    rosybrown: "#bc8f8f",
+    royalblue: "#4169e1",
+    saddlebrown: "#8b4513",
+    salmon: "#fa8072",
+    sandybrown: "#f4a460",
+    seagreen: "#2e8b57",
+    seashell: "#fff5ee",
+    sienna: "#a0522d",
+    silver: "#c0c0c0",
+    skyblue: "#87ceeb",
+    slateblue: "#6a5acd",
+    slategray: "#708090",
+    slategrey: "#708090",
+    snow: "#fffafa",
+    springgreen: "#00ff7f",
+    steelblue: "#4682b4",
+    tan: "#d2b48c",
+    teal: "#008080",
+    thistle: "#d8bfd8",
+    tomato: "#ff6347",
+    turquoise: "#40e0d0",
+    violet: "#ee82ee",
+    wheat: "#f5deb3",
+    white: "#ffffff",
+    whitesmoke: "#f5f5f5",
+    yellow: "#ffff00",
+    yellowgreen: "#9acd32"
+};
+exports.default = w3cx11;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kAJcC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+var _num2RgbJs = require("./num2rgb.js");
+var _num2RgbJsDefault = parcelHelpers.interopDefault(_num2RgbJs);
+var _rgb2NumJs = require("./rgb2num.js");
+var _rgb2NumJsDefault = parcelHelpers.interopDefault(_rgb2NumJs);
+(0, _colorJsDefault.default).prototype.num = function() {
+    return (0, _rgb2NumJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).num = (...args)=>new (0, _colorJsDefault.default)(...args, "num");
+(0, _inputJsDefault.default).format.num = (0, _num2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 5,
+    test: (...args)=>{
+        if (args.length === 1 && (0, _indexJs.type)(args[0]) === "number" && args[0] >= 0 && args[0] <= 0xffffff) return "num";
+    }
+});
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","../../utils/index.js":"FsUmr","./num2rgb.js":"8QRxn","./rgb2num.js":"2xFnM","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8QRxn":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const num2rgb = (num)=>{
+    if ((0, _indexJs.type)(num) == "number" && num >= 0 && num <= 0xffffff) {
+        const r = num >> 16;
+        const g = num >> 8 & 0xff;
+        const b = num & 0xff;
+        return [
+            r,
+            g,
+            b,
+            1
+        ];
+    }
+    throw new Error("unknown num color: " + num);
+};
+exports.default = num2rgb;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2xFnM":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const rgb2num = (...args)=>{
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    return (r << 16) + (g << 8) + b;
+};
+exports.default = rgb2num;
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2XQ0e":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _indexJs = require("../../utils/index.js");
+const { round } = Math;
+(0, _colorJsDefault.default).prototype.rgb = function(rnd = true) {
+    if (rnd === false) return this._rgb.slice(0, 3);
+    return this._rgb.slice(0, 3).map(round);
+};
+(0, _colorJsDefault.default).prototype.rgba = function(rnd = true) {
+    return this._rgb.slice(0, 4).map((v, i)=>{
+        return i < 3 ? rnd === false ? v : round(v) : v;
     });
-    var Color$m = Color_1;
-    var type$6 = utils.type;
-    Color$m.prototype.alpha = function(a, mutate) {
-        if (mutate === void 0) mutate = false;
-        if (a !== undefined && type$6(a) === "number") {
-            if (mutate) {
-                this._rgb[3] = a;
-                return this;
-            }
-            return new Color$m([
-                this._rgb[0],
-                this._rgb[1],
-                this._rgb[2],
-                a
-            ], "rgb");
-        }
-        return this._rgb[3];
-    };
-    var Color$l = Color_1;
-    Color$l.prototype.clipped = function() {
-        return this._rgb._clipped || false;
-    };
-    var Color$k = Color_1;
-    var LAB_CONSTANTS$1 = labConstants;
-    Color$k.prototype.darken = function(amount) {
-        if (amount === void 0) amount = 1;
-        var me = this;
-        var lab = me.lab();
-        lab[0] -= LAB_CONSTANTS$1.Kn * amount;
-        return new Color$k(lab, "lab").alpha(me.alpha(), true);
-    };
-    Color$k.prototype.brighten = function(amount) {
-        if (amount === void 0) amount = 1;
-        return this.darken(-amount);
-    };
-    Color$k.prototype.darker = Color$k.prototype.darken;
-    Color$k.prototype.brighter = Color$k.prototype.brighten;
-    var Color$j = Color_1;
-    Color$j.prototype.get = function(mc) {
-        var ref = mc.split(".");
-        var mode = ref[0];
-        var channel = ref[1];
-        var src = this[mode]();
-        if (channel) {
-            var i = mode.indexOf(channel) - (mode.substr(0, 2) === "ok" ? 2 : 0);
-            if (i > -1) return src[i];
-            throw new Error("unknown channel " + channel + " in mode " + mode);
-        } else return src;
-    };
-    var Color$i = Color_1;
-    var type$5 = utils.type;
-    var pow$6 = Math.pow;
-    var EPS = 1e-7;
-    var MAX_ITER = 20;
-    Color$i.prototype.luminance = function(lum) {
-        if (lum !== undefined && type$5(lum) === "number") {
-            if (lum === 0) // return pure black
-            return new Color$i([
-                0,
-                0,
-                0,
-                this._rgb[3]
-            ], "rgb");
-            if (lum === 1) // return pure white
-            return new Color$i([
-                255,
-                255,
-                255,
-                this._rgb[3]
-            ], "rgb");
-            // compute new color using...
-            var cur_lum = this.luminance();
-            var mode = "rgb";
-            var max_iter = MAX_ITER;
-            var test = function(low, high) {
-                var mid = low.interpolate(high, 0.5, mode);
-                var lm = mid.luminance();
-                if (Math.abs(lum - lm) < EPS || !max_iter--) // close enough
-                return mid;
-                return lm > lum ? test(low, mid) : test(mid, high);
-            };
-            var rgb = (cur_lum > lum ? test(new Color$i([
-                0,
-                0,
-                0
-            ]), this) : test(this, new Color$i([
-                255,
-                255,
-                255
-            ]))).rgb();
-            return new Color$i(rgb.concat([
-                this._rgb[3]
-            ]));
-        }
-        return rgb2luminance.apply(void 0, this._rgb.slice(0, 3));
-    };
-    var rgb2luminance = function(r, g, b) {
-        // relative luminance
-        // see http://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
-        r = luminance_x(r);
-        g = luminance_x(g);
-        b = luminance_x(b);
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    };
-    var luminance_x = function(x) {
-        x /= 255;
-        return x <= 0.03928 ? x / 12.92 : pow$6((x + 0.055) / 1.055, 2.4);
-    };
-    var interpolator$1 = {};
-    var Color$h = Color_1;
-    var type$4 = utils.type;
-    var interpolator = interpolator$1;
-    var mix$1 = function(col1, col2, f) {
-        if (f === void 0) f = 0.5;
-        var rest = [], len = arguments.length - 3;
-        while(len-- > 0)rest[len] = arguments[len + 3];
-        var mode = rest[0] || "lrgb";
-        if (!interpolator[mode] && !rest.length) // fall back to the first supported mode
-        mode = Object.keys(interpolator)[0];
-        if (!interpolator[mode]) throw new Error("interpolation mode " + mode + " is not defined");
-        if (type$4(col1) !== "object") col1 = new Color$h(col1);
-        if (type$4(col2) !== "object") col2 = new Color$h(col2);
-        return interpolator[mode](col1, col2, f).alpha(col1.alpha() + f * (col2.alpha() - col1.alpha()));
-    };
-    var Color$g = Color_1;
-    var mix = mix$1;
-    Color$g.prototype.mix = Color$g.prototype.interpolate = function(col2, f) {
-        if (f === void 0) f = 0.5;
-        var rest = [], len = arguments.length - 2;
-        while(len-- > 0)rest[len] = arguments[len + 2];
-        return mix.apply(void 0, [
-            this,
-            col2,
-            f
-        ].concat(rest));
-    };
-    var Color$f = Color_1;
-    Color$f.prototype.premultiply = function(mutate) {
-        if (mutate === void 0) mutate = false;
-        var rgb = this._rgb;
-        var a = rgb[3];
+};
+(0, _chromaJsDefault.default).rgb = (...args)=>new (0, _colorJsDefault.default)(...args, "rgb");
+(0, _inputJsDefault.default).format.rgb = (...args)=>{
+    const rgba = (0, _indexJs.unpack)(args, "rgba");
+    if (rgba[3] === undefined) rgba[3] = 1;
+    return rgba;
+};
+(0, _inputJsDefault.default).autodetect.push({
+    p: 3,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "rgba");
+        if ((0, _indexJs.type)(args) === "array" && (args.length === 3 || args.length === 4 && (0, _indexJs.type)(args[3]) == "number" && args[3] >= 0 && args[3] <= 1)) return "rgb";
+    }
+});
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3benl":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _temperature2RgbJs = require("./temperature2rgb.js");
+var _temperature2RgbJsDefault = parcelHelpers.interopDefault(_temperature2RgbJs);
+var _rgb2TemperatureJs = require("./rgb2temperature.js");
+var _rgb2TemperatureJsDefault = parcelHelpers.interopDefault(_rgb2TemperatureJs);
+(0, _colorJsDefault.default).prototype.temp = (0, _colorJsDefault.default).prototype.kelvin = (0, _colorJsDefault.default).prototype.temperature = function() {
+    return (0, _rgb2TemperatureJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).temp = (0, _chromaJsDefault.default).kelvin = (0, _chromaJsDefault.default).temperature = (...args)=>new (0, _colorJsDefault.default)(...args, "temp");
+(0, _inputJsDefault.default).format.temp = (0, _inputJsDefault.default).format.kelvin = (0, _inputJsDefault.default).format.temperature = (0, _temperature2RgbJsDefault.default);
+
+},{"../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./temperature2rgb.js":"jbNpI","./rgb2temperature.js":"2Sc8b","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jbNpI":[function(require,module,exports) {
+/*
+ * Based on implementation by Neil Bartlett
+ * https://github.com/neilbartlett/color-temperature
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+const { log } = Math;
+const temperature2rgb = (kelvin)=>{
+    const temp = kelvin / 100;
+    let r, g, b;
+    if (temp < 66) {
+        r = 255;
+        g = temp < 6 ? 0 : -155.25485562709179 - 0.44596950469579133 * (g = temp - 2) + 104.49216199393888 * log(g);
+        b = temp < 20 ? 0 : -254.76935184120902 + 0.8274096064007395 * (b = temp - 10) + 115.67994401066147 * log(b);
+    } else {
+        r = 351.97690566805693 + 0.114206453784165 * (r = temp - 55) - 40.25366309332127 * log(r);
+        g = 325.4494125711974 + 0.07943456536662342 * (g = temp - 50) - 28.0852963507957 * log(g);
+        b = 255;
+    }
+    return [
+        r,
+        g,
+        b,
+        1
+    ];
+};
+exports.default = temperature2rgb;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2Sc8b":[function(require,module,exports) {
+/*
+ * Based on implementation by Neil Bartlett
+ * https://github.com/neilbartlett/color-temperature
+ **/ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _temperature2RgbJs = require("./temperature2rgb.js");
+var _temperature2RgbJsDefault = parcelHelpers.interopDefault(_temperature2RgbJs);
+var _indexJs = require("../../utils/index.js");
+const { round } = Math;
+const rgb2temperature = (...args)=>{
+    const rgb = (0, _indexJs.unpack)(args, "rgb");
+    const r = rgb[0], b = rgb[2];
+    let minTemp = 1000;
+    let maxTemp = 40000;
+    const eps = 0.4;
+    let temp;
+    while(maxTemp - minTemp > eps){
+        temp = (maxTemp + minTemp) * 0.5;
+        const rgb = (0, _temperature2RgbJsDefault.default)(temp);
+        if (rgb[2] / rgb[0] >= b / r) maxTemp = temp;
+        else minTemp = temp;
+    }
+    return round(temp);
+};
+exports.default = rgb2temperature;
+
+},{"./temperature2rgb.js":"jbNpI","../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"beksD":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _oklab2RgbJs = require("./oklab2rgb.js");
+var _oklab2RgbJsDefault = parcelHelpers.interopDefault(_oklab2RgbJs);
+var _rgb2OklabJs = require("./rgb2oklab.js");
+var _rgb2OklabJsDefault = parcelHelpers.interopDefault(_rgb2OklabJs);
+(0, _colorJsDefault.default).prototype.oklab = function() {
+    return (0, _rgb2OklabJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).oklab = (...args)=>new (0, _colorJsDefault.default)(...args, "oklab");
+(0, _inputJsDefault.default).format.oklab = (0, _oklab2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 3,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "oklab");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "oklab";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./oklab2rgb.js":"iK0cA","./rgb2oklab.js":"aC22F","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iK0cA":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { pow, sign } = Math;
+/*
+ * L* [0..100]
+ * a [-100..100]
+ * b [-100..100]
+ */ const oklab2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "lab");
+    const [L, a, b] = args;
+    const l = pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
+    const m = pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
+    const s = pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
+    return [
+        255 * lrgb2rgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+        255 * lrgb2rgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+        255 * lrgb2rgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = oklab2rgb;
+function lrgb2rgb(c) {
+    const abs = Math.abs(c);
+    if (abs > 0.0031308) return (sign(c) || 1) * (1.055 * pow(abs, 1 / 2.4) - 0.055);
+    return c * 12.92;
+}
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aC22F":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+const { cbrt, pow, sign } = Math;
+const rgb2oklab = (...args)=>{
+    // OKLab color space implementation taken from
+    // https://bottosson.github.io/posts/oklab/
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    const [lr, lg, lb] = [
+        rgb2lrgb(r / 255),
+        rgb2lrgb(g / 255),
+        rgb2lrgb(b / 255)
+    ];
+    const l = cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+    const m = cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+    const s = cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+    return [
+        0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+        1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+        0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+    ];
+};
+exports.default = rgb2oklab;
+function rgb2lrgb(c) {
+    const abs = Math.abs(c);
+    if (abs < 0.04045) return c / 12.92;
+    return (sign(c) || 1) * pow((abs + 0.055) / 1.055, 2.4);
+}
+
+},{"../../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cH6m3":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../../utils/index.js");
+var _chromaJs = require("../../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _colorJs = require("../../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _inputJs = require("../input.js");
+var _inputJsDefault = parcelHelpers.interopDefault(_inputJs);
+var _oklch2RgbJs = require("./oklch2rgb.js");
+var _oklch2RgbJsDefault = parcelHelpers.interopDefault(_oklch2RgbJs);
+var _rgb2OklchJs = require("./rgb2oklch.js");
+var _rgb2OklchJsDefault = parcelHelpers.interopDefault(_rgb2OklchJs);
+(0, _colorJsDefault.default).prototype.oklch = function() {
+    return (0, _rgb2OklchJsDefault.default)(this._rgb);
+};
+(0, _chromaJsDefault.default).oklch = (...args)=>new (0, _colorJsDefault.default)(...args, "oklch");
+(0, _inputJsDefault.default).format.oklch = (0, _oklch2RgbJsDefault.default);
+(0, _inputJsDefault.default).autodetect.push({
+    p: 3,
+    test: (...args)=>{
+        args = (0, _indexJs.unpack)(args, "oklch");
+        if ((0, _indexJs.type)(args) === "array" && args.length === 3) return "oklch";
+    }
+});
+
+},{"../../utils/index.js":"FsUmr","../../chroma.js":"jNNC2","../../Color.js":"86WNB","../input.js":"2ncJk","./oklch2rgb.js":"bQx3E","./rgb2oklch.js":"jYT8A","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bQx3E":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _lch2LabJs = require("../lch/lch2lab.js");
+var _lch2LabJsDefault = parcelHelpers.interopDefault(_lch2LabJs);
+var _oklab2RgbJs = require("../oklab/oklab2rgb.js");
+var _oklab2RgbJsDefault = parcelHelpers.interopDefault(_oklab2RgbJs);
+const oklch2rgb = (...args)=>{
+    args = (0, _indexJs.unpack)(args, "lch");
+    const [l, c, h] = args;
+    const [L, a, b_] = (0, _lch2LabJsDefault.default)(l, c, h);
+    const [r, g, b] = (0, _oklab2RgbJsDefault.default)(L, a, b_);
+    return [
+        r,
+        g,
+        b,
+        args.length > 3 ? args[3] : 1
+    ];
+};
+exports.default = oklch2rgb;
+
+},{"../../utils/index.js":"FsUmr","../lch/lch2lab.js":"dlfqJ","../oklab/oklab2rgb.js":"iK0cA","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jYT8A":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../../utils/index.js");
+var _rgb2OklabJs = require("../oklab/rgb2oklab.js");
+var _rgb2OklabJsDefault = parcelHelpers.interopDefault(_rgb2OklabJs);
+var _lab2LchJs = require("../lch/lab2lch.js");
+var _lab2LchJsDefault = parcelHelpers.interopDefault(_lab2LchJs);
+const rgb2oklch = (...args)=>{
+    const [r, g, b] = (0, _indexJs.unpack)(args, "rgb");
+    const [l, a, b_] = (0, _rgb2OklabJsDefault.default)(r, g, b);
+    return (0, _lab2LchJsDefault.default)(l, a, b_);
+};
+exports.default = rgb2oklch;
+
+},{"../../utils/index.js":"FsUmr","../oklab/rgb2oklab.js":"aC22F","../lch/lab2lch.js":"k2mTo","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9kEpd":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../utils/index.js");
+(0, _colorJsDefault.default).prototype.alpha = function(a, mutate = false) {
+    if (a !== undefined && (0, _indexJs.type)(a) === "number") {
         if (mutate) {
-            this._rgb = [
-                rgb[0] * a,
-                rgb[1] * a,
-                rgb[2] * a,
-                a
-            ];
+            this._rgb[3] = a;
             return this;
-        } else return new Color$f([
+        }
+        return new (0, _colorJsDefault.default)([
+            this._rgb[0],
+            this._rgb[1],
+            this._rgb[2],
+            a
+        ], "rgb");
+    }
+    return this._rgb[3];
+};
+
+},{"../Color.js":"86WNB","../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"55Kk5":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+(0, _colorJsDefault.default).prototype.clipped = function() {
+    return this._rgb._clipped || false;
+};
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"g8H5C":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../io/lab/index.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _labConstantsJs = require("../io/lab/lab-constants.js");
+var _labConstantsJsDefault = parcelHelpers.interopDefault(_labConstantsJs);
+(0, _colorJsDefault.default).prototype.darken = function(amount = 1) {
+    const me = this;
+    const lab = me.lab();
+    lab[0] -= (0, _labConstantsJsDefault.default).Kn * amount;
+    return new (0, _colorJsDefault.default)(lab, "lab").alpha(me.alpha(), true);
+};
+(0, _colorJsDefault.default).prototype.brighten = function(amount = 1) {
+    return this.darken(-amount);
+};
+(0, _colorJsDefault.default).prototype.darker = (0, _colorJsDefault.default).prototype.darken;
+(0, _colorJsDefault.default).prototype.brighter = (0, _colorJsDefault.default).prototype.brighten;
+
+},{"../io/lab/index.js":"gMW4F","../Color.js":"86WNB","../io/lab/lab-constants.js":"gfMpf","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dVaYT":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+(0, _colorJsDefault.default).prototype.get = function(mc) {
+    const [mode, channel] = mc.split(".");
+    const src = this[mode]();
+    if (channel) {
+        const i = mode.indexOf(channel) - (mode.substr(0, 2) === "ok" ? 2 : 0);
+        if (i > -1) return src[i];
+        throw new Error(`unknown channel ${channel} in mode ${mode}`);
+    } else return src;
+};
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9NQik":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../utils/index.js");
+const { pow } = Math;
+const EPS = 1e-7;
+const MAX_ITER = 20;
+(0, _colorJsDefault.default).prototype.luminance = function(lum, mode = "rgb") {
+    if (lum !== undefined && (0, _indexJs.type)(lum) === "number") {
+        if (lum === 0) // return pure black
+        return new (0, _colorJsDefault.default)([
+            0,
+            0,
+            0,
+            this._rgb[3]
+        ], "rgb");
+        if (lum === 1) // return pure white
+        return new (0, _colorJsDefault.default)([
+            255,
+            255,
+            255,
+            this._rgb[3]
+        ], "rgb");
+        // compute new color using...
+        let cur_lum = this.luminance();
+        let max_iter = MAX_ITER;
+        const test = (low, high)=>{
+            const mid = low.interpolate(high, 0.5, mode);
+            const lm = mid.luminance();
+            if (Math.abs(lum - lm) < EPS || !max_iter--) // close enough
+            return mid;
+            return lm > lum ? test(low, mid) : test(mid, high);
+        };
+        const rgb = (cur_lum > lum ? test(new (0, _colorJsDefault.default)([
+            0,
+            0,
+            0
+        ]), this) : test(this, new (0, _colorJsDefault.default)([
+            255,
+            255,
+            255
+        ]))).rgb();
+        return new (0, _colorJsDefault.default)([
+            ...rgb,
+            this._rgb[3]
+        ]);
+    }
+    return rgb2luminance(...this._rgb.slice(0, 3));
+};
+const rgb2luminance = (r, g, b)=>{
+    // relative luminance
+    // see http://www.w3.org/TR/2008/REC-WCAG20-20081211/#relativeluminancedef
+    r = luminance_x(r);
+    g = luminance_x(g);
+    b = luminance_x(b);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const luminance_x = (x)=>{
+    x /= 255;
+    return x <= 0.03928 ? x / 12.92 : pow((x + 0.055) / 1.055, 2.4);
+};
+
+},{"../Color.js":"86WNB","../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5KlJS":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _mixJs = require("../generator/mix.js");
+var _mixJsDefault = parcelHelpers.interopDefault(_mixJs);
+(0, _colorJsDefault.default).prototype.mix = (0, _colorJsDefault.default).prototype.interpolate = function(col2, f = 0.5, ...rest) {
+    return (0, _mixJsDefault.default)(this, col2, f, ...rest);
+};
+
+},{"../Color.js":"86WNB","../generator/mix.js":"hPOrz","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hPOrz":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../utils/index.js");
+var _indexJs1 = require("../interpolator/index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+exports.default = (col1, col2, f = 0.5, ...rest)=>{
+    let mode = rest[0] || "lrgb";
+    if (!(0, _indexJsDefault.default)[mode] && !rest.length) // fall back to the first supported mode
+    mode = Object.keys((0, _indexJsDefault.default))[0];
+    if (!(0, _indexJsDefault.default)[mode]) throw new Error(`interpolation mode ${mode} is not defined`);
+    if ((0, _indexJs.type)(col1) !== "object") col1 = new (0, _colorJsDefault.default)(col1);
+    if ((0, _indexJs.type)(col2) !== "object") col2 = new (0, _colorJsDefault.default)(col2);
+    return (0, _indexJsDefault.default)[mode](col1, col2, f).alpha(col1.alpha() + f * (col2.alpha() - col1.alpha()));
+};
+
+},{"../Color.js":"86WNB","../utils/index.js":"FsUmr","../interpolator/index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"htTcH":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+exports.default = {};
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"mcoWa":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+(0, _colorJsDefault.default).prototype.premultiply = function(mutate = false) {
+    const rgb = this._rgb;
+    const a = rgb[3];
+    if (mutate) {
+        this._rgb = [
             rgb[0] * a,
             rgb[1] * a,
             rgb[2] * a,
             a
-        ], "rgb");
-    };
-    var Color$e = Color_1;
-    var LAB_CONSTANTS = labConstants;
-    Color$e.prototype.saturate = function(amount) {
-        if (amount === void 0) amount = 1;
-        var me = this;
-        var lch = me.lch();
-        lch[1] += LAB_CONSTANTS.Kn * amount;
-        if (lch[1] < 0) lch[1] = 0;
-        return new Color$e(lch, "lch").alpha(me.alpha(), true);
-    };
-    Color$e.prototype.desaturate = function(amount) {
-        if (amount === void 0) amount = 1;
-        return this.saturate(-amount);
-    };
-    var Color$d = Color_1;
-    var type$3 = utils.type;
-    Color$d.prototype.set = function(mc, value, mutate) {
-        if (mutate === void 0) mutate = false;
-        var ref = mc.split(".");
-        var mode = ref[0];
-        var channel = ref[1];
-        var src = this[mode]();
-        if (channel) {
-            var i = mode.indexOf(channel) - (mode.substr(0, 2) === "ok" ? 2 : 0);
-            if (i > -1) {
-                if (type$3(value) == "string") switch(value.charAt(0)){
-                    case "+":
-                        src[i] += +value;
-                        break;
-                    case "-":
-                        src[i] += +value;
-                        break;
-                    case "*":
-                        src[i] *= +value.substr(1);
-                        break;
-                    case "/":
-                        src[i] /= +value.substr(1);
-                        break;
-                    default:
-                        src[i] = +value;
-                }
-                else if (type$3(value) === "number") src[i] = value;
-                else throw new Error("unsupported value for Color.set");
-                var out = new Color$d(src, mode);
-                if (mutate) {
-                    this._rgb = out._rgb;
-                    return this;
-                }
-                return out;
-            }
-            throw new Error("unknown channel " + channel + " in mode " + mode);
-        } else return src;
-    };
-    var Color$c = Color_1;
-    var rgb = function(col1, col2, f) {
-        var xyz0 = col1._rgb;
-        var xyz1 = col2._rgb;
-        return new Color$c(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "rgb");
-    };
-    // register interpolator
-    interpolator$1.rgb = rgb;
-    var Color$b = Color_1;
-    var sqrt$2 = Math.sqrt;
-    var pow$5 = Math.pow;
-    var lrgb = function(col1, col2, f) {
-        var ref = col1._rgb;
-        var x1 = ref[0];
-        var y1 = ref[1];
-        var z1 = ref[2];
-        var ref$1 = col2._rgb;
-        var x2 = ref$1[0];
-        var y2 = ref$1[1];
-        var z2 = ref$1[2];
-        return new Color$b(sqrt$2(pow$5(x1, 2) * (1 - f) + pow$5(x2, 2) * f), sqrt$2(pow$5(y1, 2) * (1 - f) + pow$5(y2, 2) * f), sqrt$2(pow$5(z1, 2) * (1 - f) + pow$5(z2, 2) * f), "rgb");
-    };
-    // register interpolator
-    interpolator$1.lrgb = lrgb;
-    var Color$a = Color_1;
-    var lab = function(col1, col2, f) {
-        var xyz0 = col1.lab();
-        var xyz1 = col2.lab();
-        return new Color$a(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "lab");
-    };
-    // register interpolator
-    interpolator$1.lab = lab;
-    var Color$9 = Color_1;
-    var _hsx = function(col1, col2, f, m) {
-        var assign, assign$1;
-        var xyz0, xyz1;
-        if (m === "hsl") {
-            xyz0 = col1.hsl();
-            xyz1 = col2.hsl();
-        } else if (m === "hsv") {
-            xyz0 = col1.hsv();
-            xyz1 = col2.hsv();
-        } else if (m === "hcg") {
-            xyz0 = col1.hcg();
-            xyz1 = col2.hcg();
-        } else if (m === "hsi") {
-            xyz0 = col1.hsi();
-            xyz1 = col2.hsi();
-        } else if (m === "lch" || m === "hcl") {
-            m = "hcl";
-            xyz0 = col1.hcl();
-            xyz1 = col2.hcl();
-        } else if (m === "oklch") {
-            xyz0 = col1.oklch().reverse();
-            xyz1 = col2.oklch().reverse();
-        }
-        var hue0, hue1, sat0, sat1, lbv0, lbv1;
-        if (m.substr(0, 1) === "h" || m === "oklch") {
-            assign = xyz0, hue0 = assign[0], sat0 = assign[1], lbv0 = assign[2];
-            assign$1 = xyz1, hue1 = assign$1[0], sat1 = assign$1[1], lbv1 = assign$1[2];
-        }
-        var sat, hue, lbv, dh;
-        if (!isNaN(hue0) && !isNaN(hue1)) {
-            // both colors have hue
-            if (hue1 > hue0 && hue1 - hue0 > 180) dh = hue1 - (hue0 + 360);
-            else if (hue1 < hue0 && hue0 - hue1 > 180) dh = hue1 + 360 - hue0;
-            else dh = hue1 - hue0;
-            hue = hue0 + f * dh;
-        } else if (!isNaN(hue0)) {
-            hue = hue0;
-            if ((lbv1 == 1 || lbv1 == 0) && m != "hsv") sat = sat0;
-        } else if (!isNaN(hue1)) {
-            hue = hue1;
-            if ((lbv0 == 1 || lbv0 == 0) && m != "hsv") sat = sat1;
-        } else hue = Number.NaN;
-        if (sat === undefined) sat = sat0 + f * (sat1 - sat0);
-        lbv = lbv0 + f * (lbv1 - lbv0);
-        return m === "oklch" ? new Color$9([
-            lbv,
-            sat,
-            hue
-        ], m) : new Color$9([
-            hue,
-            sat,
-            lbv
-        ], m);
-    };
-    var interpolate_hsx$5 = _hsx;
-    var lch = function(col1, col2, f) {
-        return interpolate_hsx$5(col1, col2, f, "lch");
-    };
-    // register interpolator
-    interpolator$1.lch = lch;
-    interpolator$1.hcl = lch;
-    var Color$8 = Color_1;
-    var num = function(col1, col2, f) {
-        var c1 = col1.num();
-        var c2 = col2.num();
-        return new Color$8(c1 + f * (c2 - c1), "num");
-    };
-    // register interpolator
-    interpolator$1.num = num;
-    var interpolate_hsx$4 = _hsx;
-    var hcg = function(col1, col2, f) {
-        return interpolate_hsx$4(col1, col2, f, "hcg");
-    };
-    // register interpolator
-    interpolator$1.hcg = hcg;
-    var interpolate_hsx$3 = _hsx;
-    var hsi = function(col1, col2, f) {
-        return interpolate_hsx$3(col1, col2, f, "hsi");
-    };
-    // register interpolator
-    interpolator$1.hsi = hsi;
-    var interpolate_hsx$2 = _hsx;
-    var hsl = function(col1, col2, f) {
-        return interpolate_hsx$2(col1, col2, f, "hsl");
-    };
-    // register interpolator
-    interpolator$1.hsl = hsl;
-    var interpolate_hsx$1 = _hsx;
-    var hsv = function(col1, col2, f) {
-        return interpolate_hsx$1(col1, col2, f, "hsv");
-    };
-    // register interpolator
-    interpolator$1.hsv = hsv;
-    var Color$7 = Color_1;
-    var oklab = function(col1, col2, f) {
-        var xyz0 = col1.oklab();
-        var xyz1 = col2.oklab();
-        return new Color$7(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "oklab");
-    };
-    // register interpolator
-    interpolator$1.oklab = oklab;
-    var interpolate_hsx = _hsx;
-    var oklch = function(col1, col2, f) {
-        return interpolate_hsx(col1, col2, f, "oklch");
-    };
-    // register interpolator
-    interpolator$1.oklch = oklch;
-    var Color$6 = Color_1;
-    var clip_rgb$1 = utils.clip_rgb;
-    var pow$4 = Math.pow;
-    var sqrt$1 = Math.sqrt;
-    var PI$1 = Math.PI;
-    var cos$2 = Math.cos;
-    var sin$2 = Math.sin;
-    var atan2$1 = Math.atan2;
-    var average = function(colors, mode, weights) {
-        if (mode === void 0) mode = "lrgb";
-        if (weights === void 0) weights = null;
-        var l = colors.length;
-        if (!weights) weights = Array.from(new Array(l)).map(function() {
-            return 1;
-        });
-        // normalize weights
-        var k = l / weights.reduce(function(a, b) {
-            return a + b;
-        });
-        weights.forEach(function(w, i) {
-            weights[i] *= k;
-        });
-        // convert colors to Color objects
-        colors = colors.map(function(c) {
-            return new Color$6(c);
-        });
-        if (mode === "lrgb") return _average_lrgb(colors, weights);
-        var first = colors.shift();
-        var xyz = first.get(mode);
-        var cnt = [];
-        var dx = 0;
-        var dy = 0;
-        // initial color
-        for(var i = 0; i < xyz.length; i++){
-            xyz[i] = (xyz[i] || 0) * weights[0];
-            cnt.push(isNaN(xyz[i]) ? 0 : weights[0]);
-            if (mode.charAt(i) === "h" && !isNaN(xyz[i])) {
-                var A = xyz[i] / 180 * PI$1;
-                dx += cos$2(A) * weights[0];
-                dy += sin$2(A) * weights[0];
-            }
-        }
-        var alpha = first.alpha() * weights[0];
-        colors.forEach(function(c, ci) {
-            var xyz2 = c.get(mode);
-            alpha += c.alpha() * weights[ci + 1];
-            for(var i = 0; i < xyz.length; i++)if (!isNaN(xyz2[i])) {
-                cnt[i] += weights[ci + 1];
-                if (mode.charAt(i) === "h") {
-                    var A = xyz2[i] / 180 * PI$1;
-                    dx += cos$2(A) * weights[ci + 1];
-                    dy += sin$2(A) * weights[ci + 1];
-                } else xyz[i] += xyz2[i] * weights[ci + 1];
-            }
-        });
-        for(var i$1 = 0; i$1 < xyz.length; i$1++)if (mode.charAt(i$1) === "h") {
-            var A$1 = atan2$1(dy / cnt[i$1], dx / cnt[i$1]) / PI$1 * 180;
-            while(A$1 < 0)A$1 += 360;
-            while(A$1 >= 360)A$1 -= 360;
-            xyz[i$1] = A$1;
-        } else xyz[i$1] = xyz[i$1] / cnt[i$1];
-        alpha /= l;
-        return new Color$6(xyz, mode).alpha(alpha > 0.99999 ? 1 : alpha, true);
-    };
-    var _average_lrgb = function(colors, weights) {
-        var l = colors.length;
-        var xyz = [
-            0,
-            0,
-            0,
-            0
         ];
-        for(var i = 0; i < colors.length; i++){
-            var col = colors[i];
-            var f = weights[i] / l;
-            var rgb = col._rgb;
-            xyz[0] += pow$4(rgb[0], 2) * f;
-            xyz[1] += pow$4(rgb[1], 2) * f;
-            xyz[2] += pow$4(rgb[2], 2) * f;
-            xyz[3] += rgb[3] * f;
+        return this;
+    } else return new (0, _colorJsDefault.default)([
+        rgb[0] * a,
+        rgb[1] * a,
+        rgb[2] * a,
+        a
+    ], "rgb");
+};
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dwlfr":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../io/lch/index.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _labConstantsJs = require("../io/lab/lab-constants.js");
+var _labConstantsJsDefault = parcelHelpers.interopDefault(_labConstantsJs);
+(0, _colorJsDefault.default).prototype.saturate = function(amount = 1) {
+    const me = this;
+    const lch = me.lch();
+    lch[1] += (0, _labConstantsJsDefault.default).Kn * amount;
+    if (lch[1] < 0) lch[1] = 0;
+    return new (0, _colorJsDefault.default)(lch, "lch").alpha(me.alpha(), true);
+};
+(0, _colorJsDefault.default).prototype.desaturate = function(amount = 1) {
+    return this.saturate(-amount);
+};
+
+},{"../io/lch/index.js":"eOUqb","../Color.js":"86WNB","../io/lab/lab-constants.js":"gfMpf","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bLPTP":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../utils/index.js");
+(0, _colorJsDefault.default).prototype.set = function(mc, value, mutate = false) {
+    const [mode, channel] = mc.split(".");
+    const src = this[mode]();
+    if (channel) {
+        const i = mode.indexOf(channel) - (mode.substr(0, 2) === "ok" ? 2 : 0);
+        if (i > -1) {
+            if ((0, _indexJs.type)(value) == "string") switch(value.charAt(0)){
+                case "+":
+                    src[i] += +value;
+                    break;
+                case "-":
+                    src[i] += +value;
+                    break;
+                case "*":
+                    src[i] *= +value.substr(1);
+                    break;
+                case "/":
+                    src[i] /= +value.substr(1);
+                    break;
+                default:
+                    src[i] = +value;
+            }
+            else if ((0, _indexJs.type)(value) === "number") src[i] = value;
+            else throw new Error(`unsupported value for Color.set`);
+            const out = new (0, _colorJsDefault.default)(src, mode);
+            if (mutate) {
+                this._rgb = out._rgb;
+                return this;
+            }
+            return out;
         }
-        xyz[0] = sqrt$1(xyz[0]);
-        xyz[1] = sqrt$1(xyz[1]);
-        xyz[2] = sqrt$1(xyz[2]);
-        if (xyz[3] > 0.9999999) xyz[3] = 1;
-        return new Color$6(clip_rgb$1(xyz));
-    };
-    // minimal multi-purpose interface
-    // @requires utils color analyze
-    var chroma$4 = chroma_1;
-    var type$2 = utils.type;
-    var pow$3 = Math.pow;
-    var scale$2 = function(colors) {
+        throw new Error(`unknown channel ${channel} in mode ${mode}`);
+    } else return src;
+};
+
+},{"../Color.js":"86WNB","../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"eBxqt":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+var _indexJs = require("../io/lab/index.js");
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _mixJs = require("../generator/mix.js");
+var _mixJsDefault = parcelHelpers.interopDefault(_mixJs);
+(0, _colorJsDefault.default).prototype.tint = function(f = 0.5, ...rest) {
+    return (0, _mixJsDefault.default)(this, "white", f, ...rest);
+};
+(0, _colorJsDefault.default).prototype.shade = function(f = 0.5, ...rest) {
+    return (0, _mixJsDefault.default)(this, "black", f, ...rest);
+};
+
+},{"../io/lab/index.js":"gMW4F","../Color.js":"86WNB","../generator/mix.js":"hPOrz","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3Mpwf":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+const rgb = (col1, col2, f)=>{
+    const xyz0 = col1._rgb;
+    const xyz1 = col2._rgb;
+    return new (0, _colorJsDefault.default)(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "rgb");
+};
+// register interpolator
+(0, _indexJsDefault.default).rgb = rgb;
+exports.default = rgb;
+
+},{"../Color.js":"86WNB","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jVlXN":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs);
+const { sqrt, pow } = Math;
+const lrgb = (col1, col2, f)=>{
+    const [x1, y1, z1] = col1._rgb;
+    const [x2, y2, z2] = col2._rgb;
+    return new (0, _colorJsDefault.default)(sqrt(pow(x1, 2) * (1 - f) + pow(x2, 2) * f), sqrt(pow(y1, 2) * (1 - f) + pow(y2, 2) * f), sqrt(pow(z1, 2) * (1 - f) + pow(z2, 2) * f), "rgb");
+};
+// register interpolator
+(0, _indexJsDefault.default).lrgb = lrgb;
+exports.default = lrgb;
+
+},{"../Color.js":"86WNB","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5Usm2":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/lab/index.js");
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+const lab = (col1, col2, f)=>{
+    const xyz0 = col1.lab();
+    const xyz1 = col2.lab();
+    return new (0, _colorJsDefault.default)(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "lab");
+};
+// register interpolator
+(0, _indexJsDefault.default).lab = lab;
+exports.default = lab;
+
+},{"../io/lab/index.js":"gMW4F","./index.js":"htTcH","../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1wkzn":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/lch/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const lch = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "lch");
+};
+// register interpolator
+(0, _indexJsDefault.default).lch = lch;
+(0, _indexJsDefault.default).hcl = lch;
+exports.default = lch;
+
+},{"../io/lch/index.js":"eOUqb","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8k0Mz":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+exports.default = (col1, col2, f, m)=>{
+    let xyz0, xyz1;
+    if (m === "hsl") {
+        xyz0 = col1.hsl();
+        xyz1 = col2.hsl();
+    } else if (m === "hsv") {
+        xyz0 = col1.hsv();
+        xyz1 = col2.hsv();
+    } else if (m === "hcg") {
+        xyz0 = col1.hcg();
+        xyz1 = col2.hcg();
+    } else if (m === "hsi") {
+        xyz0 = col1.hsi();
+        xyz1 = col2.hsi();
+    } else if (m === "lch" || m === "hcl") {
+        m = "hcl";
+        xyz0 = col1.hcl();
+        xyz1 = col2.hcl();
+    } else if (m === "oklch") {
+        xyz0 = col1.oklch().reverse();
+        xyz1 = col2.oklch().reverse();
+    }
+    let hue0, hue1, sat0, sat1, lbv0, lbv1;
+    if (m.substr(0, 1) === "h" || m === "oklch") {
+        [hue0, sat0, lbv0] = xyz0;
+        [hue1, sat1, lbv1] = xyz1;
+    }
+    let sat, hue, lbv, dh;
+    if (!isNaN(hue0) && !isNaN(hue1)) {
+        // both colors have hue
+        if (hue1 > hue0 && hue1 - hue0 > 180) dh = hue1 - (hue0 + 360);
+        else if (hue1 < hue0 && hue0 - hue1 > 180) dh = hue1 + 360 - hue0;
+        else dh = hue1 - hue0;
+        hue = hue0 + f * dh;
+    } else if (!isNaN(hue0)) {
+        hue = hue0;
+        if ((lbv1 == 1 || lbv1 == 0) && m != "hsv") sat = sat0;
+    } else if (!isNaN(hue1)) {
+        hue = hue1;
+        if ((lbv0 == 1 || lbv0 == 0) && m != "hsv") sat = sat1;
+    } else hue = Number.NaN;
+    if (sat === undefined) sat = sat0 + f * (sat1 - sat0);
+    lbv = lbv0 + f * (lbv1 - lbv0);
+    return m === "oklch" ? new (0, _colorJsDefault.default)([
+        lbv,
+        sat,
+        hue
+    ], m) : new (0, _colorJsDefault.default)([
+        hue,
+        sat,
+        lbv
+    ], m);
+};
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"63PvC":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/num/index.js");
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+const num = (col1, col2, f)=>{
+    const c1 = col1.num();
+    const c2 = col2.num();
+    return new (0, _colorJsDefault.default)(c1 + f * (c2 - c1), "num");
+};
+// register interpolator
+(0, _indexJsDefault.default).num = num;
+exports.default = num;
+
+},{"../io/num/index.js":"kAJcC","./index.js":"htTcH","../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4510n":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/hcg/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const hcg = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "hcg");
+};
+// register interpolator
+(0, _indexJsDefault.default).hcg = hcg;
+exports.default = hcg;
+
+},{"../io/hcg/index.js":"tBkG3","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kJ0St":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/hsi/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const hsi = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "hsi");
+};
+// register interpolator
+(0, _indexJsDefault.default).hsi = hsi;
+exports.default = hsi;
+
+},{"../io/hsi/index.js":"kYSQw","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"4r9Np":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/hsl/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const hsl = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "hsl");
+};
+// register interpolator
+(0, _indexJsDefault.default).hsl = hsl;
+exports.default = hsl;
+
+},{"../io/hsl/index.js":"jIO0h","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lNNWW":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/hsv/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const hsv = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "hsv");
+};
+// register interpolator
+(0, _indexJsDefault.default).hsv = hsv;
+exports.default = hsv;
+
+},{"../io/hsv/index.js":"4uLhg","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"h4nc8":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/oklab/index.js");
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+const oklab = (col1, col2, f)=>{
+    const xyz0 = col1.oklab();
+    const xyz1 = col2.oklab();
+    return new (0, _colorJsDefault.default)(xyz0[0] + f * (xyz1[0] - xyz0[0]), xyz0[1] + f * (xyz1[1] - xyz0[1]), xyz0[2] + f * (xyz1[2] - xyz0[2]), "oklab");
+};
+// register interpolator
+(0, _indexJsDefault.default).oklab = oklab;
+exports.default = oklab;
+
+},{"../io/oklab/index.js":"beksD","./index.js":"htTcH","../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1CTmB":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/lch/index.js");
+var _hsxJs = require("./_hsx.js");
+var _hsxJsDefault = parcelHelpers.interopDefault(_hsxJs);
+var _indexJs1 = require("./index.js");
+var _indexJsDefault = parcelHelpers.interopDefault(_indexJs1);
+const oklch = (col1, col2, f)=>{
+    return (0, _hsxJsDefault.default)(col1, col2, f, "oklch");
+};
+// register interpolator
+(0, _indexJsDefault.default).oklch = oklch;
+exports.default = oklch;
+
+},{"../io/lch/index.js":"eOUqb","./_hsx.js":"8k0Mz","./index.js":"htTcH","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"27RYU":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../utils/index.js");
+const { pow, sqrt, PI, cos, sin, atan2 } = Math;
+exports.default = (colors, mode = "lrgb", weights = null)=>{
+    const l = colors.length;
+    if (!weights) weights = Array.from(new Array(l)).map(()=>1);
+    // normalize weights
+    const k = l / weights.reduce(function(a, b) {
+        return a + b;
+    });
+    weights.forEach((w, i)=>{
+        weights[i] *= k;
+    });
+    // convert colors to Color objects
+    colors = colors.map((c)=>new (0, _colorJsDefault.default)(c));
+    if (mode === "lrgb") return _average_lrgb(colors, weights);
+    const first = colors.shift();
+    const xyz = first.get(mode);
+    const cnt = [];
+    let dx = 0;
+    let dy = 0;
+    // initial color
+    for(let i = 0; i < xyz.length; i++){
+        xyz[i] = (xyz[i] || 0) * weights[0];
+        cnt.push(isNaN(xyz[i]) ? 0 : weights[0]);
+        if (mode.charAt(i) === "h" && !isNaN(xyz[i])) {
+            const A = xyz[i] / 180 * PI;
+            dx += cos(A) * weights[0];
+            dy += sin(A) * weights[0];
+        }
+    }
+    let alpha = first.alpha() * weights[0];
+    colors.forEach((c, ci)=>{
+        const xyz2 = c.get(mode);
+        alpha += c.alpha() * weights[ci + 1];
+        for(let i = 0; i < xyz.length; i++)if (!isNaN(xyz2[i])) {
+            cnt[i] += weights[ci + 1];
+            if (mode.charAt(i) === "h") {
+                const A = xyz2[i] / 180 * PI;
+                dx += cos(A) * weights[ci + 1];
+                dy += sin(A) * weights[ci + 1];
+            } else xyz[i] += xyz2[i] * weights[ci + 1];
+        }
+    });
+    for(let i = 0; i < xyz.length; i++)if (mode.charAt(i) === "h") {
+        let A = atan2(dy / cnt[i], dx / cnt[i]) / PI * 180;
+        while(A < 0)A += 360;
+        while(A >= 360)A -= 360;
+        xyz[i] = A;
+    } else xyz[i] = xyz[i] / cnt[i];
+    alpha /= l;
+    return new (0, _colorJsDefault.default)(xyz, mode).alpha(alpha > 0.99999 ? 1 : alpha, true);
+};
+const _average_lrgb = (colors, weights)=>{
+    const l = colors.length;
+    const xyz = [
+        0,
+        0,
+        0,
+        0
+    ];
+    for(let i = 0; i < colors.length; i++){
+        const col = colors[i];
+        const f = weights[i] / l;
+        const rgb = col._rgb;
+        xyz[0] += pow(rgb[0], 2) * f;
+        xyz[1] += pow(rgb[1], 2) * f;
+        xyz[2] += pow(rgb[2], 2) * f;
+        xyz[3] += rgb[3] * f;
+    }
+    xyz[0] = sqrt(xyz[0]);
+    xyz[1] = sqrt(xyz[1]);
+    xyz[2] = sqrt(xyz[2]);
+    if (xyz[3] > 0.9999999) xyz[3] = 1;
+    return new (0, _colorJsDefault.default)((0, _indexJs.clip_rgb)(xyz));
+};
+
+},{"../Color.js":"86WNB","../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"boRft":[function(require,module,exports) {
+//
+// interpolates between a set of colors uzing a bezier spline
+//
+// @requires utils lab
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _indexJs = require("../io/lab/index.js");
+var _scaleJs = require("./scale.js");
+var _scaleJsDefault = parcelHelpers.interopDefault(_scaleJs);
+// nth row of the pascal triangle
+const binom_row = function(n) {
+    let row = [
+        1,
+        1
+    ];
+    for(let i = 1; i < n; i++){
+        let newrow = [
+            1
+        ];
+        for(let j = 1; j <= row.length; j++)newrow[j] = (row[j] || 0) + row[j - 1];
+        row = newrow;
+    }
+    return row;
+};
+const bezier = function(colors) {
+    let I, lab0, lab1, lab2;
+    colors = colors.map((c)=>new (0, _colorJsDefault.default)(c));
+    if (colors.length === 2) {
+        // linear interpolation
+        [lab0, lab1] = colors.map((c)=>c.lab());
+        I = function(t) {
+            const lab = [
+                0,
+                1,
+                2
+            ].map((i)=>lab0[i] + t * (lab1[i] - lab0[i]));
+            return new (0, _colorJsDefault.default)(lab, "lab");
+        };
+    } else if (colors.length === 3) {
+        // quadratic bezier interpolation
+        [lab0, lab1, lab2] = colors.map((c)=>c.lab());
+        I = function(t) {
+            const lab = [
+                0,
+                1,
+                2
+            ].map((i)=>(1 - t) * (1 - t) * lab0[i] + 2 * (1 - t) * t * lab1[i] + t * t * lab2[i]);
+            return new (0, _colorJsDefault.default)(lab, "lab");
+        };
+    } else if (colors.length === 4) {
+        // cubic bezier interpolation
+        let lab3;
+        [lab0, lab1, lab2, lab3] = colors.map((c)=>c.lab());
+        I = function(t) {
+            const lab = [
+                0,
+                1,
+                2
+            ].map((i)=>(1 - t) * (1 - t) * (1 - t) * lab0[i] + 3 * (1 - t) * (1 - t) * t * lab1[i] + 3 * (1 - t) * t * t * lab2[i] + t * t * t * lab3[i]);
+            return new (0, _colorJsDefault.default)(lab, "lab");
+        };
+    } else if (colors.length >= 5) {
+        // general case (degree n bezier)
+        let labs, row, n;
+        labs = colors.map((c)=>c.lab());
+        n = colors.length - 1;
+        row = binom_row(n);
+        I = function(t) {
+            const u = 1 - t;
+            const lab = [
+                0,
+                1,
+                2
+            ].map((i)=>labs.reduce((sum, el, j)=>sum + row[j] * u ** (n - j) * t ** j * el[i], 0));
+            return new (0, _colorJsDefault.default)(lab, "lab");
+        };
+    } else throw new RangeError("No point in running bezier with only one color.");
+    return I;
+};
+exports.default = (colors)=>{
+    const f = bezier(colors);
+    f.scale = ()=>(0, _scaleJsDefault.default)(f);
+    return f;
+};
+
+},{"../Color.js":"86WNB","../io/lab/index.js":"gMW4F","./scale.js":"gBPPh","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gBPPh":[function(require,module,exports) {
+// minimal multi-purpose interface
+// @requires utils color analyze
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>function(colors) {
         // constructor
-        var _mode = "rgb";
-        var _nacol = chroma$4("#ccc");
-        var _spread = 0;
+        let _mode = "rgb";
+        let _nacol = (0, _chromaJsDefault.default)("#ccc");
+        let _spread = 0;
         // const _fixed = false;
-        var _domain = [
+        let _domain = [
             0,
             1
         ];
-        var _pos = [];
-        var _padding = [
+        let _pos = [];
+        let _padding = [
             0,
             0
         ];
-        var _classes = false;
-        var _colors = [];
-        var _out = false;
-        var _min = 0;
-        var _max = 1;
-        var _correctLightness = false;
-        var _colorCache = {};
-        var _useCache = true;
-        var _gamma = 1;
+        let _classes = false;
+        let _colors = [];
+        let _out = false;
+        let _min = 0;
+        let _max = 1;
+        let _correctLightness = false;
+        let _colorCache = {};
+        let _useCache = true;
+        let _gamma = 1;
         // private methods
-        var setColors = function(colors) {
+        const setColors = function(colors) {
             colors = colors || [
                 "#fff",
                 "#000"
             ];
-            if (colors && type$2(colors) === "string" && chroma$4.brewer && chroma$4.brewer[colors.toLowerCase()]) colors = chroma$4.brewer[colors.toLowerCase()];
-            if (type$2(colors) === "array") {
+            if (colors && (0, _indexJs.type)(colors) === "string" && (0, _chromaJsDefault.default).brewer && (0, _chromaJsDefault.default).brewer[colors.toLowerCase()]) colors = (0, _chromaJsDefault.default).brewer[colors.toLowerCase()];
+            if ((0, _indexJs.type)(colors) === "array") {
                 // handle single color
                 if (colors.length === 1) colors = [
                     colors[0],
@@ -9581,29 +9844,25 @@ var pako = {
                 // make a copy of the colors
                 colors = colors.slice(0);
                 // convert to chroma classes
-                for(var c = 0; c < colors.length; c++)colors[c] = chroma$4(colors[c]);
+                for(let c = 0; c < colors.length; c++)colors[c] = (0, _chromaJsDefault.default)(colors[c]);
                 // auto-fill color position
                 _pos.length = 0;
-                for(var c$1 = 0; c$1 < colors.length; c$1++)_pos.push(c$1 / (colors.length - 1));
+                for(let c = 0; c < colors.length; c++)_pos.push(c / (colors.length - 1));
             }
             resetCache();
             return _colors = colors;
         };
-        var getClass = function(value) {
+        const getClass = function(value) {
             if (_classes != null) {
-                var n = _classes.length - 1;
-                var i = 0;
+                const n = _classes.length - 1;
+                let i = 0;
                 while(i < n && value >= _classes[i])i++;
                 return i - 1;
             }
             return 0;
         };
-        var tMapLightness = function(t) {
-            return t;
-        };
-        var tMapDomain = function(t) {
-            return t;
-        };
+        let tMapLightness = (t)=>t;
+        let tMapDomain = (t)=>t;
         // const classifyValue = function(value) {
         //     let val = value;
         //     if (_classes.length > 2) {
@@ -9615,14 +9874,14 @@ var pako = {
         //     }
         //     return val;
         // };
-        var getColor = function(val, bypassMap) {
-            var col, t;
+        const getColor = function(val, bypassMap) {
+            let col, t;
             if (bypassMap == null) bypassMap = false;
             if (isNaN(val) || val === null) return _nacol;
             if (!bypassMap) {
                 if (_classes && _classes.length > 2) {
                     // find the class
-                    var c = getClass(val);
+                    const c = getClass(val);
                     t = c / (_classes.length - 2);
                 } else if (_max !== _min) // just interpolate between min/max
                 t = (val - _min) / (_max - _min);
@@ -9631,15 +9890,15 @@ var pako = {
             // domain map
             t = tMapDomain(t);
             if (!bypassMap) t = tMapLightness(t); // lightness correction
-            if (_gamma !== 1) t = pow$3(t, _gamma);
+            if (_gamma !== 1) t = pow(t, _gamma);
             t = _padding[0] + t * (1 - _padding[0] - _padding[1]);
-            t = Math.min(1, Math.max(0, t));
-            var k = Math.floor(t * 10000);
+            t = (0, _indexJs.limit)(t, 0, 1);
+            const k = Math.floor(t * 10000);
             if (_useCache && _colorCache[k]) col = _colorCache[k];
             else {
-                if (type$2(_colors) === "array") //for i in [0.._pos.length-1]
-                for(var i = 0; i < _pos.length; i++){
-                    var p = _pos[i];
+                if ((0, _indexJs.type)(_colors) === "array") //for i in [0.._pos.length-1]
+                for(let i = 0; i < _pos.length; i++){
+                    const p = _pos[i];
                     if (t <= p) {
                         col = _colors[i];
                         break;
@@ -9650,40 +9909,38 @@ var pako = {
                     }
                     if (t > p && t < _pos[i + 1]) {
                         t = (t - p) / (_pos[i + 1] - p);
-                        col = chroma$4.interpolate(_colors[i], _colors[i + 1], t, _mode);
+                        col = (0, _chromaJsDefault.default).interpolate(_colors[i], _colors[i + 1], t, _mode);
                         break;
                     }
                 }
-                else if (type$2(_colors) === "function") col = _colors(t);
+                else if ((0, _indexJs.type)(_colors) === "function") col = _colors(t);
                 if (_useCache) _colorCache[k] = col;
             }
             return col;
         };
-        var resetCache = function() {
-            return _colorCache = {};
-        };
+        var resetCache = ()=>_colorCache = {};
         setColors(colors);
         // public interface
-        var f = function(v) {
-            var c = chroma$4(getColor(v));
+        const f = function(v) {
+            const c = (0, _chromaJsDefault.default)(getColor(v));
             if (_out && c[_out]) return c[_out]();
             else return c;
         };
         f.classes = function(classes) {
             if (classes != null) {
-                if (type$2(classes) === "array") {
+                if ((0, _indexJs.type)(classes) === "array") {
                     _classes = classes;
                     _domain = [
                         classes[0],
                         classes[classes.length - 1]
                     ];
                 } else {
-                    var d = chroma$4.analyze(_domain);
+                    const d = (0, _chromaJsDefault.default).analyze(_domain);
                     if (classes === 0) _classes = [
                         d.min,
                         d.max
                     ];
-                    else _classes = chroma$4.limits(d, "e", classes);
+                    else _classes = (0, _chromaJsDefault.default).limits(d, "e", classes);
                 }
                 return f;
             }
@@ -9694,30 +9951,21 @@ var pako = {
             _min = domain[0];
             _max = domain[domain.length - 1];
             _pos = [];
-            var k = _colors.length;
+            const k = _colors.length;
             if (domain.length === k && _min !== _max) // update positions
-            for(var i = 0, list = Array.from(domain); i < list.length; i += 1){
-                var d = list[i];
-                _pos.push((d - _min) / (_max - _min));
-            }
+            for (let d of Array.from(domain))_pos.push((d - _min) / (_max - _min));
             else {
-                for(var c = 0; c < k; c++)_pos.push(c / (k - 1));
+                for(let c = 0; c < k; c++)_pos.push(c / (k - 1));
                 if (domain.length > 2) {
                     // set domain map
-                    var tOut = domain.map(function(d, i) {
-                        return i / (domain.length - 1);
-                    });
-                    var tBreaks = domain.map(function(d) {
-                        return (d - _min) / (_max - _min);
-                    });
-                    if (!tBreaks.every(function(val, i) {
-                        return tOut[i] === val;
-                    })) tMapDomain = function(t) {
+                    const tOut = domain.map((d, i)=>i / (domain.length - 1));
+                    const tBreaks = domain.map((d)=>(d - _min) / (_max - _min));
+                    if (!tBreaks.every((val, i)=>tOut[i] === val)) tMapDomain = (t)=>{
                         if (t <= 0 || t >= 1) return t;
-                        var i = 0;
+                        let i = 0;
                         while(t >= tBreaks[i + 1])i++;
-                        var f = (t - tBreaks[i]) / (tBreaks[i + 1] - tBreaks[i]);
-                        var out = tOut[i] + f * (tOut[i + 1] - tOut[i]);
+                        const f = (t - tBreaks[i]) / (tBreaks[i + 1] - tBreaks[i]);
+                        const out = tOut[i] + f * (tOut[i + 1] - tOut[i]);
                         return out;
                     };
                 }
@@ -9735,7 +9983,7 @@ var pako = {
             return f;
         };
         f.range = function(colors, _pos) {
-            setColors(colors);
+            setColors(colors, _pos);
             return f;
         };
         f.out = function(_o) {
@@ -9752,15 +10000,15 @@ var pako = {
             _correctLightness = v;
             resetCache();
             if (_correctLightness) tMapLightness = function(t) {
-                var L0 = getColor(0, true).lab()[0];
-                var L1 = getColor(1, true).lab()[0];
-                var pol = L0 > L1;
-                var L_actual = getColor(t, true).lab()[0];
-                var L_ideal = L0 + (L1 - L0) * t;
-                var L_diff = L_actual - L_ideal;
-                var t0 = 0;
-                var t1 = 1;
-                var max_iter = 20;
+                const L0 = getColor(0, true).lab()[0];
+                const L1 = getColor(1, true).lab()[0];
+                const pol = L0 > L1;
+                let L_actual = getColor(t, true).lab()[0];
+                const L_ideal = L0 + (L1 - L0) * t;
+                let L_diff = L_actual - L_ideal;
+                let t0 = 0;
+                let t1 = 1;
+                let max_iter = 20;
                 while(Math.abs(L_diff) > 1e-2 && max_iter-- > 0)(function() {
                     if (pol) L_diff *= -1;
                     if (L_diff < 0) {
@@ -9775,14 +10023,12 @@ var pako = {
                 })();
                 return t;
             };
-            else tMapLightness = function(t) {
-                return t;
-            };
+            else tMapLightness = (t)=>t;
             return f;
         };
         f.padding = function(p) {
             if (p != null) {
-                if (type$2(p) === "number") p = [
+                if ((0, _indexJs.type)(p) === "number") p = [
                     p,
                     p
                 ];
@@ -9793,29 +10039,24 @@ var pako = {
         f.colors = function(numColors, out) {
             // If no arguments are given, return the original colors that were provided
             if (arguments.length < 2) out = "hex";
-            var result = [];
+            let result = [];
             if (arguments.length === 0) result = _colors.slice(0);
             else if (numColors === 1) result = [
                 f(0.5)
             ];
             else if (numColors > 1) {
-                var dm = _domain[0];
-                var dd = _domain[1] - dm;
-                result = __range__(0, numColors, false).map(function(i) {
-                    return f(dm + i / (numColors - 1) * dd);
-                });
+                const dm = _domain[0];
+                const dd = _domain[1] - dm;
+                result = __range__(0, numColors, false).map((i)=>f(dm + i / (numColors - 1) * dd));
             } else {
+                // returns all colors based on the defined classes
                 colors = [];
-                var samples = [];
-                if (_classes && _classes.length > 2) for(var i = 1, end = _classes.length, asc = 1 <= end; asc ? i < end : i > end; asc ? i++ : i--)samples.push((_classes[i - 1] + _classes[i]) * 0.5);
+                let samples = [];
+                if (_classes && _classes.length > 2) for(let i = 1, end = _classes.length, asc = 1 <= end; asc ? i < end : i > end; asc ? i++ : i--)samples.push((_classes[i - 1] + _classes[i]) * 0.5);
                 else samples = _domain;
-                result = samples.map(function(v) {
-                    return f(v);
-                });
+                result = samples.map((v)=>f(v));
             }
-            if (chroma$4[out]) result = result.map(function(c) {
-                return c[out]();
-            });
+            if ((0, _chromaJsDefault.default)[out]) result = result.map((c)=>c[out]());
             return result;
         };
         f.cache = function(c) {
@@ -9832,206 +10073,86 @@ var pako = {
         };
         f.nodata = function(d) {
             if (d != null) {
-                _nacol = chroma$4(d);
+                _nacol = (0, _chromaJsDefault.default)(d);
                 return f;
             } else return _nacol;
         };
         return f;
+    });
+var _chromaJs = require("../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _indexJs = require("../utils/index.js");
+const { pow } = Math;
+function __range__(left, right, inclusive) {
+    let range = [];
+    let ascending = left < right;
+    let end = !inclusive ? right : ascending ? right + 1 : right - 1;
+    for(let i = left; ascending ? i < end : i > end; ascending ? i++ : i--)range.push(i);
+    return range;
+}
+
+},{"../chroma.js":"jNNC2","../utils/index.js":"FsUmr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"1MBHJ":[function(require,module,exports) {
+/*
+ * interpolates between a set of colors uzing a bezier spline
+ * blend mode formulas taken from https://web.archive.org/web/20180110014946/http://www.venture-ware.com/kevin/coding/lets-learn-math-photoshop-blend-modes/
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _indexJs = require("../io/rgb/index.js");
+var _chromaJs = require("../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+const blend = (bottom, top, mode)=>{
+    if (!blend[mode]) throw new Error("unknown blend mode " + mode);
+    return blend[mode](bottom, top);
+};
+const blend_f = (f)=>(bottom, top)=>{
+        const c0 = (0, _chromaJsDefault.default)(top).rgb();
+        const c1 = (0, _chromaJsDefault.default)(bottom).rgb();
+        return (0, _chromaJsDefault.default).rgb(f(c0, c1));
     };
-    function __range__(left, right, inclusive) {
-        var range = [];
-        var ascending = left < right;
-        var end = !inclusive ? right : ascending ? right + 1 : right - 1;
-        for(var i = left; ascending ? i < end : i > end; ascending ? i++ : i--)range.push(i);
-        return range;
-    }
-    //
-    // interpolates between a set of colors uzing a bezier spline
-    //
-    // @requires utils lab
-    var Color$5 = Color_1;
-    var scale$1 = scale$2;
-    // nth row of the pascal triangle
-    var binom_row = function(n) {
-        var row = [
-            1,
-            1
-        ];
-        for(var i = 1; i < n; i++){
-            var newrow = [
-                1
-            ];
-            for(var j = 1; j <= row.length; j++)newrow[j] = (row[j] || 0) + row[j - 1];
-            row = newrow;
-        }
-        return row;
+const each = (f)=>(c0, c1)=>{
+        const out = [];
+        out[0] = f(c0[0], c1[0]);
+        out[1] = f(c0[1], c1[1]);
+        out[2] = f(c0[2], c1[2]);
+        return out;
     };
-    var bezier = function(colors) {
-        var assign, assign$1, assign$2;
-        var I, lab0, lab1, lab2;
-        colors = colors.map(function(c) {
-            return new Color$5(c);
-        });
-        if (colors.length === 2) {
-            // linear interpolation
-            assign = colors.map(function(c) {
-                return c.lab();
-            }), lab0 = assign[0], lab1 = assign[1];
-            I = function(t) {
-                var lab = [
-                    0,
-                    1,
-                    2
-                ].map(function(i) {
-                    return lab0[i] + t * (lab1[i] - lab0[i]);
-                });
-                return new Color$5(lab, "lab");
-            };
-        } else if (colors.length === 3) {
-            // quadratic bezier interpolation
-            assign$1 = colors.map(function(c) {
-                return c.lab();
-            }), lab0 = assign$1[0], lab1 = assign$1[1], lab2 = assign$1[2];
-            I = function(t) {
-                var lab = [
-                    0,
-                    1,
-                    2
-                ].map(function(i) {
-                    return (1 - t) * (1 - t) * lab0[i] + 2 * (1 - t) * t * lab1[i] + t * t * lab2[i];
-                });
-                return new Color$5(lab, "lab");
-            };
-        } else if (colors.length === 4) {
-            // cubic bezier interpolation
-            var lab3;
-            assign$2 = colors.map(function(c) {
-                return c.lab();
-            }), lab0 = assign$2[0], lab1 = assign$2[1], lab2 = assign$2[2], lab3 = assign$2[3];
-            I = function(t) {
-                var lab = [
-                    0,
-                    1,
-                    2
-                ].map(function(i) {
-                    return (1 - t) * (1 - t) * (1 - t) * lab0[i] + 3 * (1 - t) * (1 - t) * t * lab1[i] + 3 * (1 - t) * t * t * lab2[i] + t * t * t * lab3[i];
-                });
-                return new Color$5(lab, "lab");
-            };
-        } else if (colors.length >= 5) {
-            // general case (degree n bezier)
-            var labs, row, n;
-            labs = colors.map(function(c) {
-                return c.lab();
-            });
-            n = colors.length - 1;
-            row = binom_row(n);
-            I = function(t) {
-                var u = 1 - t;
-                var lab = [
-                    0,
-                    1,
-                    2
-                ].map(function(i) {
-                    return labs.reduce(function(sum, el, j) {
-                        return sum + row[j] * Math.pow(u, n - j) * Math.pow(t, j) * el[i];
-                    }, 0);
-                });
-                return new Color$5(lab, "lab");
-            };
-        } else throw new RangeError("No point in running bezier with only one color.");
-        return I;
-    };
-    var bezier_1 = function(colors) {
-        var f = bezier(colors);
-        f.scale = function() {
-            return scale$1(f);
-        };
-        return f;
-    };
-    /*
-     * interpolates between a set of colors uzing a bezier spline
-     * blend mode formulas taken from http://www.venture-ware.com/kevin/coding/lets-learn-math-photoshop-blend-modes/
-     */ var chroma$3 = chroma_1;
-    var blend = function(bottom, top, mode) {
-        if (!blend[mode]) throw new Error("unknown blend mode " + mode);
-        return blend[mode](bottom, top);
-    };
-    var blend_f = function(f) {
-        return function(bottom, top) {
-            var c0 = chroma$3(top).rgb();
-            var c1 = chroma$3(bottom).rgb();
-            return chroma$3.rgb(f(c0, c1));
-        };
-    };
-    var each = function(f) {
-        return function(c0, c1) {
-            var out = [];
-            out[0] = f(c0[0], c1[0]);
-            out[1] = f(c0[1], c1[1]);
-            out[2] = f(c0[2], c1[2]);
-            return out;
-        };
-    };
-    var normal = function(a) {
-        return a;
-    };
-    var multiply = function(a, b) {
-        return a * b / 255;
-    };
-    var darken = function(a, b) {
-        return a > b ? b : a;
-    };
-    var lighten = function(a, b) {
-        return a > b ? a : b;
-    };
-    var screen = function(a, b) {
-        return 255 * (1 - (1 - a / 255) * (1 - b / 255));
-    };
-    var overlay = function(a, b) {
-        return b < 128 ? 2 * a * b / 255 : 255 * (1 - 2 * (1 - a / 255) * (1 - b / 255));
-    };
-    var burn = function(a, b) {
-        return 255 * (1 - (1 - b / 255) / (a / 255));
-    };
-    var dodge = function(a, b) {
-        if (a === 255) return 255;
-        a = 255 * (b / 255) / (1 - a / 255);
-        return a > 255 ? 255 : a;
-    };
-    // # add = (a,b) ->
-    // #     if (a + b > 255) then 255 else a + b
-    blend.normal = blend_f(each(normal));
-    blend.multiply = blend_f(each(multiply));
-    blend.screen = blend_f(each(screen));
-    blend.overlay = blend_f(each(overlay));
-    blend.darken = blend_f(each(darken));
-    blend.lighten = blend_f(each(lighten));
-    blend.dodge = blend_f(each(dodge));
-    blend.burn = blend_f(each(burn));
-    // blend.add = blend_f(each(add));
-    var blend_1 = blend;
-    // cubehelix interpolation
-    // based on D.A. Green "A colour scheme for the display of astronomical intensity images"
-    // http://astron-soc.in/bulletin/11June/289392011.pdf
-    var type$1 = utils.type;
-    var clip_rgb = utils.clip_rgb;
-    var TWOPI = utils.TWOPI;
-    var pow$2 = Math.pow;
-    var sin$1 = Math.sin;
-    var cos$1 = Math.cos;
-    var chroma$2 = chroma_1;
-    var cubehelix = function(start, rotations, hue, gamma, lightness) {
-        if (start === void 0) start = 300;
-        if (rotations === void 0) rotations = -1.5;
-        if (hue === void 0) hue = 1;
-        if (gamma === void 0) gamma = 1;
-        if (lightness === void 0) lightness = [
-            0,
-            1
-        ];
-        var dh = 0, dl;
-        if (type$1(lightness) === "array") dl = lightness[1] - lightness[0];
+const normal = (a)=>a;
+const multiply = (a, b)=>a * b / 255;
+const darken = (a, b)=>a > b ? b : a;
+const lighten = (a, b)=>a > b ? a : b;
+const screen = (a, b)=>255 * (1 - (1 - a / 255) * (1 - b / 255));
+const overlay = (a, b)=>b < 128 ? 2 * a * b / 255 : 255 * (1 - 2 * (1 - a / 255) * (1 - b / 255));
+const burn = (a, b)=>255 * (1 - (1 - b / 255) / (a / 255));
+const dodge = (a, b)=>{
+    if (a === 255) return 255;
+    a = 255 * (b / 255) / (1 - a / 255);
+    return a > 255 ? 255 : a;
+};
+// # add = (a,b) ->
+// #     if (a + b > 255) then 255 else a + b
+blend.normal = blend_f(each(normal));
+blend.multiply = blend_f(each(multiply));
+blend.screen = blend_f(each(screen));
+blend.overlay = blend_f(each(overlay));
+blend.darken = blend_f(each(darken));
+blend.lighten = blend_f(each(lighten));
+blend.dodge = blend_f(each(dodge));
+blend.burn = blend_f(each(burn));
+// blend.add = blend_f(each(add));
+exports.default = blend;
+
+},{"../io/rgb/index.js":"2XQ0e","../chroma.js":"jNNC2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"247pR":[function(require,module,exports) {
+// cubehelix interpolation
+// based on D.A. Green "A colour scheme for the display of astronomical intensity images"
+// http://astron-soc.in/bulletin/11June/289392011.pdf
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>function(start = 300, rotations = -1.5, hue = 1, gamma = 1, lightness = [
+        0,
+        1
+    ]) {
+        let dh = 0, dl;
+        if ((0, _indexJs.type)(lightness) === "array") dl = lightness[1] - lightness[0];
         else {
             dl = 0;
             lightness = [
@@ -10039,17 +10160,17 @@ var pako = {
                 lightness
             ];
         }
-        var f = function(fract) {
-            var a = TWOPI * ((start + 120) / 360 + rotations * fract);
-            var l = pow$2(lightness[0] + dl * fract, gamma);
-            var h = dh !== 0 ? hue[0] + fract * dh : hue;
-            var amp = h * l * (1 - l) / 2;
-            var cos_a = cos$1(a);
-            var sin_a = sin$1(a);
-            var r = l + amp * (-0.14861 * cos_a + 1.78277 * sin_a);
-            var g = l + amp * (-0.29227 * cos_a - 0.90649 * sin_a);
-            var b = l + amp * (1.97294 * cos_a);
-            return chroma$2(clip_rgb([
+        const f = function(fract) {
+            const a = (0, _indexJs.TWOPI) * ((start + 120) / 360 + rotations * fract);
+            const l = pow(lightness[0] + dl * fract, gamma);
+            const h = dh !== 0 ? hue[0] + fract * dh : hue;
+            const amp = h * l * (1 - l) / 2;
+            const cos_a = cos(a);
+            const sin_a = sin(a);
+            const r = l + amp * (-0.14861 * cos_a + 1.78277 * sin_a);
+            const g = l + amp * (-0.29227 * cos_a - 0.90649 * sin_a);
+            const b = l + amp * (1.97294 * cos_a);
+            return (0, _chromaJsDefault.default)((0, _indexJs.clip_rgb)([
                 r * 255,
                 g * 255,
                 b * 255,
@@ -10074,7 +10195,7 @@ var pako = {
         f.hue = function(h) {
             if (h == null) return hue;
             hue = h;
-            if (type$1(hue) === "array") {
+            if ((0, _indexJs.type)(hue) === "array") {
                 dh = hue[1] - hue[0];
                 if (dh === 0) hue = hue[1];
             } else dh = 0;
@@ -10082,7 +10203,7 @@ var pako = {
         };
         f.lightness = function(h) {
             if (h == null) return lightness;
-            if (type$1(h) === "array") {
+            if ((0, _indexJs.type)(h) === "array") {
                 lightness = h;
                 dl = h[1] - h[0];
             } else {
@@ -10094,202 +10215,200 @@ var pako = {
             }
             return f;
         };
-        f.scale = function() {
-            return chroma$2.scale(f);
-        };
+        f.scale = ()=>(0, _chromaJsDefault.default).scale(f);
         f.hue(hue);
         return f;
+    });
+var _indexJs = require("../utils/index.js");
+var _chromaJs = require("../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+const { pow, sin, cos } = Math;
+
+},{"../utils/index.js":"FsUmr","../chroma.js":"jNNC2","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"cS4dQ":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+const digits = "0123456789abcdef";
+const { floor, random } = Math;
+exports.default = ()=>{
+    let code = "#";
+    for(let i = 0; i < 6; i++)code += digits.charAt(floor(random() * 16));
+    return new (0, _colorJsDefault.default)(code, "hex");
+};
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hJPw4":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "analyze", ()=>analyze);
+parcelHelpers.export(exports, "limits", ()=>limits);
+var _typeJs = require("./type.js");
+var _typeJsDefault = parcelHelpers.interopDefault(_typeJs);
+const { log, pow, floor, abs } = Math;
+function analyze(data, key = null) {
+    const r = {
+        min: Number.MAX_VALUE,
+        max: Number.MAX_VALUE * -1,
+        sum: 0,
+        values: [],
+        count: 0
     };
-    var Color$4 = Color_1;
-    var digits = "0123456789abcdef";
-    var floor$1 = Math.floor;
-    var random = Math.random;
-    var random_1 = function() {
-        var code = "#";
-        for(var i = 0; i < 6; i++)code += digits.charAt(floor$1(random() * 16));
-        return new Color$4(code, "hex");
-    };
-    var type = type$p;
-    var log = Math.log;
-    var pow$1 = Math.pow;
-    var floor = Math.floor;
-    var abs$1 = Math.abs;
-    var analyze = function(data, key) {
-        if (key === void 0) key = null;
-        var r = {
-            min: Number.MAX_VALUE,
-            max: Number.MAX_VALUE * -1,
-            sum: 0,
-            values: [],
-            count: 0
-        };
-        if (type(data) === "object") data = Object.values(data);
-        data.forEach(function(val) {
-            if (key && type(val) === "object") val = val[key];
-            if (val !== undefined && val !== null && !isNaN(val)) {
-                r.values.push(val);
-                r.sum += val;
-                if (val < r.min) r.min = val;
-                if (val > r.max) r.max = val;
-                r.count += 1;
-            }
-        });
-        r.domain = [
-            r.min,
-            r.max
-        ];
-        r.limits = function(mode, num) {
-            return limits(r, mode, num);
-        };
-        return r;
-    };
-    var limits = function(data, mode, num) {
-        if (mode === void 0) mode = "equal";
-        if (num === void 0) num = 7;
-        if (type(data) == "array") data = analyze(data);
-        var min = data.min;
-        var max = data.max;
-        var values = data.values.sort(function(a, b) {
-            return a - b;
-        });
-        if (num === 1) return [
-            min,
-            max
-        ];
-        var limits = [];
-        if (mode.substr(0, 1) === "c") {
-            limits.push(min);
-            limits.push(max);
+    if ((0, _typeJsDefault.default)(data) === "object") data = Object.values(data);
+    data.forEach((val)=>{
+        if (key && (0, _typeJsDefault.default)(val) === "object") val = val[key];
+        if (val !== undefined && val !== null && !isNaN(val)) {
+            r.values.push(val);
+            r.sum += val;
+            if (val < r.min) r.min = val;
+            if (val > r.max) r.max = val;
+            r.count += 1;
         }
-        if (mode.substr(0, 1) === "e") {
-            limits.push(min);
-            for(var i = 1; i < num; i++)limits.push(min + i / num * (max - min));
-            limits.push(max);
-        } else if (mode.substr(0, 1) === "l") {
-            if (min <= 0) throw new Error("Logarithmic scales are only possible for values > 0");
-            var min_log = Math.LOG10E * log(min);
-            var max_log = Math.LOG10E * log(max);
-            limits.push(min);
-            for(var i$1 = 1; i$1 < num; i$1++)limits.push(pow$1(10, min_log + i$1 / num * (max_log - min_log)));
-            limits.push(max);
-        } else if (mode.substr(0, 1) === "q") {
-            limits.push(min);
-            for(var i$2 = 1; i$2 < num; i$2++){
-                var p = (values.length - 1) * i$2 / num;
-                var pb = floor(p);
-                if (pb === p) limits.push(values[pb]);
-                else {
-                    var pr = p - pb;
-                    limits.push(values[pb] * (1 - pr) + values[pb + 1] * pr);
-                }
+    });
+    r.domain = [
+        r.min,
+        r.max
+    ];
+    r.limits = (mode, num)=>limits(r, mode, num);
+    return r;
+}
+function limits(data, mode = "equal", num = 7) {
+    if ((0, _typeJsDefault.default)(data) == "array") data = analyze(data);
+    const { min, max } = data;
+    const values = data.values.sort((a, b)=>a - b);
+    if (num === 1) return [
+        min,
+        max
+    ];
+    const limits = [];
+    if (mode.substr(0, 1) === "c") {
+        // continuous
+        limits.push(min);
+        limits.push(max);
+    }
+    if (mode.substr(0, 1) === "e") {
+        // equal interval
+        limits.push(min);
+        for(let i = 1; i < num; i++)limits.push(min + i / num * (max - min));
+        limits.push(max);
+    } else if (mode.substr(0, 1) === "l") {
+        // log scale
+        if (min <= 0) throw new Error("Logarithmic scales are only possible for values > 0");
+        const min_log = Math.LOG10E * log(min);
+        const max_log = Math.LOG10E * log(max);
+        limits.push(min);
+        for(let i = 1; i < num; i++)limits.push(pow(10, min_log + i / num * (max_log - min_log)));
+        limits.push(max);
+    } else if (mode.substr(0, 1) === "q") {
+        // quantile scale
+        limits.push(min);
+        for(let i = 1; i < num; i++){
+            const p = (values.length - 1) * i / num;
+            const pb = floor(p);
+            if (pb === p) limits.push(values[pb]);
+            else {
+                // p > pb
+                const pr = p - pb;
+                limits.push(values[pb] * (1 - pr) + values[pb + 1] * pr);
             }
-            limits.push(max);
-        } else if (mode.substr(0, 1) === "k") {
-            /*
-            implementation based on
-            http://code.google.com/p/figue/source/browse/trunk/figue.js#336
-            simplified for 1-d input values
-            */ var cluster;
-            var n = values.length;
-            var assignments = new Array(n);
-            var clusterSizes = new Array(num);
-            var repeat = true;
-            var nb_iters = 0;
-            var centroids = null;
-            // get seed values
-            centroids = [];
-            centroids.push(min);
-            for(var i$3 = 1; i$3 < num; i$3++)centroids.push(min + i$3 / num * (max - min));
-            centroids.push(max);
-            while(repeat){
-                // assignment step
-                for(var j = 0; j < num; j++)clusterSizes[j] = 0;
-                for(var i$4 = 0; i$4 < n; i$4++){
-                    var value = values[i$4];
-                    var mindist = Number.MAX_VALUE;
-                    var best = void 0;
-                    for(var j$1 = 0; j$1 < num; j$1++){
-                        var dist = abs$1(centroids[j$1] - value);
-                        if (dist < mindist) {
-                            mindist = dist;
-                            best = j$1;
-                        }
-                        clusterSizes[best]++;
-                        assignments[i$4] = best;
+        }
+        limits.push(max);
+    } else if (mode.substr(0, 1) === "k") {
+        // k-means clustering
+        /*
+        implementation based on
+        http://code.google.com/p/figue/source/browse/trunk/figue.js#336
+        simplified for 1-d input values
+        */ let cluster;
+        const n = values.length;
+        const assignments = new Array(n);
+        const clusterSizes = new Array(num);
+        let repeat = true;
+        let nb_iters = 0;
+        let centroids = null;
+        // get seed values
+        centroids = [];
+        centroids.push(min);
+        for(let i = 1; i < num; i++)centroids.push(min + i / num * (max - min));
+        centroids.push(max);
+        while(repeat){
+            // assignment step
+            for(let j = 0; j < num; j++)clusterSizes[j] = 0;
+            for(let i = 0; i < n; i++){
+                const value = values[i];
+                let mindist = Number.MAX_VALUE;
+                let best;
+                for(let j = 0; j < num; j++){
+                    const dist = abs(centroids[j] - value);
+                    if (dist < mindist) {
+                        mindist = dist;
+                        best = j;
                     }
+                    clusterSizes[best]++;
+                    assignments[i] = best;
                 }
-                // update centroids step
-                var newCentroids = new Array(num);
-                for(var j$2 = 0; j$2 < num; j$2++)newCentroids[j$2] = null;
-                for(var i$5 = 0; i$5 < n; i$5++){
-                    cluster = assignments[i$5];
-                    if (newCentroids[cluster] === null) newCentroids[cluster] = values[i$5];
-                    else newCentroids[cluster] += values[i$5];
-                }
-                for(var j$3 = 0; j$3 < num; j$3++)newCentroids[j$3] *= 1 / clusterSizes[j$3];
-                // check convergence
-                repeat = false;
-                for(var j$4 = 0; j$4 < num; j$4++)if (newCentroids[j$4] !== centroids[j$4]) {
-                    repeat = true;
-                    break;
-                }
-                centroids = newCentroids;
-                nb_iters++;
-                if (nb_iters > 200) repeat = false;
             }
-            // finished k-means clustering
-            // the next part is borrowed from gabrielflor.it
-            var kClusters = {};
-            for(var j$5 = 0; j$5 < num; j$5++)kClusters[j$5] = [];
-            for(var i$6 = 0; i$6 < n; i$6++){
-                cluster = assignments[i$6];
-                kClusters[cluster].push(values[i$6]);
+            // update centroids step
+            const newCentroids = new Array(num);
+            for(let j = 0; j < num; j++)newCentroids[j] = null;
+            for(let i = 0; i < n; i++){
+                cluster = assignments[i];
+                if (newCentroids[cluster] === null) newCentroids[cluster] = values[i];
+                else newCentroids[cluster] += values[i];
             }
-            var tmpKMeansBreaks = [];
-            for(var j$6 = 0; j$6 < num; j$6++){
-                tmpKMeansBreaks.push(kClusters[j$6][0]);
-                tmpKMeansBreaks.push(kClusters[j$6][kClusters[j$6].length - 1]);
+            for(let j = 0; j < num; j++)newCentroids[j] *= 1 / clusterSizes[j];
+            // check convergence
+            repeat = false;
+            for(let j = 0; j < num; j++)if (newCentroids[j] !== centroids[j]) {
+                repeat = true;
+                break;
             }
-            tmpKMeansBreaks = tmpKMeansBreaks.sort(function(a, b) {
-                return a - b;
-            });
-            limits.push(tmpKMeansBreaks[0]);
-            for(var i$7 = 1; i$7 < tmpKMeansBreaks.length; i$7 += 2){
-                var v = tmpKMeansBreaks[i$7];
-                if (!isNaN(v) && limits.indexOf(v) === -1) limits.push(v);
-            }
+            centroids = newCentroids;
+            nb_iters++;
+            if (nb_iters > 200) repeat = false;
         }
-        return limits;
-    };
-    var analyze_1 = {
-        analyze: analyze,
-        limits: limits
-    };
-    var Color$3 = Color_1;
-    var contrast = function(a, b) {
-        // WCAG contrast ratio
-        // see http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
-        a = new Color$3(a);
-        b = new Color$3(b);
-        var l1 = a.luminance();
-        var l2 = b.luminance();
-        return l1 > l2 ? (l1 + 0.05) / (l2 + 0.05) : (l2 + 0.05) / (l1 + 0.05);
-    };
-    var Color$2 = Color_1;
-    var sqrt = Math.sqrt;
-    var pow = Math.pow;
-    var min = Math.min;
-    var max = Math.max;
-    var atan2 = Math.atan2;
-    var abs = Math.abs;
-    var cos = Math.cos;
-    var sin = Math.sin;
-    var exp = Math.exp;
-    var PI = Math.PI;
-    var deltaE = function(a, b, Kl, Kc, Kh) {
-        if (Kl === void 0) Kl = 1;
-        if (Kc === void 0) Kc = 1;
-        if (Kh === void 0) Kh = 1;
+        // finished k-means clustering
+        // the next part is borrowed from gabrielflor.it
+        const kClusters = {};
+        for(let j = 0; j < num; j++)kClusters[j] = [];
+        for(let i = 0; i < n; i++){
+            cluster = assignments[i];
+            kClusters[cluster].push(values[i]);
+        }
+        let tmpKMeansBreaks = [];
+        for(let j = 0; j < num; j++){
+            tmpKMeansBreaks.push(kClusters[j][0]);
+            tmpKMeansBreaks.push(kClusters[j][kClusters[j].length - 1]);
+        }
+        tmpKMeansBreaks = tmpKMeansBreaks.sort((a, b)=>a - b);
+        limits.push(tmpKMeansBreaks[0]);
+        for(let i = 1; i < tmpKMeansBreaks.length; i += 2){
+            const v = tmpKMeansBreaks[i];
+            if (!isNaN(v) && limits.indexOf(v) === -1) limits.push(v);
+        }
+    }
+    return limits;
+}
+
+},{"./type.js":"dsbh4","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"103co":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+var _luminanceJs = require("../ops/luminance.js");
+exports.default = (a, b)=>{
+    // WCAG contrast ratio
+    // see http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
+    a = new (0, _colorJsDefault.default)(a);
+    b = new (0, _colorJsDefault.default)(b);
+    const l1 = a.luminance();
+    const l2 = b.luminance();
+    return l1 > l2 ? (l1 + 0.05) / (l2 + 0.05) : (l2 + 0.05) / (l1 + 0.05);
+};
+
+},{"../Color.js":"86WNB","../ops/luminance.js":"9NQik","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hKJFm":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>function(a, b, Kl = 1, Kc = 1, Kh = 1) {
         // Delta E (CIE 2000)
         // see http://www.brucelindbloom.com/index.html?Eqn_DeltaE_CIE2000.html
         var rad2deg = function(rad) {
@@ -10298,570 +10417,557 @@ var pako = {
         var deg2rad = function(deg) {
             return 2 * PI * deg / 360;
         };
-        a = new Color$2(a);
-        b = new Color$2(b);
-        var ref = Array.from(a.lab());
-        var L1 = ref[0];
-        var a1 = ref[1];
-        var b1 = ref[2];
-        var ref$1 = Array.from(b.lab());
-        var L2 = ref$1[0];
-        var a2 = ref$1[1];
-        var b2 = ref$1[2];
-        var avgL = (L1 + L2) / 2;
-        var C1 = sqrt(pow(a1, 2) + pow(b1, 2));
-        var C2 = sqrt(pow(a2, 2) + pow(b2, 2));
-        var avgC = (C1 + C2) / 2;
-        var G = 0.5 * (1 - sqrt(pow(avgC, 7) / (pow(avgC, 7) + pow(25, 7))));
-        var a1p = a1 * (1 + G);
-        var a2p = a2 * (1 + G);
-        var C1p = sqrt(pow(a1p, 2) + pow(b1, 2));
-        var C2p = sqrt(pow(a2p, 2) + pow(b2, 2));
-        var avgCp = (C1p + C2p) / 2;
-        var arctan1 = rad2deg(atan2(b1, a1p));
-        var arctan2 = rad2deg(atan2(b2, a2p));
-        var h1p = arctan1 >= 0 ? arctan1 : arctan1 + 360;
-        var h2p = arctan2 >= 0 ? arctan2 : arctan2 + 360;
-        var avgHp = abs(h1p - h2p) > 180 ? (h1p + h2p + 360) / 2 : (h1p + h2p) / 2;
-        var T = 1 - 0.17 * cos(deg2rad(avgHp - 30)) + 0.24 * cos(deg2rad(2 * avgHp)) + 0.32 * cos(deg2rad(3 * avgHp + 6)) - 0.2 * cos(deg2rad(4 * avgHp - 63));
-        var deltaHp = h2p - h1p;
+        a = new (0, _colorJsDefault.default)(a);
+        b = new (0, _colorJsDefault.default)(b);
+        const [L1, a1, b1] = Array.from(a.lab());
+        const [L2, a2, b2] = Array.from(b.lab());
+        const avgL = (L1 + L2) / 2;
+        const C1 = sqrt(pow(a1, 2) + pow(b1, 2));
+        const C2 = sqrt(pow(a2, 2) + pow(b2, 2));
+        const avgC = (C1 + C2) / 2;
+        const G = 0.5 * (1 - sqrt(pow(avgC, 7) / (pow(avgC, 7) + pow(25, 7))));
+        const a1p = a1 * (1 + G);
+        const a2p = a2 * (1 + G);
+        const C1p = sqrt(pow(a1p, 2) + pow(b1, 2));
+        const C2p = sqrt(pow(a2p, 2) + pow(b2, 2));
+        const avgCp = (C1p + C2p) / 2;
+        const arctan1 = rad2deg(atan2(b1, a1p));
+        const arctan2 = rad2deg(atan2(b2, a2p));
+        const h1p = arctan1 >= 0 ? arctan1 : arctan1 + 360;
+        const h2p = arctan2 >= 0 ? arctan2 : arctan2 + 360;
+        const avgHp = abs(h1p - h2p) > 180 ? (h1p + h2p + 360) / 2 : (h1p + h2p) / 2;
+        const T = 1 - 0.17 * cos(deg2rad(avgHp - 30)) + 0.24 * cos(deg2rad(2 * avgHp)) + 0.32 * cos(deg2rad(3 * avgHp + 6)) - 0.2 * cos(deg2rad(4 * avgHp - 63));
+        let deltaHp = h2p - h1p;
         deltaHp = abs(deltaHp) <= 180 ? deltaHp : h2p <= h1p ? deltaHp + 360 : deltaHp - 360;
         deltaHp = 2 * sqrt(C1p * C2p) * sin(deg2rad(deltaHp) / 2);
-        var deltaL = L2 - L1;
-        var deltaCp = C2p - C1p;
-        var sl = 1 + 0.015 * pow(avgL - 50, 2) / sqrt(20 + pow(avgL - 50, 2));
-        var sc = 1 + 0.045 * avgCp;
-        var sh = 1 + 0.015 * avgCp * T;
-        var deltaTheta = 30 * exp(-pow((avgHp - 275) / 25, 2));
-        var Rc = 2 * sqrt(pow(avgCp, 7) / (pow(avgCp, 7) + pow(25, 7)));
-        var Rt = -Rc * sin(2 * deg2rad(deltaTheta));
-        var result = sqrt(pow(deltaL / (Kl * sl), 2) + pow(deltaCp / (Kc * sc), 2) + pow(deltaHp / (Kh * sh), 2) + Rt * (deltaCp / (Kc * sc)) * (deltaHp / (Kh * sh)));
+        const deltaL = L2 - L1;
+        const deltaCp = C2p - C1p;
+        const sl = 1 + 0.015 * pow(avgL - 50, 2) / sqrt(20 + pow(avgL - 50, 2));
+        const sc = 1 + 0.045 * avgCp;
+        const sh = 1 + 0.015 * avgCp * T;
+        const deltaTheta = 30 * exp(-pow((avgHp - 275) / 25, 2));
+        const Rc = 2 * sqrt(pow(avgCp, 7) / (pow(avgCp, 7) + pow(25, 7)));
+        const Rt = -Rc * sin(2 * deg2rad(deltaTheta));
+        const result = sqrt(pow(deltaL / (Kl * sl), 2) + pow(deltaCp / (Kc * sc), 2) + pow(deltaHp / (Kh * sh), 2) + Rt * (deltaCp / (Kc * sc)) * (deltaHp / (Kh * sh)));
         return max(0, min(100, result));
-    };
-    var Color$1 = Color_1;
-    // simple Euclidean distance
-    var distance = function(a, b, mode) {
-        if (mode === void 0) mode = "lab";
+    });
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+const { sqrt, pow, min, max, atan2, abs, cos, sin, exp, PI } = Math;
+
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"3CIrA":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+// simple Euclidean distance
+parcelHelpers.export(exports, "default", ()=>function(a, b, mode = "lab") {
         // Delta E (CIE 1976)
         // see http://www.brucelindbloom.com/index.html?Equations.html
-        a = new Color$1(a);
-        b = new Color$1(b);
-        var l1 = a.get(mode);
-        var l2 = b.get(mode);
-        var sum_sq = 0;
-        for(var i in l1){
-            var d = (l1[i] || 0) - (l2[i] || 0);
+        a = new (0, _colorJsDefault.default)(a);
+        b = new (0, _colorJsDefault.default)(b);
+        const l1 = a.get(mode);
+        const l2 = b.get(mode);
+        let sum_sq = 0;
+        for(let i in l1){
+            const d = (l1[i] || 0) - (l2[i] || 0);
             sum_sq += d * d;
         }
         return Math.sqrt(sum_sq);
-    };
-    var Color = Color_1;
-    var valid = function() {
-        var args = [], len = arguments.length;
-        while(len--)args[len] = arguments[len];
-        try {
-            new (Function.prototype.bind.apply(Color, [
-                null
-            ].concat(args)));
-            return true;
-        } catch (e) {
-            return false;
-        }
-    };
-    // some pre-defined color scales:
-    var chroma$1 = chroma_1;
-    var scale = scale$2;
-    var scales = {
-        cool: function cool() {
-            return scale([
-                chroma$1.hsl(180, 1, .9),
-                chroma$1.hsl(250, .7, .4)
-            ]);
-        },
-        hot: function hot() {
-            return scale([
-                "#000",
-                "#f00",
-                "#ff0",
-                "#fff"
-            ]).mode("rgb");
-        }
-    };
-    /**
-        ColorBrewer colors for chroma.js
+    });
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
 
-        Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The
-        Pennsylvania State University.
-
-        Licensed under the Apache License, Version 2.0 (the "License");
-        you may not use this file except in compliance with the License.
-        You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
-
-        Unless required by applicable law or agreed to in writing, software distributed
-        under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-        CONDITIONS OF ANY KIND, either express or implied. See the License for the
-        specific language governing permissions and limitations under the License.
-    */ var colorbrewer = {
-        // sequential
-        OrRd: [
-            "#fff7ec",
-            "#fee8c8",
-            "#fdd49e",
-            "#fdbb84",
-            "#fc8d59",
-            "#ef6548",
-            "#d7301f",
-            "#b30000",
-            "#7f0000"
-        ],
-        PuBu: [
-            "#fff7fb",
-            "#ece7f2",
-            "#d0d1e6",
-            "#a6bddb",
-            "#74a9cf",
-            "#3690c0",
-            "#0570b0",
-            "#045a8d",
-            "#023858"
-        ],
-        BuPu: [
-            "#f7fcfd",
-            "#e0ecf4",
-            "#bfd3e6",
-            "#9ebcda",
-            "#8c96c6",
-            "#8c6bb1",
-            "#88419d",
-            "#810f7c",
-            "#4d004b"
-        ],
-        Oranges: [
-            "#fff5eb",
-            "#fee6ce",
-            "#fdd0a2",
-            "#fdae6b",
-            "#fd8d3c",
-            "#f16913",
-            "#d94801",
-            "#a63603",
-            "#7f2704"
-        ],
-        BuGn: [
-            "#f7fcfd",
-            "#e5f5f9",
-            "#ccece6",
-            "#99d8c9",
-            "#66c2a4",
-            "#41ae76",
-            "#238b45",
-            "#006d2c",
-            "#00441b"
-        ],
-        YlOrBr: [
-            "#ffffe5",
-            "#fff7bc",
-            "#fee391",
-            "#fec44f",
-            "#fe9929",
-            "#ec7014",
-            "#cc4c02",
-            "#993404",
-            "#662506"
-        ],
-        YlGn: [
-            "#ffffe5",
-            "#f7fcb9",
-            "#d9f0a3",
-            "#addd8e",
-            "#78c679",
-            "#41ab5d",
-            "#238443",
-            "#006837",
-            "#004529"
-        ],
-        Reds: [
-            "#fff5f0",
-            "#fee0d2",
-            "#fcbba1",
-            "#fc9272",
-            "#fb6a4a",
-            "#ef3b2c",
-            "#cb181d",
-            "#a50f15",
-            "#67000d"
-        ],
-        RdPu: [
-            "#fff7f3",
-            "#fde0dd",
-            "#fcc5c0",
-            "#fa9fb5",
-            "#f768a1",
-            "#dd3497",
-            "#ae017e",
-            "#7a0177",
-            "#49006a"
-        ],
-        Greens: [
-            "#f7fcf5",
-            "#e5f5e0",
-            "#c7e9c0",
-            "#a1d99b",
-            "#74c476",
-            "#41ab5d",
-            "#238b45",
-            "#006d2c",
-            "#00441b"
-        ],
-        YlGnBu: [
-            "#ffffd9",
-            "#edf8b1",
-            "#c7e9b4",
-            "#7fcdbb",
-            "#41b6c4",
-            "#1d91c0",
-            "#225ea8",
-            "#253494",
-            "#081d58"
-        ],
-        Purples: [
-            "#fcfbfd",
-            "#efedf5",
-            "#dadaeb",
-            "#bcbddc",
-            "#9e9ac8",
-            "#807dba",
-            "#6a51a3",
-            "#54278f",
-            "#3f007d"
-        ],
-        GnBu: [
-            "#f7fcf0",
-            "#e0f3db",
-            "#ccebc5",
-            "#a8ddb5",
-            "#7bccc4",
-            "#4eb3d3",
-            "#2b8cbe",
-            "#0868ac",
-            "#084081"
-        ],
-        Greys: [
-            "#ffffff",
-            "#f0f0f0",
-            "#d9d9d9",
-            "#bdbdbd",
-            "#969696",
-            "#737373",
-            "#525252",
-            "#252525",
-            "#000000"
-        ],
-        YlOrRd: [
-            "#ffffcc",
-            "#ffeda0",
-            "#fed976",
-            "#feb24c",
-            "#fd8d3c",
-            "#fc4e2a",
-            "#e31a1c",
-            "#bd0026",
-            "#800026"
-        ],
-        PuRd: [
-            "#f7f4f9",
-            "#e7e1ef",
-            "#d4b9da",
-            "#c994c7",
-            "#df65b0",
-            "#e7298a",
-            "#ce1256",
-            "#980043",
-            "#67001f"
-        ],
-        Blues: [
-            "#f7fbff",
-            "#deebf7",
-            "#c6dbef",
-            "#9ecae1",
-            "#6baed6",
-            "#4292c6",
-            "#2171b5",
-            "#08519c",
-            "#08306b"
-        ],
-        PuBuGn: [
-            "#fff7fb",
-            "#ece2f0",
-            "#d0d1e6",
-            "#a6bddb",
-            "#67a9cf",
-            "#3690c0",
-            "#02818a",
-            "#016c59",
-            "#014636"
-        ],
-        Viridis: [
-            "#440154",
-            "#482777",
-            "#3f4a8a",
-            "#31678e",
-            "#26838f",
-            "#1f9d8a",
-            "#6cce5a",
-            "#b6de2b",
-            "#fee825"
-        ],
-        // diverging
-        Spectral: [
-            "#9e0142",
-            "#d53e4f",
-            "#f46d43",
-            "#fdae61",
-            "#fee08b",
-            "#ffffbf",
-            "#e6f598",
-            "#abdda4",
-            "#66c2a5",
-            "#3288bd",
-            "#5e4fa2"
-        ],
-        RdYlGn: [
-            "#a50026",
-            "#d73027",
-            "#f46d43",
-            "#fdae61",
-            "#fee08b",
-            "#ffffbf",
-            "#d9ef8b",
-            "#a6d96a",
-            "#66bd63",
-            "#1a9850",
-            "#006837"
-        ],
-        RdBu: [
-            "#67001f",
-            "#b2182b",
-            "#d6604d",
-            "#f4a582",
-            "#fddbc7",
-            "#f7f7f7",
-            "#d1e5f0",
-            "#92c5de",
-            "#4393c3",
-            "#2166ac",
-            "#053061"
-        ],
-        PiYG: [
-            "#8e0152",
-            "#c51b7d",
-            "#de77ae",
-            "#f1b6da",
-            "#fde0ef",
-            "#f7f7f7",
-            "#e6f5d0",
-            "#b8e186",
-            "#7fbc41",
-            "#4d9221",
-            "#276419"
-        ],
-        PRGn: [
-            "#40004b",
-            "#762a83",
-            "#9970ab",
-            "#c2a5cf",
-            "#e7d4e8",
-            "#f7f7f7",
-            "#d9f0d3",
-            "#a6dba0",
-            "#5aae61",
-            "#1b7837",
-            "#00441b"
-        ],
-        RdYlBu: [
-            "#a50026",
-            "#d73027",
-            "#f46d43",
-            "#fdae61",
-            "#fee090",
-            "#ffffbf",
-            "#e0f3f8",
-            "#abd9e9",
-            "#74add1",
-            "#4575b4",
-            "#313695"
-        ],
-        BrBG: [
-            "#543005",
-            "#8c510a",
-            "#bf812d",
-            "#dfc27d",
-            "#f6e8c3",
-            "#f5f5f5",
-            "#c7eae5",
-            "#80cdc1",
-            "#35978f",
-            "#01665e",
-            "#003c30"
-        ],
-        RdGy: [
-            "#67001f",
-            "#b2182b",
-            "#d6604d",
-            "#f4a582",
-            "#fddbc7",
-            "#ffffff",
-            "#e0e0e0",
-            "#bababa",
-            "#878787",
-            "#4d4d4d",
-            "#1a1a1a"
-        ],
-        PuOr: [
-            "#7f3b08",
-            "#b35806",
-            "#e08214",
-            "#fdb863",
-            "#fee0b6",
-            "#f7f7f7",
-            "#d8daeb",
-            "#b2abd2",
-            "#8073ac",
-            "#542788",
-            "#2d004b"
-        ],
-        // qualitative
-        Set2: [
-            "#66c2a5",
-            "#fc8d62",
-            "#8da0cb",
-            "#e78ac3",
-            "#a6d854",
-            "#ffd92f",
-            "#e5c494",
-            "#b3b3b3"
-        ],
-        Accent: [
-            "#7fc97f",
-            "#beaed4",
-            "#fdc086",
-            "#ffff99",
-            "#386cb0",
-            "#f0027f",
-            "#bf5b17",
-            "#666666"
-        ],
-        Set1: [
-            "#e41a1c",
-            "#377eb8",
-            "#4daf4a",
-            "#984ea3",
-            "#ff7f00",
-            "#ffff33",
-            "#a65628",
-            "#f781bf",
-            "#999999"
-        ],
-        Set3: [
-            "#8dd3c7",
-            "#ffffb3",
-            "#bebada",
-            "#fb8072",
-            "#80b1d3",
-            "#fdb462",
-            "#b3de69",
-            "#fccde5",
-            "#d9d9d9",
-            "#bc80bd",
-            "#ccebc5",
-            "#ffed6f"
-        ],
-        Dark2: [
-            "#1b9e77",
-            "#d95f02",
-            "#7570b3",
-            "#e7298a",
-            "#66a61e",
-            "#e6ab02",
-            "#a6761d",
-            "#666666"
-        ],
-        Paired: [
-            "#a6cee3",
-            "#1f78b4",
-            "#b2df8a",
-            "#33a02c",
-            "#fb9a99",
-            "#e31a1c",
-            "#fdbf6f",
-            "#ff7f00",
-            "#cab2d6",
-            "#6a3d9a",
-            "#ffff99",
-            "#b15928"
-        ],
-        Pastel2: [
-            "#b3e2cd",
-            "#fdcdac",
-            "#cbd5e8",
-            "#f4cae4",
-            "#e6f5c9",
-            "#fff2ae",
-            "#f1e2cc",
-            "#cccccc"
-        ],
-        Pastel1: [
-            "#fbb4ae",
-            "#b3cde3",
-            "#ccebc5",
-            "#decbe4",
-            "#fed9a6",
-            "#ffffcc",
-            "#e5d8bd",
-            "#fddaec",
-            "#f2f2f2"
-        ]
-    };
-    // add lowercase aliases for case-insensitive matches
-    for(var i = 0, list = Object.keys(colorbrewer); i < list.length; i += 1){
-        var key = list[i];
-        colorbrewer[key.toLowerCase()] = colorbrewer[key];
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"i7AZI":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _colorJs = require("../Color.js");
+var _colorJsDefault = parcelHelpers.interopDefault(_colorJs);
+exports.default = (...args)=>{
+    try {
+        new (0, _colorJsDefault.default)(...args);
+        return true;
+    // eslint-disable-next-line
+    } catch (e) {
+        return false;
     }
-    var colorbrewer_1 = colorbrewer;
-    var chroma = chroma_1;
-    // feel free to comment out anything to rollup
-    // a smaller chroma.js built
-    // io --> convert colors
-    // operators --> modify existing Colors
-    // interpolators
-    // generators -- > create new colors
-    chroma.average = average;
-    chroma.bezier = bezier_1;
-    chroma.blend = blend_1;
-    chroma.cubehelix = cubehelix;
-    chroma.mix = chroma.interpolate = mix$1;
-    chroma.random = random_1;
-    chroma.scale = scale$2;
-    // other utility methods
-    chroma.analyze = analyze_1.analyze;
-    chroma.contrast = contrast;
-    chroma.deltaE = deltaE;
-    chroma.distance = distance;
-    chroma.limits = analyze_1.limits;
-    chroma.valid = valid;
-    // scale
-    chroma.scales = scales;
-    // colors
-    chroma.colors = w3cx11_1;
-    chroma.brewer = colorbrewer_1;
-    var chroma_js = chroma;
-    return chroma_js;
-});
+};
 
-},{}],"agkns":[function(require,module,exports) {
+},{"../Color.js":"86WNB","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"fP9EO":[function(require,module,exports) {
+// some pre-defined color scales:
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+var _chromaJs = require("../chroma.js");
+var _chromaJsDefault = parcelHelpers.interopDefault(_chromaJs);
+var _indexJs = require("../io/hsl/index.js");
+var _scaleJs = require("../generator/scale.js");
+var _scaleJsDefault = parcelHelpers.interopDefault(_scaleJs);
+exports.default = {
+    cool () {
+        return (0, _scaleJsDefault.default)([
+            (0, _chromaJsDefault.default).hsl(180, 1, 0.9),
+            (0, _chromaJsDefault.default).hsl(250, 0.7, 0.4)
+        ]);
+    },
+    hot () {
+        return (0, _scaleJsDefault.default)([
+            "#000",
+            "#f00",
+            "#ff0",
+            "#fff"
+        ], [
+            0,
+            0.25,
+            0.75,
+            1
+        ]).mode("rgb");
+    }
+};
+
+},{"../chroma.js":"jNNC2","../io/hsl/index.js":"jIO0h","../generator/scale.js":"gBPPh","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9uaXl":[function(require,module,exports) {
+/**
+    ColorBrewer colors for chroma.js
+
+    Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The
+    Pennsylvania State University.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed
+    under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+    CONDITIONS OF ANY KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations under the License.
+*/ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+const colorbrewer = {
+    // sequential
+    OrRd: [
+        "#fff7ec",
+        "#fee8c8",
+        "#fdd49e",
+        "#fdbb84",
+        "#fc8d59",
+        "#ef6548",
+        "#d7301f",
+        "#b30000",
+        "#7f0000"
+    ],
+    PuBu: [
+        "#fff7fb",
+        "#ece7f2",
+        "#d0d1e6",
+        "#a6bddb",
+        "#74a9cf",
+        "#3690c0",
+        "#0570b0",
+        "#045a8d",
+        "#023858"
+    ],
+    BuPu: [
+        "#f7fcfd",
+        "#e0ecf4",
+        "#bfd3e6",
+        "#9ebcda",
+        "#8c96c6",
+        "#8c6bb1",
+        "#88419d",
+        "#810f7c",
+        "#4d004b"
+    ],
+    Oranges: [
+        "#fff5eb",
+        "#fee6ce",
+        "#fdd0a2",
+        "#fdae6b",
+        "#fd8d3c",
+        "#f16913",
+        "#d94801",
+        "#a63603",
+        "#7f2704"
+    ],
+    BuGn: [
+        "#f7fcfd",
+        "#e5f5f9",
+        "#ccece6",
+        "#99d8c9",
+        "#66c2a4",
+        "#41ae76",
+        "#238b45",
+        "#006d2c",
+        "#00441b"
+    ],
+    YlOrBr: [
+        "#ffffe5",
+        "#fff7bc",
+        "#fee391",
+        "#fec44f",
+        "#fe9929",
+        "#ec7014",
+        "#cc4c02",
+        "#993404",
+        "#662506"
+    ],
+    YlGn: [
+        "#ffffe5",
+        "#f7fcb9",
+        "#d9f0a3",
+        "#addd8e",
+        "#78c679",
+        "#41ab5d",
+        "#238443",
+        "#006837",
+        "#004529"
+    ],
+    Reds: [
+        "#fff5f0",
+        "#fee0d2",
+        "#fcbba1",
+        "#fc9272",
+        "#fb6a4a",
+        "#ef3b2c",
+        "#cb181d",
+        "#a50f15",
+        "#67000d"
+    ],
+    RdPu: [
+        "#fff7f3",
+        "#fde0dd",
+        "#fcc5c0",
+        "#fa9fb5",
+        "#f768a1",
+        "#dd3497",
+        "#ae017e",
+        "#7a0177",
+        "#49006a"
+    ],
+    Greens: [
+        "#f7fcf5",
+        "#e5f5e0",
+        "#c7e9c0",
+        "#a1d99b",
+        "#74c476",
+        "#41ab5d",
+        "#238b45",
+        "#006d2c",
+        "#00441b"
+    ],
+    YlGnBu: [
+        "#ffffd9",
+        "#edf8b1",
+        "#c7e9b4",
+        "#7fcdbb",
+        "#41b6c4",
+        "#1d91c0",
+        "#225ea8",
+        "#253494",
+        "#081d58"
+    ],
+    Purples: [
+        "#fcfbfd",
+        "#efedf5",
+        "#dadaeb",
+        "#bcbddc",
+        "#9e9ac8",
+        "#807dba",
+        "#6a51a3",
+        "#54278f",
+        "#3f007d"
+    ],
+    GnBu: [
+        "#f7fcf0",
+        "#e0f3db",
+        "#ccebc5",
+        "#a8ddb5",
+        "#7bccc4",
+        "#4eb3d3",
+        "#2b8cbe",
+        "#0868ac",
+        "#084081"
+    ],
+    Greys: [
+        "#ffffff",
+        "#f0f0f0",
+        "#d9d9d9",
+        "#bdbdbd",
+        "#969696",
+        "#737373",
+        "#525252",
+        "#252525",
+        "#000000"
+    ],
+    YlOrRd: [
+        "#ffffcc",
+        "#ffeda0",
+        "#fed976",
+        "#feb24c",
+        "#fd8d3c",
+        "#fc4e2a",
+        "#e31a1c",
+        "#bd0026",
+        "#800026"
+    ],
+    PuRd: [
+        "#f7f4f9",
+        "#e7e1ef",
+        "#d4b9da",
+        "#c994c7",
+        "#df65b0",
+        "#e7298a",
+        "#ce1256",
+        "#980043",
+        "#67001f"
+    ],
+    Blues: [
+        "#f7fbff",
+        "#deebf7",
+        "#c6dbef",
+        "#9ecae1",
+        "#6baed6",
+        "#4292c6",
+        "#2171b5",
+        "#08519c",
+        "#08306b"
+    ],
+    PuBuGn: [
+        "#fff7fb",
+        "#ece2f0",
+        "#d0d1e6",
+        "#a6bddb",
+        "#67a9cf",
+        "#3690c0",
+        "#02818a",
+        "#016c59",
+        "#014636"
+    ],
+    Viridis: [
+        "#440154",
+        "#482777",
+        "#3f4a8a",
+        "#31678e",
+        "#26838f",
+        "#1f9d8a",
+        "#6cce5a",
+        "#b6de2b",
+        "#fee825"
+    ],
+    // diverging
+    Spectral: [
+        "#9e0142",
+        "#d53e4f",
+        "#f46d43",
+        "#fdae61",
+        "#fee08b",
+        "#ffffbf",
+        "#e6f598",
+        "#abdda4",
+        "#66c2a5",
+        "#3288bd",
+        "#5e4fa2"
+    ],
+    RdYlGn: [
+        "#a50026",
+        "#d73027",
+        "#f46d43",
+        "#fdae61",
+        "#fee08b",
+        "#ffffbf",
+        "#d9ef8b",
+        "#a6d96a",
+        "#66bd63",
+        "#1a9850",
+        "#006837"
+    ],
+    RdBu: [
+        "#67001f",
+        "#b2182b",
+        "#d6604d",
+        "#f4a582",
+        "#fddbc7",
+        "#f7f7f7",
+        "#d1e5f0",
+        "#92c5de",
+        "#4393c3",
+        "#2166ac",
+        "#053061"
+    ],
+    PiYG: [
+        "#8e0152",
+        "#c51b7d",
+        "#de77ae",
+        "#f1b6da",
+        "#fde0ef",
+        "#f7f7f7",
+        "#e6f5d0",
+        "#b8e186",
+        "#7fbc41",
+        "#4d9221",
+        "#276419"
+    ],
+    PRGn: [
+        "#40004b",
+        "#762a83",
+        "#9970ab",
+        "#c2a5cf",
+        "#e7d4e8",
+        "#f7f7f7",
+        "#d9f0d3",
+        "#a6dba0",
+        "#5aae61",
+        "#1b7837",
+        "#00441b"
+    ],
+    RdYlBu: [
+        "#a50026",
+        "#d73027",
+        "#f46d43",
+        "#fdae61",
+        "#fee090",
+        "#ffffbf",
+        "#e0f3f8",
+        "#abd9e9",
+        "#74add1",
+        "#4575b4",
+        "#313695"
+    ],
+    BrBG: [
+        "#543005",
+        "#8c510a",
+        "#bf812d",
+        "#dfc27d",
+        "#f6e8c3",
+        "#f5f5f5",
+        "#c7eae5",
+        "#80cdc1",
+        "#35978f",
+        "#01665e",
+        "#003c30"
+    ],
+    RdGy: [
+        "#67001f",
+        "#b2182b",
+        "#d6604d",
+        "#f4a582",
+        "#fddbc7",
+        "#ffffff",
+        "#e0e0e0",
+        "#bababa",
+        "#878787",
+        "#4d4d4d",
+        "#1a1a1a"
+    ],
+    PuOr: [
+        "#7f3b08",
+        "#b35806",
+        "#e08214",
+        "#fdb863",
+        "#fee0b6",
+        "#f7f7f7",
+        "#d8daeb",
+        "#b2abd2",
+        "#8073ac",
+        "#542788",
+        "#2d004b"
+    ],
+    // qualitative
+    Set2: [
+        "#66c2a5",
+        "#fc8d62",
+        "#8da0cb",
+        "#e78ac3",
+        "#a6d854",
+        "#ffd92f",
+        "#e5c494",
+        "#b3b3b3"
+    ],
+    Accent: [
+        "#7fc97f",
+        "#beaed4",
+        "#fdc086",
+        "#ffff99",
+        "#386cb0",
+        "#f0027f",
+        "#bf5b17",
+        "#666666"
+    ],
+    Set1: [
+        "#e41a1c",
+        "#377eb8",
+        "#4daf4a",
+        "#984ea3",
+        "#ff7f00",
+        "#ffff33",
+        "#a65628",
+        "#f781bf",
+        "#999999"
+    ],
+    Set3: [
+        "#8dd3c7",
+        "#ffffb3",
+        "#bebada",
+        "#fb8072",
+        "#80b1d3",
+        "#fdb462",
+        "#b3de69",
+        "#fccde5",
+        "#d9d9d9",
+        "#bc80bd",
+        "#ccebc5",
+        "#ffed6f"
+    ],
+    Dark2: [
+        "#1b9e77",
+        "#d95f02",
+        "#7570b3",
+        "#e7298a",
+        "#66a61e",
+        "#e6ab02",
+        "#a6761d",
+        "#666666"
+    ],
+    Paired: [
+        "#a6cee3",
+        "#1f78b4",
+        "#b2df8a",
+        "#33a02c",
+        "#fb9a99",
+        "#e31a1c",
+        "#fdbf6f",
+        "#ff7f00",
+        "#cab2d6",
+        "#6a3d9a",
+        "#ffff99",
+        "#b15928"
+    ],
+    Pastel2: [
+        "#b3e2cd",
+        "#fdcdac",
+        "#cbd5e8",
+        "#f4cae4",
+        "#e6f5c9",
+        "#fff2ae",
+        "#f1e2cc",
+        "#cccccc"
+    ],
+    Pastel1: [
+        "#fbb4ae",
+        "#b3cde3",
+        "#ccebc5",
+        "#decbe4",
+        "#fed9a6",
+        "#ffffcc",
+        "#e5d8bd",
+        "#fddaec",
+        "#f2f2f2"
+    ]
+};
+// add lowercase aliases for case-insensitive matches
+for (let key of Object.keys(colorbrewer))colorbrewer[key.toLowerCase()] = colorbrewer[key];
+exports.default = colorbrewer;
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"agkns":[function(require,module,exports) {
 /*!
- * Paper.js v0.12.17 - The Swiss Army Knife of Vector Graphics Scripting.
+ * Paper.js v0.12.18 - The Swiss Army Knife of Vector Graphics Scripting.
  * http://paperjs.org/
  *
  * Copyright (c) 2011 - 2020, Jürg Lehni & Jonathan Puckey
@@ -10871,7 +10977,7 @@ var pako = {
  *
  * All rights reserved.
  *
- * Date: Thu Nov 3 21:15:36 2022 +0100
+ * Date: Wed Jul 17 14:57:24 2024 +0200
  *
  ***
  *
@@ -11456,7 +11562,7 @@ var pako = {
                 if (agent.atom) delete agent.chrome;
             }
         },
-        version: "0.12.17",
+        version: "0.12.18",
         getView: function() {
             var project = this.project;
             return project && project._view;
@@ -13884,6 +13990,12 @@ var pako = {
         },
         getIndex: function() {
             return this._index;
+        },
+        setIndex: function(index) {
+            var parent = this._parent, children = parent && parent._children;
+            if (children) parent.insertChildren(index in children ? index : undefined, [
+                this
+            ]);
         },
         equals: function(item) {
             return item === this || item && this._class === item._class && this._style.equals(item._style) && this._matrix.equals(item._matrix) && this._locked === item._locked && this._visible === item._visible && this._blendMode === item._blendMode && this._opacity === item._opacity && this._clipMask === item._clipMask && this._guide === item._guide && this._equals(item) || false;
@@ -20998,7 +21110,7 @@ var pako = {
         _handleMouseEvent: function(type, event, point, mouse) {
             paper = this._scope;
             if (mouse.drag && !this.responds(type)) type = "mousemove";
-            var move = mouse.move || mouse.drag, responds = this.responds(type), minDistance = this.minDistance, maxDistance = this.maxDistance, called = false, tool = this;
+            var move = mouse.move || mouse.drag, responds = this.responds(type), called = false, tool = this;
             function update(minDistance, maxDistance) {
                 var pt = point, toolPoint = move ? tool._point : tool._downPoint || pt;
                 if (move) {
@@ -21026,9 +21138,9 @@ var pako = {
                 update();
                 emit();
             } else if (mouse.up) {
-                update(null, maxDistance);
+                update(null, this._maxDistance);
                 emit();
-            } else if (responds) while(update(minDistance, maxDistance))emit();
+            } else if (responds) while(update(this._minDistance, this._maxDistance))emit();
             return called;
         }
     });
@@ -21760,12 +21872,12 @@ var pako = {
             SymbolItem: exportSymbolItem,
             PointText: exportText
         };
-        function applyStyle(item, node, isRoot) {
+        function applyStyle(item, node, options, isRoot) {
             var attrs = {}, parent = !isRoot && item.getParent(), style = [];
             if (item._name != null) attrs.id = item._name;
             Base.each(SvgStyles, function(entry) {
                 var get = entry.get, type = entry.type, value = item[get]();
-                if (entry.exportFilter ? entry.exportFilter(item, value) : !parent || !Base.equals(parent[get](), value)) {
+                if (entry.exportFilter ? entry.exportFilter(item, value) : options.reduceAttributes == false || !parent || !Base.equals(parent[get](), value)) {
                     if (type === "color" && value != null) {
                         var alpha = value.getAlpha();
                         if (alpha < 1) attrs[entry.attribute + "-opacity"] = alpha;
@@ -21819,7 +21931,7 @@ var pako = {
                 var data = JSON.stringify(item._data);
                 if (data && data !== "{}" && data !== "null") node.setAttribute("data-paper-data", data);
             }
-            return node && applyStyle(item, node, isRoot);
+            return node && applyStyle(item, node, options, isRoot);
         }
         function setOptions(options) {
             if (!options) options = {};
@@ -22006,7 +22118,7 @@ var pako = {
                 for(var i = 0, l = transforms.length; i < l; i++){
                     var transform = transforms[i];
                     if (!transform) break;
-                    var parts = transform.split(/\(\s*/), command = parts[0], v = parts[1].split(/[\s,]+/g);
+                    var parts = transform.split(/\(\s*/), command = parts[0].trim(), v = parts[1].split(/[\s,]+/g);
                     for(var j = 0, m = v.length; j < m; j++)v[j] = parseFloat(v[j]);
                     switch(command){
                         case "matrix":
@@ -25518,7 +25630,7 @@ Parser.tokenizer = function tokenizer(input, options) {
 Object.defineProperties(Parser.prototype, prototypeAccessors);
 var pp$9 = Parser.prototype;
 // ## Parser utilities
-var literal = /^(?:'((?:\\.|[^'\\])*?)'|"((?:\\.|[^"\\])*?)")/;
+var literal = /^(?:'((?:\\[^]|[^'\\])*?)'|"((?:\\[^]|[^"\\])*?)")/;
 pp$9.strictDirective = function(start) {
     if (this.options.ecmaVersion < 5) return false;
     for(;;){
@@ -25655,7 +25767,7 @@ pp$8.isLet = function(context) {
     // is allowed. However, `let [` is an explicit negative lookahead for
     // ExpressionStatement, so special-case it first.
     if (nextCh === 91 || nextCh === 92) return true;
-     // '[', '/'
+     // '[', '\'
     if (context) return false;
     if (nextCh === 123 || nextCh > 0xd7ff && nextCh < 0xdc00) return true;
      // '{', astral
@@ -25837,13 +25949,17 @@ pp$8.parseForStatement = function(node) {
         return this.parseFor(node, init$1);
     }
     var startsWithLet = this.isContextual("let"), isForOf = false;
+    var containsEsc = this.containsEsc;
     var refDestructuringErrors = new DestructuringErrors;
-    var init = this.parseExpression(awaitAt > -1 ? "await" : true, refDestructuringErrors);
+    var initPos = this.start;
+    var init = awaitAt > -1 ? this.parseExprSubscripts(refDestructuringErrors, "await") : this.parseExpression(true, refDestructuringErrors);
     if (this.type === types$1._in || (isForOf = this.options.ecmaVersion >= 6 && this.isContextual("of"))) {
-        if (this.options.ecmaVersion >= 9) {
-            if (this.type === types$1._in) {
-                if (awaitAt > -1) this.unexpected(awaitAt);
-            } else node.await = awaitAt > -1;
+        if (awaitAt > -1) {
+            if (this.type === types$1._in) this.unexpected(awaitAt);
+            node.await = true;
+        } else if (isForOf && this.options.ecmaVersion >= 8) {
+            if (init.start === initPos && !containsEsc && init.type === "Identifier" && init.name === "async") this.unexpected();
+            else if (this.options.ecmaVersion >= 9) node.await = false;
         }
         if (startsWithLet && isForOf) this.raise(init.start, "The left-hand side of a for-of loop may not start with 'let'.");
         this.toAssignable(init, false, refDestructuringErrors);
@@ -27076,7 +27192,7 @@ pp$5.parseMaybeUnary = function(refDestructuringErrors, sawUnary, incDec, forIni
         node.argument = this.parseMaybeUnary(null, true, update, forInit);
         this.checkExpressionErrors(refDestructuringErrors, true);
         if (update) this.checkLValSimple(node.argument);
-        else if (this.strict && node.operator === "delete" && node.argument.type === "Identifier") this.raiseRecoverable(node.start, "Deleting local variable in strict mode");
+        else if (this.strict && node.operator === "delete" && isLocalVariableAccess(node.argument)) this.raiseRecoverable(node.start, "Deleting local variable in strict mode");
         else if (node.operator === "delete" && isPrivateFieldAccess(node.argument)) this.raiseRecoverable(node.start, "Private fields can not be deleted");
         else sawUnary = true;
         expr = this.finishNode(node, update ? "UpdateExpression" : "UnaryExpression");
@@ -27103,8 +27219,11 @@ pp$5.parseMaybeUnary = function(refDestructuringErrors, sawUnary, incDec, forIni
         else return this.buildBinary(startPos, startLoc, expr, this.parseMaybeUnary(null, false, false, forInit), "**", false);
     } else return expr;
 };
+function isLocalVariableAccess(node) {
+    return node.type === "Identifier" || node.type === "ParenthesizedExpression" && isLocalVariableAccess(node.expression);
+}
 function isPrivateFieldAccess(node) {
-    return node.type === "MemberExpression" && node.property.type === "PrivateIdentifier" || node.type === "ChainExpression" && isPrivateFieldAccess(node.expression);
+    return node.type === "MemberExpression" && node.property.type === "PrivateIdentifier" || node.type === "ChainExpression" && isPrivateFieldAccess(node.expression) || node.type === "ParenthesizedExpression" && isPrivateFieldAccess(node.expression);
 }
 // Parse call, dot, and `[]`-subscript expressions.
 pp$5.parseExprSubscripts = function(refDestructuringErrors, forInit) {
@@ -27435,7 +27554,7 @@ pp$5.parseTemplateElement = function(ref) {
     if (this.type === types$1.invalidTemplate) {
         if (!isTagged) this.raiseRecoverable(this.start, "Bad escape sequence in untagged template literal");
         elem.value = {
-            raw: this.value,
+            raw: this.value.replace(/\r\n?/g, "\n"),
             cooked: null
         };
     } else elem.value = {
@@ -27964,6 +28083,25 @@ for(var i = 0, list = [
     buildUnicodeData(ecmaVersion);
 }
 var pp$1 = Parser.prototype;
+// Track disjunction structure to determine whether a duplicate
+// capture group name is allowed because it is in a separate branch.
+var BranchID = function BranchID(parent, base) {
+    // Parent disjunction branch
+    this.parent = parent;
+    // Identifies this set of sibling branches
+    this.base = base || this;
+};
+BranchID.prototype.separatedFrom = function separatedFrom(alt) {
+    // A branch is separate from another branch if they or any of
+    // their parents are siblings in a given disjunction
+    for(var self = this; self; self = self.parent)for(var other = alt; other; other = other.parent){
+        if (self.base === other.base && self !== other) return true;
+    }
+    return false;
+};
+BranchID.prototype.sibling = function sibling() {
+    return new BranchID(this.parent, this.base);
+};
 var RegExpValidationState = function RegExpValidationState(parser) {
     this.parser = parser;
     this.validFlags = "gim" + (parser.options.ecmaVersion >= 6 ? "uy" : "") + (parser.options.ecmaVersion >= 9 ? "s" : "") + (parser.options.ecmaVersion >= 13 ? "d" : "") + (parser.options.ecmaVersion >= 15 ? "v" : "");
@@ -27980,8 +28118,9 @@ var RegExpValidationState = function RegExpValidationState(parser) {
     this.lastAssertionIsQuantifiable = false;
     this.numCapturingParens = 0;
     this.maxBackReference = 0;
-    this.groupNames = [];
+    this.groupNames = Object.create(null);
     this.backReferenceNames = [];
+    this.branchID = null;
 };
 RegExpValidationState.prototype.reset = function reset(start, pattern, flags) {
     var unicodeSets = flags.indexOf("v") !== -1;
@@ -28074,6 +28213,10 @@ RegExpValidationState.prototype.eatChars = function eatChars(chs, forceU) {
     }
     if (this.options.ecmaVersion >= 15 && u && v) this.raise(state.start, "Invalid regular expression flag");
 };
+function hasProp(obj) {
+    for(var _ in obj)return true;
+    return false;
+}
 /**
  * Validate the pattern part of a given RegExpLiteral.
  *
@@ -28086,7 +28229,7 @@ RegExpValidationState.prototype.eatChars = function eatChars(chs, forceU) {
     // |Pattern[~U, +N]| and use this result instead. Throw a *SyntaxError*
     // exception if _P_ did not conform to the grammar, if any elements of _P_
     // were not matched by the parse, or if any Early Error conditions exist.
-    if (!state.switchN && this.options.ecmaVersion >= 9 && state.groupNames.length > 0) {
+    if (!state.switchN && this.options.ecmaVersion >= 9 && hasProp(state.groupNames)) {
         state.switchN = true;
         this.regexp_pattern(state);
     }
@@ -28099,8 +28242,9 @@ pp$1.regexp_pattern = function(state) {
     state.lastAssertionIsQuantifiable = false;
     state.numCapturingParens = 0;
     state.maxBackReference = 0;
-    state.groupNames.length = 0;
+    state.groupNames = Object.create(null);
     state.backReferenceNames.length = 0;
+    state.branchID = null;
     this.regexp_disjunction(state);
     if (state.pos !== state.source.length) {
         // Make the same messages as V8.
@@ -28110,13 +28254,19 @@ pp$1.regexp_pattern = function(state) {
     if (state.maxBackReference > state.numCapturingParens) state.raise("Invalid escape");
     for(var i = 0, list = state.backReferenceNames; i < list.length; i += 1){
         var name = list[i];
-        if (state.groupNames.indexOf(name) === -1) state.raise("Invalid named capture referenced");
+        if (!state.groupNames[name]) state.raise("Invalid named capture referenced");
     }
 };
 // https://www.ecma-international.org/ecma-262/8.0/#prod-Disjunction
 pp$1.regexp_disjunction = function(state) {
+    var trackDisjunction = this.options.ecmaVersion >= 16;
+    if (trackDisjunction) state.branchID = new BranchID(state.branchID, null);
     this.regexp_alternative(state);
-    while(state.eat(0x7C /* | */ ))this.regexp_alternative(state);
+    while(state.eat(0x7C /* | */ )){
+        if (trackDisjunction) state.branchID = state.branchID.sibling();
+        this.regexp_alternative(state);
+    }
+    if (trackDisjunction) state.branchID = state.branchID.parent;
     // Make the same message as V8.
     if (this.regexp_eatQuantifier(state, true)) state.raise("Nothing to repeat");
     if (state.eat(0x7B /* { */ )) state.raise("Lone quantifier brackets");
@@ -28280,12 +28430,18 @@ pp$1.regexp_eatExtendedPatternCharacter = function(state) {
 //   `?` GroupName
 pp$1.regexp_groupSpecifier = function(state) {
     if (state.eat(0x3F /* ? */ )) {
-        if (this.regexp_eatGroupName(state)) {
-            if (state.groupNames.indexOf(state.lastStringValue) !== -1) state.raise("Duplicate capture group name");
-            state.groupNames.push(state.lastStringValue);
-            return;
+        if (!this.regexp_eatGroupName(state)) state.raise("Invalid group");
+        var trackDisjunction = this.options.ecmaVersion >= 16;
+        var known = state.groupNames[state.lastStringValue];
+        if (known) {
+            if (trackDisjunction) for(var i = 0, list = known; i < list.length; i += 1){
+                var altID = list[i];
+                if (!altID.separatedFrom(state.branchID)) state.raise("Duplicate capture group name");
+            }
+            else state.raise("Duplicate capture group name");
         }
-        state.raise("Invalid group");
+        if (trackDisjunction) (known || (state.groupNames[state.lastStringValue] = [])).push(state.branchID);
+        else state.groupNames[state.lastStringValue] = true;
     }
 };
 // GroupName ::
@@ -29513,9 +29669,18 @@ pp.readInvalidTemplateToken = function() {
             break;
         case "$":
             if (this.input[this.pos + 1] !== "{") break;
-        // falls through
+        // fall through
         case "`":
             return this.finishToken(types$1.invalidTemplate, this.input.slice(this.start, this.pos));
+        case "\r":
+            if (this.input[this.pos + 1] === "\n") ++this.pos;
+        // fall through
+        case "\n":
+        case "\u2028":
+        case "\u2029":
+            ++this.curLine;
+            this.lineStart = this.pos + 1;
+            break;
     }
     this.raise(this.start, "Unterminated template");
 };
@@ -29577,9 +29742,15 @@ pp.readEscapedChar = function(inTemplate) {
                 if ((octalStr !== "0" || ch === 56 || ch === 57) && (this.strict || inTemplate)) this.invalidStringToken(this.pos - 1 - octalStr.length, inTemplate ? "Octal literal in template string" : "Octal literal in strict mode");
                 return String.fromCharCode(octal);
             }
-            if (isNewLine(ch)) // Unicode new line characters after \ get removed from output in both
-            // template literals and strings
-            return "";
+            if (isNewLine(ch)) {
+                // Unicode new line characters after \ get removed from output in both
+                // template literals and strings
+                if (this.options.locations) {
+                    this.lineStart = this.pos;
+                    ++this.curLine;
+                }
+                return "";
+            }
             return String.fromCharCode(ch);
     }
 };
@@ -29640,7 +29811,7 @@ pp.readWord = function() {
 // [ghbt]: https://github.com/acornjs/acorn/issues
 //
 // [walk]: util/walk.js
-var version = "8.11.3";
+var version = "8.12.1";
 Parser.acorn = {
     Parser: Parser,
     version: version,
@@ -29708,9 +29879,12 @@ var _step = require("./step");
 var _eventListeners = require("./eventListeners");
 var _solution = require("./solution");
 var _interact = require("./interact");
+var _tile = require("./items/tile");
 const elements = Object.freeze({
+    footer: document.getElementById("footer"),
+    footerMessage: document.getElementById("footer-message"),
+    headerMessage: document.getElementById("header-message"),
     main: document.getElementById("main"),
-    message: document.getElementById("message"),
     next: document.getElementById("next"),
     previous: document.getElementById("previous"),
     puzzle: document.getElementById("puzzle"),
@@ -29864,7 +30038,7 @@ class Puzzle {
         // TODO animation?
         const tiles = this.#tiles.filter(mask.tileFilter).map((tile)=>new (0, _mask.Mask)(tile, typeof mask.configuration.style === "function" ? mask.configuration.style(tile) : mask.configuration.style));
         this.layers.mask.addChildren(tiles.map((tile)=>tile.group));
-        if (mask.message) elements.message.textContent = mask.message;
+        if (mask.message) elements.headerMessage.textContent = mask.message;
         mask.onMask(this);
         document.body.classList.add(Puzzle.Events.Mask);
     }
@@ -29907,6 +30081,7 @@ class Puzzle {
         this.selectedTile = tile;
         this.#state.setSelectedTile(tile);
         this.#updateMessage(tile);
+        this.#updateModifiers(tile, previouslySelectedTile);
         if (previouslySelectedTile && previouslySelectedTile !== tile) previouslySelectedTile.onDeselected(tile);
         if (tile && tile !== previouslySelectedTile) tile.onSelected(previouslySelectedTile);
         return previouslySelectedTile;
@@ -29929,6 +30104,10 @@ class Puzzle {
             this.layers.collisions,
             this.layers.debug
         ].forEach((layer)=>(0, _paperDefault.default).project.addLayer(layer));
+    }
+    #getModifiers(tile) {
+        // Sort by ID to ensure they always appear in the same order regardless of ownership
+        return this.layout.modifiers.concat(tile?.modifiers || []).filter((modifier)=>!modifier.immutable).sort((a, b)=>a.id - b.id);
     }
     #next() {
         const id = (0, _puzzles.Puzzles).visible.nextId(this.#state.getId());
@@ -29965,7 +30144,7 @@ class Puzzle {
         cause = cause ?? error?.cause;
         if (cause) console.error("cause:", cause);
         message = message ?? error?.message ?? "The puzzle has encountered an error, please consider reporting.";
-        elements.message.textContent = message;
+        elements.headerMessage.textContent = message;
         document.body.classList.add(Puzzle.Events.Error);
     }
     #onKeyup(event) {
@@ -29976,7 +30155,22 @@ class Puzzle {
         this.mask(event.detail.mask);
     }
     #onModifierInvoked(event) {
+        const modifier = event.detail.modifier;
         const tile = event.detail.tile;
+        if (// Modifier does not belong to a tile
+        !modifier.parent && // Tile has a lock modifier
+        tile.modifiers.some((modifier)=>modifier.type === (0, _modifier.Modifier).Types.lock) && // Tile does not already have a modifier of this type
+        !tile.modifiers.some((other)=>other.type === modifier.type) && // Tile has less than the maximum number of modifiers
+        tile.modifiers.length < (0, _tile.Tile).MaxModifiers) {
+            console.debug("locking modifier to tile", modifier, tile);
+            this.layout.removeModifier(modifier);
+            modifier.move(tile);
+            // Disable any other attached modifiers of this type to prevent duplicate locking
+            this.#getModifiers(tile).filter((other)=>other.type === modifier.type && other.id !== modifier.id).forEach((other)=>other.update({
+                    disabled: true
+                }));
+        }
+        this.updateState();
         this.#beams// Update beams in the tile being modified first
         .sort((beam)=>tile.items.some((item)=>item === beam) ? -1 : 0).forEach((beam)=>beam.onModifierInvoked(event, this));
         setTimeout(()=>this.update(), 0);
@@ -29990,10 +30184,10 @@ class Puzzle {
         this.updateSelectedTile(undefined);
         this.mask(Puzzle.#solvedMask);
         const span = document.createElement("span");
-        span.classList.add("material-symbols-outlined");
+        span.classList.add(Puzzle.ClassNames.Icon);
         span.textContent = "celebration";
         span.title = "Solved!";
-        elements.message.replaceChildren(span);
+        elements.headerMessage.replaceChildren(span);
         document.body.classList.add(Puzzle.Events.Solved);
         (0, _util.emitEvent)(Puzzle.Events.Solved);
     }
@@ -30088,7 +30282,7 @@ class Puzzle {
         const title = this.#state.getTitle();
         // Update browser title
         elements.title.textContent = `Beaming: Puzzle ${title}`;
-        (0, _util.removeClass)("disabled", ...Array.from(document.querySelectorAll("#actions li")));
+        (0, _util.removeClass)(Puzzle.ClassNames.Disabled, ...Array.from(document.querySelectorAll("#actions li")));
         const disable = [];
         if (!this.#state.canUndo()) disable.push(elements.undo);
         if (!this.#state.canRedo()) disable.push(elements.redo);
@@ -30102,7 +30296,7 @@ class Puzzle {
             if (id === (0, _puzzles.Puzzles).visible.firstId) disable.push(elements.previous);
             else if (id === (0, _puzzles.Puzzles).visible.lastId) disable.push(elements.next);
         }
-        (0, _util.addClass)("disabled", ...disable);
+        (0, _util.addClass)(Puzzle.ClassNames.Disabled, ...disable);
     }
     #updateDropdown() {
         elements.puzzleId.replaceChildren();
@@ -30129,11 +30323,20 @@ class Puzzle {
         setTimeout(()=>this.#updateBeams(), this.#beamsUpdateDelay);
     }
     #updateMessage(tile) {
+        elements.headerMessage.textContent = this.message;
+        elements.footerMessage.replaceChildren();
         if (tile) {
             // Check to see if tile has any color elements that need to be displayed
-            const colorElements = tile.items.map((item)=>item.getColorElements(tile)).find((colorElements)=>colorElements.length > 0) || [];
-            elements.message.replaceChildren(...colorElements);
-        } else elements.message.textContent = this.message || "Select a tile";
+            // Note: these will only be displayed if the tile contains an item with more than one color
+            const colorElements = tile.items.map((item)=>item.getColorElements(tile)).find((colorElements)=>colorElements.length > 1) || [];
+            elements.footerMessage.replaceChildren(...colorElements);
+        }
+    }
+    #updateModifiers(tile, previouslySelectedTile) {
+        this.#getModifiers(previouslySelectedTile).forEach((modifier)=>modifier.detach());
+        const modifiers = this.#getModifiers(tile);
+        modifiers.forEach((modifier)=>modifier.attach(tile));
+        elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0);
     }
     static Collision = class {
         constructor(layer, beams, point, item){
@@ -30183,6 +30386,11 @@ class Puzzle {
             ].join(",");
         }
     };
+    static ClassNames = Object.freeze({
+        Active: "active",
+        Disabled: "disabled",
+        Icon: "material-symbols-outlined"
+    });
     static Events = Object.freeze({
         Error: "puzzle-error",
         Loaded: "puzzle-loaded",
@@ -30220,7 +30428,7 @@ class Puzzle {
     });
 }
 
-},{"./layout":"kCkVw","chroma-js":"iVrwS","paper":"agkns","./util":"92uDI","./item":"klNFr","./items/mask":"dOejK","./modifier":"bQhih","./items/beam":"9UvIU","./items/collision":"hUIiT","./stateful":"2njM8","./coordinates/offset":"3z9Dj","./state":"7XqMQ","../puzzles":"7ifRD","./step":"71fBe","./eventListeners":"8T0Qv","./solution":"foTr2","./interact":"fHNCq","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kCkVw":[function(require,module,exports) {
+},{"./layout":"kCkVw","chroma-js":"bnCL0","paper":"agkns","./util":"92uDI","./item":"klNFr","./items/mask":"dOejK","./modifier":"bQhih","./items/beam":"9UvIU","./items/collision":"hUIiT","./stateful":"2njM8","./coordinates/offset":"3z9Dj","./state":"7XqMQ","../puzzles":"7ifRD","./step":"71fBe","./eventListeners":"8T0Qv","./solution":"foTr2","./interact":"fHNCq","./items/tile":"3fTdS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"kCkVw":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Layout", ()=>Layout);
@@ -30231,11 +30439,13 @@ var _offset = require("./coordinates/offset");
 var _tile = require("./items/tile");
 var _util = require("./util");
 var _stateful = require("./stateful");
+var _modifierFactory = require("./modifierFactory");
 class Layout extends (0, _stateful.Stateful) {
     #tilesByAxial = [];
     #tilesByOffset = [];
     items = [];
     layers = {};
+    modifiers = [];
     tiles = [];
     tileSize = 120;
     constructor(state){
@@ -30247,8 +30457,11 @@ class Layout extends (0, _stateful.Stateful) {
         // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
         const height = tiles.length * parameters.width;
         const startingOffsetY = center.y - height / 2;
+        // noinspection JSValidateTypes
         this.layers.tiles = new (0, _paper.Layer)();
+        // noinspection JSValidateTypes
         this.layers.items = new (0, _paper.Layer)();
+        this.modifiers = (state.modifiers || []).map((state)=>(0, _modifierFactory.modifierFactory)(null, state)).filter((modifier)=>modifier !== undefined);
         // Find the widest row
         const widestRow = tiles.reduce((current, row, index)=>{
             const length = row.length;
@@ -30305,15 +30518,24 @@ class Layout extends (0, _stateful.Stateful) {
         return this.#tilesByOffset[offset.r][offset.c];
     }
     getState() {
+        const state = {
+            type: this.type
+        };
         // Tiles are defined by offset in the puzzle state
-        return Object.assign(super.getState(), {
-            tiles: this.#tilesByOffset.map((row)=>row.map((tile)=>tile?.getState() || null))
-        });
+        state.tiles = this.#tilesByOffset.map((row)=>row.map((tile)=>tile?.getState() || null));
+        const modifiers = this.modifiers.map((modifier)=>modifier.getState());
+        if (modifiers.length) state.modifiers = modifiers;
+        return state;
     }
     getNeighboringTile(axial, direction) {
         return this.getTileByAxial((0, _cube.CubeCoordinates).neighbor(axial, (0, _util.getConvertedDirection)(direction)));
     }
+    removeModifier(modifier) {
+        const index = this.modifiers.indexOf(modifier);
+        if (index >= 0) this.modifiers.splice(index, 1);
+    }
     teardown() {
+        this.modifiers.forEach((modifier)=>modifier.detach());
         Object.values(this.layers).forEach((layer)=>layer.removeChildren());
     }
     #isOffsetRow(index) {
@@ -30325,7 +30547,7 @@ class Layout extends (0, _stateful.Stateful) {
     });
 }
 
-},{"paper":"agkns","./coordinates/cube":"dL4ay","./coordinates/offset":"3z9Dj","./items/tile":"3fTdS","./util":"92uDI","./stateful":"2njM8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dL4ay":[function(require,module,exports) {
+},{"paper":"agkns","./coordinates/cube":"dL4ay","./coordinates/offset":"3z9Dj","./items/tile":"3fTdS","./util":"92uDI","./stateful":"2njM8","./modifierFactory":"ig2Kj","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dL4ay":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 /**
@@ -30421,6 +30643,7 @@ var _itemFactory = require("../itemFactory");
 var _util = require("../util");
 var _modifierFactory = require("../modifierFactory");
 class Tile extends (0, _item.Item) {
+    icons = [];
     selected = false;
     #ui;
     constructor(coordinates, layout, parameters, state){
@@ -30437,8 +30660,7 @@ class Tile extends (0, _item.Item) {
         this.parameters = parameters;
         this.styles = this.#ui.styles;
         this.group.addChildren([
-            this.#ui.hexagon,
-            this.#ui.indicator
+            this.#ui.hexagon
         ]);
         // These need to be last, since they reference this
         this.items = (state.items || []).map((state)=>(0, _itemFactory.itemFactory)(this, state)).filter((item)=>item !== undefined);
@@ -30446,11 +30668,11 @@ class Tile extends (0, _item.Item) {
         this.update();
     }
     addItem(item) {
-        this.items.unshift(item);
+        this.items.push(item);
         this.update();
     }
     addModifier(modifier) {
-        this.modifiers.unshift(modifier);
+        this.modifiers.push(modifier);
         this.update();
     }
     afterModify() {
@@ -30475,28 +30697,27 @@ class Tile extends (0, _item.Item) {
         if (items.length) state.items = items;
         const modifiers = this.modifiers.map((modifier)=>modifier.getState());
         if (modifiers.length) state.modifiers = modifiers;
+        // noinspection JSValidateTypes
         return state;
     }
     onTap(event) {
-        console.debug(this.coordinates.offset.toString(), this);
         this.items.forEach((item)=>item.onTap(event));
     }
     onDeselected(selectedTile) {
         this.selected = false;
         this.#ui.hexagon.style = this.styles.default;
         this.items.forEach((item)=>item.onDeselected());
-        this.modifiers.forEach((modifier)=>modifier.detach());
         (0, _util.emitEvent)(Tile.Events.Deselected, {
             selectedTile,
             deselectedTile: this
         });
     }
     onSelected(deselectedTile) {
+        console.debug(this.toString(), "selected");
         this.selected = true;
         this.group.bringToFront();
         this.#ui.hexagon.style = this.styles.selected;
         this.items.forEach((item)=>item.onSelected());
-        this.modifiers.forEach((modifier)=>modifier.attach());
     }
     removeItem(item) {
         const index = this.items.indexOf(item);
@@ -30519,12 +30740,20 @@ class Tile extends (0, _item.Item) {
         this.modifiers.forEach((modifier)=>modifier.detach());
     }
     toString() {
-        return this.coordinates.offset.toString();
+        return `[${this.type}:${this.coordinates.offset.toString()}]`;
     }
     update() {
         super.update();
-        // Display the indicator if the tile contains non-immutable modifiers
-        this.#ui.indicator.opacity = this.modifiers.filter((modifier)=>!modifier.immutable).length ? 1 : 0;
+        // Update tile modifier icons
+        this.icons = this.modifiers.map((modifier, index)=>{
+            const position = (0, _util.getPointBetween)(this.#ui.hexagon.segments[index].point, this.center, (length)=>length / 3);
+            return modifier.getSymbol().place(position, {
+                fillColor: modifier.immutable ? "#ccc" : "#333"
+            });
+        });
+        // Everything after child 0 (hexagon) is an icon
+        this.group.removeChildren(1);
+        this.group.addChildren(this.icons);
     }
     static parameters(height) {
         const circumradius = height / 2;
@@ -30558,22 +30787,9 @@ class Tile extends (0, _item.Item) {
             sides: 6,
             style: styles.default
         });
-        const indicator = new (0, _paper.Path).RegularPolygon({
-            center: (0, _util.getPointBetween)(hexagon.segments[1].point, center, (length)=>length / 3),
-            data: {
-                collidable: false
-            },
-            opacity: 0,
-            radius: parameters.circumradius / 16,
-            sides: 6,
-            style: {
-                fillColor: "#ccc"
-            }
-        });
         return {
             center,
             hexagon,
-            indicator,
             styles
         };
     }
@@ -30581,6 +30797,7 @@ class Tile extends (0, _item.Item) {
         Deselected: "tile-deselected",
         Selected: "tile-selected"
     });
+    static MaxModifiers = 6;
     static Styles = Object.freeze({
         // Need to use new Color here explicitly due to:
         // https://github.com/paperjs/paper.js/issues/2049
@@ -30622,7 +30839,7 @@ class Item extends (0, _stateful.Stateful) {
     type;
     constructor(parent, state, configuration){
         // Retain ID from state if it exists, otherwise generate a new one
-        state.id ??= Item.uniqueId();
+        state.id ??= (0, _util.uniqueId)();
         super(state);
         this.id = state.id;
         this.immutable ??= state?.immutable ?? false;
@@ -30695,9 +30912,6 @@ class Item extends (0, _stateful.Stateful) {
             type,
             (0, _util.capitalize)(type)
         ])));
-    static uniqueId() {
-        return crypto.randomUUID().split("-")[0];
-    }
 }
 
 },{"./util":"92uDI","paper":"agkns","./stateful":"2njM8","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"2njM8":[function(require,module,exports) {
@@ -30716,9 +30930,10 @@ class Stateful {
     setState(state) {
         this.#state = structuredClone(state);
     }
-    updateState(updater, dispatchEvent = true) {
+    updateState(updater, dispatchEvent = false) {
         updater(this.#state);
-        if (dispatchEvent) (0, _util.emitEvent)(Stateful.Events.Update, {
+        if (dispatchEvent) // This will cause puzzle cache to update
+        (0, _util.emitEvent)(Stateful.Events.Update, {
             object: this
         });
         return this.getState();
@@ -30816,7 +31031,7 @@ class Filter extends (0, _move.movable)((0, _item.Item)) {
     }
 }
 
-},{"chroma-js":"iVrwS","../item":"klNFr","paper":"agkns","../modifiers/move":"iw6ob","../util":"92uDI","../step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iw6ob":[function(require,module,exports) {
+},{"chroma-js":"bnCL0","../item":"klNFr","paper":"agkns","../modifiers/move":"iw6ob","../util":"92uDI","../step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"iw6ob":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Move", ()=>Move);
@@ -30825,9 +31040,10 @@ var _modifier = require("../modifier");
 var _puzzle = require("../puzzle");
 var _util = require("../util");
 var _item = require("../item");
+var _icons = require("../icons");
 class Move extends (0, _modifier.Modifier) {
     #mask;
-    name = "drag_pan";
+    name = (0, _icons.Icons).Move.name;
     title = "Move";
     onTap(event) {
         super.onTap(event);
@@ -30869,13 +31085,12 @@ class Move extends (0, _modifier.Modifier) {
         tile.items.some((item)=>!Move.ignoreItemTypes.includes(item.type)));
     }
     #maskOnTap(puzzle, tile) {
+        puzzle.unmask();
         if (tile) {
             const data = this.moveItems(tile);
-            puzzle.updateState();
             puzzle.updateSelectedTile(tile);
-            puzzle.unmask();
             this.dispatchEvent((0, _modifier.Modifier).Events.Invoked, data);
-        } else puzzle.unmask();
+        }
         this.#mask = undefined;
     }
     static data(fromTile, toTile, items) {
@@ -30913,18 +31128,18 @@ const movable = (SuperClass)=>class MovableItem extends SuperClass {
         onMove() {}
     };
 
-},{"../modifier":"bQhih","../puzzle":"jIcx0","../util":"92uDI","../item":"klNFr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bQhih":[function(require,module,exports) {
+},{"../modifier":"bQhih","../puzzle":"jIcx0","../util":"92uDI","../item":"klNFr","../icons":"lDr3h","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bQhih":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Modifier", ()=>Modifier);
 var _util = require("./util");
-var _puzzle = require("./puzzle");
 var _stateful = require("./stateful");
 var _eventListeners = require("./eventListeners");
 var _interact = require("./interact");
 var _item = require("./item");
-const modifiersImmutable = document.getElementById("modifiers-immutable");
-const modifiersMutable = document.getElementById("modifiers-mutable");
+var _icons = require("./icons");
+var _tile = require("./items/tile");
+const modifiers = document.getElementById("modifiers");
 let uniqueId = 0;
 class Modifier extends (0, _stateful.Stateful) {
     #container;
@@ -30932,8 +31147,6 @@ class Modifier extends (0, _stateful.Stateful) {
     #eventListener = new (0, _eventListeners.EventListeners)({
         context: this
     });
-    #mask;
-    #selectionTime = 500;
     #timeoutId;
     configuration;
     element;
@@ -30941,33 +31154,37 @@ class Modifier extends (0, _stateful.Stateful) {
     id = uniqueId++;
     immutable = false;
     name;
-    selected = false;
+    parent;
     tile;
     title;
     type;
     constructor(tile, state){
         super(state);
-        this.tile = tile;
+        this.parent = tile;
         this.type = state.type;
     }
     /**
    * Attach the modifier to the DOM and add listeners.
-   */ attach() {
+   */ attach(tile) {
+        this.tile = tile;
+        // Disable by default if: modifier is immutable
+        this.disabled = this.immutable || // The tile contains an immutable modifier
+        this.tile?.modifiers.some((modifier)=>modifier.type === Modifier.Types.immutable) || // The tile has no interactable items
+        !this.tile?.items.some((item)=>item.type !== (0, _item.Item).Types.beam) || // The tile being attached to is not this modifier's parent
+        !this.tile?.equals(this.parent) && // The tile contains another modifier of this type already
+        (this.tile.modifiers.some((modifier)=>modifier.type === this.type) || // The tile already contains the max number of modifiers
+        this.tile?.modifiers.length === (0, _tile.Tile).MaxModifiers);
         const li = this.#container = document.createElement("li");
         li.classList.add([
             "modifier",
             this.type.toLowerCase()
         ].join("-"));
-        if (this.immutable) this.disabled = true;
+        li.dataset.id = this.id.toString();
         const span = this.element = document.createElement("span");
         span.classList.add("material-symbols-outlined", "fill");
         li.append(span);
         this.update();
         this.#eventListener.add([
-            {
-                type: "deselected",
-                handler: this.onDeselected
-            },
             {
                 type: "pointerdown",
                 handler: this.onPointerDown
@@ -30983,16 +31200,14 @@ class Modifier extends (0, _stateful.Stateful) {
         ], {
             element: li
         });
-        this.immutable ? modifiersImmutable.append(li) : modifiersMutable.append(li);
+        modifiers.append(li);
     }
     /**
    * Remove listeners and the modifier from the DOM.
    */ detach() {
         if (!this.#container) return;
-        Modifier.deselect();
         this.#eventListener.remove();
         this.#container.remove();
-        this.selected = false;
         this.element = undefined;
         this.#container = undefined;
     }
@@ -31005,35 +31220,27 @@ class Modifier extends (0, _stateful.Stateful) {
     equals(other) {
         return other instanceof Modifier && this.id === other.id;
     }
+    getSymbol() {
+        return (0, _icons.Icons).ByName[this.name];
+    }
     move(tile) {
-        this.remove();
-        tile.addModifier(this);
-        this.tile = tile;
+        this.parent?.removeModifier(this);
+        this.parent = tile;
+        tile?.addModifier(this);
     }
     moveFilter(tile) {
         // Mask immutable tiles
         return tile.modifiers.some(Modifier.immutable) || // Mask tiles that only contain immutable items
         tile.items.every((0, _item.Item).immutable);
     }
-    onDeselected() {
-        this.update({
-            selected: false
-        });
-        this.tile.afterModify();
-        this.dispatchEvent(Modifier.Events.Deselected);
-    }
     onPointerDown(event) {
         if (event.button !== 0) // Support toggle on non-primary pointer button
         this.onToggle(event);
-        else {
-            this.#down = true;
-            if (!this.#mask && !this.tile.modifiers.some(Modifier.immovable)) // No active mask and modifiers are not immovable
-            this.#timeoutId = setTimeout(this.onSelected.bind(this), this.#selectionTime);
-        }
+        else this.#down = true;
     }
     onPointerUp(event) {
         clearTimeout(this.#timeoutId);
-        if (this.#down && !this.disabled && !this.selected) switch(event.type){
+        if (this.#down && !this.disabled) switch(event.type){
             case "pointerleave":
                 // Support swiping up on pointer device
                 this.onToggle(event);
@@ -31044,32 +31251,9 @@ class Modifier extends (0, _stateful.Stateful) {
         }
         this.#down = false;
     }
-    onSelected() {
-        Modifier.deselect();
-        (0, _interact.Interact).vibrate();
-        this.update({
-            selected: true
-        });
-        const mask = this.#mask = new (0, _puzzle.Puzzle).Mask({
-            id: this.toString(),
-            onMask: ()=>this.tile.beforeModify(),
-            onTap: this.#maskOnTap.bind(this),
-            tileFilter: this.#moveFilter.bind(this)
-        });
-        this.dispatchEvent((0, _puzzle.Puzzle).Events.Mask, {
-            mask
-        });
-    }
-    onTap() {
-        this.selected = false;
-    }
+    onTap() {}
     onToggle() {
         (0, _interact.Interact).vibrate();
-    }
-    remove() {
-        this.detach();
-        this.tile.removeModifier(this);
-        this.tile = null;
     }
     toString() {
         return [
@@ -31080,56 +31264,22 @@ class Modifier extends (0, _stateful.Stateful) {
     update(options) {
         options = Object.assign({
             disabled: this.disabled,
-            selected: this.selected,
             name: this.name,
             title: this.title
         }, options || {});
         if (!this.immutable) this.disabled = options.disabled;
         this.name = options.name;
         this.title = options.title;
-        this.selected = options.selected;
         if (this.#container) {
             this.#container.classList.toggle("disabled", this.disabled);
-            this.#container.classList.toggle("selected", this.selected);
             this.element.textContent = this.name;
             this.element.title = this.title;
         }
-    }
-    #maskOnTap(puzzle, tile) {
-        if (tile && tile !== this.tile) {
-            const fromTile = this.tile;
-            this.move(tile);
-            puzzle.updateState();
-            puzzle.updateSelectedTile(tile);
-            puzzle.unmask();
-            this.dispatchEvent(Modifier.Events.Moved, {
-                fromTile
-            });
-        } else {
-            Modifier.deselect();
-            puzzle.unmask();
-        }
-        this.#mask = undefined;
-        this.update({
-            selected: false
-        });
-    }
-    #moveFilter(tile) {
-        // Always include current tile
-        return !tile.equals(this.tile) && this.moveFilter(tile);
-    }
-    static deselect() {
-        const selectedModifier = document.querySelector(".modifiers .selected");
-        if (selectedModifier) selectedModifier.dispatchEvent(new CustomEvent("deselected"));
-    }
-    static immovable(modifier) {
-        return Modifier.immovableTypes.includes(modifier.type);
     }
     static immutable(modifier) {
         return modifier.type === Modifier.Types.immutable;
     }
     static Events = Object.freeze({
-        Deselected: "modifier-deselected",
         Invoked: "modifier-invoked",
         Moved: "modifier-moved"
     });
@@ -31144,13 +31294,9 @@ class Modifier extends (0, _stateful.Stateful) {
             type,
             (0, _util.capitalize)(type)
         ])));
-    static immovableTypes = [
-        Modifier.Types.immutable,
-        Modifier.Types.lock
-    ];
 }
 
-},{"./util":"92uDI","./puzzle":"jIcx0","./stateful":"2njM8","./eventListeners":"8T0Qv","./interact":"fHNCq","./item":"klNFr","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8T0Qv":[function(require,module,exports) {
+},{"./util":"92uDI","./stateful":"2njM8","./eventListeners":"8T0Qv","./interact":"fHNCq","./item":"klNFr","./icons":"lDr3h","./items/tile":"3fTdS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8T0Qv":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "EventListeners", ()=>EventListeners);
@@ -31387,7 +31533,66 @@ class Cache {
     }
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"71fBe":[function(require,module,exports) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"lDr3h":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Icons", ()=>Icons);
+var _symbol = require("./symbol");
+class Icons {
+    static Immutable = new (0, _symbol.Symbol)("icon-immutable", "block");
+    static Lock = new (0, _symbol.Symbol)("icon-lock", "lock");
+    static Move = new (0, _symbol.Symbol)("icon-move", "drag_pan");
+    static RotateLeft = new (0, _symbol.Symbol)("icon-rotate-left", "rotate_left");
+    static RotateRight = new (0, _symbol.Symbol)("icon-rotate-right", "rotate_right");
+    static Swap = new (0, _symbol.Symbol)("icon-swap", "swap_horiz");
+    static ToggleOff = new (0, _symbol.Symbol)("icon-toggle-off", "toggle_off");
+    static ToggleOn = new (0, _symbol.Symbol)("icon-toggle-on", "toggle_on");
+    static All = Object.freeze([
+        Icons.Immutable,
+        Icons.Lock,
+        Icons.Move,
+        Icons.RotateLeft,
+        Icons.RotateRight,
+        Icons.Swap,
+        Icons.ToggleOff,
+        Icons.ToggleOn
+    ]);
+    static ByName = Object.freeze(Object.fromEntries(Icons.All.map((icon)=>[
+            icon.name,
+            icon
+        ])));
+}
+
+},{"./symbol":"jnYD6","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"jnYD6":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Symbol", ()=>Symbol);
+var _paper = require("paper");
+var _paperDefault = parcelHelpers.interopDefault(_paper);
+class Symbol {
+    definition;
+    id;
+    name;
+    constructor(id, name){
+        this.id = id;
+        this.name = name;
+    }
+    place(position, settings) {
+        if (!this.definition) {
+            const element = document.getElementById(this.id);
+            const item = (0, _paperDefault.default).project.importSVG(element);
+            // By default, symbols will be excluded from beam collisions
+            item.data.collidable = false;
+            // By default, symbols cannot be clicked on
+            item.locked = true;
+            this.definition = new (0, _paper.SymbolDefinition)(item);
+        }
+        if (settings) this.definition.item.set(settings);
+        return this.definition.place(position);
+    }
+}
+
+},{"paper":"agkns","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"71fBe":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Step", ()=>Step);
@@ -31510,7 +31715,7 @@ class StepState {
     };
 }
 
-},{"chroma-js":"iVrwS","./util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5Jnaf":[function(require,module,exports) {
+},{"chroma-js":"bnCL0","./util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"5Jnaf":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Portal", ()=>Portal);
@@ -31608,7 +31813,8 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         } else if (exitPortals.length === 1) {
             const exitPortal = exitPortals[0];
             console.debug(this.toString(), "single exit portal matched:", exitPortal);
-            return this.#getStep(beam, nextStep, exitPortal);
+            // Since no user choice was made, don't store this decision as a delta (move)
+            return this.#getStep(beam, nextStep, exitPortal, false);
         } else {
             // Multiple matching destinations. User will need to pick one manually.
             console.debug(this.toString(), "found multiple valid exit portals:", exitPortals);
@@ -31686,7 +31892,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         }
         return exitPortals;
     }
-    #getStep(beam, nextStep, exitPortal) {
+    #getStep(beam, nextStep, exitPortal, keepDelta = true) {
         const direction = Portal.getExitDirection(nextStep, this, exitPortal);
         return nextStep.copy({
             connected: false,
@@ -31697,7 +31903,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
                 // Store this decision in beam state and generate a matching delta
                 beam.updateState((state)=>(state.steps ??= {})[step.index] = {
                         [this.id]: exitPortal.id
-                    });
+                    }, keepDelta);
             },
             onRemove: (step)=>{
                 // Remove any associated beam state, but don't generate a delta.
@@ -31728,6 +31934,7 @@ parcelHelpers.export(exports, "Rotate", ()=>Rotate);
 parcelHelpers.export(exports, "rotatable", ()=>rotatable);
 var _modifier = require("../modifier");
 var _util = require("../util");
+var _icons = require("../icons");
 class Rotate extends (0, _modifier.Modifier) {
     clockwise;
     title = "Rotate";
@@ -31759,8 +31966,8 @@ class Rotate extends (0, _modifier.Modifier) {
         });
     }
     static Names = Object.freeze({
-        left: "rotate_left",
-        right: "rotate_right "
+        left: (0, _icons.Icons).RotateLeft.name,
+        right: (0, _icons.Icons).RotateRight.name
     });
 }
 const rotatable = (SuperClass)=>class RotatableItem extends SuperClass {
@@ -31803,7 +32010,7 @@ const rotatable = (SuperClass)=>class RotatableItem extends SuperClass {
         }
     };
 
-},{"../modifier":"bQhih","../util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7I7P6":[function(require,module,exports) {
+},{"../modifier":"bQhih","../util":"92uDI","../icons":"lDr3h","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7I7P6":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Terminus", ()=>Terminus);
@@ -31837,6 +32044,7 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
         this.color = color;
         this.openings = openings;
         this.radius = this.#ui.radius;
+        this.toggled = openings.some((opening)=>opening.on);
         // Needs to be last since it references 'this'
         this.beams = openings.map((opening)=>new (0, _beam.Beam)(this, state.openings[opening.direction], opening));
         this.update();
@@ -31985,25 +32193,32 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
     });
 }
 
-},{"chroma-js":"iVrwS","paper":"agkns","../modifiers/toggle":"8EkH3","../item":"klNFr","../modifiers/rotate":"dh5U5","../util":"92uDI","./beam":"9UvIU","../modifiers/move":"iw6ob","../step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8EkH3":[function(require,module,exports) {
+},{"chroma-js":"bnCL0","paper":"agkns","../modifiers/toggle":"8EkH3","../item":"klNFr","../modifiers/rotate":"dh5U5","../util":"92uDI","./beam":"9UvIU","../modifiers/move":"iw6ob","../step":"71fBe","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"8EkH3":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Toggle", ()=>Toggle);
 parcelHelpers.export(exports, "toggleable", ()=>toggleable);
 var _modifier = require("../modifier");
+var _icons = require("../icons");
 class Toggle extends (0, _modifier.Modifier) {
     on;
     title = "Toggle";
     constructor(tile, { on }){
         super(...arguments);
         this.on = on || false;
-        this.tile.items.forEach((item)=>{
-            item.toggled = this.on;
+        this.name = this.getName();
+    }
+    attach(tile) {
+        super.attach(tile);
+        // Consider the modifier toggled if there is at least one toggled item in the tile
+        // TODO: refactor to be 'toggled' everywhere
+        this.on = this.tile?.items.some((item)=>item.on || item.toggled);
+        this.update({
+            name: this.getName()
         });
     }
-    attach() {
-        this.name = Toggle.Names[this.on ? "on" : "off"];
-        super.attach();
+    getName() {
+        return Toggle.Names[this.on ? "on" : "off"];
     }
     moveFilter(tile) {
         // Filter out tiles that contain no toggleable items
@@ -32015,15 +32230,15 @@ class Toggle extends (0, _modifier.Modifier) {
         const items = this.tile.items.filter((item)=>item.toggleable);
         items.forEach((item)=>item.toggle(this.on));
         this.update({
-            name: Toggle.Names[this.on ? "on" : "off"]
+            name: this.getName()
         });
         this.dispatchEvent((0, _modifier.Modifier).Events.Invoked, {
             items
         });
     }
     static Names = Object.freeze({
-        on: "toggle_on",
-        off: "toggle_off "
+        on: (0, _icons.Icons).ToggleOn.name,
+        off: (0, _icons.Icons).ToggleOff.name
     });
 }
 const toggleable = (SuperClass)=>class ToggleableItem extends SuperClass {
@@ -32032,6 +32247,7 @@ const toggleable = (SuperClass)=>class ToggleableItem extends SuperClass {
         constructor(parent, configuration){
             super(...arguments);
             this.toggleable = !this.immutable && configuration.toggleable !== false;
+            this.toggled = this.toggleable && configuration.toggled;
         }
         onToggle() {}
         toggle(toggled) {
@@ -32040,7 +32256,7 @@ const toggleable = (SuperClass)=>class ToggleableItem extends SuperClass {
         }
     };
 
-},{"../modifier":"bQhih","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9UvIU":[function(require,module,exports) {
+},{"../modifier":"bQhih","../icons":"lDr3h","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"9UvIU":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Beam", ()=>Beam);
@@ -32267,14 +32483,17 @@ class Beam extends (0, _item.Item) {
         if (!isSameDirection || isSelf) {
             // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
             console.debug(beam.toString(), "has collided with", isSelf ? "self" : this.toString(), collision);
-            if (!isSelf) // Update beam at point of impact
-            this.update(stepIndex, {
-                done: true,
-                state: step.state.copy(new (0, _step.StepState).Collision(collision.mirror()))
-            });
-            else if (!isSameDirection) // For a collision with self, the update at point of impact will occur on the next update loop. This results in
-            // a better visualization of the collision which will result in an infinite looping animation.
-            this.update(stepIndex, puzzle.getBeamsUpdateDelay());
+            if (!step.state.get((0, _step.StepState).Collision)?.point.equals(collision.point)) {
+                // No need to update if there is already an existing collision at this same point
+                if (!isSelf) // Update beam at point of impact
+                this.update(stepIndex, {
+                    done: true,
+                    state: step.state.copy(new (0, _step.StepState).Collision(collision.mirror()))
+                });
+                else if (!isSameDirection) // For a collision with self, the update at point of impact will occur on the next update loop. This results in
+                // a better visualization of the collision which will result in an infinite looping animation.
+                this.update(stepIndex, puzzle.getBeamsUpdateDelay());
+            }
             return collisionStep.copy({
                 done: true,
                 // Use same insertion point as the beam we collided with to ensure proper item hierarchy.
@@ -32558,7 +32777,7 @@ class Beam extends (0, _item.Item) {
     });
 }
 
-},{"chroma-js":"iVrwS","paper":"agkns","../item":"klNFr","../util":"92uDI","../step":"71fBe","../collision":"bFbGC","../cache":"dDiTO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bFbGC":[function(require,module,exports) {
+},{"chroma-js":"bnCL0","paper":"agkns","../item":"klNFr","../util":"92uDI","../step":"71fBe","../collision":"bFbGC","../cache":"dDiTO","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bFbGC":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Collision", ()=>Collision);
@@ -32651,9 +32870,12 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
         }
         if (directionTo === directionFrom) {
             console.debug(beam.toString(), "stopping due to reflection back at self");
-            if (collisions.some((collision)=>collision.item.type === (0, _item.Item).Types.beam)) // If there is also a beam collision in the list of collisions for this step, let that one resolve it
-            return;
-            else // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
+            // Unsure why this rule was here, but it was causing a bug when re-evaluating history
+            // if (collisions.some((collision) => collision.item.type === Item.Types.beam)) {
+            //   // If there is also a beam collision in the list of collisions for this step, let that one resolve it
+            //   return
+            // } else {
+            // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
             // same side of the reflector will collide with this beam.
             return nextStep.copy({
                 done: true,
@@ -32663,6 +32885,7 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
                     ]
                 })))
             });
+        // }
         }
         // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state
         if (!currentStep.state.has((0, _step.StepState).Reflector)) return nextStep.copy({
@@ -32675,8 +32898,8 @@ class Reflector extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item
         });
     }
     static item(tile, color) {
-        const length = tile.parameters.circumradius;
         const width = tile.parameters.circumradius / 12;
+        const length = tile.parameters.circumradius - width * 2;
         const topLeft = tile.center.subtract(new (0, _paper.Point)(width / 2, length / 2));
         const size = new (0, _paper.Size)(width, length);
         return new (0, _paper.Path).Rectangle({
@@ -32799,8 +33022,9 @@ parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Swap", ()=>Swap);
 var _move = require("./move");
 var _modifier = require("../modifier");
+var _icons = require("../icons");
 class Swap extends (0, _move.Move) {
-    name = "swap_horiz";
+    name = (0, _icons.Icons).Swap.name;
     title = "Swap";
     moveItems(tile) {
         const toItems = tile.items.filter((0, _move.Move).movable);
@@ -32826,7 +33050,7 @@ class Swap extends (0, _move.Move) {
     }
 }
 
-},{"./move":"iw6ob","../modifier":"bQhih","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dOejK":[function(require,module,exports) {
+},{"./move":"iw6ob","../modifier":"bQhih","../icons":"lDr3h","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"dOejK":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Mask", ()=>Mask);
@@ -33165,40 +33389,40 @@ Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id)=>[
 Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id)=>!Puzzles.hidden.has(id)));
 
 },{"388f1e0e9ef404f1":"aW13h","c78ae468f341d769":"7g0cm","970871732d2a157b":"iaK6p","bc9e0c5f7c5d01e4":"ljdPP","f3e72dc0ddab4b01":"1cnyP","5dcf17593d7a4bf0":"aIJrc","a02b60cdc8a431e2":"2F0gb","ade4d10630f08956":"1bhn7","6305a2004246bb2":"2icw5","da10656096d2af94":"b93JV","ac22c67945d4fda9":"6ZkNx","fe6acb01757b24c8":"IvGia","85499c36fcf7a4eb":"fUqeV","de475d1b852df9bb":"9Zi8W","41bc05d099929c0d":"4XdFs","255f7590a7448490":"eKsSY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aW13h":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Toggle"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Toggle"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"7g0cm":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"clockwise":false,"type":"Rotate"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Toggle"}],"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"on":true,"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"iaK6p":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"clockwise":false,"type":"Rotate"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"clockwise":false,"type":"Rotate"}],"tiles":[[{"items":[{"color":"blue","openings":[{"type":"Beam"},null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"on":true,"type":"Beam"},null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"ljdPP":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,{"on":true,"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Swap"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,{"on":true,"type":"Beam"},null],"type":"Terminus"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"red","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Swap"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"1cnyP":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,null,{"on":true,"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Move"}],"type":"Tile"}],[{"items":[{"color":"blue","openings":[null,{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"color":"red","openings":[null,null,{"on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Swap"},{"clockwise":false,"type":"Rotate"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":2,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"tiles":[[{"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,null,{"on":true,"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Move"}],"type":"Tile"}],[{"items":[{"color":"blue","openings":[null,{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"color":"red","openings":[null,null,{"on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Swap"},{"clockwise":false,"type":"Rotate"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":2,"type":"Connections"}],"version":1}');
 
 },{}],"aIJrc":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"rotation":2,"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Swap"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"openings":[null,null,null,{"color":"red","type":"Beam"},null,{"color":"blue","on":true,"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"type":"Tile"},{"items":[{"openings":[{"color":"blue","type":"Beam"},null,{"color":"red","on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Swap"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":2,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"rotation":2,"type":"Reflector"}],"modifiers":[{"type":"Swap"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"type":"Tile"}],[{"items":[{"openings":[null,null,null,{"color":"red","type":"Beam"},null,{"color":"blue","on":true,"type":"Beam"}],"type":"Terminus"}],"type":"Tile"},{"type":"Tile"},{"items":[{"openings":[{"color":"blue","type":"Beam"},null,{"color":"red","on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"type":"Tile"}],[{"items":[{"type":"Reflector"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"modifiers":[{"type":"Swap"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":2,"type":"Connections"}],"version":1}');
 
 },{}],"2F0gb":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,{"type":"Beam"},{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,{"type":"Beam"},{"on":true,"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"color":"red","openings":[null,null,{"on":true,"type":"Beam"},{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,{"on":true,"type":"Beam"},{"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[null,{"items":[{"color":"blue","openings":[{"type":"Beam"},{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"type":"Tile"},{"items":[{"color":"red","openings":[{"on":true,"type":"Beam"},{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}]]},"solution":[{"amount":0,"type":"Connections"},{"amount":6,"type":"Moves"}],"version":1}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Move"}],"tiles":[[{"items":[{"color":"blue","openings":[null,null,{"type":"Beam"},{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"blue","openings":[null,null,null,null,{"type":"Beam"},{"on":true,"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"color":"red","openings":[null,null,{"on":true,"type":"Beam"},{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,{"on":true,"type":"Beam"},{"type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[null,{"items":[{"color":"blue","openings":[{"type":"Beam"},{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"type":"Tile"},{"items":[{"rotation":3,"type":"Reflector"}],"type":"Tile"},{"items":[{"color":"red","openings":[{"on":true,"type":"Beam"},{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}]]},"solution":[{"amount":0,"type":"Connections"},{"amount":4,"type":"Moves"}],"version":2}');
 
 },{}],"1bhn7":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Swap"}],"type":"Tile"},{"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"modifiers":[{"type":"Lock"},{"type":"Toggle"}],"type":"Tile"},{"items":[{"color":["red","blue"],"openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Move"}],"type":"Tile"},{"items":[{"color":"blue","type":"Filter"}],"modifiers":[{"type":"Lock"},{"type":"Move"}],"type":"Tile"},{"items":[{"color":"red","type":"Filter"}],"modifiers":[{"type":"Lock"},{"type":"Move"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"},{"type":"Move"}],"type":"Tile"}],[null,{"items":[{"color":["red","blue"],"openings":[null,{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"modifiers":[{"type":"Lock"},{"type":"Toggle"}],"type":"Tile"},{"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"items":[{"color":"red","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Swap"}],"type":"Tile"}]]},"solution":[{"amount":2,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"blue","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Swap"}],"type":"Tile"},{"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"modifiers":[{"type":"Toggle"}],"type":"Tile"},{"items":[{"color":["red","blue"],"openings":[null,null,null,null,{"type":"Beam"},null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"color":"blue","type":"Filter"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"color":"red","type":"Filter"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Move"}],"type":"Tile"}],[null,{"items":[{"color":["red","blue"],"openings":[null,{"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"modifiers":[{"type":"Toggle"}],"type":"Tile"},{"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"color":"red","openings":[{"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Swap"}],"type":"Tile"}]]},"solution":[{"amount":2,"type":"Connections"}],"version":1}');
 
 },{}],"2icw5":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"green","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"type":"Tile"},null,{"items":[{"color":"green","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},null,null,{"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Move"}],"tiles":[[{"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"green","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"type":"Tile"},null,{"items":[{"color":"green","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},null,null,{"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"b93JV":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"green","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"type":"Tile"},null,{"items":[{"color":"green","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Move"}],"tiles":[[{"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}],[{"items":[{"color":"green","openings":[null,{"on":true,"type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"type":"Tile"},null,{"items":[{"color":"green","openings":[null,null,null,{"type":"Beam"},null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"type":"Tile"},{"items":[{"type":"Reflector"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},null,null,{"type":"Tile"},{"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
 
 },{}],"6ZkNx":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"openings":[null,null,{"color":"blue","on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"openings":[null,null,null,null,null,{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":1}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Rotate"}],"tiles":[[{"items":[{"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"openings":[null,null,{"color":"blue","on":true,"type":"Beam"},null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"type":"Tile"},{"items":[{"openings":[null,null,null,null,null,{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"}],[{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":5,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":1,"type":"Connections"}],"version":2}');
 
 },{}],"IvGia":[function(require,module,exports) {
-module.exports = JSON.parse('{"layout":{"tiles":[[null,null,{"type":"Tile"},{"type":"Tile"}],[null,null,{"items":[{"directions":[4],"type":"Wall"}],"type":"Tile"},{"items":[{"on":true,"openings":[{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"items":[{"directions":[3],"type":"Wall"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"directions":[3,4,5],"type":"Wall"}],"type":"Tile"},{"items":[{"directions":[2,3,4],"type":"Wall"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},null,{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Move"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},null,null,{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Rotate"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":6,"type":"Connections"}]}');
+module.exports = JSON.parse('{"layout":{"modifiers":[{"type":"Move"},{"type":"Move"},{"type":"Rotate"},{"type":"Rotate"}],"tiles":[[null,null,{"type":"Tile"},{"type":"Tile"}],[null,null,{"items":[{"directions":[4],"type":"Wall"}],"type":"Tile"},{"items":[{"on":true,"openings":[{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"},{"color":"red","type":"Beam"},{"color":"blue","type":"Beam"}],"type":"Terminus"}],"modifiers":[{"type":"Lock"},{"type":"Rotate"}],"type":"Tile"},{"items":[{"directions":[3],"type":"Wall"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"directions":[3,4,5],"type":"Wall"}],"type":"Tile"},{"items":[{"directions":[2,3,4],"type":"Wall"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}],[{"items":[{"direction":1,"type":"Portal"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},null,{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"type":"Portal"}],"modifiers":[{"type":"Immutable"}],"type":"Tile"},{"items":[{"direction":0,"type":"Portal"}],"type":"Tile"}],[{"items":[{"openings":[null,{"color":"blue","type":"Beam"},null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"},{"items":[{"direction":1,"type":"Portal"}],"type":"Tile"},null,null,{"items":[{"direction":0,"type":"Portal"}],"type":"Tile"},{"items":[{"openings":[{"color":"red","type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"modifiers":[{"type":"Lock"}],"type":"Tile"}]],"type":"even-r"},"solution":[{"amount":6,"type":"Connections"}],"version":1}');
 
 },{}],"fUqeV":[function(require,module,exports) {
 module.exports = JSON.parse('{"layout":{"tiles":[[{"items":[{"color":"red","openings":[null,null,null,{"on":true,"type":"Beam"},null,null],"type":"Terminus"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"type":"Tile"},{"type":"Tile"},{"items":[{"color":"red","openings":[null,null,null,null,null,{"on":true,"type":"Beam"}],"type":"Terminus"}],"type":"Tile"}],[{"type":"Tile"},{"type":"Tile"},{"type":"Tile"}],[null,{"items":[{"rotation":4,"type":"Reflector"}],"type":"Tile"},{"items":[{"rotation":2,"type":"Reflector"}],"type":"Tile"},{"items":[{"color":"blue","openings":[{"on":true,"type":"Beam"},null,null,null,null,null],"type":"Terminus"}],"type":"Tile"}]]},"solution":[{"amount":100,"type":"Connections"}]}');

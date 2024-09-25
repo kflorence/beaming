@@ -136,23 +136,41 @@ body > footer, body > header {
   user-select: none;
   z-index: 1;
   background-color: #fff;
-  align-items: stretch;
-  min-height: 3.5em;
-  display: flex;
-  position: relative;
-  box-shadow: 0 0 .75rem .5rem #00000040;
+  border-radius: .5rem;
+  width: fit-content;
+  min-width: fit-content;
+  max-width: calc(100% - 2em);
+  margin: 0 auto;
+  position: absolute;
+  overflow: hidden;
+  box-shadow: 0 0 .5rem .25rem #00000059;
 }
 
 body > header {
-  border-bottom: 1px solid #999;
+  top: 1em;
+  left: 0;
+  right: 0;
 }
 
 body > footer {
-  border-top: 1px solid #999;
+  flex-direction: column;
+  display: none;
+  bottom: 1em;
+  left: 0;
+  right: 0;
+}
+
+body > footer.active {
+  display: flex;
 }
 
 main {
   flex: auto;
+}
+
+#actions {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 #doorbell.doorbell-inline #doorbell-container {
@@ -173,12 +191,25 @@ main {
 
 #error {
   color: #666;
-  cursor: not-allowed;
   justify-content: center;
   align-items: center;
   height: 100%;
   font-size: 6em;
   display: none;
+}
+
+#footer-message {
+  border-bottom: 1px solid #ddd;
+}
+
+#header-message {
+  border-top: 1px solid #ddd;
+}
+
+#header-navigation {
+  flex-wrap: wrap;
+  justify-content: center;
+  display: flex;
 }
 
 #logo {
@@ -187,31 +218,46 @@ main {
   margin: 2em 0 1em;
 }
 
-#message {
-  align-items: center;
-  line-height: 1em;
+#modifiers {
+  justify-content: center;
   display: flex;
 }
 
 #puzzle-id {
+  appearance: none;
   cursor: pointer;
-  background-color: #fff;
   border: none;
   border-left: 1px solid #ddd;
-  padding: 1em;
+  padding: 1em 2em 1em 1em;
   font-size: 1em;
   font-weight: bold;
 }
 
+#puzzle-id:hover {
+  background-color: #eee;
+}
+
 #puzzle-id:focus-visible {
   color: #fff;
+  fill: #fff;
   background-color: #333;
   outline: none;
+}
+
+#puzzle-id:focus-visible + svg {
+  fill: #fff;
 }
 
 #selector {
   align-items: stretch;
   display: flex;
+  position: relative;
+}
+
+#selector svg {
+  position: absolute;
+  top: calc(50% - 5px);
+  right: .75rem;
 }
 
 #solution {
@@ -224,6 +270,10 @@ main {
 
 #solution .icon {
   margin-left: .5em;
+}
+
+#symbols {
+  display: none;
 }
 
 #version {
@@ -291,6 +341,9 @@ main {
   -webkit-user-select: none;
   user-select: none;
   vertical-align: middle;
+  width: 24px;
+  min-height: 24px;
+  overflow: hidden;
 }
 
 .material-symbols-outlined.fill {
@@ -338,6 +391,21 @@ main {
   background-color: #333;
 }
 
+.message {
+  background-color: #eee;
+  flex: 100%;
+  justify-content: center;
+  align-items: center;
+  min-height: 24px;
+  padding: 1em;
+  line-height: 24px;
+  display: flex;
+}
+
+.message:empty {
+  display: none;
+}
+
 .modifiers {
   -webkit-user-select: none;
   user-select: none;
@@ -356,16 +424,31 @@ main {
 }
 
 .puzzle-solved #puzzle {
-  cursor: not-allowed;
+  cursor: default;
+}
+
+.puzzle-solved footer {
+  display: none;
 }
 
 .text {
   padding: 0 .25em;
 }
 
-@media (width <= 425px) {
+@media (width <= 600px) {
   body > header, body > footer {
-    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body > footer {
+    border-radius: 0;
+    bottom: 0;
+  }
+
+  body > header {
+    border-radius: 0;
+    top: 0;
   }
 
   body > header .flex-left, body > header .flex-right {
@@ -374,7 +457,12 @@ main {
 
   body > header .flex-center {
     border-top: 1px solid #ddd;
+    flex: 100%;
     order: 1;
+  }
+
+  #actions {
+    border: 0;
   }
 }
 
