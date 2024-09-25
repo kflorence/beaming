@@ -1,5 +1,11 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "clockwise": false,
+        "type": "Rotate"
+      }
+    ],
     "tiles": [
       [
         {
@@ -7,7 +13,9 @@
             {
               "color": "blue",
               "openings": [
-                null,
+                {
+                  "type": "Beam"
+                },
                 null,
                 null,
                 {
@@ -22,7 +30,7 @@
           ],
           "modifiers": [
             {
-              "type": "Immutable"
+              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -61,11 +69,6 @@
               "type": "Terminus"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
           "type": "Tile"
         },
         {
@@ -74,11 +77,14 @@
               "color": "blue",
               "openings": [
                 {
+                  "on": true,
                   "type": "Beam"
                 },
                 null,
                 null,
-                null,
+                {
+                  "type": "Beam"
+                },
                 null,
                 null
               ],
@@ -87,8 +93,7 @@
           ],
           "modifiers": [
             {
-              "clockwise": false,
-              "type": "Rotate"
+              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -102,5 +107,6 @@
       "amount": 1,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

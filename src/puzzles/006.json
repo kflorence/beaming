@@ -11,9 +11,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Swap"
             }
           ],
@@ -23,11 +20,6 @@
           "items": [
             {
               "type": "Reflector"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -53,11 +45,6 @@
                 }
               ],
               "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -86,11 +73,6 @@
               "type": "Terminus"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
           "type": "Tile"
         }
       ],
@@ -99,11 +81,6 @@
           "items": [
             {
               "type": "Reflector"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -116,9 +93,6 @@
             }
           ],
           "modifiers": [
-            {
-              "type": "Lock"
-            },
             {
               "type": "Swap"
             }
@@ -134,5 +108,6 @@
       "amount": 2,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

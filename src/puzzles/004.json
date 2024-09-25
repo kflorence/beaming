@@ -21,9 +21,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Rotate"
             }
           ],
@@ -45,11 +42,6 @@
                 null
               ],
               "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -87,9 +79,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Swap"
             }
           ],
@@ -107,5 +96,6 @@
       "amount": 1,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

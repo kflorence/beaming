@@ -21,9 +21,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Swap"
             }
           ],
@@ -32,9 +29,6 @@
         {
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Rotate"
             }
           ],
@@ -42,9 +36,6 @@
         },
         {
           "modifiers": [
-            {
-              "type": "Lock"
-            },
             {
               "type": "Toggle"
             }
@@ -88,9 +79,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Move"
             }
           ],
@@ -104,9 +92,6 @@
             }
           ],
           "modifiers": [
-            {
-              "type": "Lock"
-            },
             {
               "type": "Move"
             }
@@ -122,9 +107,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Move"
             }
           ],
@@ -137,9 +119,6 @@
             }
           ],
           "modifiers": [
-            {
-              "type": "Lock"
-            },
             {
               "type": "Move"
             }
@@ -179,9 +158,6 @@
         {
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Toggle"
             }
           ],
@@ -189,9 +165,6 @@
         },
         {
           "modifiers": [
-            {
-              "type": "Lock"
-            },
             {
               "type": "Rotate"
             }
@@ -217,9 +190,6 @@
           ],
           "modifiers": [
             {
-              "type": "Lock"
-            },
-            {
               "type": "Swap"
             }
           ],
@@ -230,5 +200,6 @@
   },
   "solution": [
     { "amount": 2, "type": "Connections" }
-  ]
+  ],
+  "version": 1
 }

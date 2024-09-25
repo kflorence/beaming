@@ -1,10 +1,5 @@
 {
   "layout": {
-    "modifiers": [
-      {
-        "type": "Toggle"
-      }
-    ],
     "tiles": [
       [
         {
@@ -61,6 +56,11 @@
               "type": "Terminus"
             }
           ],
+          "modifiers": [
+            {
+              "type": "Toggle"
+            }
+          ],
           "type": "Tile"
         },
         {
@@ -80,11 +80,6 @@
               "type": "Terminus"
             }
           ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
           "type": "Tile"
         }
       ]
@@ -96,5 +91,6 @@
       "amount": 1,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

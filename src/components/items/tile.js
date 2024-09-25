@@ -3,7 +3,6 @@ import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
 import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
-import { Modifier } from '../modifier'
 
 export class Tile extends Item {
   icons = []
@@ -73,10 +72,6 @@ export class Tile extends Item {
 
     // noinspection JSValidateTypes
     return state
-  }
-
-  hasLock () {
-    return this.modifiers.some((modifier) => modifier.type === Modifier.Types.lock)
   }
 
   onTap (event) {

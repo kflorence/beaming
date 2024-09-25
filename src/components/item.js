@@ -1,4 +1,4 @@
-import { capitalize } from './util'
+import { capitalize, uniqueId } from './util'
 import { CompoundPath, Group } from 'paper'
 import { Stateful } from './stateful'
 
@@ -16,7 +16,7 @@ export class Item extends Stateful {
 
   constructor (parent, state, configuration) {
     // Retain ID from state if it exists, otherwise generate a new one
-    state.id ??= Item.uniqueId()
+    state.id ??= uniqueId()
 
     super(state)
 
@@ -101,8 +101,4 @@ export class Item extends Stateful {
     'tile',
     'wall'
   ].map((type) => [type, capitalize(type)])))
-
-  static uniqueId () {
-    return crypto.randomUUID().split('-')[0]
-  }
 }

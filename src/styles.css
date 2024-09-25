@@ -159,19 +159,16 @@ body > header {
 }
 
 body > footer {
-  display: flex;
+  display: none;
   bottom: 1em;
   flex-direction: column;
   left: 0;
   right: 0;
 }
 
-/* this is not working correctly. re-evaluate solution */
-/*body > footer:has(> *:empty) {*/
-/*  display: none;*/
-/*  !*noinspection CssInvalidPropertyValue*!*/
-/*  transition: all 0.2s allow-discrete;*/
-/*}*/
+body > footer.active {
+  display: flex;
+}
 
 main {
   flex: auto;
@@ -202,14 +199,13 @@ main {
 #error {
   align-items: center;
   color: #666;
-  cursor: not-allowed;
   display: none;
   height: 100%;
   font-size: 6em;
   justify-content: center;
 }
 
-#header-top {
+#header-navigation {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -228,10 +224,6 @@ main {
 #modifiers {
   display: flex;
   justify-content: center;
-}
-
-#modifiers-locked {
-  border-right: 1px solid #ddd;
 }
 
 #puzzle-id {
@@ -432,17 +424,10 @@ main {
   line-height: 24px;
   min-height: 24px;
   padding: 1em;
-  /*noinspection CssInvalidPropertyValue*/
-  transition: all 0.2s allow-discrete;
 }
 
 .message:empty {
-  border: 0;
   display: none;
-  height: 0;
-  min-height: 0;
-  opacity: 0;
-  padding: 0;
 }
 
 .modifiers {
@@ -466,7 +451,11 @@ main {
 }
 
 .puzzle-solved #puzzle {
-  cursor: not-allowed;
+  cursor: default;
+}
+
+.puzzle-solved footer {
+  display: none;
 }
 
 .text {
@@ -510,15 +499,5 @@ main {
 @media (max-width: 1024px) {
   dialog {
     width: 100%;
-  }
-}
-
-/*noinspection CssInvalidAtRule*/
-@starting-style {
-  .message {
-    height: 0;
-    min-height: 0;
-    opacity: 0;
-    padding: 0;
   }
 }

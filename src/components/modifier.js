@@ -5,8 +5,7 @@ import { Interact } from './interact'
 import { Item } from './item'
 import { Icons } from './icons'
 
-const modifiersLocked = document.getElementById('modifiers-locked')
-const modifiersUnlocked = document.getElementById('modifiers-unlocked')
+const modifiers = document.getElementById('modifiers')
 
 let uniqueId = 0
 
@@ -39,11 +38,20 @@ export class Modifier extends Stateful {
    */
   attach (tile) {
     this.tile = tile
-    this.disabled = this.immutable || !this.tile?.items.some((item) => item.type !== Item.Types.beam)
+
+    // Disable by default if: modifier is immutable
+    this.disabled = this.immutable ||
+      // The tile contains an immutable modifier
+      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable) ||
+      // The tile has no interactable items
+      !this.tile?.items.some((item) => item.type !== Item.Types.beam) ||
+      // The tile contains another modifier of this type already
+      this.tile?.modifiers.some((modifier) => modifier.type === this.type && modifier.id !== this.id)
 
     const li = this.#container = document.createElement('li')
 
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
+    li.dataset.id = this.id
 
     const span = this.element = document.createElement('span')
 
@@ -59,7 +67,7 @@ export class Modifier extends Stateful {
       { type: 'pointerup', handler: this.onPointerUp }
     ], { element: li })
 
-    this.parent ? modifiersLocked.append(li) : modifiersUnlocked.append(li)
+    modifiers.append(li)
   }
 
   /**

@@ -1,5 +1,10 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "type": "Toggle"
+      }
+    ],
     "tiles": [
       [
         {
@@ -18,11 +23,6 @@
                 null
               ],
               "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
             }
           ],
           "type": "Tile"
@@ -64,10 +64,6 @@
           "modifiers": [
             {
               "type": "Lock"
-            },
-            {
-              "clockwise": false,
-              "type": "Rotate"
             }
           ],
           "type": "Tile"
@@ -78,6 +74,7 @@
               "color": "blue",
               "openings": [
                 {
+                  "on": true,
                   "type": "Beam"
                 },
                 null,
@@ -105,5 +102,6 @@
       "amount": 1,
       "type": "Connections"
     }
-  ]
+  ],
+  "version": 1
 }

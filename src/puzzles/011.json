@@ -1,5 +1,10 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "type": "Rotate"
+      }
+    ],
     "tiles": [
       [
         {
@@ -61,11 +66,6 @@
             {
               "direction": 0,
               "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Rotate"
             }
           ],
           "type": "Tile"
@@ -134,5 +134,5 @@
       "type": "Connections"
     }
   ],
-  "version": 1
+  "version": 2
 }

@@ -225,3 +225,7 @@ export function uniqueBy (array, key) {
   const values = array.map((value) => value[key])
   return array.filter((value, index) => !values.includes(value[key], index + 1))
 }
+
+export function uniqueId () {
+  return crypto.randomUUID().split('-')[0]
+}
