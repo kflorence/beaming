@@ -33149,7 +33149,6 @@ class State {
     #selectedTile;
     #version;
     constructor(id, original, deltas, moveIndex, moves, selectedTile, version){
-        console.log(moveIndex);
         this.#id = id;
         this.#original = original;
         this.#deltas = deltas || [];
@@ -33285,7 +33284,7 @@ class State {
         this.#current = structuredClone(this.#original);
         // Then apply every delta until the currently active delta
         const deltaIndex = this.getDeltaIndex();
-        console.log(this.toString(), "resetCurrent", deltaIndex);
+        console.debug(this.toString(), "resetCurrent", deltaIndex);
         this.#deltas.filter((delta, index)=>index <= deltaIndex).forEach((delta)=>this.#apply(delta));
     }
     #updateCache() {
@@ -33355,7 +33354,6 @@ class State {
         pathSegments.filter((path)=>!(0, _puzzles.Puzzles).has(path)).some((segment, index)=>{
             try {
                 state = State.fromEncoded(segment);
-                id = state.getId();
             } catch (e) {
                 console.debug(`Could not parse state from path segment '${index}'`, e);
             }
