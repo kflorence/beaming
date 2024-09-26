@@ -8,54 +8,80 @@ export class State {
   #current
   #deltas
   #id
-  #index
+  #moveIndex
+  #moves
   #original
   #selectedTile
   #version
 
-  constructor (id, original, deltas, deltasIndex, selectedTile, version) {
+  constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
+    console.log(moveIndex)
     this.#id = id
     this.#original = original
     this.#deltas = deltas || []
-    this.#index = deltasIndex || this.#lastIndex()
+    this.#moves = moves || []
+    this.#moveIndex = moveIndex ?? this.#moves.length - 1
     this.#selectedTile = selectedTile
-    this.#version = version ?? original.version
+    this.#version = version ?? State.Version
 
-    // Update current state
-    this.#current = structuredClone(original)
-    this.#deltas.filter((delta, index) => index <= this.#index).forEach((delta) => this.apply(delta))
-
-    this.#updateCache(id)
+    this.#resetCurrent()
+    this.#updateCache()
   }
 
-  apply (delta) {
-    // Support for deltas stored as stringified JSON in cache
-    if (typeof delta === 'string') {
-      delta = JSON.parse(delta)
+  addMove () {
+    // Handle moving after an undo (revising history)
+    if (this.#moveIndex < this.#moves.length - 1) {
+      const deltaIndex = this.getDeltaIndex()
+
+      console.debug(
+        this.toString(),
+        'addMove: revising history. moves:',
+        this.#moves,
+        `moveIndex: ${this.#moveIndex}`,
+        `deltaIndex: ${deltaIndex}`
+      )
+
+      // Remove all deltas after the current one
+      this.#deltas.splice(deltaIndex + 1)
+      // Remove all moves after the current one
+      this.#moves.splice(this.#moveIndex + 1)
     }
-    console.debug('StateManager: applying delta', delta)
-    return jsonDiffPatch.patch(this.#current, delta)
+
+    const deltaIndex = this.#deltas.length - 1
+    if (!this.#moves.includes(deltaIndex)) {
+      // Don't add duplicate moves
+      this.#moves.push(deltaIndex)
+    } else {
+      console.debug(this.toString(), `addMove: ignoring duplicate move: ${deltaIndex}`)
+    }
+
+    this.#moveIndex = this.#moves.length - 1
+
+    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, deltaIndex)
+
+    return this.#moveIndex
   }
 
   canRedo () {
-    return this.#index < this.#lastIndex()
+    return this.#moveIndex < this.#moves.length - 1
   }
 
   canReset () {
-    return this.#deltas.length > 0
+    return this.#moves.length > 0
   }
 
   canUndo () {
-    return this.#index >= 0
+    return this.#moveIndex >= 0
   }
 
   encode () {
     return base64encode(JSON.stringify({
       id: this.#id,
-      // No need to cache puzzles which exist in code
-      original: Puzzles.has(this.#id) ? undefined : this.#original,
+      // If this puzzle exists in code, just cache the version
+      original: Puzzles.has(this.#id) ? { version: this.#original.version } : this.#original,
       deltas: this.#deltas,
-      deltasIndex: this.#index,
+      moveIndex: this.#moveIndex,
+      moves: this.#moves,
       selectedTile: this.#selectedTile,
       version: this.#version
     }))
@@ -63,6 +89,13 @@ export class State {
 
   getCurrent () {
     return structuredClone(this.#current)
+  }
+
+  getDeltaIndex () {
+    console.debug(this.toString(), 'getDeltaIndex', this.#moves, this.#moveIndex, this.#deltas.length - 1)
+    // If there are no moves, or the user is on the latest move, use the latest delta index
+    // Otherwise, use the delta index indicated by the move
+    return this.#moveIndex < this.#moves.length - 1 ? this.#moves[this.#moveIndex + 1] : this.#deltas.length - 1
   }
 
   getId () {
@@ -78,11 +111,7 @@ export class State {
   }
 
   moves () {
-    return this.#index + 1
-  }
-
-  length () {
-    return this.#deltas.length
+    return this.#moves
   }
 
   redo () {
@@ -90,10 +119,8 @@ export class State {
       return
     }
 
-    this.#index++
-    this.#current = structuredClone(this.#original)
-    this.#deltas.filter((delta, index) => index <= this.#index).forEach((delta) => this.apply(delta))
-
+    this.#moveIndex++
+    this.#resetCurrent()
     this.#updateCache()
 
     return true
@@ -104,13 +131,15 @@ export class State {
       return
     }
 
-    this.#current = structuredClone(this.#original)
-    this.#deltas = []
-    this.#index = this.#lastIndex()
+    // Reset to the state prior to the first move
+    this.#deltas.splice(this.#moves[0] + 1)
+    this.#moveIndex = -1
+    this.#moves = []
     this.#selectedTile = undefined
 
     State.clearCache(this.getId())
 
+    this.#resetCurrent()
     this.#updateCache()
 
     return true
@@ -124,54 +153,65 @@ export class State {
     }
   }
 
+  toString () {
+    return `[State:${this.#deltas.length - 1}:${this.#moveIndex}]`
+  }
+
   undo () {
     if (!this.canUndo()) {
       return
     }
 
-    this.#index--
-    this.#current = structuredClone(this.#original)
-    this.#deltas.filter((delta, index) => index <= this.#index).forEach((delta) => this.apply(delta))
+    console.log(this.toString(), 'undo', this.#moveIndex)
 
+    this.#moveIndex--
+    this.#resetCurrent()
     this.#updateCache()
 
     return true
   }
 
-  update (newState, keepDelta = true) {
+  update (newState) {
     const delta = jsonDiffPatch.diff(this.#current, newState)
-    console.debug('delta', delta)
+    console.debug(this.toString(), 'update', delta)
 
     if (delta === undefined) {
       // Nothing to do
       return
     }
 
-    this.apply(delta)
+    // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+    // their stringified JSON representation and parsed before being applied.
+    // See:https://github.com/benjamine/jsondiffpatch/issues/34
+    this.#deltas.push(JSON.stringify(delta))
 
-    if (keepDelta) {
-      // Handle updating after undoing
-      if (this.#index < this.#lastIndex()) {
-        // Remove all deltas after the current one
-        this.#deltas.splice(this.#index + 1)
-      }
-
-      // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-      // their stringified JSON representation and parsed before being applied.
-      // See:https://github.com/benjamine/jsondiffpatch/issues/34
-      this.#deltas.push(JSON.stringify(delta))
-      this.#index = this.#lastIndex()
-    }
-
+    this.#apply(delta)
     this.#updateCache()
+  }
+
+  #apply (delta) {
+    // Support for deltas stored as stringified JSON in cache
+    if (typeof delta === 'string') {
+      delta = JSON.parse(delta)
+    }
+    console.debug(this.toString(), 'apply', delta)
+    return jsonDiffPatch.patch(this.#current, delta)
   }
 
   #key (key) {
     return State.key(key, this.getId())
   }
 
-  #lastIndex () {
-    return this.#deltas.length - 1
+  #resetCurrent () {
+    // Start with the original state
+    this.#current = structuredClone(this.#original)
+
+    // Then apply every delta until the currently active delta
+    const deltaIndex = this.getDeltaIndex()
+
+    console.log(this.toString(), 'resetCurrent', deltaIndex)
+
+    this.#deltas.filter((delta, index) => index <= deltaIndex).forEach((delta) => this.#apply(delta))
   }
 
   #updateCache () {
@@ -203,13 +243,40 @@ export class State {
 
   static fromEncoded (state) {
     state = JSON.parse(base64decode(state))
-    state.original = state.original || Puzzles.get(state.id)
-    state.original.version ??= 0
+
+    if (state.id === undefined) {
+      console.warn('Invalid cache, ignoring.')
+      return
+    }
+
+    if (state.version !== State.Version) {
+      console.debug(
+        'Invalidating cache due to version mismatch. ' +
+        `Ours: ${State.Version}, theirs: ${state.version}.`
+      )
+      State.clearCache()
+      return
+    }
+
+    if (Puzzles.has(state.id)) {
+      const original = Puzzles.get(state.id)
+      if (original && original.version !== state.original?.version) {
+        console.debug(
+          `Invalidating cache for puzzle ${state.id} due to version mismatch. ` +
+          `Ours: ${original.version}, theirs: ${state.original?.version}.`
+        )
+        State.clearCache(state.id)
+        return
+      }
+      state.original = original
+    }
+
     return new State(
       state.id,
       state.original,
       state.deltas,
-      state.deltasIndex,
+      state.moveIndex,
+      state.moves,
       state.selectedTile,
       state.version
     )
@@ -257,20 +324,6 @@ export class State {
       }
     }
 
-    if (state) {
-      const cachedVersion = state.#version
-      const originalVersion = state.#original.version
-
-      if (cachedVersion !== originalVersion) {
-        console.debug(
-          `Invalidating cache for ID ${id} due to version mismatch. ` +
-          `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`
-        )
-        state = undefined
-        State.clearCache(id)
-      }
-    }
-
     if (!state) {
       // Fall back to loading state from Puzzles cache by ID
       state = State.fromId(id)
@@ -297,4 +350,8 @@ export class State {
   static ParamKeys = Object.freeze({
     clearCache: 'clearCache'
   })
+
+  // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
+  // Use this sparingly as it will reset the state of every puzzle on the users end
+  static Version = 3
 }

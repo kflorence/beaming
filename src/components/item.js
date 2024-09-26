@@ -24,7 +24,7 @@ export class Item extends Stateful {
     this.immutable ??= state?.immutable ?? false
     this.type = state?.type ?? configuration?.type
     if (this.type === undefined) {
-      console.debug(`[Item:${this.id}]`, state)
+      console.debug(`[Item:${this.id}]`, state, configuration)
       throw new Error('Item must have type defined')
     }
 

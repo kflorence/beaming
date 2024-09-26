@@ -5,7 +5,6 @@ import { emitEvent, getPointBetween } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
-  icons = []
   selected = false
 
   #ui
@@ -59,7 +58,7 @@ export class Tile extends Item {
   }
 
   getState () {
-    const state = { type: this.type }
+    const state = { id: this.id, type: this.type }
 
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())

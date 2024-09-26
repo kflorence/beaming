@@ -9,7 +9,7 @@ export class Toggle extends Modifier {
     super(...arguments)
 
     // TODO: refactor to use 'toggled' everywhere
-    this.on = state.on || this.parent?.items.some((item => item.on || item.toggled))
+    this.on = state.on || this.parent?.items.some(item => item.on || item.toggled)
     this.name = this.getName()
   }
 
@@ -17,7 +17,7 @@ export class Toggle extends Modifier {
     super.attach(tile)
 
     // TODO: refactor to use 'toggled' everywhere
-    this.on = this.tile?.items.some((item => item.on || item.toggled))
+    this.on = this.tile?.items.some(item => item.on || item.toggled)
     this.update({ name: this.getName() })
   }
 
@@ -27,7 +27,7 @@ export class Toggle extends Modifier {
 
   moveFilter (tile) {
     // Filter out tiles that contain no toggleable items
-    return super.moveFilter(tile) || !tile.items.some((item) => item.toggleable)
+    return super.moveFilter(tile) || !tile.items.some(item => item.toggleable)
   }
 
   onTap (event) {

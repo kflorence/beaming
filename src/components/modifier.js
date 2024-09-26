@@ -25,9 +25,8 @@ export class Modifier extends Stateful {
   type
 
   constructor (tile, state) {
-    console.log(state.id)
+    // Retain ID from state if it exists, otherwise generate a new one
     state.id ??= uniqueId()
-
     super(state)
 
     this.id = state.id
