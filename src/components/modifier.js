@@ -1,4 +1,4 @@
-import { capitalize, emitEvent } from './util'
+import { capitalize, emitEvent, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -7,8 +7,6 @@ import { Icons } from './icons'
 import { Tile } from './items/tile'
 
 const modifiers = document.getElementById('modifiers')
-
-let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
@@ -19,7 +17,6 @@ export class Modifier extends Stateful {
   configuration
   element
   disabled = false
-  id = uniqueId++
   immutable = false
   name
   parent
@@ -28,8 +25,12 @@ export class Modifier extends Stateful {
   type
 
   constructor (tile, state) {
+    console.log(state.id)
+    state.id ??= uniqueId()
+
     super(state)
 
+    this.id = state.id
     this.parent = tile
     this.type = state.type
   }
@@ -142,6 +143,9 @@ export class Modifier extends Stateful {
           break
         }
       }
+
+      // Keep the tile icon in sync
+      this.parent?.updateIcon(this)
     }
 
     this.#down = false

@@ -32,6 +32,8 @@ export class Tile extends Item {
       .map((state) => modifierFactory(this, state))
       .filter((modifier) => modifier !== undefined)
 
+    this.modifiers.forEach((modifier) => this.updateIcon(modifier))
+
     this.update()
   }
 
@@ -42,7 +44,7 @@ export class Tile extends Item {
 
   addModifier (modifier) {
     this.modifiers.push(modifier)
-    this.update()
+    this.updateIcon(modifier)
   }
 
   afterModify () {
@@ -106,7 +108,7 @@ export class Tile extends Item {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
       this.modifiers.splice(index, 1)
-      this.update()
+      this.updateIcon(modifier)
     }
   }
 
@@ -122,18 +124,25 @@ export class Tile extends Item {
     return `[${this.type}:${this.coordinates.offset.toString()}]`
   }
 
-  update () {
-    super.update()
-
-    // Update tile modifier icons
-    this.icons = this.modifiers.map((modifier, index) => {
-      const position = getPointBetween(this.#ui.hexagon.segments[index].point, this.center, (length) => length / 3)
-      return modifier.getSymbol().place(position, { fillColor: modifier.immutable ? '#ccc' : '#333' })
-    })
-
-    // Everything after child 0 (hexagon) is an icon
-    this.group.removeChildren(1)
-    this.group.addChildren(this.icons)
+  updateIcon (modifier) {
+    const index = this.modifiers.indexOf(modifier)
+    if (index >= 0) {
+      const position = getPointBetween(
+        this.#ui.hexagon.segments[index].point,
+        this.center,
+        (length) => length / 3
+      )
+      const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
+      const icon = modifier.getSymbol().place(position, { style })
+      icon.data = { id: modifier.id, name: modifier.name, type: modifier.type }
+      const childIndex = this.group.children.findIndex((icon) => icon.data.id === modifier.id)
+      if (childIndex >= 0) {
+        // Update existing
+        this.group.children[childIndex].replaceWith(icon)
+      } else {
+        this.group.addChild(icon)
+      }
+    }
   }
 
   static parameters (height) {

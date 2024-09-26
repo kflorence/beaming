@@ -251,7 +251,7 @@ export class Puzzle {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return this.layout.modifiers.concat(tile?.modifiers || [])
       .filter((modifier) => !modifier.immutable)
-      .sort((a, b) => a.id - b.id)
+      .sort((a, b) => a.id.localeCompare(b.id))
   }
 
   #next () {
@@ -482,7 +482,7 @@ export class Puzzle {
       : undefined
 
     this.updateSelectedTile(selectedTile)
-    this.updateState(false)
+    this.updateState()
     this.update()
   }
 
