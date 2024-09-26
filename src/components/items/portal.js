@@ -109,8 +109,7 @@ export class Portal extends movable(rotatable(Item)) {
     } else if (exitPortals.length === 1) {
       const exitPortal = exitPortals[0]
       console.debug(this.toString(), 'single exit portal matched:', exitPortal)
-      // Since no user choice was made, don't store this decision as a delta (move)
-      return this.#getStep(beam, nextStep, exitPortal, false)
+      return this.#getStep(beam, nextStep, exitPortal)
     } else {
       // Multiple matching destinations. User will need to pick one manually.
       console.debug(this.toString(), 'found multiple valid exit portals:', exitPortals)
@@ -123,6 +122,8 @@ export class Portal extends movable(rotatable(Item)) {
           onTap: (puzzle, tile) => {
             const exitPortal = data.exitPortals.find((portal) => portal.parent === tile)
             if (exitPortal) {
+              // Add a move, since the user made a decision
+              puzzle.addMove()
               beam.addStep(this.#getStep(beam, nextStep, exitPortal))
               puzzle.unmask()
             }
@@ -206,7 +207,7 @@ export class Portal extends movable(rotatable(Item)) {
     return exitPortals
   }
 
-  #getStep (beam, nextStep, exitPortal, keepDelta = true) {
+  #getStep (beam, nextStep, exitPortal) {
     const direction = Portal.getExitDirection(nextStep, this, exitPortal)
     return nextStep.copy({
       connected: false,
@@ -214,13 +215,13 @@ export class Portal extends movable(rotatable(Item)) {
       insertAbove: exitPortal,
       onAdd: (step) => {
         exitPortal.update(direction, step)
-        // Store this decision in beam state and generate a matching delta
-        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }), keepDelta)
+        // Store this decision in beam state
+        // TODO: store this less cryptically (e.g. use "portal")
+        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }))
       },
       onRemove: (step) => {
-        // Remove any associated beam state, but don't generate a delta.
-        // If the step is being removed, a delta for that action was most likely created elsewhere already.
-        beam.updateState((state) => { delete state.steps[step.index] }, false)
+        // Remove any associated beam state
+        beam.updateState((state) => { delete state.steps[step.index] })
         exitPortal.update(direction)
       },
       point: exitPortal.parent.center,

@@ -161,7 +161,7 @@ body > header {
 body > footer {
   display: none;
   bottom: 1em;
-  flex-direction: column;
+  flex-flow: column wrap;
   left: 0;
   right: 0;
 }
@@ -227,7 +227,17 @@ main {
 
 #modifiers {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  margin: -1px 0;
+  user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
+}
+
+#modifiers li {
+  border: 1px solid #ddd;
+  margin: 0 0 -1px -1px;
 }
 
 #puzzle-id {
@@ -270,9 +280,7 @@ main {
 #solution {
   align-items: center;
   cursor: default;
-  display: flex;
   line-height: 24px;
-  list-style: none;
 }
 
 #solution .icon {
@@ -429,19 +437,13 @@ main {
   display: none;
 }
 
-.modifiers {
-  user-select: none;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
-}
-
 .puzzle-error .flex-left,
 .puzzle-error .flex-right {
   flex: 0;
 }
 
 .puzzle-error:not(.puzzle-loaded) #puzzle,
-.puzzle-error .modifiers {
+.puzzle-error #modifiers {
   display: none;
 }
 
@@ -462,16 +464,9 @@ main {
 }
 
 @media (max-width: 600px) {
-  body > header,
-  body > footer {
-    /*flex-wrap: wrap;*/
+  body > header {
     max-width: 100%;
     width: 100%;
-  }
-
-  body > footer {
-    border-radius: 0;
-    bottom: 0;
   }
 
   body > header {

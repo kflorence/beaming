@@ -5,7 +5,7 @@ import { Reflector } from './items/reflector'
 import { Wall } from './items/wall'
 import { Item } from './item'
 
-export function itemFactory (parent, state, configuration) {
+export function itemFactory (parent, state, index) {
   let item
 
   switch (state.type) {

@@ -8,6 +8,7 @@ import { Tile } from './items/tile'
 
 const modifiers = document.getElementById('modifiers')
 
+// Use incrementing IDs to preserve sort order
 let uniqueId = 0
 
 export class Modifier extends Stateful {
@@ -19,7 +20,6 @@ export class Modifier extends Stateful {
   configuration
   element
   disabled = false
-  id = uniqueId++
   immutable = false
   name
   parent
@@ -28,8 +28,11 @@ export class Modifier extends Stateful {
   type
 
   constructor (tile, state) {
+    // Retain ID from state if it exists, otherwise generate a new one
+    state.id ??= uniqueId++
     super(state)
 
+    this.id = state.id
     this.parent = tile
     this.type = state.type
   }
@@ -142,6 +145,9 @@ export class Modifier extends Stateful {
           break
         }
       }
+
+      // Keep the tile icon in sync
+      this.parent?.updateIcon(this)
     }
 
     this.#down = false

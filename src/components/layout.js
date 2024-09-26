@@ -35,7 +35,7 @@ export class Layout extends Stateful {
     this.layers.items = new Layer()
 
     this.modifiers = (state.modifiers || [])
-      .map((state) => modifierFactory(null, state))
+      .map((state, index) => modifierFactory(null, state, index))
       .filter((modifier) => modifier !== undefined)
 
     // Find the widest row

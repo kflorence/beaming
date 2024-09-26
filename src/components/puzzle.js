@@ -91,6 +91,10 @@ export class Puzzle {
     this.select()
   }
 
+  addMove () {
+    return this.#state.addMove()
+  }
+
   centerOnTile (offset) {
     const tile = this.layout.getTileByOffset(offset)
     paper.view.center = tile.center
@@ -228,12 +232,11 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
-  updateState (keepDelta = true) {
-    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }), keepDelta)
+  updateState () {
+    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
     this.#updateActions()
-    if (keepDelta) {
-      emitEvent(Puzzle.Events.Updated, { state: this.#state })
-    }
+
+    emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
   #addLayers () {
@@ -249,7 +252,7 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return this.layout.modifiers.concat(tile?.modifiers || [])
+    return (tile?.modifiers || []).concat(this.layout.modifiers)
       .filter((modifier) => !modifier.immutable)
       .sort((a, b) => a.id - b.id)
   }
@@ -350,6 +353,7 @@ export class Puzzle {
         .forEach((other) => other.update({ disabled: true }))
     }
 
+    this.addMove()
     this.updateState()
 
     this.#beams
@@ -385,7 +389,8 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Solved)
   }
 
-  #onStateUpdate () {
+  #onStateUpdate (event) {
+    console.debug('Puzzle.#onStateUpdate()', event)
     this.updateState()
   }
 
@@ -482,7 +487,7 @@ export class Puzzle {
       : undefined
 
     this.updateSelectedTile(selectedTile)
-    this.updateState(false)
+    this.updateState()
     this.update()
   }
 
