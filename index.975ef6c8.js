@@ -29991,6 +29991,9 @@ class Puzzle {
         this.#updateDropdown();
         this.select();
     }
+    addMove() {
+        return this.#state.addMove();
+    }
     centerOnTile(offset) {
         const tile = this.layout.getTileByOffset(offset);
         (0, _paperDefault.default).view.center = tile.center;
@@ -30086,12 +30089,12 @@ class Puzzle {
         if (tile && tile !== previouslySelectedTile) tile.onSelected(previouslySelectedTile);
         return previouslySelectedTile;
     }
-    updateState(keepDelta = true) {
+    updateState() {
         this.#state.update(Object.assign(this.#state.getCurrent(), {
             layout: this.layout.getState()
-        }), keepDelta);
+        }));
         this.#updateActions();
-        if (keepDelta) (0, _util.emitEvent)(Puzzle.Events.Updated, {
+        (0, _util.emitEvent)(Puzzle.Events.Updated, {
             state: this.#state
         });
     }
@@ -30107,7 +30110,7 @@ class Puzzle {
     }
     #getModifiers(tile) {
         // Sort by ID to ensure they always appear in the same order regardless of ownership
-        return this.layout.modifiers.concat(tile?.modifiers || []).filter((modifier)=>!modifier.immutable).sort((a, b)=>a.id - b.id);
+        return (tile?.modifiers || []).concat(this.layout.modifiers).filter((modifier)=>!modifier.immutable).sort((a, b)=>a.id - b.id);
     }
     #next() {
         const id = (0, _puzzles.Puzzles).visible.nextId(this.#state.getId());
@@ -30170,6 +30173,7 @@ class Puzzle {
                     disabled: true
                 }));
         }
+        this.addMove();
         this.updateState();
         this.#beams// Update beams in the tile being modified first
         .sort((beam)=>tile.items.some((item)=>item === beam) ? -1 : 0).forEach((beam)=>beam.onModifierInvoked(event, this));
@@ -30191,7 +30195,8 @@ class Puzzle {
         document.body.classList.add(Puzzle.Events.Solved);
         (0, _util.emitEvent)(Puzzle.Events.Solved);
     }
-    #onStateUpdate() {
+    #onStateUpdate(event) {
+        console.debug("Puzzle.#onStateUpdate()", event);
         this.updateState();
     }
     #onTap(event) {
@@ -30253,7 +30258,7 @@ class Puzzle {
         const selectedTileId = this.#state.getSelectedTile();
         const selectedTile = selectedTileId ? this.layout.getTileByOffset(new (0, _offset.OffsetCoordinates)(...selectedTileId.split(","))) : undefined;
         this.updateSelectedTile(selectedTile);
-        this.updateState(false);
+        this.updateState();
         this.update();
     }
     #teardown() {
@@ -30461,7 +30466,7 @@ class Layout extends (0, _stateful.Stateful) {
         this.layers.tiles = new (0, _paper.Layer)();
         // noinspection JSValidateTypes
         this.layers.items = new (0, _paper.Layer)();
-        this.modifiers = (state.modifiers || []).map((state)=>(0, _modifierFactory.modifierFactory)(null, state)).filter((modifier)=>modifier !== undefined);
+        this.modifiers = (state.modifiers || []).map((state, index)=>(0, _modifierFactory.modifierFactory)(null, state, index)).filter((modifier)=>modifier !== undefined);
         // Find the widest row
         const widestRow = tiles.reduce((current, row, index)=>{
             const length = row.length;
@@ -30643,7 +30648,6 @@ var _itemFactory = require("../itemFactory");
 var _util = require("../util");
 var _modifierFactory = require("../modifierFactory");
 class Tile extends (0, _item.Item) {
-    icons = [];
     selected = false;
     #ui;
     constructor(coordinates, layout, parameters, state){
@@ -30663,8 +30667,9 @@ class Tile extends (0, _item.Item) {
             this.#ui.hexagon
         ]);
         // These need to be last, since they reference this
-        this.items = (state.items || []).map((state)=>(0, _itemFactory.itemFactory)(this, state)).filter((item)=>item !== undefined);
-        this.modifiers = (state.modifiers || []).map((state)=>(0, _modifierFactory.modifierFactory)(this, state)).filter((modifier)=>modifier !== undefined);
+        this.items = (state.items || []).map((state, index)=>(0, _itemFactory.itemFactory)(this, state, index)).filter((item)=>item !== undefined);
+        this.modifiers = (state.modifiers || []).map((state, index)=>(0, _modifierFactory.modifierFactory)(this, state, index)).filter((modifier)=>modifier !== undefined);
+        this.modifiers.forEach((modifier)=>this.updateIcon(modifier));
         this.update();
     }
     addItem(item) {
@@ -30673,7 +30678,7 @@ class Tile extends (0, _item.Item) {
     }
     addModifier(modifier) {
         this.modifiers.push(modifier);
-        this.update();
+        this.updateIcon(modifier);
     }
     afterModify() {
         this.setStyle(this.selected ? "selected" : "default");
@@ -30690,6 +30695,7 @@ class Tile extends (0, _item.Item) {
     }
     getState() {
         const state = {
+            id: this.id,
             type: this.type
         };
         // Filter out beams, which are not stored in state
@@ -30730,7 +30736,7 @@ class Tile extends (0, _item.Item) {
         const index = this.modifiers.indexOf(modifier);
         if (index >= 0) {
             this.modifiers.splice(index, 1);
-            this.update();
+            this.updateIcon(modifier);
         }
     }
     setStyle(style) {
@@ -30742,18 +30748,26 @@ class Tile extends (0, _item.Item) {
     toString() {
         return `[${this.type}:${this.coordinates.offset.toString()}]`;
     }
-    update() {
-        super.update();
-        // Update tile modifier icons
-        this.icons = this.modifiers.map((modifier, index)=>{
+    updateIcon(modifier) {
+        const index = this.modifiers.indexOf(modifier);
+        if (index >= 0) {
             const position = (0, _util.getPointBetween)(this.#ui.hexagon.segments[index].point, this.center, (length)=>length / 3);
-            return modifier.getSymbol().place(position, {
+            const style = {
                 fillColor: modifier.immutable ? "#ccc" : "#333"
+            };
+            const icon = modifier.getSymbol().place(position, {
+                style
             });
-        });
-        // Everything after child 0 (hexagon) is an icon
-        this.group.removeChildren(1);
-        this.group.addChildren(this.icons);
+            icon.data = {
+                id: modifier.id,
+                name: modifier.name,
+                type: modifier.type
+            };
+            const childIndex = this.group.children.findIndex((icon)=>icon.data.id === modifier.id);
+            if (childIndex >= 0) // Update existing
+            this.group.children[childIndex].replaceWith(icon);
+            else this.group.addChild(icon);
+        }
     }
     static parameters(height) {
         const circumradius = height / 2;
@@ -30845,7 +30859,7 @@ class Item extends (0, _stateful.Stateful) {
         this.immutable ??= state?.immutable ?? false;
         this.type = state?.type ?? configuration?.type;
         if (this.type === undefined) {
-            console.debug(`[Item:${this.id}]`, state);
+            console.debug(`[Item:${this.id}]`, state, configuration);
             throw new Error("Item must have type defined");
         }
         this.data = Object.assign({
@@ -30953,7 +30967,7 @@ var _terminus = require("./items/terminus");
 var _reflector = require("./items/reflector");
 var _wall = require("./items/wall");
 var _item = require("./item");
-function itemFactory(parent, state, configuration) {
+function itemFactory(parent, state, index) {
     let item;
     switch(state.type){
         case (0, _item.Item).Types.filter:
@@ -31140,6 +31154,7 @@ var _item = require("./item");
 var _icons = require("./icons");
 var _tile = require("./items/tile");
 const modifiers = document.getElementById("modifiers");
+// Use incrementing IDs to preserve sort order
 let uniqueId = 0;
 class Modifier extends (0, _stateful.Stateful) {
     #container;
@@ -31151,7 +31166,6 @@ class Modifier extends (0, _stateful.Stateful) {
     configuration;
     element;
     disabled = false;
-    id = uniqueId++;
     immutable = false;
     name;
     parent;
@@ -31159,7 +31173,10 @@ class Modifier extends (0, _stateful.Stateful) {
     title;
     type;
     constructor(tile, state){
+        // Retain ID from state if it exists, otherwise generate a new one
+        state.id ??= uniqueId++;
         super(state);
+        this.id = state.id;
         this.parent = tile;
         this.type = state.type;
     }
@@ -31240,14 +31257,18 @@ class Modifier extends (0, _stateful.Stateful) {
     }
     onPointerUp(event) {
         clearTimeout(this.#timeoutId);
-        if (this.#down && !this.disabled) switch(event.type){
-            case "pointerleave":
-                // Support swiping up on pointer device
-                this.onToggle(event);
-                break;
-            case "pointerup":
-                this.onTap(event);
-                break;
+        if (this.#down && !this.disabled) {
+            switch(event.type){
+                case "pointerleave":
+                    // Support swiping up on pointer device
+                    this.onToggle(event);
+                    break;
+                case "pointerup":
+                    this.onTap(event);
+                    break;
+            }
+            // Keep the tile icon in sync
+            this.parent?.updateIcon(this);
         }
         this.#down = false;
     }
@@ -31813,8 +31834,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         } else if (exitPortals.length === 1) {
             const exitPortal = exitPortals[0];
             console.debug(this.toString(), "single exit portal matched:", exitPortal);
-            // Since no user choice was made, don't store this decision as a delta (move)
-            return this.#getStep(beam, nextStep, exitPortal, false);
+            return this.#getStep(beam, nextStep, exitPortal);
         } else {
             // Multiple matching destinations. User will need to pick one manually.
             console.debug(this.toString(), "found multiple valid exit portals:", exitPortals);
@@ -31828,6 +31848,8 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
                 onTap: (puzzle, tile)=>{
                     const exitPortal = data.exitPortals.find((portal)=>portal.parent === tile);
                     if (exitPortal) {
+                        // Add a move, since the user made a decision
+                        puzzle.addMove();
                         beam.addStep(this.#getStep(beam, nextStep, exitPortal));
                         puzzle.unmask();
                     }
@@ -31892,7 +31914,7 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
         }
         return exitPortals;
     }
-    #getStep(beam, nextStep, exitPortal, keepDelta = true) {
+    #getStep(beam, nextStep, exitPortal) {
         const direction = Portal.getExitDirection(nextStep, this, exitPortal);
         return nextStep.copy({
             connected: false,
@@ -31900,17 +31922,17 @@ class Portal extends (0, _move.movable)((0, _rotate.rotatable)((0, _item.Item)))
             insertAbove: exitPortal,
             onAdd: (step)=>{
                 exitPortal.update(direction, step);
-                // Store this decision in beam state and generate a matching delta
+                // Store this decision in beam state
+                // TODO: store this less cryptically (e.g. use "portal")
                 beam.updateState((state)=>(state.steps ??= {})[step.index] = {
                         [this.id]: exitPortal.id
-                    }, keepDelta);
+                    });
             },
             onRemove: (step)=>{
-                // Remove any associated beam state, but don't generate a delta.
-                // If the step is being removed, a delta for that action was most likely created elsewhere already.
+                // Remove any associated beam state
                 beam.updateState((state)=>{
                     delete state.steps[step.index];
-                }, false);
+                });
                 exitPortal.update(direction);
             },
             point: exitPortal.parent.center,
@@ -32203,15 +32225,15 @@ var _icons = require("../icons");
 class Toggle extends (0, _modifier.Modifier) {
     on;
     title = "Toggle";
-    constructor(tile, { on }){
+    constructor(tile, state){
         super(...arguments);
-        this.on = on || false;
+        // TODO: refactor to use 'toggled' everywhere
+        this.on = state.on || this.parent?.items.some((item)=>item.on || item.toggled);
         this.name = this.getName();
     }
     attach(tile) {
         super.attach(tile);
-        // Consider the modifier toggled if there is at least one toggled item in the tile
-        // TODO: refactor to be 'toggled' everywhere
+        // TODO: refactor to use 'toggled' everywhere
         this.on = this.tile?.items.some((item)=>item.on || item.toggled);
         this.update({
             name: this.getName()
@@ -32966,29 +32988,29 @@ var _rotate = require("./modifiers/rotate");
 var _toggle = require("./modifiers/toggle");
 var _modifier = require("./modifier");
 var _swap = require("./modifiers/swap");
-function modifierFactory(tile, configuration) {
+function modifierFactory(parent, state, index) {
     let modifier;
-    switch(configuration.type){
+    switch(state.type){
         case (0, _modifier.Modifier).Types.immutable:
-            modifier = new (0, _immutable.Immutable)(tile, configuration);
+            modifier = new (0, _immutable.Immutable)(...arguments);
             break;
         case (0, _modifier.Modifier).Types.lock:
-            modifier = new (0, _lock.Lock)(tile, configuration);
+            modifier = new (0, _lock.Lock)(...arguments);
             break;
         case (0, _modifier.Modifier).Types.move:
-            modifier = new (0, _move.Move)(tile, configuration);
+            modifier = new (0, _move.Move)(...arguments);
             break;
         case (0, _modifier.Modifier).Types.rotate:
-            modifier = new (0, _rotate.Rotate)(tile, configuration);
+            modifier = new (0, _rotate.Rotate)(...arguments);
             break;
         case (0, _modifier.Modifier).Types.swap:
-            modifier = new (0, _swap.Swap)(tile, configuration);
+            modifier = new (0, _swap.Swap)(...arguments);
             break;
         case (0, _modifier.Modifier).Types.toggle:
-            modifier = new (0, _toggle.Toggle)(tile, configuration);
+            modifier = new (0, _toggle.Toggle)(...arguments);
             break;
         default:
-            console.error("Ignoring modifier with unknown type:", configuration.type);
+            console.error("Ignoring modifier with unknown type:", state.type);
             break;
     }
     return modifier;
@@ -33121,50 +33143,72 @@ class State {
     #current;
     #deltas;
     #id;
-    #index;
+    #moveIndex;
+    #moves;
     #original;
     #selectedTile;
     #version;
-    constructor(id, original, deltas, deltasIndex, selectedTile, version){
+    constructor(id, original, deltas, moveIndex, moves, selectedTile, version){
+        console.log(moveIndex);
         this.#id = id;
         this.#original = original;
         this.#deltas = deltas || [];
-        this.#index = deltasIndex || this.#lastIndex();
+        this.#moves = moves || [];
+        this.#moveIndex = moveIndex ?? this.#moves.length - 1;
         this.#selectedTile = selectedTile;
-        this.#version = version ?? original.version;
-        // Update current state
-        this.#current = structuredClone(original);
-        this.#deltas.filter((delta, index)=>index <= this.#index).forEach((delta)=>this.apply(delta));
-        this.#updateCache(id);
+        this.#version = version ?? State.Version;
+        this.#resetCurrent();
+        this.#updateCache();
     }
-    apply(delta) {
-        // Support for deltas stored as stringified JSON in cache
-        if (typeof delta === "string") delta = JSON.parse(delta);
-        console.debug("StateManager: applying delta", delta);
-        return (0, _util.jsonDiffPatch).patch(this.#current, delta);
+    addMove() {
+        // Handle moving after an undo (revising history)
+        if (this.#moveIndex < this.#moves.length - 1) {
+            const deltaIndex = this.getDeltaIndex();
+            console.debug(this.toString(), "addMove: revising history. moves:", this.#moves, `moveIndex: ${this.#moveIndex}`, `deltaIndex: ${deltaIndex}`);
+            // Remove all deltas after the current one
+            this.#deltas.splice(deltaIndex + 1);
+            // Remove all moves after the current one
+            this.#moves.splice(this.#moveIndex + 1);
+        }
+        const deltaIndex = this.#deltas.length - 1;
+        if (!this.#moves.includes(deltaIndex)) // Don't add duplicate moves
+        this.#moves.push(deltaIndex);
+        else console.debug(this.toString(), `addMove: ignoring duplicate move: ${deltaIndex}`);
+        this.#moveIndex = this.#moves.length - 1;
+        console.debug(this.toString(), "addMove: added move", this.#moveIndex, deltaIndex);
+        return this.#moveIndex;
     }
     canRedo() {
-        return this.#index < this.#lastIndex();
+        return this.#moveIndex < this.#moves.length - 1;
     }
     canReset() {
-        return this.#deltas.length > 0;
+        return this.#moves.length > 0;
     }
     canUndo() {
-        return this.#index >= 0;
+        return this.#moveIndex >= 0;
     }
     encode() {
         return (0, _util.base64encode)(JSON.stringify({
             id: this.#id,
-            // No need to cache puzzles which exist in code
-            original: (0, _puzzles.Puzzles).has(this.#id) ? undefined : this.#original,
+            // If this puzzle exists in code, just cache the version
+            original: (0, _puzzles.Puzzles).has(this.#id) ? {
+                version: this.#original.version
+            } : this.#original,
             deltas: this.#deltas,
-            deltasIndex: this.#index,
+            moveIndex: this.#moveIndex,
+            moves: this.#moves,
             selectedTile: this.#selectedTile,
             version: this.#version
         }));
     }
     getCurrent() {
         return structuredClone(this.#current);
+    }
+    getDeltaIndex() {
+        console.debug(this.toString(), "getDeltaIndex", this.#moves, this.#moveIndex, this.#deltas.length - 1);
+        // If there are no moves, or the user is on the latest move, use the latest delta index
+        // Otherwise, use the delta index indicated by the move
+        return this.#moveIndex < this.#moves.length - 1 ? this.#moves[this.#moveIndex + 1] : this.#deltas.length - 1;
     }
     getId() {
         return this.#id;
@@ -33176,26 +33220,24 @@ class State {
         return this.#selectedTile;
     }
     moves() {
-        return this.#index + 1;
-    }
-    length() {
-        return this.#deltas.length;
+        return this.#moves;
     }
     redo() {
         if (!this.canRedo()) return;
-        this.#index++;
-        this.#current = structuredClone(this.#original);
-        this.#deltas.filter((delta, index)=>index <= this.#index).forEach((delta)=>this.apply(delta));
+        this.#moveIndex++;
+        this.#resetCurrent();
         this.#updateCache();
         return true;
     }
     reset() {
         if (!this.canReset()) return;
-        this.#current = structuredClone(this.#original);
-        this.#deltas = [];
-        this.#index = this.#lastIndex();
+        // Reset to the state prior to the first move
+        this.#deltas.splice(this.#moves[0] + 1);
+        this.#moveIndex = -1;
+        this.#moves = [];
         this.#selectedTile = undefined;
         State.clearCache(this.getId());
+        this.#resetCurrent();
         this.#updateCache();
         return true;
     }
@@ -33206,37 +33248,45 @@ class State {
             this.#updateCache();
         }
     }
+    toString() {
+        return `[State:${this.#deltas.length - 1}:${this.#moveIndex}]`;
+    }
     undo() {
         if (!this.canUndo()) return;
-        this.#index--;
-        this.#current = structuredClone(this.#original);
-        this.#deltas.filter((delta, index)=>index <= this.#index).forEach((delta)=>this.apply(delta));
+        console.log(this.toString(), "undo", this.#moveIndex);
+        this.#moveIndex--;
+        this.#resetCurrent();
         this.#updateCache();
         return true;
     }
-    update(newState, keepDelta = true) {
+    update(newState) {
         const delta = (0, _util.jsonDiffPatch).diff(this.#current, newState);
-        console.debug("delta", delta);
+        console.debug(this.toString(), "update", delta);
         if (delta === undefined) // Nothing to do
         return;
-        this.apply(delta);
-        if (keepDelta) {
-            // Handle updating after undoing
-            if (this.#index < this.#lastIndex()) // Remove all deltas after the current one
-            this.#deltas.splice(this.#index + 1);
-            // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-            // their stringified JSON representation and parsed before being applied.
-            // See:https://github.com/benjamine/jsondiffpatch/issues/34
-            this.#deltas.push(JSON.stringify(delta));
-            this.#index = this.#lastIndex();
-        }
+        // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+        // their stringified JSON representation and parsed before being applied.
+        // See:https://github.com/benjamine/jsondiffpatch/issues/34
+        this.#deltas.push(JSON.stringify(delta));
+        this.#apply(delta);
         this.#updateCache();
+    }
+    #apply(delta) {
+        // Support for deltas stored as stringified JSON in cache
+        if (typeof delta === "string") delta = JSON.parse(delta);
+        console.debug(this.toString(), "apply", delta);
+        return (0, _util.jsonDiffPatch).patch(this.#current, delta);
     }
     #key(key) {
         return State.key(key, this.getId());
     }
-    #lastIndex() {
-        return this.#deltas.length - 1;
+    #resetCurrent() {
+        // Start with the original state
+        this.#current = structuredClone(this.#original);
+        // Then apply every delta until the currently active delta
+        const deltaIndex = this.getDeltaIndex();
+        console.log(this.toString(), "resetCurrent", deltaIndex);
+        this.#deltas.filter((delta, index)=>index <= deltaIndex).forEach((delta)=>this.#apply(delta));
     }
     #updateCache() {
         const id = this.getId();
@@ -33273,9 +33323,25 @@ class State {
     }
     static fromEncoded(state) {
         state = JSON.parse((0, _util.base64decode)(state));
-        state.original = state.original || (0, _puzzles.Puzzles).get(state.id);
-        state.original.version ??= 0;
-        return new State(state.id, state.original, state.deltas, state.deltasIndex, state.selectedTile, state.version);
+        if (state.id === undefined) {
+            console.warn("Invalid cache, ignoring.");
+            return;
+        }
+        if (state.version !== State.Version) {
+            console.debug("Invalidating cache due to version mismatch. " + `Ours: ${State.Version}, theirs: ${state.version}.`);
+            State.clearCache();
+            return;
+        }
+        if ((0, _puzzles.Puzzles).has(state.id)) {
+            const original = (0, _puzzles.Puzzles).get(state.id);
+            if (original && original.version !== state.original?.version) {
+                console.debug(`Invalidating cache for puzzle ${state.id} due to version mismatch. ` + `Ours: ${original.version}, theirs: ${state.original?.version}.`);
+                State.clearCache(state.id);
+                return;
+            }
+            state.original = original;
+        }
+        return new State(state.id, state.original, state.deltas, state.moveIndex, state.moves, state.selectedTile, state.version);
     }
     static fromId(id) {
         return new State(id, (0, _puzzles.Puzzles).get(id));
@@ -33305,15 +33371,6 @@ class State {
                 console.debug(`Could not parse state with ID '${id}' from localStorage`, e);
             }
         }
-        if (state) {
-            const cachedVersion = state.#version;
-            const originalVersion = state.#original.version;
-            if (cachedVersion !== originalVersion) {
-                console.debug(`Invalidating cache for ID ${id} due to version mismatch. ` + `Puzzle: ${originalVersion}, Cache: ${cachedVersion}`);
-                state = undefined;
-                State.clearCache(id);
-            }
-        }
         if (!state) // Fall back to loading state from Puzzles cache by ID
         state = State.fromId(id);
         if (!state) throw new Error(`Unable to resolve state for ID '${id}'`);
@@ -33331,6 +33388,9 @@ class State {
     static ParamKeys = Object.freeze({
         clearCache: "clearCache"
     });
+    // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
+    // Use this sparingly as it will reset the state of every puzzle on the users end
+    static Version = 3;
 }
 
 },{"../puzzles":"7ifRD","./util":"92uDI","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"7ifRD":[function(require,module,exports) {
@@ -33638,7 +33698,7 @@ class Moves extends SolutionCondition {
     }
     update(event) {
         console.debug("Moves.update", event);
-        this.#moves = event.detail.state.moves();
+        this.#moves = event.detail.state.moves().length;
         this.#completed.textContent = this.#moves.toString();
     }
     static Operators = Object.freeze({
