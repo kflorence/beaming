@@ -24,11 +24,11 @@ export class Tile extends Item {
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
-      .map((state) => itemFactory(this, state))
+      .map((state, index) => itemFactory(this, state, index))
       .filter((item) => item !== undefined)
 
     this.modifiers = (state.modifiers || [])
-      .map((state) => modifierFactory(this, state))
+      .map((state, index) => modifierFactory(this, state, index))
       .filter((modifier) => modifier !== undefined)
 
     this.modifiers.forEach((modifier) => this.updateIcon(modifier))

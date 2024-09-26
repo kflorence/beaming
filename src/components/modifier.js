@@ -1,4 +1,4 @@
-import { capitalize, emitEvent, uniqueId } from './util'
+import { capitalize, emitEvent } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -7,6 +7,9 @@ import { Icons } from './icons'
 import { Tile } from './items/tile'
 
 const modifiers = document.getElementById('modifiers')
+
+// Use incrementing IDs to preserve sort order
+let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
@@ -26,7 +29,7 @@ export class Modifier extends Stateful {
 
   constructor (tile, state) {
     // Retain ID from state if it exists, otherwise generate a new one
-    state.id ??= uniqueId()
+    state.id ??= uniqueId++
     super(state)
 
     this.id = state.id

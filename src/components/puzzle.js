@@ -252,9 +252,9 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return this.layout.modifiers.concat(tile?.modifiers || [])
+    return (tile?.modifiers || []).concat(this.layout.modifiers)
       .filter((modifier) => !modifier.immutable)
-      .sort((a, b) => a.id.localeCompare(b.id))
+      .sort((a, b) => a.id - b.id)
   }
 
   #next () {

@@ -6,30 +6,30 @@ import { Toggle } from './modifiers/toggle'
 import { Modifier } from './modifier'
 import { Swap } from './modifiers/swap'
 
-export function modifierFactory (tile, configuration) {
+export function modifierFactory (parent, state, index) {
   let modifier
 
-  switch (configuration.type) {
+  switch (state.type) {
     case Modifier.Types.immutable:
-      modifier = new Immutable(tile, configuration)
+      modifier = new Immutable(...arguments)
       break
     case Modifier.Types.lock:
-      modifier = new Lock(tile, configuration)
+      modifier = new Lock(...arguments)
       break
     case Modifier.Types.move:
-      modifier = new Move(tile, configuration)
+      modifier = new Move(...arguments)
       break
     case Modifier.Types.rotate:
-      modifier = new Rotate(tile, configuration)
+      modifier = new Rotate(...arguments)
       break
     case Modifier.Types.swap:
-      modifier = new Swap(tile, configuration)
+      modifier = new Swap(...arguments)
       break
     case Modifier.Types.toggle:
-      modifier = new Toggle(tile, configuration)
+      modifier = new Toggle(...arguments)
       break
     default:
-      console.error('Ignoring modifier with unknown type:', configuration.type)
+      console.error('Ignoring modifier with unknown type:', state.type)
       break
   }
 
