@@ -353,6 +353,10 @@ export class Puzzle {
         .forEach((other) => other.update({ disabled: true }))
     }
 
+    if (event.detail.selectedTile) {
+      this.updateSelectedTile(event.detail.selectedTile)
+    }
+
     this.addMove()
     this.updateState()
 

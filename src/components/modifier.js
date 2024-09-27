@@ -97,7 +97,7 @@ export class Modifier extends Stateful {
   }
 
   dispatchEvent (event, detail) {
-    emitEvent(event, Object.assign({}, detail || {}, { modifier: this, tile: this.tile }))
+    emitEvent(event, Object.assign({ tile: this.tile }, detail || {}, { modifier: this }))
   }
 
   equals (other) {

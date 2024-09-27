@@ -41,6 +41,8 @@ export class Move extends Modifier {
     items.forEach((item) => item.move(tile))
     return {
       moved: [Move.data(this.tile, tile, items)],
+      selectedTile: tile,
+      tile: this.tile,
       tiles: [this.tile, tile]
     }
   }
@@ -60,9 +62,6 @@ export class Move extends Modifier {
 
     if (tile) {
       const data = this.moveItems(tile)
-
-      puzzle.updateSelectedTile(tile)
-
       this.dispatchEvent(Modifier.Events.Invoked, data)
     }
 
