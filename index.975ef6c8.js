@@ -30173,6 +30173,7 @@ class Puzzle {
                     disabled: true
                 }));
         }
+        if (event.detail.selectedTile) this.updateSelectedTile(event.detail.selectedTile);
         this.addMove();
         this.updateState();
         this.#beams// Update beams in the tile being modified first
@@ -31086,6 +31087,8 @@ class Move extends (0, _modifier.Modifier) {
             moved: [
                 Move.data(this.tile, tile, items)
             ],
+            selectedTile: tile,
+            tile: this.tile,
             tiles: [
                 this.tile,
                 tile
@@ -31102,7 +31105,6 @@ class Move extends (0, _modifier.Modifier) {
         puzzle.unmask();
         if (tile) {
             const data = this.moveItems(tile);
-            puzzle.updateSelectedTile(tile);
             this.dispatchEvent((0, _modifier.Modifier).Events.Invoked, data);
         }
         this.#mask = undefined;
@@ -31229,9 +31231,10 @@ class Modifier extends (0, _stateful.Stateful) {
         this.#container = undefined;
     }
     dispatchEvent(event, detail) {
-        (0, _util.emitEvent)(event, Object.assign({}, detail || {}, {
-            modifier: this,
+        (0, _util.emitEvent)(event, Object.assign({
             tile: this.tile
+        }, detail || {}, {
+            modifier: this
         }));
     }
     equals(other) {
@@ -33058,6 +33061,8 @@ class Swap extends (0, _move.Move) {
                 (0, _move.Move).data(this.tile, tile, fromItems),
                 (0, _move.Move).data(tile, this.tile, toItems)
             ],
+            selectedTile: tile,
+            tile: this.tile,
             tiles: [
                 this.tile,
                 tile
