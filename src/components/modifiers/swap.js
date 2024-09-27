@@ -15,6 +15,8 @@ export class Swap extends Move {
 
     return {
       moved: [Move.data(this.tile, tile, fromItems), Move.data(tile, this.tile, toItems)],
+      selectedTile: tile,
+      tile: this.tile,
       tiles: [this.tile, tile]
     }
   }
