@@ -21,18 +21,18 @@
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^128.0.3",
-    "mocha": "^10.4.0",
-    "parcel": "^2.12.0",
-    "selenium-webdriver": "^4.21.0",
-    "standard": "^17.1.0",
+    "chromedriver": "^131.0.4",
+    "mocha": "^10.8.2",
+    "parcel": "^2.13.3",
+    "selenium-webdriver": "^4.27.0",
+    "standard": "^17.1.2",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "@types/chroma-js": "^2.4.4",
-    "chroma-js": "^2.4.2",
+    "@types/chroma-js": "^2.4.5",
+    "chroma-js": "^2.6.0",
     "jsondiffpatch": "^0.6.0",
     "pako": "^2.1.0",
-    "paper": "^0.12.17"
+    "paper": "^0.12.18"
   }
 }
