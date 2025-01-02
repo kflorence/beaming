@@ -132,7 +132,6 @@ dialog footer ul li:first-child {
 }
 
 body > footer, body > header {
-  -webkit-user-select: none;
   user-select: none;
   z-index: 1;
   background-color: #fff;
@@ -219,7 +218,6 @@ main {
 }
 
 #modifiers {
-  -webkit-user-select: none;
   user-select: none;
   flex-wrap: wrap;
   justify-content: center;
@@ -345,7 +343,6 @@ main {
 
 .material-symbols-outlined {
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
-  -webkit-user-select: none;
   user-select: none;
   vertical-align: middle;
   width: 24px;
@@ -355,7 +352,6 @@ main {
 
 .material-symbols-outlined.fill {
   font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
-  -webkit-user-select: none;
   user-select: none;
 }
 
