@@ -24,7 +24,6 @@ export class State {
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
-    this.#updateCache()
   }
 
   addMove () {
@@ -102,7 +101,7 @@ export class State {
   }
 
   getTitle () {
-    return this.getId() + (this.#current.title ? ` - ${this.#current.title}` : '')
+    return this.getId() + (this.#current?.title ? ` - ${this.#current.title}` : '')
   }
 
   getSelectedTile () {
@@ -174,17 +173,15 @@ export class State {
     const delta = jsonDiffPatch.diff(this.#current, newState)
     console.debug(this.toString(), 'update', delta)
 
-    if (delta === undefined) {
-      // Nothing to do
-      return
+    if (delta !== undefined) {
+      // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+      // their stringified JSON representation and parsed before being applied.
+      // See:https://github.com/benjamine/jsondiffpatch/issues/34
+      this.#deltas.push(JSON.stringify(delta))
+
+      this.#apply(delta)
     }
 
-    // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-    // their stringified JSON representation and parsed before being applied.
-    // See:https://github.com/benjamine/jsondiffpatch/issues/34
-    this.#deltas.push(JSON.stringify(delta))
-
-    this.#apply(delta)
     this.#updateCache()
   }
 
@@ -213,28 +210,27 @@ export class State {
 
   #updateCache () {
     const id = this.getId()
-    const state = this.encode()
+    const data = { id }
+    const hashParams = ['', id]
 
-    url.hash = ['', id, state].join('/')
-    history.pushState({ id, state }, '', url)
+    if (!hashParams.includes(params.get(State.ParamKeys.clearCache))) {
+      // Include encoded state in URL if cache is not being cleared for this puzzle ID
+      data.state = this.encode()
+      hashParams.push(data.state)
+      localStorage.setItem(this.#key(State.CacheKeys.state), data.state)
+    }
+
+    url.hash = hashParams.join('/')
+    history.pushState(data, '', url)
     localStorage.setItem(State.CacheKeys.id, id)
-    localStorage.setItem(this.#key(State.CacheKeys.state), state)
   }
 
   static clearCache (id) {
-    if (!id) {
-      // Clear everything
-      url.hash = ''
-      history.pushState({}, '', url)
-      id = localStorage.getItem(State.CacheKeys.id)
-      localStorage.clear()
-      // Keep current puzzle ID
-      localStorage.setItem(State.CacheKeys.id, id)
-    } else {
-      // Clear a single puzzle
-      url.hash = `/${id}`
-      history.pushState({ id }, '', url)
+    if (id) {
+      // Clear a single puzzle ID
       localStorage.removeItem(State.key(State.CacheKeys.state, id))
+    } else {
+      localStorage.clear()
     }
   }
 
@@ -284,16 +280,13 @@ export class State {
   }
 
   static resolve (id) {
+    const pathSegments = url.hash.substring(1).split('/').filter((path) => path !== '')
     let state
 
-    // Allow cache to be cleared via URL param
     if (params.has(State.ParamKeys.clearCache)) {
+      // Clear local cache
       State.clearCache(params.get(State.ParamKeys.clearCache))
-    }
-
-    const pathSegments = url.hash.substring(1).split('/').filter((path) => path !== '')
-
-    if (!id) {
+    } else if (!id) {
       // If no explicit ID is given, try to load state from URL
       pathSegments.filter((path) => !Puzzles.has(path)).some((segment, index) => {
         try {
@@ -302,11 +295,11 @@ export class State {
           console.debug(`Could not parse state from path segment '${index}'`, e)
         }
 
-        return state !== undefined
+        return state?.getCurrent() !== undefined
       })
     }
 
-    if (!state) {
+    if (!state?.getCurrent()) {
       // Update ID before checking for state in localStorage.
       id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
 
@@ -320,13 +313,9 @@ export class State {
       }
     }
 
-    if (!state) {
+    if (!state?.getCurrent()) {
       // Fall back to loading state from Puzzles cache by ID
       state = State.fromId(id)
-    }
-
-    if (!state) {
-      throw new Error(`Unable to resolve state for ID '${id}'`)
     }
 
     return state

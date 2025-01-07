@@ -199,10 +199,12 @@ main {
 #error {
   align-items: center;
   color: #666;
+  cursor: default;
   display: none;
   height: 100%;
   font-size: 6em;
   justify-content: center;
+  width: 100%;
 }
 
 #footer-message {
@@ -435,11 +437,6 @@ main {
 
 .message:empty {
   display: none;
-}
-
-.puzzle-error .flex-left,
-.puzzle-error .flex-right {
-  flex: 0;
 }
 
 .puzzle-error:not(.puzzle-loaded) #puzzle,

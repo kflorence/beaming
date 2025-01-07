@@ -174,13 +174,15 @@ export class Puzzle {
       return
     }
 
-    try {
-      this.#state = State.resolve(id)
-    } catch (e) {
-      this.#onError(e, 'Could not load puzzle.')
-    }
+    const state = this.#state = State.resolve(id)
 
-    this.#reload()
+    if (state.getCurrent()) {
+      // No need to reload if there is no puzzle configuration
+      this.#reload()
+    } else {
+      this.#onError('Puzzle configuration is invalid.')
+      this.#updateActions()
+    }
   }
 
   unmask () {
