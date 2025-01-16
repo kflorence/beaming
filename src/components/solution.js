@@ -6,7 +6,7 @@ import { Puzzle } from './puzzle'
 export class Solution {
   #conditions = []
 
-  constructor (state) {
+  constructor (state = []) {
     state.forEach((condition) => this.#conditionFactory(condition))
   }
 

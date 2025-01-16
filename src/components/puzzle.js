@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, fuzzyEquals, noop, removeClass } from './util'
+import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -16,6 +16,7 @@ import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
 import { Tile } from './items/tile'
+import { Editor } from './editor'
 
 const elements = Object.freeze({
   footer: document.getElementById('footer'),
@@ -26,6 +27,7 @@ const elements = Object.freeze({
   previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
   puzzleId: document.getElementById('puzzle-id'),
+  puzzleTitle: document.getElementById('puzzle-title'),
   redo: document.getElementById('redo'),
   reset: document.getElementById('reset'),
   undo: document.getElementById('undo'),
@@ -47,6 +49,7 @@ export class Puzzle {
   #beams
   #beamsUpdateDelay = 30
   #collisions = {}
+  #editor
   #eventListeners = new EventListeners({ context: this })
   #interact
   #isUpdatingBeams = false
@@ -175,14 +178,11 @@ export class Puzzle {
     }
 
     const state = this.#state = State.resolve(id)
-
-    if (state.getCurrent()) {
-      // No need to reload if there is no puzzle configuration
-      this.#reload()
-    } else {
-      this.#onError('Puzzle configuration is invalid.')
-      this.#updateActions()
+    if (params.has(State.ParamKeys.edit)) {
+      this.#editor = new Editor(this, state)
     }
+
+    this.#reload()
   }
 
   unmask () {
@@ -236,6 +236,7 @@ export class Puzzle {
 
   updateState () {
     this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+    this.#updateDropdown()
     this.#updateActions()
 
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
@@ -375,7 +376,7 @@ export class Puzzle {
   }
 
   #onSolved () {
-    if (this.solved) {
+    if (this.solved || this.#editor) {
       return
     }
 
@@ -444,12 +445,18 @@ export class Puzzle {
 
   #reload () {
     this.error = false
+    document.body.classList.remove(Puzzle.Events.Error)
 
     if (this.#state) {
       this.#teardown()
     }
 
-    this.#setup()
+    try {
+      this.#setup()
+    } catch (e) {
+      this.#onError(e, 'Puzzle configuration is invalid.')
+      this.#updateActions()
+    }
 
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
@@ -528,8 +535,10 @@ export class Puzzle {
     const id = this.#state.getId()
     const title = this.#state.getTitle()
 
+    elements.puzzleTitle.textContent = title
+
     // Update browser title
-    elements.title.textContent = `Beaming: Puzzle ${title}`
+    elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`
 
     removeClass(Puzzle.ClassNames.Disabled, ...Array.from(document.querySelectorAll('#actions li')))
 
@@ -549,11 +558,8 @@ export class Puzzle {
 
     if (!Puzzles.visible.has(id)) {
       // Custom puzzle
-      elements.puzzleId.value = ''
       disable.push(elements.previous, elements.next)
     } else {
-      elements.puzzleId.value = id
-
       if (id === Puzzles.visible.firstId) {
         disable.push(elements.previous)
       } else if (id === Puzzles.visible.lastId) {
@@ -566,12 +572,23 @@ export class Puzzle {
 
   #updateDropdown () {
     elements.puzzleId.replaceChildren()
-    for (const id of Puzzles.visible.ids) {
-      const option = document.createElement('option')
-      option.value = id
-      option.innerText = Puzzles.titles[id]
-      elements.puzzleId.append(option)
+
+    // TODO support pulling custom IDs from local cache
+    const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
+    const id = this.#state?.getId()
+    if (id !== undefined && !Puzzles.visible.ids.includes(id)) {
+      options.push({ id, title: this.#state.getTitle() })
     }
+
+    for (const option of options) {
+      const $option = document.createElement('option')
+      $option.value = option.id
+      $option.innerText = option.title
+      elements.puzzleId.append($option)
+    }
+
+    // Select current ID
+    elements.puzzleId.value = id
   }
 
   #updateBeams () {

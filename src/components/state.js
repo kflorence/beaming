@@ -1,6 +1,7 @@
 import { Puzzles } from '../puzzles'
 import { base64decode, base64encode, jsonDiffPatch, params, url } from './util'
 
+const crypto = window.crypto
 const history = window.history
 const localStorage = window.localStorage
 
@@ -15,8 +16,8 @@ export class State {
   #version
 
   constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
-    this.#id = id
-    this.#original = original
+    this.#id = id || crypto.randomUUID().split('-')[0]
+    this.#original = original || {}
     this.#deltas = deltas || []
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
@@ -280,49 +281,41 @@ export class State {
   }
 
   static resolve (id) {
-    const pathSegments = url.hash.substring(1).split('/').filter((path) => path !== '')
+    // Store each segment of the URL hash in the values array for resolution
+    const values = url.hash.substring(1).split('/').filter((path) => path !== '')
     let state
 
     if (params.has(State.ParamKeys.clearCache)) {
-      // Clear local cache
+      // If cache is being cleared, do it before attempting resolution
       State.clearCache(params.get(State.ParamKeys.clearCache))
-    } else if (!id) {
-      // If no explicit ID is given, try to load state from URL
-      pathSegments.filter((path) => !Puzzles.has(path)).some((segment, index) => {
+    }
+
+    if (id === undefined) {
+      // If no explicit ID is given, try to resolve state from values array
+      if (!params.has(State.ParamKeys.edit)) {
+        // If puzzle is not being edited, check last active puzzle ID, falling back to first puzzle ID
+        id = localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
+        values.push(id)
+      }
+      values.some((value) => {
+        const encoded = localStorage.getItem(State.key(State.CacheKeys.state, value)) || value
         try {
-          state = State.fromEncoded(segment)
+          state = State.fromEncoded(encoded)
         } catch (e) {
-          console.debug(`Could not parse state from path segment '${index}'`, e)
+          console.debug(`Could not parse state from value: ${value}`, e)
         }
 
-        return state?.getCurrent() !== undefined
+        return state !== undefined
       })
     }
 
-    if (!state?.getCurrent()) {
-      // Update ID before checking for state in localStorage.
-      id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
-
-      const localState = localStorage.getItem(State.key(State.CacheKeys.state, id))
-      if (localState) {
-        try {
-          state = State.fromEncoded(localState)
-        } catch (e) {
-          console.debug(`Could not parse state with ID '${id}' from localStorage`, e)
-        }
-      }
-    }
-
-    if (!state?.getCurrent()) {
-      // Fall back to loading state from Puzzles cache by ID
-      state = State.fromId(id)
-    }
-
-    return state
+    // Fall back to loading state from puzzles cache
+    return state || State.fromId(id)
   }
 
-  static key (key, id) {
-    return `${key}:${id}`
+  static key () {
+    const args = [...arguments]
+    return args.join(':')
   }
 
   static CacheKeys = Object.freeze({
@@ -333,7 +326,8 @@ export class State {
   })
 
   static ParamKeys = Object.freeze({
-    clearCache: 'clearCache'
+    clearCache: 'clearCache',
+    edit: 'edit'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated

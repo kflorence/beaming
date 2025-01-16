@@ -1,4 +1,4 @@
-import './info'
+import './dialog'
 import { debug } from './components/debug'
 import { Point } from 'paper'
 import { Puzzle } from './components/puzzle'

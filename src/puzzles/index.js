@@ -23,7 +23,7 @@ function traverse (ids, id, amount) {
 }
 
 class PuzzleGroup {
-  ids
+  ids = []
 
   constructor (ids) {
     this.firstId = ids[0]

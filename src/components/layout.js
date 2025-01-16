@@ -16,14 +16,14 @@ export class Layout extends Stateful {
   tiles = []
   tileSize = 120
 
-  constructor (state) {
+  constructor (state = {}) {
     super(state)
 
     this.type = state.type || Layout.Types.oddR
 
     const center = paper.view.center
     const parameters = Tile.parameters(this.tileSize)
-    const tiles = state.tiles
+    const tiles = state.tiles || []
 
     // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
     const height = tiles.length * parameters.width

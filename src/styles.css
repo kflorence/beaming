@@ -177,6 +177,7 @@ main {
 #actions {
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
+  display: none;
 }
 
 #doorbell.doorbell-inline #doorbell-container {
@@ -188,6 +189,10 @@ main {
 }
 
 #doorbell form legend {
+  display: none;
+}
+
+#edit-actions {
   display: none;
 }
 
@@ -247,6 +252,7 @@ main {
   border: none;
   border-left: 1px solid #ddd;
   cursor: pointer;
+  display: none;
   font-size: 1em;
   font-weight: bold;
   padding: 1em 2em 1em 1em;
@@ -267,9 +273,19 @@ main {
   fill: white;
 }
 
+#puzzle-title {
+  align-items: center;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  display: none;
+  line-height: 24px;
+  padding: 0 1em;
+  user-select: text;
+}
+
 #selector {
   align-items: stretch;
-  display: flex;
+  display: none;
   position: relative;
 }
 
@@ -277,6 +293,10 @@ main {
   position: absolute;
   right: 0.75rem;
   top: calc(50% - 5px);
+}
+
+#settings {
+  display: none;
 }
 
 #solution {
@@ -331,6 +351,21 @@ main {
 .buttons {
   grid-gap: 1em;
   margin: 1em 0;
+}
+
+.edit #edit-actions,
+.edit #settings {
+  display: block;
+}
+
+body:not(.edit) #puzzle-id {
+  display: inline-block;
+}
+
+body:not(.edit) #actions,
+.edit #puzzle-title,
+body:not(.edit) #selector {
+  display: flex;
 }
 
 .flex-center,
