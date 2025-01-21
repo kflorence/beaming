@@ -38,8 +38,10 @@ const elements = Object.freeze({
 // long-running computations from blocking UI updates.
 // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
+  center
   connections = []
   debug = false
+  element = elements.puzzle
   error = false
   layers = {}
   message
@@ -68,9 +70,12 @@ export class Puzzle {
 
     this.#resize()
 
-    this.layers.mask = new Layer()
+    this.center = paper.view.center
+
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
+    this.layers.edit = new Layer()
+    this.layers.mask = new Layer()
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
@@ -245,6 +250,7 @@ export class Puzzle {
   #addLayers () {
     // Add layers in the order we want them
     [
+      this.layers.edit,
       this.layout.layers.tiles,
       this.layout.layers.items,
       this.layers.mask,
@@ -502,11 +508,14 @@ export class Puzzle {
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
+
+    this.#editor?.setup()
   }
 
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
+    this.#editor?.teardown()
     this.#removeLayers()
 
     this.#tiles.forEach((tile) => tile.teardown())

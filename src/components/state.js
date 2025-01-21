@@ -90,6 +90,10 @@ export class State {
     return structuredClone(this.#current)
   }
 
+  getCurrentJSON () {
+    return JSON.stringify(this.getCurrent(), null, 2)
+  }
+
   getDeltaIndex () {
     console.debug(this.toString(), 'getDeltaIndex', this.#moves, this.#moveIndex, this.#deltas.length - 1)
     // If there are no moves, or the user is on the latest move, use the latest delta index

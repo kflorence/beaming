@@ -273,6 +273,23 @@ main {
   fill: white;
 }
 
+#puzzle-settings {
+  padding: 1em;
+}
+
+#puzzle-settings label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+
+#puzzle-settings textarea {
+  box-sizing: border-box;
+  height: 400px;
+  padding: 1em;
+  width: 100%;
+}
+
 #puzzle-title {
   align-items: center;
   border-left: 1px solid #ddd;

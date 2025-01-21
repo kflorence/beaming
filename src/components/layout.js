@@ -29,9 +29,7 @@ export class Layout extends Stateful {
     const height = tiles.length * parameters.width
     const startingOffsetY = center.y - (height / 2)
 
-    // noinspection JSValidateTypes
     this.layers.tiles = new Layer()
-    // noinspection JSValidateTypes
     this.layers.items = new Layer()
 
     this.modifiers = (state.modifiers || [])
