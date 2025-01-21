@@ -1,7 +1,6 @@
 import { OffsetCoordinates } from './offset'
 import { Point } from 'paper'
-
-const sqrt3 = Math.sqrt(3)
+import { sqrt3 } from '../util'
 
 /**
  * @see https://www.redblobgames.com/grids/hexagons/#coordinates
@@ -61,9 +60,9 @@ export class CubeCoordinates {
     new CubeCoordinates(0, 1)
   ]
 
-  static fromPoint (point, size) {
-    const q = (sqrt3 / 3 * point.x - 1.0 / 3 * point.y) / size
-    const r = (2.0 / 3 * point.y) / size
+  static fromPoint (point, circumradius) {
+    const q = (sqrt3 / 3 * point.x - 1.0 / 3 * point.y) / circumradius
+    const r = (2.0 / 3 * point.y) / circumradius
     return CubeCoordinates.round(new CubeCoordinates(q, r))
   }
 

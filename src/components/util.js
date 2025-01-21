@@ -6,6 +6,7 @@ import { Point } from 'paper'
 const location = window.location
 
 export const params = new URLSearchParams(location.search)
+export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
 
 // noinspection JSCheckFunctionSignatures

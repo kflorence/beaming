@@ -1,8 +1,7 @@
-import paper, { Layer } from 'paper'
+import paper, { Layer, Point } from 'paper'
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
-import { getConvertedDirection } from './util'
 import { Stateful } from './stateful'
 import { modifierFactory } from './modifierFactory'
 
@@ -10,25 +9,23 @@ export class Layout extends Stateful {
   #tilesByAxial = []
   #tilesByOffset = []
 
+  center
+  height
   items = []
   layers = {}
   modifiers = []
+  offset
+  parameters
   tiles = []
-  tileSize = 120
+  width
+  widestRow
 
   constructor (state = {}) {
     super(state)
 
-    this.type = state.type || Layout.Types.oddR
-
-    const center = paper.view.center
-    const parameters = Tile.parameters(this.tileSize)
     const tiles = state.tiles || []
 
-    // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
-    const height = tiles.length * parameters.width
-    const startingOffsetY = center.y - (height / 2)
-
+    this.center = paper.view.center
     this.layers.tiles = new Layer()
     this.layers.items = new Layer()
 
@@ -36,8 +33,11 @@ export class Layout extends Stateful {
       .map((state, index) => modifierFactory(null, state, index))
       .filter((modifier) => modifier !== undefined)
 
+    this.parameters = Tile.parameters(state.tile?.height)
+    this.type = state.type || Layout.Types.oddR
+
     // Find the widest row
-    const widestRow = tiles.reduce((current, row, index) => {
+    this.widestRow = tiles.reduce((current, row, index) => {
       const length = row.length
 
       // Favor offset rows, since they will be wider
@@ -48,8 +48,13 @@ export class Layout extends Stateful {
       return current
     }, { index: 0, length: 0 })
 
-    const width = (widestRow.length * parameters.width) + (this.#isOffsetRow(widestRow.index) ? parameters.inradius : 0)
-    const startingOffsetX = center.x - (width / 2)
+    this.width = (this.widestRow.length * this.parameters.width) +
+      (this.#isOffsetRow(this.widestRow.index) ? this.parameters.inradius : 0)
+
+    // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
+    this.height = tiles.length * this.parameters.width
+
+    this.offset = this.center.subtract(new Point(this.width, this.height).divide(2))
 
     for (let r = 0; r < tiles.length; r++) {
       const row = tiles[r]
@@ -65,8 +70,7 @@ export class Layout extends Stateful {
           row: r,
           column: c,
           // Shift row to the right if it is an offset row
-          startingOffsetX: startingOffsetX + (this.#isOffsetRow(r) ? parameters.inradius : 0),
-          startingOffsetY
+          offset: this.#isOffsetRow(r) ? this.offset.add(new Point(this.parameters.inradius, 0)) : this.offset
         }
 
         const state = row[c]
@@ -74,7 +78,7 @@ export class Layout extends Stateful {
           continue
         }
 
-        const tile = new Tile({ axial, offset }, layout, parameters, state)
+        const tile = new Tile({ axial, offset }, layout, this.parameters, state)
 
         this.layers.tiles.addChild(tile.group)
 
@@ -94,14 +98,6 @@ export class Layout extends Stateful {
     }
   }
 
-  getTileByAxial (axial) {
-    return (this.#tilesByAxial[axial.r] || [])[axial.q]
-  }
-
-  getTileByOffset (offset) {
-    return this.#tilesByOffset[offset.r][offset.c]
-  }
-
   getState () {
     const state = { type: this.type }
 
@@ -115,8 +111,12 @@ export class Layout extends Stateful {
     return state
   }
 
-  getNeighboringTile (axial, direction) {
-    return this.getTileByAxial(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
+  getTileByAxial (axial) {
+    return (this.#tilesByAxial[axial.r] || [])[axial.q]
+  }
+
+  getTileByOffset (offset) {
+    return this.#tilesByOffset[offset.r][offset.c]
   }
 
   removeModifier (modifier) {

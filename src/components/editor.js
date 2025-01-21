@@ -24,8 +24,10 @@ export class Editor {
   }
 
   setup () {
-    this.#center = CubeCoordinates.fromPoint(this.#puzzle.center, this.#puzzle.layout.tileSize)
-    this.group.addChildren(Editor.mark(this.#puzzle.center, this.#puzzle.layout.tileSize / 4))
+    const parameters = this.#puzzle.layout.parameters
+    console.log(parameters)
+    this.#center = CubeCoordinates.fromPoint(this.#puzzle.center, parameters.circumradius)
+    this.group.addChildren(Editor.mark(this.#puzzle.center, parameters.circumradius / 4))
     this.#puzzle.layers.edit.addChild(this.group)
   }
 
@@ -34,12 +36,27 @@ export class Editor {
   }
 
   #onPointerMove (event) {
+    const parameters = this.#puzzle.layout.parameters
+
     // TODO figuring out how to map pointer events to a rough "grid"
-    const cube = CubeCoordinates.fromPoint(new Point(event.x, event.y), this.#puzzle.layout.tileSize)
+    const cube = CubeCoordinates.fromPoint(new Point(event.x, event.y), parameters.circumradius)
     const offset = CubeCoordinates.toOffsetCoordinates(CubeCoordinates.subtract(cube, this.#center))
+
     console.log(offset.toString())
+
     this.#puzzle.clearDebugPoints()
-    this.#puzzle.drawDebugPoint(cube.toPoint(this.#puzzle.layout.tileSize))
+    const center = cube.toPoint(parameters.circumradius)
+    this.#puzzle.layers.debug.addChild(new Path.RegularPolygon({
+      center,
+      closed: true,
+      radius: parameters.circumradius,
+      sides: 6,
+      style: {
+        strokeColor: '#aaa',
+        strokeWidth: 2
+      }
+    }))
+    this.#puzzle.drawDebugPoint(center)
   }
 
   static mark (center, width) {

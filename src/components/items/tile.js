@@ -1,7 +1,7 @@
 import { Color, Path, Point } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
-import { emitEvent, getPointBetween } from '../util'
+import { emitEvent, getPointBetween, sqrt3 } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
@@ -144,9 +144,10 @@ export class Tile extends Item {
     }
   }
 
-  static parameters (height) {
+  static parameters (height = Tile.DefaultHeight) {
+    // AKA "size"
     const circumradius = height / 2
-    const width = Math.sqrt(3) * circumradius
+    const width = sqrt3 * circumradius
     const inradius = width / 2
     const offsetY = height * (3 / 4)
 
@@ -159,10 +160,10 @@ export class Tile extends Item {
     }
   }
 
-  static ui (layout, parameters, configuration, data) {
+  static ui (layout, parameters, configuration = {}, data = {}) {
     const center = new Point(
-      layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
-      layout.startingOffsetY + parameters.circumradius + layout.row * parameters.offsetY
+      layout.offset.x + parameters.inradius + layout.column * parameters.width,
+      layout.offset.y + parameters.circumradius + layout.row * parameters.offsetY
     )
 
     const dashWidth = parameters.circumradius / 10
@@ -187,6 +188,8 @@ export class Tile extends Item {
 
     return { center, hexagon, styles }
   }
+
+  static DefaultHeight = 160
 
   static Events = Object.freeze({
     Deselected: 'tile-deselected',
