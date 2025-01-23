@@ -7,6 +7,10 @@ export class OffsetCoordinates {
     this.c = c
   }
 
+  add (offset) {
+    return new OffsetCoordinates(this.r + offset.r, this.c + offset.c)
+  }
+
   toString () {
     return this.coordinates.join(',')
   }

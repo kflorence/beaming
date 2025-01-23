@@ -15,7 +15,7 @@ export class CubeCoordinates {
   }
 
   add (other) {
-    return CubeCoordinates.add(this, other)
+    return new CubeCoordinates(this.q + other.q, this.r + other.r)
   }
 
   equals (other) {
@@ -38,10 +38,6 @@ export class CubeCoordinates {
 
   toString () {
     return this.coordinates.join(',')
-  }
-
-  static add (a, b) {
-    return new CubeCoordinates(a.q + b.q, a.r + b.r)
   }
 
   static direction (direction) {
@@ -94,12 +90,8 @@ export class CubeCoordinates {
     }
   }
 
-  static subtract (a, b) {
-    return new CubeCoordinates(a.q - b.q, a.r - b.r)
-  }
-
   static toOffsetCoordinates (axial) {
     const c = axial.q + (axial.r - (axial.r & 1)) / 2
-    return new OffsetCoordinates(c, axial.r)
+    return new OffsetCoordinates(axial.r, c)
   }
 }

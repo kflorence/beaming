@@ -51,8 +51,7 @@ export class Layout extends Stateful {
     this.width = (this.widestRow.length * this.parameters.width) +
       (this.#isOffsetRow(this.widestRow.index) ? this.parameters.inradius : 0)
 
-    // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
-    this.height = tiles.length * this.parameters.width
+    this.height = (tiles.length * this.parameters.offsetY) + this.parameters.circumradius / 2
 
     this.offset = this.center.subtract(new Point(this.width, this.height).divide(2))
 

@@ -131,6 +131,10 @@ export class Puzzle {
     return (tile ? this.#tiles.filter((t) => t === tile) : this.#tiles).flatMap((tile) => tile.items)
   }
 
+  getState () {
+    return this.#state.getCurrent()
+  }
+
   getTile (point) {
     const result = paper.project.hitTest(point.ceil(), {
       fill: true,
@@ -176,18 +180,39 @@ export class Puzzle {
     document.body.classList.add(Puzzle.Events.Mask)
   }
 
+  reload (state) {
+    this.error = false
+    document.body.classList.remove(Puzzle.Events.Error)
+
+    if (this.#state) {
+      this.#teardown()
+    }
+
+    if (state instanceof State) {
+      // Reset state
+      this.#state = state
+    } else if (typeof state === 'object') {
+      // Update current state
+      this.#state.update(state)
+    }
+
+    try {
+      this.#setup()
+    } catch (e) {
+      this.#onError(e, 'Puzzle configuration is invalid.')
+      this.#updateActions()
+    }
+
+    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+  }
+
   select (id) {
     if (id !== undefined && id === this.#state?.getId()) {
       // This ID is already selected
       return
     }
 
-    const state = this.#state = State.resolve(id)
-    if (params.has(State.ParamKeys.edit)) {
-      this.#editor = new Editor(this, state)
-    }
-
-    this.#reload()
+    this.reload(State.resolve(id))
   }
 
   unmask () {
@@ -250,11 +275,11 @@ export class Puzzle {
   #addLayers () {
     // Add layers in the order we want them
     [
-      this.layers.edit,
       this.layout.layers.tiles,
       this.layout.layers.items,
       this.layers.mask,
       this.layers.collisions,
+      this.layers.edit,
       this.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
   }
@@ -410,7 +435,8 @@ export class Puzzle {
   #onTap (event) {
     let tile
 
-    if (this.solved || this.error) {
+    // TODO: allow in editor mode if locked
+    if (this.#editor || this.solved || this.error) {
       return
     }
 
@@ -445,26 +471,8 @@ export class Puzzle {
 
   #redo () {
     if (this.#state.redo()) {
-      this.#reload()
+      this.reload()
     }
-  }
-
-  #reload () {
-    this.error = false
-    document.body.classList.remove(Puzzle.Events.Error)
-
-    if (this.#state) {
-      this.#teardown()
-    }
-
-    try {
-      this.#setup()
-    } catch (e) {
-      this.#onError(e, 'Puzzle configuration is invalid.')
-      this.#updateActions()
-    }
-
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
   }
 
   #removeLayers () {
@@ -474,7 +482,7 @@ export class Puzzle {
 
   #reset () {
     if (this.#state.reset()) {
-      this.#reload()
+      this.reload()
     }
   }
 
@@ -509,13 +517,18 @@ export class Puzzle {
     this.updateState()
     this.update()
 
-    this.#editor?.setup()
+    if (params.has(State.ParamKeys.edit)) {
+      // Edit mode
+      this.#editor = new Editor(this, this.#state)
+    }
   }
 
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
     this.#editor?.teardown()
+    this.#editor = undefined
+
     this.#removeLayers()
 
     this.#tiles.forEach((tile) => tile.teardown())
@@ -536,7 +549,7 @@ export class Puzzle {
 
   #undo () {
     if (this.#state.undo()) {
-      this.#reload()
+      this.reload()
     }
   }
 
