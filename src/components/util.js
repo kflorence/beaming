@@ -156,6 +156,11 @@ export function getIconElement (name, title) {
   return span
 }
 
+export function getKey () {
+  const args = [...arguments]
+  return args.join(':')
+}
+
 export function getPointBetween (pointA, pointB, length = (length) => length / 2) {
   const vector = pointA.subtract(pointB)
   vector.length = typeof length === 'function' ? length(vector.length) : length
@@ -214,12 +219,20 @@ export function noop (value) {
   }
 }
 
+export function pointToString (point) {
+  return `${point.x},${point.y}`
+}
+
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
 export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
+}
+
+export function stringToPoint (string) {
+  return new Point(string.split(','))
 }
 
 export function uniqueBy (array, key) {

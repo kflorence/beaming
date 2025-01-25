@@ -17,6 +17,7 @@ import { Solution } from './solution'
 import { Interact } from './interact'
 import { Tile } from './items/tile'
 import { Editor } from './editor'
+import { View } from './view'
 
 const elements = Object.freeze({
   footer: document.getElementById('footer'),
@@ -38,7 +39,6 @@ const elements = Object.freeze({
 // long-running computations from blocking UI updates.
 // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
-  center
   connections = []
   debug = false
   element = elements.puzzle
@@ -69,8 +69,6 @@ export class Puzzle {
     paper.setup(elements.puzzle)
 
     this.#resize()
-
-    this.center = paper.view.center
 
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
@@ -104,8 +102,8 @@ export class Puzzle {
   }
 
   centerOnTile (offset) {
-    const tile = this.layout.getTileByOffset(offset)
-    paper.view.center = tile.center
+    const tile = this.layout.getTile(offset)
+    View.setCenter(tile.center)
   }
 
   clearDebugPoints () {
@@ -131,6 +129,10 @@ export class Puzzle {
     return (tile ? this.#tiles.filter((t) => t === tile) : this.#tiles).flatMap((tile) => tile.items)
   }
 
+  getProjectPoint (point) {
+    return this.#interact.getProjectPoint(point)
+  }
+
   getState () {
     return this.#state.getCurrent()
   }
@@ -143,7 +145,7 @@ export class Puzzle {
       stroke: true,
       tolerance: 0
     })
-    return result ? this.layout.getTileByAxial(result.item.data.coordinates.axial) : result
+    return result ? this.layout.getTile(result.item.data.coordinates.offset) : result
   }
 
   mask (mask) {
@@ -446,7 +448,7 @@ export class Puzzle {
       case Item.Types.mask:
         return
       case Item.Types.tile:
-        tile = this.layout.getTileByAxial(result.item.data.coordinates.axial)
+        tile = this.layout.getTile(result.item.data.coordinates.offset)
         break
     }
 
@@ -510,7 +512,7 @@ export class Puzzle {
 
     const selectedTileId = this.#state.getSelectedTile()
     const selectedTile = selectedTileId
-      ? this.layout.getTileByOffset(new OffsetCoordinates(...selectedTileId.split(',')))
+      ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
     this.updateSelectedTile(selectedTile)

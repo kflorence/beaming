@@ -1,26 +1,41 @@
-import { Color, Path, Point } from 'paper'
+import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
 import { emitEvent, getPointBetween, sqrt3 } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
+  path
   selected = false
 
-  #ui
-
-  constructor (coordinates, layout, parameters, state) {
+  constructor (coordinates, center, parameters, state) {
     super(null, state, { locked: false })
 
-    this.#ui = Tile.ui(layout, parameters, state, { coordinates, type: this.type })
+    const dashWidth = parameters.circumradius / 10
 
-    this.center = this.#ui.center
+    this.styles = Object.assign(
+      {},
+      Tile.Styles,
+      {
+        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
+      },
+      state.style || {}
+    )
+
+    this.center = center
     this.coordinates = coordinates
-    this.hexagon = this.#ui.hexagon
     this.parameters = parameters
-    this.styles = this.#ui.styles
 
-    this.group.addChildren([this.#ui.hexagon])
+    this.path = new Path.RegularPolygon({
+      center,
+      closed: true,
+      data: { coordinates, type: this.type },
+      radius: parameters.circumradius,
+      sides: 6,
+      style: this.styles.default
+    })
+
+    this.group.addChildren([this.path])
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
@@ -81,7 +96,7 @@ export class Tile extends Item {
 
   onDeselected (selectedTile) {
     this.selected = false
-    this.#ui.hexagon.style = this.styles.default
+    this.path.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
@@ -91,7 +106,7 @@ export class Tile extends Item {
     console.debug(this.toString(), 'selected')
     this.selected = true
     this.group.bringToFront()
-    this.#ui.hexagon.style = this.styles.selected
+    this.path.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
   }
 
@@ -112,7 +127,7 @@ export class Tile extends Item {
   }
 
   setStyle (style) {
-    this.hexagon.set(this.styles[style])
+    this.path.set(this.styles[style])
   }
 
   teardown () {
@@ -127,7 +142,7 @@ export class Tile extends Item {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
       const position = getPointBetween(
-        this.#ui.hexagon.segments[index].point,
+        this.path.segments[index].point,
         this.center,
         (length) => length / 3
       )
@@ -158,35 +173,6 @@ export class Tile extends Item {
       offsetY,
       width
     }
-  }
-
-  static ui (layout, parameters, configuration = {}, data = {}) {
-    const center = new Point(
-      layout.offset.x + parameters.inradius + layout.column * parameters.width,
-      layout.offset.y + parameters.circumradius + layout.row * parameters.offsetY
-    )
-
-    const dashWidth = parameters.circumradius / 10
-
-    const styles = Object.assign(
-      {},
-      Tile.Styles,
-      {
-        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
-      },
-      configuration.style || {}
-    )
-
-    const hexagon = new Path.RegularPolygon({
-      center,
-      closed: true,
-      data,
-      radius: parameters.circumradius,
-      sides: 6,
-      style: styles.default
-    })
-
-    return { center, hexagon, styles }
   }
 
   static DefaultHeight = 160

@@ -1,5 +1,5 @@
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode, jsonDiffPatch, params, url } from './util'
+import { base64decode, base64encode, getKey, jsonDiffPatch, params, url } from './util'
 
 const crypto = window.crypto
 const history = window.history
@@ -199,10 +199,6 @@ export class State {
     return jsonDiffPatch.patch(this.#current, delta)
   }
 
-  #key (key) {
-    return State.key(key, this.getId())
-  }
-
   #resetCurrent () {
     // Start with the original state
     this.#current = structuredClone(this.#original)
@@ -222,7 +218,7 @@ export class State {
       // Include encoded state in URL if cache is not being cleared for this puzzle ID
       data.state = this.encode()
       hashParams.push(data.state)
-      localStorage.setItem(this.#key(State.CacheKeys.state), data.state)
+      localStorage.setItem(getKey(State.CacheKeys.state, id), data.state)
     }
 
     url.hash = hashParams.join('/')
@@ -233,7 +229,7 @@ export class State {
   static clearCache (id) {
     if (id) {
       // Clear a single puzzle ID
-      localStorage.removeItem(State.key(State.CacheKeys.state, id))
+      localStorage.removeItem(getKey(State.CacheKeys.state, id))
     } else {
       localStorage.clear()
     }
@@ -284,6 +280,10 @@ export class State {
     return new State(id, Puzzles.get(id))
   }
 
+  static getId () {
+    return localStorage.getItem(State.CacheKeys.id)
+  }
+
   static resolve (id) {
     // Store each segment of the URL hash in the values array for resolution
     const values = url.hash.substring(1).split('/').filter((path) => path !== '')
@@ -302,7 +302,7 @@ export class State {
         values.push(id)
       }
       values.some((value) => {
-        const encoded = localStorage.getItem(State.key(State.CacheKeys.state, value)) || value
+        const encoded = localStorage.getItem(getKey(State.CacheKeys.state, value)) || value
         try {
           state = State.fromEncoded(encoded)
         } catch (e) {
@@ -317,16 +317,9 @@ export class State {
     return state || State.fromId(id)
   }
 
-  static key () {
-    const args = [...arguments]
-    return args.join(':')
-  }
-
   static CacheKeys = Object.freeze({
-    center: 'center',
     id: 'id',
-    state: 'state',
-    zoom: 'zoom'
+    state: 'state'
   })
 
   static ParamKeys = Object.freeze({

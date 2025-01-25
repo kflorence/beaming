@@ -1,6 +1,6 @@
 import './dialog'
 import { debug } from './components/debug'
-import { Point } from 'paper'
+import paper, { Point } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { OffsetCoordinates } from './components/coordinates/offset'
 
@@ -24,3 +24,4 @@ beaming.drawDebugPoint = function (x, y, style) {
 
 // Export
 window.beaming = beaming
+window.paper = paper

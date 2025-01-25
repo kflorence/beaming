@@ -1,7 +1,7 @@
 import { Group, Path, Point } from 'paper'
 import { EventListeners } from './eventListeners'
 import { CubeCoordinates } from './coordinates/cube'
-import { OffsetCoordinates } from './coordinates/offset'
+import { Interact } from './interact'
 
 const elements = Object.freeze({
   configuration: document.getElementById('configuration')
@@ -13,22 +13,25 @@ export class Editor {
 
   #center
   #eventListener = new EventListeners({ context: this })
+  #hover
+  #parameters
   #puzzle
 
   constructor (puzzle, state) {
     this.id = state.getId()
+    this.#center = puzzle.layout.center
+    this.#parameters = puzzle.layout.parameters
     this.#puzzle = puzzle
+
     this.#eventListener.add([
       { element: puzzle.element, handler: this.#onPointerMove, type: 'pointermove' },
       { element: puzzle.element, handler: this.#onTap, type: 'tap' }
     ])
+
     document.body.classList.add(Editor.ClassNames.Edit)
     elements.configuration.value = state.getCurrentJSON()
 
-    const parameters = this.#puzzle.layout.parameters
-    console.log(parameters)
-    this.#center = CubeCoordinates.fromPoint(this.#puzzle.center, parameters.circumradius)
-    this.group.addChildren(Editor.mark(this.#puzzle.center, parameters.circumradius / 4))
+    this.group.addChildren(Editor.mark(this.#center, this.#parameters.circumradius / 4))
     this.#puzzle.layers.edit.addChild(this.group)
   }
 
@@ -38,82 +41,53 @@ export class Editor {
   }
 
   #getCubeCoordinates (point) {
-    return CubeCoordinates.fromPoint(point.subtract(this.#puzzle.center), this.#puzzle.layout.parameters.circumradius)
+    return CubeCoordinates.fromPoint(point.subtract(this.#center), this.#parameters.circumradius)
+  }
+
+  #getPoint (cube) {
+    return cube.toPoint(this.#parameters.circumradius).add(this.#center)
   }
 
   #onPointerMove (event) {
-    const parameters = this.#puzzle.layout.parameters
-    const cube = this.#getCubeCoordinates(new Point(event.x, event.y))
+    const cube = this.#getCubeCoordinates(this.#puzzle.getProjectPoint(Interact.point(event)))
+    const center = this.#getPoint(cube)
+    if (!this.#hover) {
+      this.#hover = new Path.RegularPolygon({
+        center,
+        closed: true,
+        radius: this.#parameters.circumradius,
+        opacity: 0.2,
+        sides: 6,
+        style: {
+          strokeColor: 'black',
+          strokeWidth: 2
+        }
+      })
 
-    console.log(CubeCoordinates.toOffsetCoordinates(cube).toString())
-
-    this.#puzzle.clearDebugPoints()
-    const center = cube.toPoint(parameters.circumradius).add(this.#puzzle.center)
-    this.#puzzle.layers.debug.addChild(new Path.RegularPolygon({
-      center,
-      closed: true,
-      radius: parameters.circumradius,
-      opacity: 0.2,
-      sides: 6,
-      style: {
-        strokeColor: 'black',
-        strokeWidth: 2
-      }
-    }))
-    this.#puzzle.drawDebugPoint(center)
+      this.group.addChild(this.#hover)
+    } else {
+      this.#hover.position = center
+    }
   }
 
   #onTap (event) {
     const cube = this.#getCubeCoordinates(event.detail.point)
     const offset = CubeCoordinates.toOffsetCoordinates(cube)
+
+    console.log('tap', offset)
+
     const state = this.#puzzle.getState()
-
-    const oldGridSize = new OffsetCoordinates(state.layout.tiles.length, this.#puzzle.layout.widestRow.length)
-    const newGridSize = Editor.gridSize(offset)
-    const rDiff = newGridSize.r - oldGridSize.r
-    const cDiff = newGridSize.c - oldGridSize.c
-    console.log(rDiff, cDiff)
-
-    const newTiles = []
-    for (let r = 0; r < newGridSize.r; r++) {
-      newTiles.push(new Array(newGridSize.c).fill(null))
+    if (!state.layout.tiles[offset.r]) {
+      state.layout.tiles[offset.r] = {}
     }
 
-    const newTileOffset = Editor.translate(offset, newGridSize)
-    console.log('placement', newTiles, newTileOffset)
-    if (!newTiles[newTileOffset.r]) {
-      newTiles[newTileOffset.r] = []
+    if (state.layout.tiles[offset.r][offset.c]) {
+      delete state.layout.tiles[offset.r][offset.c]
+    } else {
+      state.layout.tiles[offset.r][offset.c] = { type: 'Tile' }
     }
-    newTiles[newTileOffset.r][newTileOffset.c] = { type: 'Tile' }
 
-    console.log(newTiles)
-
-    state.layout.tiles = newTiles
     this.#puzzle.reload(state)
-    // Translate from editor offset to state offset
-    /*
-    editor:
-    [
-      [(-1,-1), null, null],
-      [null, (0,0), null],
-      [null, null, (1,1)]
-    ]
-    state:
-    [
-      [(0,0), null, null],
-      [null, (1,1), null],
-      [null, null, (2,2)]
-    ]
-     */
-
-    // console.log(offset, tiles, rDiff, cDiff)
-  }
-
-  static gridSize (offset) {
-    // The grid is always symmetrical and based on the furthest distance selected away from center
-    const r = Math.abs(offset.r) * 2
-    const c = Math.abs(offset.c) * 2
-    return new OffsetCoordinates(r === 0 ? r : r + 1, c === 0 ? c : c + 1)
   }
 
   static mark (center, width) {
@@ -132,12 +106,6 @@ export class Editor {
       new Path(Object.assign({ segments: [square.segments[0], square.segments[2]] }, settings)),
       new Path(Object.assign({ segments: [square.segments[1], square.segments[3]] }, settings))
     ]
-  }
-
-  static translate (offset, gridSize) {
-    const center = new OffsetCoordinates(Math.floor(gridSize.r / 2), Math.floor(gridSize.c / 2))
-    console.log('center', center)
-    return offset.add(center)
   }
 
   static ClassNames = Object.freeze({

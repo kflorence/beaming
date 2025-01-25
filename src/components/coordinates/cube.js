@@ -22,17 +22,9 @@ export class CubeCoordinates {
     return this.q === other.q && this.r === other.r && this.s === other.s
   }
 
-  isNeighbor (other) {
-    return CubeCoordinates.isNeighbor(this, other)
-  }
-
-  neighbor (direction) {
-    return CubeCoordinates.neighbor(this, direction)
-  }
-
-  toPoint (size) {
-    const x = size * (sqrt3 * this.q + sqrt3 / 2 * this.r)
-    const y = size * (3.0 / 2 * this.r)
+  toPoint (circumradius) {
+    const x = circumradius * (sqrt3 * this.q + sqrt3 / 2 * this.r)
+    const y = circumradius * (3.0 / 2 * this.r)
     return new Point(x, y)
   }
 
@@ -60,16 +52,6 @@ export class CubeCoordinates {
     const q = (sqrt3 / 3 * point.x - 1.0 / 3 * point.y) / circumradius
     const r = (2.0 / 3 * point.y) / circumradius
     return CubeCoordinates.round(new CubeCoordinates(q, r))
-  }
-
-  static isNeighbor (a, b) {
-    return CubeCoordinates.directions
-      .map((direction) => CubeCoordinates.add(a, direction))
-      .some((neighbor) => neighbor.equals(b))
-  }
-
-  static neighbor (start, direction) {
-    return CubeCoordinates.add(start, CubeCoordinates.direction(direction))
   }
 
   static round (cube) {
