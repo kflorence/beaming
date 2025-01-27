@@ -7,7 +7,7 @@ import { modifierFactory } from './modifierFactory'
 import { View } from './view'
 
 export class Layout extends Stateful {
-  #tiles
+  #tiles = {}
 
   center
   items = []
@@ -19,7 +19,7 @@ export class Layout extends Stateful {
   constructor (state = {}) {
     super(state)
 
-    const tiles = this.#tiles = state.tiles || {}
+    const tiles = state.tiles || {}
 
     // The tiles will always position themselves relative to the center of the canvas
     // This allows us to manipulate paper.view.center without affecting the tile center calculations
@@ -38,6 +38,8 @@ export class Layout extends Stateful {
       const row = tiles[r]
       const rowOffset = Math.floor(r / 2)
 
+      this.#tiles[r] ??= {}
+
       for (const c in row) {
         const axial = new CubeCoordinates(c - rowOffset, r)
         const offset = new OffsetCoordinates(r, c)
@@ -52,6 +54,8 @@ export class Layout extends Stateful {
         }
 
         this.tiles.push(tile)
+
+        this.#tiles[r][c] = tile
       }
     }
 
@@ -59,7 +63,16 @@ export class Layout extends Stateful {
   }
 
   getState () {
-    const state = { tiles: structuredClone(this.#tiles) }
+    const tiles = {}
+
+    Object.keys(this.#tiles).forEach((r) => {
+      tiles[r] ??= {}
+      Object.keys(this.#tiles[r]).forEach((c) => {
+        tiles[r][c] = this.#tiles[r][c].getState()
+      })
+    })
+
+    const state = { tiles }
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
     if (modifiers.length) {
       state.modifiers = modifiers

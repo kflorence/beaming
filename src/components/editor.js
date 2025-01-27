@@ -77,9 +77,8 @@ export class Editor {
     console.log('tap', offset)
 
     const state = this.#puzzle.getState()
-    if (!state.layout.tiles[offset.r]) {
-      state.layout.tiles[offset.r] = {}
-    }
+
+    state.layout.tiles[offset.r] ??= {}
 
     if (state.layout.tiles[offset.r][offset.c]) {
       delete state.layout.tiles[offset.r][offset.c]

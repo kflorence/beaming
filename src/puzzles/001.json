@@ -1,44 +1,43 @@
 {
   "layout": {
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "0": {
+          "type": "Tile",
+          "id": "0cbb0588"
+        },
+        "1": {
+          "type": "Tile",
+          "id": "9c7f7b9a"
+        },
+        "-1": {
+          "type": "Tile",
+          "id": "da960fda"
+        }
+      },
+      "1": {
+        "0": {
+
           "items": [
             {
               "color": "blue",
               "openings": [
-                null,
-                null,
-                null,
                 {
-                  "on": true,
                   "type": "Beam"
                 },
+                null,
+                null,
+                null,
                 null,
                 null
               ],
               "type": "Terminus"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "5c2510d3"
         },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
+        "-1": {
           "items": [
             {
               "color": "red",
@@ -61,30 +60,38 @@
               "type": "Toggle"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "e3bec484"
+        }
+      },
+      "-1": {
+        "0": {
+          "type": "Tile",
+          "id": "c9bedf13"
         },
-        {
+        "-1": {
           "items": [
             {
               "color": "blue",
               "openings": [
+                null,
+                null,
+                null,
                 {
+                  "on": true,
                   "type": "Beam"
                 },
-                null,
-                null,
-                null,
                 null,
                 null
               ],
               "type": "Terminus"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "349a7a4a"
         }
-      ]
-    ],
-    "type": "even-r"
+      }
+    }
   },
   "solution": [
     {

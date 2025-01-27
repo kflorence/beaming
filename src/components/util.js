@@ -227,12 +227,12 @@ export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
-export function subtractDirection (direction, amount) {
-  return addDirection(direction, amount * -1)
-}
-
 export function stringToPoint (string) {
   return new Point(string.split(','))
+}
+
+export function subtractDirection (direction, amount) {
+  return addDirection(direction, amount * -1)
 }
 
 export function uniqueBy (array, key) {

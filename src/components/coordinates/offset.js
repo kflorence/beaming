@@ -2,9 +2,9 @@ import { CubeCoordinates } from './cube'
 
 export class OffsetCoordinates {
   constructor (r, c) {
-    this.coordinates = [r, c]
-    this.r = r
-    this.c = c
+    this.r = OffsetCoordinates.normalize(r)
+    this.c = OffsetCoordinates.normalize(c)
+    this.coordinates = [this.r, this.c]
   }
 
   add (offset) {
@@ -13,6 +13,11 @@ export class OffsetCoordinates {
 
   toString () {
     return this.coordinates.join(',')
+  }
+
+  static normalize (coordinate) {
+    // Get rid of signed zero
+    return coordinate === 0 ? Math.abs(coordinate) : coordinate
   }
 
   static toAxialCoordinates (offset) {
