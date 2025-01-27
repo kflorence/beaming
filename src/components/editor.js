@@ -1,7 +1,7 @@
 import { Group, Path, Point } from 'paper'
 import { EventListeners } from './eventListeners'
-import { CubeCoordinates } from './coordinates/cube'
 import { Interact } from './interact'
+import { Tile } from './items/tile'
 
 const elements = Object.freeze({
   configuration: document.getElementById('configuration')
@@ -11,17 +11,16 @@ export class Editor {
   group = new Group({ locked: true })
   id
 
-  #center
   #eventListener = new EventListeners({ context: this })
   #hover
-  #parameters
+  #layout
   #puzzle
 
   constructor (puzzle, state) {
     this.id = state.getId()
-    this.#center = puzzle.layout.center
-    this.#parameters = puzzle.layout.parameters
+
     this.#puzzle = puzzle
+    this.#layout = puzzle.layout
 
     this.#eventListener.add([
       { element: puzzle.element, handler: this.#onPointerMove, type: 'pointermove' },
@@ -31,7 +30,8 @@ export class Editor {
     document.body.classList.add(Editor.ClassNames.Edit)
     elements.configuration.value = state.getCurrentJSON()
 
-    this.group.addChildren(Editor.mark(this.#center, this.#parameters.circumradius / 4))
+    // TODO: replace this with a "re-center" icon
+    this.group.addChildren(Editor.mark(this.#layout.getCenter(), this.#layout.parameters.circumradius / 4))
     this.#puzzle.layers.edit.addChild(this.group)
   }
 
@@ -40,22 +40,14 @@ export class Editor {
     this.group.removeChildren()
   }
 
-  #getCubeCoordinates (point) {
-    return CubeCoordinates.fromPoint(point.subtract(this.#center), this.#parameters.circumradius)
-  }
-
-  #getPoint (cube) {
-    return cube.toPoint(this.#parameters.circumradius).add(this.#center)
-  }
-
   #onPointerMove (event) {
-    const cube = this.#getCubeCoordinates(this.#puzzle.getProjectPoint(Interact.point(event)))
-    const center = this.#getPoint(cube)
+    const offset = this.#layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
+    const center = this.#layout.getPoint(offset)
     if (!this.#hover) {
       this.#hover = new Path.RegularPolygon({
         center,
         closed: true,
-        radius: this.#parameters.circumradius,
+        radius: this.#layout.parameters.circumradius,
         opacity: 0.2,
         sides: 6,
         style: {
@@ -71,22 +63,15 @@ export class Editor {
   }
 
   #onTap (event) {
-    const cube = this.#getCubeCoordinates(event.detail.point)
-    const offset = CubeCoordinates.toOffsetCoordinates(cube)
+    const offset = this.#layout.getOffset(event.detail.point)
 
     console.log('tap', offset)
 
-    const state = this.#puzzle.getState()
+    this.#puzzle.layout.addTile(offset, Tile.Empty)
 
-    state.layout.tiles[offset.r] ??= {}
-
-    if (state.layout.tiles[offset.r][offset.c]) {
-      delete state.layout.tiles[offset.r][offset.c]
-    } else {
-      state.layout.tiles[offset.r][offset.c] = { type: 'Tile' }
-    }
-
-    this.#puzzle.reload(state)
+    this.#puzzle.addMove()
+    this.#puzzle.updateState()
+    this.#puzzle.update()
   }
 
   static mark (center, width) {

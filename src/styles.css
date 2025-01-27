@@ -177,7 +177,6 @@ main {
 #actions {
   border-left: 1px solid #ddd;
   border-right: 1px solid #ddd;
-  display: none;
 }
 
 #doorbell.doorbell-inline #doorbell-container {
@@ -379,7 +378,6 @@ body:not(.edit) #puzzle-id {
   display: inline-block;
 }
 
-body:not(.edit) #actions,
 .edit #puzzle-title,
 body:not(.edit) #selector {
   display: flex;

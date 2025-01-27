@@ -131,6 +131,7 @@ export class Tile extends Item {
   }
 
   teardown () {
+    this.items.forEach((item) => item.remove())
     this.modifiers.forEach((modifier) => modifier.detach())
   }
 
@@ -176,6 +177,12 @@ export class Tile extends Item {
   }
 
   static DefaultHeight = 160
+
+  static Empty = Object.freeze({
+    items: [],
+    modifiers: [],
+    type: Item.Types.tile
+  })
 
   static Events = Object.freeze({
     Deselected: 'tile-deselected',

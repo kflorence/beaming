@@ -28,7 +28,6 @@ const elements = Object.freeze({
   previous: document.getElementById('previous'),
   puzzle: document.getElementById('puzzle'),
   puzzleId: document.getElementById('puzzle-id'),
-  puzzleTitle: document.getElementById('puzzle-title'),
   redo: document.getElementById('redo'),
   reset: document.getElementById('reset'),
   undo: document.getElementById('undo'),
@@ -502,6 +501,7 @@ export class Puzzle {
     this.message = message
     this.#solution = new Solution(solution)
 
+    // FIXME: these should all be replaced with lookup methods. can't cache these as state can change
     this.#tiles = this.layout.tiles
     this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
     this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
@@ -558,8 +558,6 @@ export class Puzzle {
   #updateActions () {
     const id = this.#state.getId()
     const title = this.#state.getTitle()
-
-    elements.puzzleTitle.textContent = title
 
     // Update browser title
     elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`
