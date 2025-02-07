@@ -1,7 +1,6 @@
 import { Group, Path, Point } from 'paper'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
-import { Tile } from './items/tile'
 
 const elements = Object.freeze({
   configuration: document.getElementById('configuration')
@@ -67,7 +66,11 @@ export class Editor {
 
     console.log('tap', offset)
 
-    this.#puzzle.layout.addTile(offset, Tile.Empty)
+    if (this.#puzzle.layout.getTile(offset)) {
+      this.#puzzle.layout.removeTile(offset)
+    } else {
+      this.#puzzle.layout.addTile(offset)
+    }
 
     this.#puzzle.addMove()
     this.#puzzle.updateState()

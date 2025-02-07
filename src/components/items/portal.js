@@ -176,7 +176,7 @@ export class Portal extends movable(rotatable(Item)) {
   }
 
   #getExitPortals (puzzle, beam, nextStep) {
-    const exitPortals = puzzle.getItems().filter((item) =>
+    const exitPortals = puzzle.layout.getItems().filter((item) =>
       // Is a portal
       item.type === Item.Types.portal &&
       // But not the entry portal

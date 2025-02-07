@@ -47,7 +47,6 @@ export class Puzzle {
   selectedTile
   solved = false
 
-  #beams
   #beamsUpdateDelay = 30
   #collisions = {}
   #editor
@@ -58,8 +57,6 @@ export class Puzzle {
   #maskQueue = []
   #solution
   #state
-  #termini
-  #tiles = []
 
   constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -120,12 +117,14 @@ export class Puzzle {
     this.layers.debug.addChild(circle)
   }
 
-  getBeamsUpdateDelay () {
-    return this.#beamsUpdateDelay
+  getBeams () {
+    return this.layout.getItems()
+      .filter((item) => item.type === Item.Types.terminus)
+      .flatMap((terminus) => terminus.beams)
   }
 
-  getItems (tile) {
-    return (tile ? this.#tiles.filter((t) => t === tile) : this.#tiles).flatMap((tile) => tile.items)
+  getBeamsUpdateDelay () {
+    return this.#beamsUpdateDelay
   }
 
   getProjectPoint (point) {
@@ -162,7 +161,7 @@ export class Puzzle {
     this.#mask = mask
 
     // TODO animation?
-    const tiles = this.#tiles.filter(mask.tileFilter)
+    const tiles = this.layout.tiles.filter(mask.tileFilter)
       .map((tile) => new Mask(
         tile,
         typeof mask.configuration.style === 'function'
@@ -323,7 +322,7 @@ export class Puzzle {
 
     Object.values(this.#collisions).forEach((collision) => collision.update())
 
-    this.#beams
+    this.getBeams()
       .filter((otherBeam) => otherBeam !== beam)
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
@@ -395,7 +394,7 @@ export class Puzzle {
     this.addMove()
     this.updateState()
 
-    this.#beams
+    this.getBeams()
       // Update beams in the tile being modified first
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
@@ -501,11 +500,6 @@ export class Puzzle {
     this.message = message
     this.#solution = new Solution(solution)
 
-    // FIXME: these should all be replaced with lookup methods. can't cache these as state can change
-    this.#tiles = this.layout.tiles
-    this.#termini = this.layout.items.filter((item) => item.type === Item.Types.terminus)
-    this.#beams = this.#termini.flatMap((terminus) => terminus.beams)
-
     this.#addLayers()
 
     document.body.classList.add(Puzzle.Events.Loaded)
@@ -533,20 +527,16 @@ export class Puzzle {
 
     this.#removeLayers()
 
-    this.#tiles.forEach((tile) => tile.teardown())
-    this.#tiles = []
     this.#solution?.teardown()
     this.#solution = undefined
     this.solved = false
     this.layout?.teardown()
     this.layout = undefined
     this.selectedTile = undefined
-    this.#beams = []
     this.#collisions = {}
     this.#isUpdatingBeams = false
     this.#mask = undefined
     this.#maskQueue = []
-    this.#termini = []
   }
 
   #undo () {
@@ -614,7 +604,7 @@ export class Puzzle {
   }
 
   #updateBeams () {
-    const beams = this.#beams.filter((beam) => beam.isPending())
+    const beams = this.getBeams().filter((beam) => beam.isPending())
 
     if (!beams.length) {
       this.#isUpdatingBeams = false

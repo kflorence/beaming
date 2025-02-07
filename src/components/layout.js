@@ -69,6 +69,10 @@ export class Layout extends Stateful {
     return paper.view.viewSize.divide(2)
   }
 
+  getItems () {
+    return this.tiles.flatMap((tile) => tile.items)
+  }
+
   getOffset (point) {
     return CubeCoordinates.toOffsetCoordinates(
       CubeCoordinates.fromPoint(point.subtract(this.getCenter()), this.parameters.circumradius))
@@ -126,6 +130,7 @@ export class Layout extends Stateful {
   }
 
   teardown () {
+    this.tiles.forEach((tile) => tile.teardown())
     this.modifiers.forEach((modifier) => modifier.detach())
     Object.values(this.layers).forEach((layer) => layer.removeChildren())
   }

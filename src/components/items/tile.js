@@ -5,10 +5,20 @@ import { emitEvent, getPointBetween, sqrt3 } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
+  coordinates
+  items
+  modifiers
+  parameters
   path
   selected = false
 
-  constructor (coordinates, center, parameters, state) {
+  constructor (coordinates, center, parameters, state = {}) {
+    state = Object.assign({
+      items: [],
+      modifiers: [],
+      type: Item.Types.tile
+    }, state)
+
     super(null, state, { locked: false })
 
     const dashWidth = parameters.circumradius / 10
@@ -177,12 +187,6 @@ export class Tile extends Item {
   }
 
   static DefaultHeight = 160
-
-  static Empty = Object.freeze({
-    items: [],
-    modifiers: [],
-    type: Item.Types.tile
-  })
 
   static Events = Object.freeze({
     Deselected: 'tile-deselected',
