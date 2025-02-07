@@ -174,11 +174,6 @@ main {
   flex: auto;
 }
 
-#actions {
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-}
-
 #doorbell.doorbell-inline #doorbell-container {
   background-color: #eee;
   border: 1px solid #ccc;
@@ -223,6 +218,10 @@ main {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+#header-navigation .flex-center .menu {
+  border-left: 1px solid #ddd;
 }
 
 #logo {
@@ -311,12 +310,9 @@ main {
   top: calc(50% - 5px);
 }
 
-#settings {
-  display: none;
-}
-
 #solution {
   align-items: center;
+  border-left: 1px solid #ddd;
   cursor: default;
   line-height: 24px;
 }
@@ -369,15 +365,11 @@ main {
   margin: 1em 0;
 }
 
-.edit #edit-actions,
-.edit #settings {
-  display: block;
-}
-
 body:not(.edit) #puzzle-id {
   display: inline-block;
 }
 
+.edit #edit-actions,
 .edit #puzzle-title,
 body:not(.edit) #selector {
   display: flex;

@@ -264,8 +264,8 @@ export class Puzzle {
     return previouslySelectedTile
   }
 
-  updateState () {
-    this.#state.update(Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+  updateState (state) {
+    this.#state.update(state || Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
     this.#updateDropdown()
     this.#updateActions()
 
@@ -275,11 +275,11 @@ export class Puzzle {
   #addLayers () {
     // Add layers in the order we want them
     [
+      this.layers.edit,
       this.layout.layers.tiles,
       this.layout.layers.items,
       this.layers.mask,
       this.layers.collisions,
-      this.layers.edit,
       this.layers.debug
     ].forEach((layer) => paper.project.addLayer(layer))
   }

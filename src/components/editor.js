@@ -1,9 +1,12 @@
 import { Group, Path, Point } from 'paper'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
+import { View } from './view'
+import { Puzzle } from './puzzle'
 
 const elements = Object.freeze({
-  configuration: document.getElementById('configuration')
+  configuration: document.getElementById('configuration'),
+  recenter: document.getElementById('recenter')
 })
 
 export class Editor {
@@ -14,22 +17,26 @@ export class Editor {
   #hover
   #layout
   #puzzle
+  #state
 
   constructor (puzzle, state) {
     this.id = state.getId()
 
     this.#puzzle = puzzle
     this.#layout = puzzle.layout
+    this.#state = state
 
     this.#eventListener.add([
+      { element: elements.configuration, handler: this.#onConfigurationUpdate, type: 'focusout' },
       { element: puzzle.element, handler: this.#onPointerMove, type: 'pointermove' },
+      { handler: this.#onPuzzleUpdate, type: Puzzle.Events.Updated },
+      { element: elements.recenter, handler: this.#onRecenter, type: 'click' },
       { element: puzzle.element, handler: this.#onTap, type: 'tap' }
     ])
 
     document.body.classList.add(Editor.ClassNames.Edit)
     elements.configuration.value = state.getCurrentJSON()
 
-    // TODO: replace this with a "re-center" icon
     this.group.addChildren(Editor.mark(this.#layout.getCenter(), this.#layout.parameters.circumradius / 4))
     this.#puzzle.layers.edit.addChild(this.group)
   }
@@ -37,6 +44,18 @@ export class Editor {
   teardown () {
     this.#eventListener.remove()
     this.group.removeChildren()
+  }
+
+  #onConfigurationUpdate () {
+    try {
+      const state = JSON.parse(elements.configuration.value)
+      this.#puzzle.addMove()
+      // Need to force a reload to make sure the UI is in sync with the state
+      this.#puzzle.reload(state)
+    } catch (e) {
+      // TODO: maybe display something to the user, too
+      console.error(e)
+    }
   }
 
   #onPointerMove (event) {
@@ -61,12 +80,21 @@ export class Editor {
     }
   }
 
+  #onPuzzleUpdate () {
+    elements.configuration.value = this.#state.getCurrentJSON()
+  }
+
+  #onRecenter () {
+    View.setCenter(this.#layout.getCenter())
+  }
+
   #onTap (event) {
     const offset = this.#layout.getOffset(event.detail.point)
+    const tile = this.#puzzle.layout.getTile(offset)
 
-    console.log('tap', offset)
+    console.log('tap', offset, tile)
 
-    if (this.#puzzle.layout.getTile(offset)) {
+    if (tile) {
       this.#puzzle.layout.removeTile(offset)
     } else {
       this.#puzzle.layout.addTile(offset)

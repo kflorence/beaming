@@ -13,11 +13,7 @@ export class Tile extends Item {
   selected = false
 
   constructor (coordinates, center, parameters, state = {}) {
-    state = Object.assign({
-      items: [],
-      modifiers: [],
-      type: Item.Types.tile
-    }, state)
+    state = Object.assign({ type: Item.Types.tile }, state)
 
     super(null, state, { locked: false })
 
@@ -143,6 +139,7 @@ export class Tile extends Item {
   teardown () {
     this.items.forEach((item) => item.remove())
     this.modifiers.forEach((modifier) => modifier.detach())
+    this.remove()
   }
 
   toString () {

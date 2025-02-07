@@ -1,4 +1,4 @@
-import paper, { Layer } from 'paper'
+import paper, { Layer, Point } from 'paper'
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
@@ -66,7 +66,7 @@ export class Layout extends Stateful {
 
   getCenter () {
     // The center of the canvas
-    return paper.view.viewSize.divide(2)
+    return new Point(paper.view.viewSize.divide(2))
   }
 
   getItems () {
