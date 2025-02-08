@@ -5,6 +5,7 @@ import { Point } from 'paper'
 
 const location = window.location
 
+export const baseUri = 'https://kflorence.github.io/beaming'
 export const params = new URLSearchParams(location.search)
 export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
@@ -157,8 +158,12 @@ export function getIconElement (name, title) {
 }
 
 export function getKey () {
-  const args = [...arguments]
-  return args.join(':')
+  return Array.from(arguments).join(':')
+}
+
+export function getKeyFactory () {
+  const base = arguments
+  return function () { return getKey(...base, ...arguments) }
 }
 
 export function getPointBetween (pointA, pointB, length = (length) => length / 2) {

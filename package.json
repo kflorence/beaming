@@ -30,6 +30,7 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
+    "@json-editor/json-editor": "^2.15.2",
     "@types/chroma-js": "^2.4.5",
     "chroma-js": "^2.6.0",
     "jsondiffpatch": "^0.6.0",

@@ -3,6 +3,7 @@ document.querySelectorAll('.dialog').forEach((element) => {
   element.addEventListener('click', () => {
     if (!dialog.open) {
       dialog.showModal()
+      dialog.dispatchEvent(new CustomEvent('open'))
     }
   })
 })

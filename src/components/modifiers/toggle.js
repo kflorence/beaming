@@ -1,28 +1,27 @@
 import { Modifier } from '../modifier'
 import { Icons } from '../icons'
+import { baseUri } from '../util'
 
 export class Toggle extends Modifier {
-  on
   title = 'Toggle'
+  toggled
 
   constructor (tile, state) {
     super(...arguments)
 
-    // TODO: refactor to use 'toggled' everywhere
-    this.on = state.on || this.parent?.items.some(item => item.on || item.toggled)
+    this.toggled = state.toggled || this.parent?.items.some(item => item.toggled)
     this.name = this.getName()
   }
 
   attach (tile) {
     super.attach(tile)
 
-    // TODO: refactor to use 'toggled' everywhere
-    this.on = this.tile?.items.some(item => item.on || item.toggled)
+    this.toggled = this.tile?.items.some(item => item.toggled)
     this.update({ name: this.getName() })
   }
 
   getName () {
-    return Toggle.Names[this.on ? 'on' : 'off']
+    return Toggle.Names[this.toggled ? 'on' : 'off']
   }
 
   moveFilter (tile) {
@@ -33,10 +32,10 @@ export class Toggle extends Modifier {
   onTap (event) {
     super.onTap(event)
 
-    this.on = !this.on
+    this.toggled = !this.toggled
 
     const items = this.tile.items.filter((item) => item.toggleable)
-    items.forEach((item) => item.toggle(this.on))
+    items.forEach((item) => item.toggle(this.toggled))
 
     this.update({ name: this.getName() })
 
@@ -44,6 +43,20 @@ export class Toggle extends Modifier {
   }
 
   static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
+
+  static Schema = Object.freeze({
+    $id: `${baseUri}/schemas/modifiers/${Modifier.Types.toggle.toLowerCase()}`,
+    properties: {
+      toggled: {
+        type: 'boolean'
+      },
+      type: {
+        const: Modifier.Types.toggle
+      }
+    },
+    required: ['type'],
+    type: 'object'
+  })
 }
 
 /**

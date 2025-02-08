@@ -26,9 +26,12 @@
         </form>
       </header>
       <form id="puzzle-settings">
-        <label for="configuration">Configuration</label>
-        <p>The underlying JSON configuration for the puzzle.</p>
-        <textarea id="configuration"></textarea>
+        <div id="puzzle-editor"></div>
+        <details>
+          <summary><label for="configuration">Configuration</label></summary>
+          <p>The underlying JSON configuration for the puzzle.</p>
+          <textarea id="configuration"></textarea>
+        </details>
       </form>
       <footer>
         <div class="flex-right">
@@ -239,6 +242,7 @@
             <li id="next"><span class="material-symbols-outlined" title="Next Puzzle">navigate_next</span></li>
           </ul>
           <ul id="edit-actions" class="menu">
+            <li id="lock"><span class="icon material-symbols-outlined" title="Lock tiles">lock_open</span></li>
             <li id="recenter"><span class="material-symbols-outlined" title="Re-center">recenter</span></li>
             <li class="dialog" id="settings"><span class="material-symbols-outlined" title="Settings">settings</span></li>
           </ul>

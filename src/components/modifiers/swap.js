@@ -1,6 +1,7 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
 import { Icons } from '../icons'
+import { baseUri } from '../util'
 
 export class Swap extends Move {
   name = Icons.Swap.name
@@ -30,4 +31,15 @@ export class Swap extends Move {
       !tile.items.some(Move.movable)
     )
   }
+
+  static Schema = Object.freeze({
+    $id: `${baseUri}/schemas/modifiers/${Modifier.Types.swap.toLowerCase()}`,
+    properties: {
+      type: {
+        const: Modifier.Types.swap
+      }
+    },
+    required: ['type'],
+    type: 'object'
+  })
 }

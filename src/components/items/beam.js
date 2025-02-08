@@ -181,7 +181,7 @@ export class Beam extends Item {
   isOn () {
     const opening = this.getOpening()
     // The opening will also be on if another beam connects with it
-    return opening.on && !opening.connected
+    return opening.toggled && !opening.connected
   }
 
   isPending () {

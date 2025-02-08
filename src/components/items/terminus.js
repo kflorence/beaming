@@ -28,7 +28,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
           opening.color ?? color,
           direction,
           opening.connected,
-          opening.on ?? state.on
+          opening.toggled ?? state.toggled
         )
         : opening
     ).filter((opening) => opening)
@@ -40,7 +40,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.color = color
     this.openings = openings
     this.radius = this.#ui.radius
-    this.toggled = openings.some((opening) => opening.on)
+    this.toggled = openings.some((opening) => opening.toggled)
 
     // Needs to be last since it references 'this'
     this.beams = openings.map((opening) => new Beam(this, state.openings[opening.direction], opening))
@@ -75,7 +75,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     const opening = this.openings.find((opening) => this.getDirection(opening.direction) === directionFrom)
     if (
       opening && opening.color === nextStep.color && (
-        !opening.on ||
+        !opening.toggled ||
         // When re-evaluating history of an already connected opening
         (opening.connected && existingNextStep?.state.get(StepState.TerminusConnection)?.terminus.equals(this))
       )
@@ -132,7 +132,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.updateState((state) => {
       this.openings.filter((opening) => !opening.connected).forEach((opening) => {
         opening.toggle()
-        state.openings[opening.direction].on = opening.on
+        state.openings[opening.direction].toggled = opening.toggled
       })
     })
     this.update()
@@ -142,7 +142,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.beams.forEach((beam) => {
       const opening = beam.getOpening()
       const item = this.#ui.openings.find((item) => item.data.direction === opening.direction)
-      item.opacity = opening.on ? 1 : Terminus.#openingOffOpacity
+      item.opacity = opening.toggled ? 1 : Terminus.#openingOffOpacity
     })
   }
 
@@ -178,7 +178,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
         closed: true,
         data: { collidable: false, direction },
         fillColor: opening.color,
-        opacity: opening.on ? 1 : Terminus.#openingOffOpacity,
+        opacity: opening.toggled ? 1 : Terminus.#openingOffOpacity,
         segments: [p1, p2, p3]
       })
     })
@@ -187,24 +187,24 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   static #Opening = class {
-    constructor (color, direction, connected, on) {
+    constructor (color, direction, connected, toggled) {
       this.colors = Array.isArray(color) ? color : [color]
       this.color = chroma.average(this.colors).hex()
       this.direction = direction
       this.connected = connected === true
-      this.on = on === true
+      this.toggled = toggled === true
     }
 
     connect () {
-      this.connected = this.on = true
+      this.connected = this.toggled = true
     }
 
     disconnect () {
-      this.connected = this.on = false
+      this.connected = this.toggled = false
     }
 
     toggle () {
-      this.on = !this.on
+      this.toggled = !this.toggled
     }
   }
 

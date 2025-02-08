@@ -435,8 +435,8 @@ export class Puzzle {
   #onTap (event) {
     let tile
 
-    // TODO: allow in editor mode if locked
-    if (this.#editor || this.solved || this.error) {
+    if ((this.#editor && !this.#editor.isLocked()) || this.solved || this.error) {
+      // In a state that cannot be interacted with
       return
     }
 

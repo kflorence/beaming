@@ -1,38 +1,36 @@
 import paper from 'paper'
 import { State } from './state'
-import { getKey, pointToString, stringToPoint } from './util'
+import { getKeyFactory, pointToString, stringToPoint } from './util'
 
 const localStorage = window.localStorage
 
 export class View {
   static setCenter (point) {
     paper.view.center = point
-    localStorage.setItem(View.#getKey(View.CacheKeys.center), pointToString(point))
+    localStorage.setItem(View.#key(View.CacheKeys.Center), pointToString(point))
   }
 
   static setZoom (factor) {
     paper.view.zoom = factor
-    localStorage.setItem(View.#getKey(View.CacheKeys.zoom), factor.toString())
+    localStorage.setItem(View.#key(View.CacheKeys.Zoom), factor.toString())
   }
 
   static update () {
-    const center = localStorage.getItem(View.#getKey(View.CacheKeys.center))
+    const center = localStorage.getItem(View.#key(View.CacheKeys.Center))
     if (center !== null) {
       paper.view.center = stringToPoint(center)
     }
 
-    const zoom = localStorage.getItem(View.#getKey(View.CacheKeys.zoom))
+    const zoom = localStorage.getItem(View.#key(View.CacheKeys.Zoom))
     if (zoom !== null) {
       paper.view.zoom = Number(zoom)
     }
   }
 
-  static #getKey () {
-    return getKey(...arguments, State.getId())
-  }
+  static #key = getKeyFactory(State.getId(), 'view')
 
   static CacheKeys = Object.freeze({
-    center: 'center',
-    zoom: 'zoom'
+    Center: 'center',
+    Zoom: 'zoom'
   })
 }
