@@ -1,4 +1,4 @@
-import { capitalize, uniqueId } from './util'
+import { capitalize, Schema, uniqueId } from './util'
 import { CompoundPath, Group } from 'paper'
 import { Stateful } from './stateful'
 
@@ -88,6 +88,10 @@ export class Item extends Stateful {
 
   static immutable (item) {
     return item.immutable
+  }
+
+  static schema (type) {
+    return Schema.typed('item', type)
   }
 
   static Types = Object.freeze(Object.fromEntries([

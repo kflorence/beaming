@@ -5,6 +5,9 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { getKeyFactory } from './util'
+import { JSONEditor } from '@json-editor/json-editor/src/core'
+import { modifiersSchema } from './modifierFactory'
+import { Tile } from './items/tile'
 
 const elements = Object.freeze({
   configuration: document.getElementById('configuration'),
@@ -59,7 +62,7 @@ export class Editor {
 
   teardown () {
     this.#eventListener.remove()
-    this.group.removeChildren()
+    this.group.remove()
   }
 
   #onConfigurationUpdate () {
@@ -74,14 +77,27 @@ export class Editor {
     }
   }
 
-  #onDialogClose (event) {
-    // TODO destroy json editor
-    console.log(event)
+  #onDialogClose () {
+    this.#editor.destroy()
   }
 
-  #onDialogOpen (event) {
-    // TODO set up json editor
-    console.log(event)
+  #onDialogOpen () {
+    const options = {
+      disable_collapse: true,
+      // disable_edit_json: true,
+      disable_properties: true,
+      enforce_const: true,
+      no_additional_properties: true,
+      prompt_before_delete: false,
+      refs: {
+        [modifiersSchema.$id]: modifiersSchema
+      },
+      schema: this.#puzzle.selectedTile ? Tile.Schema : Puzzle.Schema
+    }
+
+    console.log(JSON.stringify(options, null, 2))
+
+    this.#editor = new JSONEditor(elements.editor, options)
   }
 
   #onPointerMove (event) {

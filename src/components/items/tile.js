@@ -1,7 +1,7 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
-import { emitEvent, getPointBetween, sqrt3 } from '../util'
+import { emitEvent, getPointBetween, merge, Schema, sqrt3 } from '../util'
 import { modifierFactory } from '../modifierFactory'
 
 export class Tile extends Item {
@@ -191,6 +191,14 @@ export class Tile extends Item {
   })
 
   static MaxModifiers = 6
+
+  static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
+    properties: {
+      modifiers: {
+        $ref: Schema.$id('modifiers')
+      }
+    }
+  }))
 
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:

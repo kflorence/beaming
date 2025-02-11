@@ -1,4 +1,4 @@
-import { baseUri, capitalize, emitEvent } from './util'
+import { capitalize, emitEvent, Schema } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -187,6 +187,10 @@ export class Modifier extends Stateful {
     return modifier.type === Modifier.Types.immutable
   }
 
+  static schema (type) {
+    return Schema.typed('modifier', type)
+  }
+
   static Events = Object.freeze({
     Invoked: 'modifier-invoked',
     Moved: 'modifier-moved'
@@ -200,14 +204,4 @@ export class Modifier extends Stateful {
     'swap',
     'toggle'
   ].map((type) => [type, capitalize(type)])))
-
-  static Schema = Object.freeze({
-    $id: `${baseUri}/schemas/modifiers`,
-    items: {
-      anyOf: Object.keys(Modifier.Types).map((type) => ({ $ref: `/schemas/modifiers/${type}` }))
-    },
-    minItems: 0,
-    maxItems: 6,
-    type: 'array'
-  })
 }

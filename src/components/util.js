@@ -1,4 +1,5 @@
 import * as jsonDiffPatchFactory from 'jsondiffpatch'
+import deepmerge from 'deepmerge'
 import pako from 'pako'
 import chroma from 'chroma-js'
 import { Point } from 'paper'
@@ -218,6 +219,10 @@ export function getTextElement (text) {
   return span
 }
 
+export function merge () {
+  return deepmerge.all(Array.from(arguments))
+}
+
 export function noop (value) {
   if (value) {
     return value
@@ -247,4 +252,24 @@ export function uniqueBy (array, key) {
 
 export function uniqueId () {
   return crypto.randomUUID().split('-')[0]
+}
+
+export class Schema {
+  static $id () {
+    return `${baseUri}/schemas/${Array.from(arguments).map((arg) => arg.toLowerCase()).join('/')}`
+  }
+
+  static typed (path, type) {
+    return {
+      $id: Schema.$id(path, type),
+      properties: {
+        type: {
+          const: type,
+          type: 'string'
+        }
+      },
+      required: ['type'],
+      type: 'object'
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
-import { baseUri, emitEvent } from '../util'
+import { emitEvent } from '../util'
 import { Item } from '../item'
 import { Icons } from '../icons'
 
@@ -78,16 +78,7 @@ export class Move extends Modifier {
 
   static ignoreItemTypes = [Item.Types.beam, Item.Types.wall]
 
-  static Schema = Object.freeze({
-    $id: `${baseUri}/schemas/modifiers/${Modifier.Types.move.toLowerCase()}`,
-    properties: {
-      type: {
-        const: Modifier.Types.move
-      }
-    },
-    required: ['type'],
-    type: 'object'
-  })
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.move))
 }
 
 /**

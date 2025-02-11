@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier'
 import { Icons } from '../icons'
-import { baseUri } from '../util'
+import { merge } from '../util'
 
 export class Toggle extends Modifier {
   title = 'Toggle'
@@ -44,19 +44,14 @@ export class Toggle extends Modifier {
 
   static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
 
-  static Schema = Object.freeze({
-    $id: `${baseUri}/schemas/modifiers/${Modifier.Types.toggle.toLowerCase()}`,
+  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.toggle), {
     properties: {
       toggled: {
         type: 'boolean'
-      },
-      type: {
-        const: Modifier.Types.toggle
       }
     },
-    required: ['type'],
-    type: 'object'
-  })
+    required: ['toggled']
+  }))
 }
 
 /**

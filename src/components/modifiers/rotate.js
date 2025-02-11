@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { addDirection, baseUri, coalesce } from '../util'
+import { addDirection, coalesce, merge } from '../util'
 import { Icons } from '../icons'
 
 export class Rotate extends Modifier {
@@ -37,19 +37,13 @@ export class Rotate extends Modifier {
 
   static Names = Object.freeze({ left: Icons.RotateLeft.name, right: Icons.RotateRight.name })
 
-  static Schema = Object.freeze({
-    $id: `${baseUri}/schemas/modifiers/${Modifier.Types.rotate.toLowerCase()}`,
+  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.rotate), {
     properties: {
       clockwise: {
         type: 'boolean'
-      },
-      type: {
-        const: Modifier.Types.rotate
       }
-    },
-    required: ['type'],
-    type: 'object'
-  })
+    }
+  }))
 }
 
 /**

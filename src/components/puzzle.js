@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
+import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass, Schema } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -651,6 +651,9 @@ export class Puzzle {
     elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0)
   }
 
+  // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
+  static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
+
   static Collision = class {
     constructor (layer, beams, point, item = undefined) {
       this.id = Puzzle.Collision.id(point)
@@ -746,9 +749,6 @@ export class Puzzle {
     }
   }
 
-  // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
-  static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
-
   static #solvedMask = new Puzzle.Mask({
     style: (tile) => {
       const beams = tile.items.filter(Puzzle.#connectedBeams)
@@ -756,5 +756,15 @@ export class Puzzle {
       return { fillColor: chroma.average(colors).hex() }
     },
     tileFilter: (tile) => tile.items.some(Puzzle.#connectedBeams)
+  })
+
+  static Schema = Object.freeze({
+    $id: Schema.$id('puzzle'),
+    properties: {
+      modifiers: {
+        $ref: Schema.$id('modifiers')
+      }
+    },
+    type: 'object'
   })
 }
