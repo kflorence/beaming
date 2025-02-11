@@ -5,7 +5,7 @@ import { Rotate } from './modifiers/rotate'
 import { Toggle } from './modifiers/toggle'
 import { Modifier } from './modifier'
 import { Swap } from './modifiers/swap'
-import { Schema } from './util'
+import { Schema } from './schema'
 
 export function modifierFactory (parent, state, index) {
   let modifier

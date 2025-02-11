@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass, Schema } from './util'
+import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -18,6 +18,7 @@ import { Interact } from './interact'
 import { Tile } from './items/tile'
 import { Editor } from './editor'
 import { View } from './view'
+import { Schema } from './schema'
 
 const elements = Object.freeze({
   footer: document.getElementById('footer'),
@@ -760,10 +761,9 @@ export class Puzzle {
 
   static Schema = Object.freeze({
     $id: Schema.$id('puzzle'),
+    additionalProperties: true,
     properties: {
-      modifiers: {
-        $ref: Schema.$id('modifiers')
-      }
+      layout: Layout.Schema
     },
     type: 'object'
   })

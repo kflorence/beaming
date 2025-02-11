@@ -1,6 +1,7 @@
-import { capitalize, Schema, uniqueId } from './util'
+import { capitalize, uniqueId } from './util'
 import { CompoundPath, Group } from 'paper'
 import { Stateful } from './stateful'
+import { Schema } from './schema'
 
 export class Item extends Stateful {
   center

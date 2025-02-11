@@ -253,23 +253,3 @@ export function uniqueBy (array, key) {
 export function uniqueId () {
   return crypto.randomUUID().split('-')[0]
 }
-
-export class Schema {
-  static $id () {
-    return `${baseUri}/schemas/${Array.from(arguments).map((arg) => arg.toLowerCase()).join('/')}`
-  }
-
-  static typed (path, type) {
-    return {
-      $id: Schema.$id(path, type),
-      properties: {
-        type: {
-          const: type,
-          type: 'string'
-        }
-      },
-      required: ['type'],
-      type: 'object'
-    }
-  }
-}

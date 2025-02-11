@@ -3,8 +3,9 @@ import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
 import { Stateful } from './stateful'
-import { modifierFactory } from './modifierFactory'
+import { modifierFactory, modifiersSchema } from './modifierFactory'
 import { View } from './view'
+import { Schema } from './schema'
 
 export class Layout extends Stateful {
   #tiles = {}
@@ -93,13 +94,9 @@ export class Layout extends Stateful {
       }
     }
 
-    const state = { tiles }
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
-    if (modifiers.length) {
-      state.modifiers = modifiers
-    }
 
-    return state
+    return { tiles, modifiers }
   }
 
   getTile (offset) {
@@ -134,4 +131,12 @@ export class Layout extends Stateful {
     this.modifiers.forEach((modifier) => modifier.detach())
     Object.values(this.layers).forEach((layer) => layer.removeChildren())
   }
+
+  static Schema = Object.freeze({
+    $id: Schema.$id('layout'),
+    properties: {
+      modifiers: modifiersSchema
+    },
+    type: 'object'
+  })
 }

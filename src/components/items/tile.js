@@ -1,8 +1,9 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { itemFactory } from '../itemFactory'
-import { emitEvent, getPointBetween, merge, Schema, sqrt3 } from '../util'
+import { emitEvent, getPointBetween, merge, sqrt3 } from '../util'
 import { modifierFactory } from '../modifierFactory'
+import { Schema } from '../schema'
 
 export class Tile extends Item {
   coordinates

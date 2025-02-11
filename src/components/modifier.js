@@ -1,10 +1,11 @@
-import { capitalize, emitEvent, Schema } from './util'
+import { capitalize, emitEvent } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
 import { Icons } from './icons'
 import { Tile } from './items/tile'
+import { Schema } from './schema'
 
 const modifiers = document.getElementById('modifiers')
 

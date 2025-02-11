@@ -101,6 +101,10 @@ export class State {
     return this.#moveIndex < this.#moves.length - 1 ? this.#moves[this.#moveIndex + 1] : this.#deltas.length - 1
   }
 
+  getDiff (newState) {
+    return jsonDiffPatch.diff(this.#current, newState)
+  }
+
   getId () {
     return this.#id
   }
@@ -175,7 +179,7 @@ export class State {
   }
 
   update (newState) {
-    const delta = jsonDiffPatch.diff(this.#current, newState)
+    const delta = this.getDiff(newState)
     console.debug(this.toString(), 'update', delta)
 
     if (delta !== undefined) {

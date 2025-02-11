@@ -6,7 +6,6 @@ import { Puzzle } from './puzzle'
 import { State } from './state'
 import { getKeyFactory } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
-import { modifiersSchema } from './modifierFactory'
 import { Tile } from './items/tile'
 
 const elements = Object.freeze({
@@ -56,6 +55,10 @@ export class Editor {
     this.#puzzle.layers.edit.addChild(this.group)
   }
 
+  getState () {
+    return JSON.parse(elements.configuration.value)
+  }
+
   isLocked () {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
@@ -63,11 +66,20 @@ export class Editor {
   teardown () {
     this.#eventListener.remove()
     this.group.remove()
+
+    if (this.#editor) {
+      this.#editor.destroy()
+    }
   }
 
   #onConfigurationUpdate () {
     try {
-      const state = JSON.parse(elements.configuration.value)
+      const state = this.getState()
+      if (this.#state.getDiff(state) === undefined) {
+        // No changes
+        return
+      }
+
       this.#puzzle.addMove()
       // Need to force a reload to make sure the UI is in sync with the state
       this.#puzzle.reload(state)
@@ -79,25 +91,37 @@ export class Editor {
 
   #onDialogClose () {
     this.#editor.destroy()
+    this.#editor = undefined
+    this.#onConfigurationUpdate()
   }
 
   #onDialogOpen () {
     const options = {
       disable_collapse: true,
-      // disable_edit_json: true,
+      disable_edit_json: true,
       disable_properties: true,
       enforce_const: true,
+      form_name_root: 'puzzle',
       no_additional_properties: true,
       prompt_before_delete: false,
-      refs: {
-        [modifiersSchema.$id]: modifiersSchema
-      },
-      schema: this.#puzzle.selectedTile ? Tile.Schema : Puzzle.Schema
+      schema: this.#puzzle.selectedTile ? Tile.Schema : Puzzle.Schema,
+      startval: this.#puzzle.selectedTile ? { /* TODO */ } : this.getState()
     }
 
     console.log(JSON.stringify(options, null, 2))
 
     this.#editor = new JSONEditor(elements.editor, options)
+    this.#editor.on('change', this.#onEditorUpdate.bind(this))
+  }
+
+  #onEditorUpdate () {
+    const state = this.getState()
+    if (this.#puzzle.selectedTile) {
+      // TODO
+    } else {
+      Object.assign(state, this.#editor.getValue())
+    }
+    elements.configuration.value = JSON.stringify(state, null, 2)
   }
 
   #onPointerMove (event) {
