@@ -1,17 +1,23 @@
-import { baseUri } from './util'
-
 export class Schema {
   static $id () {
-    return `${baseUri}/schemas/${Array.from(arguments).map((arg) => arg.toLowerCase()).join('/')}`
+    return Array.from(arguments).map((arg) => arg.toLowerCase()).join('/')
+  }
+
+  static $ref (id) {
+    return { $ref: `#/definitions/${id}` }
   }
 
   static typed (path, type) {
     return {
       $id: Schema.$id(path, type),
-      additionalProperties: true,
       properties: {
         type: {
           const: type,
+          options: {
+            containerAttributes: {
+              class: 'hide'
+            }
+          },
           readOnly: true,
           type: 'string'
         }

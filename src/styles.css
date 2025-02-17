@@ -393,6 +393,10 @@ body:not(.edit) #selector {
   cursor: grabbing;
 }
 
+.hide {
+  display: none;
+}
+
 /* https://developers.google.com/fonts/docs/material_icons */
 .material-symbols-outlined {
   font-variation-settings:

@@ -1,7 +1,8 @@
-import { capitalize, getIconElement, getTextElement } from './util'
+import { capitalize, getIconElement, getTextElement, merge } from './util'
 import { Terminus } from './items/terminus'
 import { EventListeners } from './eventListeners'
 import { Puzzle } from './puzzle'
+import { Schema } from './schema'
 
 export class Solution {
   #conditions = []
@@ -34,6 +35,10 @@ export class Solution {
         break
       }
     }
+  }
+
+  static schema (type) {
+    return Schema.typed('solutions', type)
   }
 
   static element = document.getElementById('solution')
@@ -114,6 +119,16 @@ class Connections extends SolutionCondition {
 
     this.#completed.textContent = this.#connections.length.toString()
   }
+
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.connections), {
+    properties: {
+      amount: {
+        minimum: 0,
+        type: 'number'
+      }
+    },
+    required: ['number']
+  }))
 }
 
 class Moves extends SolutionCondition {
@@ -175,4 +190,27 @@ class Moves extends SolutionCondition {
     greaterThan: '>',
     lessThan: '<'
   })
+
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.moves), {
+    properties: {
+      amount: {
+        minimum: 0,
+        type: 'number'
+      },
+      operator: {
+        enum: Object.values(Moves.Operators)
+      }
+    },
+    required: ['number']
+  }))
 }
+
+Solution.Schema = Object.freeze({
+  $id: Schema.$id('solution'),
+  items: {
+    anyOf: [Connections.Schema, Moves.Schema],
+    headerTemplate: 'Solution {{i1}}'
+  },
+  minItems: 1,
+  type: 'array'
+})

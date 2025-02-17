@@ -3,7 +3,7 @@ import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
 import { Stateful } from './stateful'
-import { modifierFactory, modifiersSchema } from './modifierFactory'
+import { Modifiers } from './modifiers'
 import { View } from './view'
 import { Schema } from './schema'
 
@@ -24,7 +24,7 @@ export class Layout extends Stateful {
     this.layers.tiles = new Layer()
 
     this.modifiers = (state.modifiers || [])
-      .map((state, index) => modifierFactory(null, state, index))
+      .map((state, index) => Modifiers.factory(null, state, index))
       .filter((modifier) => modifier !== undefined)
 
     this.parameters = Tile.parameters(state.tile?.height)
@@ -135,7 +135,7 @@ export class Layout extends Stateful {
   static Schema = Object.freeze({
     $id: Schema.$id('layout'),
     properties: {
-      modifiers: modifiersSchema
+      modifiers: Schema.$ref(Modifiers.Schema.$id)
     },
     type: 'object'
   })

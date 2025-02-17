@@ -1,4 +1,4 @@
-import { capitalize, emitEvent } from './util'
+import { capitalize, emitEvent, merge } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -189,7 +189,19 @@ export class Modifier extends Stateful {
   }
 
   static schema (type) {
-    return Schema.typed('modifier', type)
+    return merge(Schema.typed('modifiers', type), {
+      properties: {
+        id: {
+          options: {
+            containerAttributes: {
+              class: 'hide'
+            }
+          },
+          readOnly: true,
+          type: 'number'
+        }
+      }
+    })
   }
 
   static Events = Object.freeze({

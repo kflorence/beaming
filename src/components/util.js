@@ -6,7 +6,6 @@ import { Point } from 'paper'
 
 const location = window.location
 
-export const baseUri = 'https://kflorence.github.io/beaming'
 export const params = new URLSearchParams(location.search)
 export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
@@ -28,6 +27,8 @@ export function addDegrees (original, degrees) {
 export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
+
+export const arrayMergeOverwrite = (target, source) => source
 
 export function base64decode (string) {
   const binString = window.atob(base64unescape(string))
@@ -93,6 +94,10 @@ export function deepEqual (x, y) {
 
 export function emitEvent (event, detail = null) {
   document.dispatchEvent(new CustomEvent(event, { detail }))
+}
+
+export function entries (key, ...values) {
+  return values.map((value) => ([value[key], value]))
 }
 
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
@@ -220,7 +225,12 @@ export function getTextElement (text) {
 }
 
 export function merge () {
-  return deepmerge.all(Array.from(arguments))
+  const args = Array.from(arguments)
+  let options
+  if (!Array.isArray(args[args.length - 1])) {
+    options = args.pop()
+  }
+  return deepmerge.all(Array.from(arguments), options)
 }
 
 export function noop (value) {

@@ -4,7 +4,7 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
-import { getKeyFactory } from './util'
+import { arrayMergeOverwrite, getKeyFactory, merge } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 
@@ -75,6 +75,7 @@ export class Editor {
   #onConfigurationUpdate () {
     try {
       const state = this.getState()
+      console.log('onConfigurationUpdate', state)
       if (this.#state.getDiff(state) === undefined) {
         // No changes
         return
@@ -96,6 +97,7 @@ export class Editor {
   }
 
   #onDialogOpen () {
+    const tile = this.#puzzle.selectedTile
     const options = {
       disable_collapse: true,
       disable_edit_json: true,
@@ -104,8 +106,9 @@ export class Editor {
       form_name_root: 'puzzle',
       no_additional_properties: true,
       prompt_before_delete: false,
-      schema: this.#puzzle.selectedTile ? Tile.Schema : Puzzle.Schema,
-      startval: this.#puzzle.selectedTile ? { /* TODO */ } : this.getState()
+      schema: tile ? Tile.Schema : Puzzle.Schema,
+      startval: tile ? tile.getState() : this.#puzzle.getState(),
+      theme: 'barebones'
     }
 
     console.log(JSON.stringify(options, null, 2))
@@ -115,13 +118,19 @@ export class Editor {
   }
 
   #onEditorUpdate () {
-    const state = this.getState()
-    if (this.#puzzle.selectedTile) {
-      // TODO
-    } else {
-      Object.assign(state, this.#editor.getValue())
-    }
-    elements.configuration.value = JSON.stringify(state, null, 2)
+    const state = this.#puzzle.getState()
+    const value = this.#editor.getValue()
+    const offset = this.#puzzle.selectedTile?.coordinates.offset
+
+    // Update state
+    const newState = merge(
+      offset ? state.layout.tiles[offset.r][offset.c] : state,
+      value,
+      { arrayMerge: arrayMergeOverwrite }
+    )
+
+    // Update configuration
+    elements.configuration.value = JSON.stringify(newState, null, 2)
   }
 
   #onPointerMove (event) {

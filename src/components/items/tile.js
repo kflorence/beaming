@@ -1,8 +1,8 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
-import { itemFactory } from '../itemFactory'
-import { emitEvent, getPointBetween, merge, sqrt3 } from '../util'
-import { modifierFactory } from '../modifierFactory'
+import { Items } from '../items'
+import { emitEvent, entries, getPointBetween, merge, sqrt3 } from '../util'
+import { Modifiers } from '../modifiers'
 import { Schema } from '../schema'
 
 export class Tile extends Item {
@@ -46,11 +46,11 @@ export class Tile extends Item {
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
-      .map((state, index) => itemFactory(this, state, index))
+      .map((state, index) => Items.factory(this, state, index))
       .filter((item) => item !== undefined)
 
     this.modifiers = (state.modifiers || [])
-      .map((state, index) => modifierFactory(this, state, index))
+      .map((state, index) => Modifiers.factory(this, state, index))
       .filter((modifier) => modifier !== undefined)
 
     this.modifiers.forEach((modifier) => this.updateIcon(modifier))
@@ -80,21 +80,11 @@ export class Tile extends Item {
   }
 
   getState () {
-    const state = { id: this.id, type: this.type }
-
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())
-    if (items.length) {
-      state.items = items
-    }
-
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
-    if (modifiers.length) {
-      state.modifiers = modifiers
-    }
 
-    // noinspection JSValidateTypes
-    return state
+    return { id: this.id, items, modifiers, type: this.type }
   }
 
   onTap (event) {
@@ -191,13 +181,12 @@ export class Tile extends Item {
     Selected: 'tile-selected'
   })
 
-  static MaxModifiers = 6
+  static MaxModifiers = Modifiers.Schema.maxItems
 
   static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
+    definitions: Object.fromEntries(entries('$id', Modifiers.Schema)),
     properties: {
-      modifiers: {
-        $ref: Schema.$id('modifiers')
-      }
+      modifiers: Schema.$ref(Modifiers.Schema.$id)
     }
   }))
 
