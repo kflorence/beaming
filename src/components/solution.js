@@ -127,7 +127,7 @@ class Connections extends SolutionCondition {
         type: 'number'
       }
     },
-    required: ['number']
+    required: ['amount']
   }))
 }
 
@@ -198,10 +198,11 @@ class Moves extends SolutionCondition {
         type: 'number'
       },
       operator: {
-        enum: Object.values(Moves.Operators)
+        enum: Object.values(Moves.Operators),
+        type: 'string'
       }
     },
-    required: ['number']
+    required: ['amount']
   }))
 }
 
@@ -211,6 +212,5 @@ Solution.Schema = Object.freeze({
     anyOf: [Connections.Schema, Moves.Schema],
     headerTemplate: 'Solution {{i1}}'
   },
-  minItems: 1,
   type: 'array'
 })

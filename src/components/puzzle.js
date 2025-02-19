@@ -773,6 +773,11 @@ export class Puzzle {
         type: 'number'
       }
     },
+    required: [
+      'layout',
+      'solution',
+      'version'
+    ],
     type: 'object'
   })
 }

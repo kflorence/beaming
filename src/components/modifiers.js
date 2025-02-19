@@ -8,22 +8,17 @@ import { Swap } from './modifiers/swap'
 import { Schema } from './schema'
 
 export class Modifiers {
-  static Schemas = Object.freeze([
-    Immutable.Schema,
-    Lock.Schema,
-    Move.Schema,
-    Rotate.Schema,
-    Swap.Schema,
-    Toggle.Schema
-  ])
-
   static Schema = Object.freeze({
     $id: Schema.$id('modifiers'),
     items: {
-      anyOf: Modifiers.Schemas,
-      // TODO this could be updated to reference schema IDs once this issue is resolved:
-      //  https://github.com/json-editor/json-editor/issues/1648
-      // anyOf: Object.keys(Modifier.Types).map((type) => (Schema.$ref(Schema.$id('modifiers', type)))),
+      anyOf: [
+        Immutable.Schema,
+        Lock.Schema,
+        Move.Schema,
+        Rotate.Schema,
+        Swap.Schema,
+        Toggle.Schema
+      ],
       headerTemplate: 'Modifier {{i1}}'
     },
     minItems: 0,

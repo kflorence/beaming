@@ -1,6 +1,8 @@
 export class Schema {
   static $id () {
-    return Array.from(arguments).map((arg) => arg.toLowerCase()).join('/')
+    // Can't use forward slash here:
+    // https://github.com/json-editor/json-editor/issues/1648
+    return Array.from(arguments).map((arg) => arg.toLowerCase()).join('-')
   }
 
   static $ref (id) {
