@@ -50,7 +50,8 @@ export class Tile extends Item {
       .filter((item) => item !== undefined)
 
     this.modifiers = (state.modifiers || [])
-      .map((state, index) => Modifiers.factory(this, state, index))
+      // Adding 10 to index to ensure modifiers on tiles are sorted last
+      .map((state, index) => Modifiers.factory(this, state, 10 + index))
       .filter((modifier) => modifier !== undefined)
 
     this.modifiers.forEach((modifier) => this.updateIcon(modifier))

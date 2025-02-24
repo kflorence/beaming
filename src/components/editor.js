@@ -99,13 +99,19 @@ export class Editor {
   #onDialogOpen () {
     const tile = this.#puzzle.selectedTile
     const options = {
+      disable_array_delete_all_rows: true,
+      disable_array_delete_last_row: true,
       disable_collapse: true,
       disable_edit_json: true,
       disable_properties: true,
       enforce_const: true,
       form_name_root: 'puzzle',
-      no_additional_properties: true,
+      // There is no support for material icons, so we have to hack it into another icon lib
+      iconlib: 'fontawesome3',
+      // Enabling this causes items to not match in anyOf :(
+      // no_additional_properties: true,
       prompt_before_delete: false,
+      remove_button_labels: true,
       schema: tile ? Tile.Schema : Puzzle.Schema,
       startval: tile ? tile.getState() : this.#puzzle.getState(),
       theme: 'barebones'
@@ -124,11 +130,11 @@ export class Editor {
 
     // Update state
     const newState = merge(
-      offset ? state.layout.tiles[offset.r][offset.c] : state,
-      value,
+      state,
+      offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,
       { arrayMerge: arrayMergeOverwrite }
     )
-
+    console.log('state', state, 'value', value, 'newState', newState)
     // Update configuration
     elements.configuration.value = JSON.stringify(newState, null, 2)
   }

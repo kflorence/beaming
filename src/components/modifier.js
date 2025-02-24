@@ -1,4 +1,4 @@
-import { capitalize, emitEvent, merge } from './util'
+import { capitalize, emitEvent, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -8,9 +8,6 @@ import { Tile } from './items/tile'
 import { Schema } from './schema'
 
 const modifiers = document.getElementById('modifiers')
-
-// Use incrementing IDs to preserve sort order
-let uniqueId = 0
 
 export class Modifier extends Stateful {
   #container
@@ -22,18 +19,20 @@ export class Modifier extends Stateful {
   element
   disabled = false
   immutable = false
+  index
   name
   parent
   tile
   title
   type
 
-  constructor (tile, state) {
+  constructor (tile, state, index) {
     // Retain ID from state if it exists, otherwise generate a new one
-    state.id ??= uniqueId++
+    state.id ??= uniqueId()
     super(state)
 
     this.id = state.id
+    this.index = index
     this.parent = tile
     this.type = state.type
   }
@@ -189,19 +188,7 @@ export class Modifier extends Stateful {
   }
 
   static schema (type) {
-    return merge(Schema.typed('modifiers', type), {
-      properties: {
-        id: {
-          options: {
-            containerAttributes: {
-              class: 'hide'
-            }
-          },
-          readOnly: true,
-          type: 'number'
-        }
-      }
-    })
+    return Schema.typed('modifiers', type)
   }
 
   static Events = Object.freeze({

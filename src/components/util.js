@@ -224,13 +224,8 @@ export function getTextElement (text) {
   return span
 }
 
-export function merge () {
-  const args = Array.from(arguments)
-  let options
-  if (!Array.isArray(args[args.length - 1])) {
-    options = args.pop()
-  }
-  return deepmerge.all(Array.from(arguments), options)
+export function merge (a, b, options) {
+  return deepmerge.all(Array.isArray(a) ? a : [a, b], options)
 }
 
 export function noop (value) {

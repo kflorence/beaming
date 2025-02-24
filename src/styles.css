@@ -170,6 +170,23 @@ body > footer.active {
   display: flex;
 }
 
+/* .material-symbols-outlined */
+i {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
 main {
   flex: auto;
 }
@@ -243,6 +260,77 @@ main {
 #modifiers li {
   border: 1px solid #ddd;
   margin: 0 0 -1px -1px;
+}
+
+#puzzle-editor {
+  margin-bottom: 1em;
+}
+
+#puzzle-editor button,
+#puzzle-editor input,
+#puzzle-editor select {
+  padding: 0.2em;
+}
+
+#puzzle-editor button + button {
+  margin-left: 0.5em;
+}
+
+#puzzle-editor .form-control label {
+  margin-right: 0.5em;
+}
+
+#puzzle-editor .je-indented-panel {
+  border-bottom: 1px solid #ddd;
+  margin-left: 1em;
+  padding: 0.5em 0 0.5em 0.5em;
+}
+
+#puzzle-editor .je-indented-panel > b {
+  display: none;
+}
+
+/* these are the spans that contain the button controls */
+#puzzle-editor .je-indented-panel > span:last-child {
+  display: block;
+  margin-top: 0.5em;
+}
+
+#puzzle-editor [data-schemapath="puzzle.layout.tiles"] {
+  display: none;
+}
+
+/* hides all schema paths which end in 'id' */
+#puzzle-editor [data-schemapath$=id] {
+  display: none;
+}
+
+#puzzle-editor [data-schematype=array] > .je-indented-panel {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#puzzle-editor .je-header {
+  display: flex;
+}
+
+#puzzle-editor .je-object__controls {
+  margin: 0;
+}
+
+#puzzle-editor .row,
+#puzzle-editor .je-indented-panel + .je-indented-panel {
+  padding-top: 0.5em;
+}
+
+#puzzle-editor .row:has(> .hide) {
+  padding-top: 0;
+}
+
+#puzzle-editor .je-switcher {
+  font-weight: bold;
+  margin: 0;
 }
 
 #puzzle-id {
@@ -397,7 +485,28 @@ body:not(.edit) #selector {
   display: none;
 }
 
+.icon-arrow-down:before {
+  content: 'arrow_downward'
+}
+
+.icon-arrow-up:before {
+  content: 'arrow_upward'
+}
+
+.icon-minus:before {
+  content: 'remove'
+}
+
+.icon-plus:before {
+  content: 'add'
+}
+
+.icon-trash:before {
+  content: 'delete'
+}
+
 /* https://developers.google.com/fonts/docs/material_icons */
+i,
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,

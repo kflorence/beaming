@@ -288,7 +288,7 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return (tile?.modifiers || []).concat(this.layout.modifiers)
+    return this.layout.modifiers.concat(tile?.modifiers || [])
       .filter((modifier) => !modifier.immutable)
       .sort((a, b) => a.id - b.id)
   }
@@ -770,6 +770,7 @@ export class Puzzle {
       layout: Layout.Schema,
       solution: Solution.Schema,
       version: {
+        default: 0,
         type: 'number'
       }
     },
