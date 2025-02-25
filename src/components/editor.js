@@ -75,7 +75,6 @@ export class Editor {
   #onConfigurationUpdate () {
     try {
       const state = this.getState()
-      console.log('onConfigurationUpdate', state)
       if (this.#state.getDiff(state) === undefined) {
         // No changes
         return
@@ -113,6 +112,7 @@ export class Editor {
       prompt_before_delete: false,
       remove_button_labels: true,
       schema: tile ? Tile.Schema : Puzzle.Schema,
+      show_opt_in: true,
       startval: tile ? tile.getState() : this.#puzzle.getState(),
       theme: 'barebones'
     }
@@ -134,7 +134,9 @@ export class Editor {
       offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,
       { arrayMerge: arrayMergeOverwrite }
     )
+
     console.log('state', state, 'value', value, 'newState', newState)
+
     // Update configuration
     elements.configuration.value = JSON.stringify(newState, null, 2)
   }
@@ -188,6 +190,11 @@ export class Editor {
 
     this.#puzzle.addMove()
     this.#puzzle.updateState()
+    this.#puzzle.getBeams().forEach((beam) => {
+      // Re-evaluate all the beams
+      beam.done = false
+    })
+
     this.#puzzle.update()
   }
 

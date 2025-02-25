@@ -94,9 +94,18 @@ export class Layout extends Stateful {
       }
     }
 
-    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    const state = {}
 
-    return { tiles, modifiers }
+    if (Object.keys(tiles).length) {
+      state.tiles = tiles
+    }
+
+    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    if (modifiers.length) {
+      state.modifiers = modifiers
+    }
+
+    return state
   }
 
   getTile (offset) {
@@ -135,7 +144,7 @@ export class Layout extends Stateful {
   static Schema = Object.freeze({
     $id: Schema.$id('layout'),
     properties: {
-      modifiers: Schema.$ref(Modifiers.Schema.$id)
+      modifiers: Modifiers.Schema
     },
     type: 'object'
   })

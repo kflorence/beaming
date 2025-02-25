@@ -1,9 +1,8 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { Items } from '../items'
-import { emitEvent, entries, getPointBetween, merge, sqrt3 } from '../util'
+import { emitEvent, getPointBetween, merge, sqrt3 } from '../util'
 import { Modifiers } from '../modifiers'
-import { Schema } from '../schema'
 
 export class Tile extends Item {
   coordinates
@@ -81,11 +80,20 @@ export class Tile extends Item {
   }
 
   getState () {
+    const state = { id: this.id, type: this.type }
+
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())
-    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    if (items.length) {
+      state.items = items
+    }
 
-    return { id: this.id, items, modifiers, type: this.type }
+    const modifiers = this.modifiers.map((modifier) => modifier.getState())
+    if (modifiers.length) {
+      state.modifiers = modifiers
+    }
+
+    return state
   }
 
   onTap (event) {
@@ -185,9 +193,9 @@ export class Tile extends Item {
   static MaxModifiers = Modifiers.Schema.maxItems
 
   static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
-    definitions: Object.fromEntries(entries('$id', Modifiers.Schema)),
     properties: {
-      modifiers: Schema.$ref(Modifiers.Schema.$id)
+      items: Items.Schema,
+      modifiers: Modifiers.Schema
     }
   }))
 

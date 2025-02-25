@@ -25,14 +25,15 @@ export class Beam extends Item {
   #stepIndex = -1
   #steps = []
 
-  constructor (terminus, state, configuration) {
+  constructor (terminus, state) {
     // Exclude from modification
     state.immutable = true
+    state.type = Item.Types.beam
 
     super(...arguments)
 
     this.group = null
-    this.#direction = configuration.direction
+    this.#direction = state.direction
 
     this.#path = {
       closed: false,
@@ -448,8 +449,8 @@ export class Beam extends Item {
     )
 
     const items = uniqueBy(
-      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items),
-      'id'
+      'id',
+      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items)
     )
 
     console.debug(this.toString(), 'collision items:', items)

@@ -3,10 +3,18 @@ import { Path } from 'paper'
 import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getColorElements, emitEvent, getOppositeDirection, addDirection, subtractDirection } from '../util'
+import {
+  getColorElements,
+  emitEvent,
+  getOppositeDirection,
+  addDirection,
+  subtractDirection,
+  merge, uniqueBy
+} from '../util'
 import { Beam } from './beam'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
+import { Schema } from '../schema'
 
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   sortOrder = 2
@@ -16,22 +24,28 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   constructor (tile, state) {
     super(...arguments)
 
+    state.openings ??= []
+    state.openings = uniqueBy('direction', state.openings)
+
     const colors = state.openings.filter((opening) => opening?.color)
       .flatMap((opening) => Array.isArray(opening.color) ? opening.color : [opening.color])
+
+    if (!colors.length && !state.color) {
+      throw new Error('Color must be defined on terminus or opening: ' + this.toString())
+    }
+
     const color = chroma.average(
       colors.length ? colors : (Array.isArray(state.color) ? state.color : [state.color])
     ).hex()
 
-    const openings = state.openings.map((opening, direction) =>
-      opening
-        ? new Terminus.#Opening(
-          opening.color ?? color,
-          direction,
-          opening.connected,
-          opening.toggled ?? state.toggled
-        )
-        : opening
-    ).filter((opening) => opening)
+    const openings = state.openings.map((opening, index) =>
+      new Terminus.Opening(
+        index,
+        opening.color ?? color,
+        opening.direction,
+        opening.connected,
+        opening.toggled ?? state.toggled
+      ))
 
     this.#ui = Terminus.ui(tile, color, openings)
 
@@ -43,7 +57,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.toggled = openings.some((opening) => opening.toggled)
 
     // Needs to be last since it references 'this'
-    this.beams = openings.map((opening) => new Beam(this, state.openings[opening.direction], opening))
+    this.beams = openings.map((opening) => new Beam(this, opening))
 
     this.update()
   }
@@ -132,7 +146,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.updateState((state) => {
       this.openings.filter((opening) => !opening.connected).forEach((opening) => {
         opening.toggle()
-        state.openings[opening.direction].toggled = opening.toggled
+        state.openings[opening.index].toggled = opening.toggled
       })
     })
     this.update()
@@ -186,8 +200,16 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     return { openings, radius, terminus }
   }
 
-  static #Opening = class {
-    constructor (color, direction, connected, toggled) {
+  static Opening = class {
+    color
+    colors
+    connected
+    direction
+    index
+    toggled
+
+    constructor (index, color, direction, connected, toggled) {
+      this.index = index
       this.colors = Array.isArray(color) ? color : [color]
       this.color = chroma.average(this.colors).hex()
       this.direction = direction
@@ -206,10 +228,49 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     toggle () {
       this.toggled = !this.toggled
     }
+
+    static Schema = Object.freeze({
+      $id: Schema.$id('terminus', 'opening'),
+      properties: {
+        color: {
+          default: null,
+          format: 'color',
+          type: 'string'
+        },
+        direction: {
+          enum: [0, 1, 2, 3, 4, 5],
+          options: {
+            enum_titles: ['Northwest', 'Northeast', 'East', 'Southeast', 'Southwest', 'West']
+          },
+          type: 'number'
+        },
+        toggled: {
+          type: 'boolean'
+        }
+      },
+      required: ['direction'],
+      type: 'object'
+    })
   }
 
   static Events = Object.freeze({
     Connection: 'terminus-connection',
     Disconnection: 'terminus-disconnection'
   })
+
+  static Schema = Object.freeze(merge(Item.schema(Item.Types.terminus), {
+    properties: {
+      color: {
+        format: 'color',
+        type: 'string'
+      },
+      openings: {
+        items: Terminus.Opening.Schema,
+        type: 'array'
+      },
+      toggled: {
+        type: 'boolean'
+      }
+    }
+  }))
 }

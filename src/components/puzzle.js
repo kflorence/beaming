@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, entries, fuzzyEquals, noop, params, removeClass } from './util'
+import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -19,7 +19,6 @@ import { Tile } from './items/tile'
 import { Editor } from './editor'
 import { View } from './view'
 import { Schema } from './schema'
-import { Modifiers } from './modifiers'
 
 const elements = Object.freeze({
   footer: document.getElementById('footer'),
@@ -289,7 +288,6 @@ export class Puzzle {
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return this.layout.modifiers.concat(tile?.modifiers || [])
-      .filter((modifier) => !modifier.immutable)
       .sort((a, b) => a.id - b.id)
   }
 
@@ -762,7 +760,6 @@ export class Puzzle {
 
   static Schema = Object.freeze({
     $id: Schema.$id('puzzle'),
-    definitions: Object.fromEntries(entries('$id', Modifiers.Schema)),
     properties: {
       author: {
         type: 'string'
@@ -776,7 +773,6 @@ export class Puzzle {
     },
     required: [
       'layout',
-      'solution',
       'version'
     ],
     type: 'object'

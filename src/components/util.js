@@ -250,7 +250,7 @@ export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
 }
 
-export function uniqueBy (array, key) {
+export function uniqueBy (key, array) {
   const values = array.map((value) => value[key])
   return array.filter((value, index) => !values.includes(value[key], index + 1))
 }

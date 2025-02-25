@@ -4,8 +4,19 @@ import { Terminus } from './items/terminus'
 import { Reflector } from './items/reflector'
 import { Wall } from './items/wall'
 import { Item } from './item'
+import { Schema } from './schema'
 
 export class Items {
+  static Schema = Object.freeze({
+    $id: Schema.$id('items'),
+    items: {
+      anyOf: [
+        Terminus.Schema
+      ]
+    },
+    type: 'array'
+  })
+
   static factory (parent, state, index) {
     let item
 
