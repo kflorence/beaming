@@ -225,7 +225,16 @@ export function getTextElement (text) {
 }
 
 export function merge (a, b, options) {
-  return deepmerge.all(Array.isArray(a) ? a : [a, b], options)
+  let args
+
+  if (Array.isArray(a)) {
+    args = a
+    options = b
+  } else {
+    args = [a, b]
+  }
+
+  return deepmerge.all(args, options)
 }
 
 export function noop (value) {

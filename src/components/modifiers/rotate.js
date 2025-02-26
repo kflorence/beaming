@@ -105,3 +105,22 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     this.rotateGroup(rotation)
   }
 }
+
+rotatable.Schema = {
+  properties: {
+    direction: {
+      type: 'number'
+    },
+    rotatable: {
+      default: true,
+      type: 'boolean'
+    },
+    rotation: {
+      type: 'number'
+    },
+    rotationDegrees: {
+      enum: [30, 60, 90],
+      type: 'number'
+    }
+  }
+}

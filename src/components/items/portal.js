@@ -4,7 +4,8 @@ import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
-import { coalesce, getOppositeDirection } from '../util'
+import { coalesce, getOppositeDirection, merge } from '../util'
+import { Schema } from '../schema'
 
 export class Portal extends movable(rotatable(Item)) {
   #directions = {}
@@ -237,4 +238,15 @@ export class Portal extends movable(rotatable(Item)) {
     // - direction beam was traveling when it reached the entry portal
     return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction
   }
+
+  static Schema = Object.freeze(merge([
+    Item.schema(Item.Types.portal),
+    movable.Schema,
+    rotatable.Schema,
+    {
+      properties: {
+        direction: Schema.direction
+      }
+    }
+  ]))
 }

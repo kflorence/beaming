@@ -107,6 +107,7 @@ export class Editor {
       form_name_root: 'puzzle',
       // There is no support for material icons, so we have to hack it into another icon lib
       iconlib: 'fontawesome3',
+      keep_oneof_values: false,
       // Enabling this causes items to not match in anyOf :(
       // no_additional_properties: true,
       prompt_before_delete: false,

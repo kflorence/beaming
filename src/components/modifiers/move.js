@@ -111,3 +111,12 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
 
   onMove () {}
 }
+
+movable.Schema = {
+  properties: {
+    movable: {
+      default: true,
+      type: 'boolean'
+    }
+  }
+}

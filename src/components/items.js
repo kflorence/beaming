@@ -11,7 +11,11 @@ export class Items {
     $id: Schema.$id('items'),
     items: {
       anyOf: [
-        Terminus.Schema
+        Filter.Schema,
+        Portal.Schema,
+        Reflector.Schema,
+        Terminus.Schema,
+        Wall.Schema
       ]
     },
     type: 'array'

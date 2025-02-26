@@ -231,19 +231,10 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
     static Schema = Object.freeze({
       $id: Schema.$id('terminus', 'opening'),
+      headerTemplate: 'Opening {{i1}}',
       properties: {
-        color: {
-          default: null,
-          format: 'color',
-          type: 'string'
-        },
-        direction: {
-          enum: [0, 1, 2, 3, 4, 5],
-          options: {
-            enum_titles: ['Northwest', 'Northeast', 'East', 'Southeast', 'Southwest', 'West']
-          },
-          type: 'number'
-        },
+        color: Schema.color,
+        direction: Schema.direction,
         toggled: {
           type: 'boolean'
         }
@@ -258,19 +249,19 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     Disconnection: 'terminus-disconnection'
   })
 
-  static Schema = Object.freeze(merge(Item.schema(Item.Types.terminus), {
-    properties: {
-      color: {
-        format: 'color',
-        type: 'string'
-      },
-      openings: {
-        items: Terminus.Opening.Schema,
-        type: 'array'
-      },
-      toggled: {
-        type: 'boolean'
+  static Schema = Object.freeze(merge([
+    Item.schema(Item.Types.terminus),
+    movable.Schema,
+    rotatable.Schema,
+    toggleable.Schema,
+    {
+      properties: {
+        color: Schema.color,
+        openings: {
+          items: Terminus.Opening.Schema,
+          type: 'array'
+        }
       }
     }
-  }))
+  ]))
 }

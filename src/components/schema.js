@@ -9,6 +9,19 @@ export class Schema {
     return { $ref: `#/definitions/${id}` }
   }
 
+  static color = {
+    format: 'color',
+    type: 'string'
+  }
+
+  static direction = {
+    enum: [0, 1, 2, 3, 4, 5],
+    options: {
+      enum_titles: ['Northwest', 'Northeast', 'East', 'Southeast', 'Southwest', 'West']
+    },
+    type: 'number'
+  }
+
   static typed (path, type) {
     return {
       $id: Schema.$id(path, type),

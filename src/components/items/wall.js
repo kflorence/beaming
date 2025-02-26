@@ -1,8 +1,9 @@
 import { Item } from '../item'
 import { Path } from 'paper'
-import { addDirection } from '../util'
+import { addDirection, merge } from '../util'
 import { rotatable } from '../modifiers/rotate'
 import { movable } from '../modifiers/move'
+import { Schema } from '../schema'
 
 export class Wall extends movable(rotatable(Item)) {
   sortOrder = 1
@@ -43,4 +44,26 @@ export class Wall extends movable(rotatable(Item)) {
       })
     })
   }
+
+  static Schema = Object.freeze(merge([
+    Item.schema(Item.Types.wall),
+    movable.Schema,
+    rotatable.Schema,
+    {
+      properties: {
+        directions: {
+          items: Schema.direction,
+          minItems: 1,
+          maxItems: 6,
+          type: 'array',
+          uniqueItems: true
+        },
+        immutable: {
+          default: true,
+          type: 'boolean'
+        }
+      },
+      required: ['directions']
+    }
+  ]))
 }

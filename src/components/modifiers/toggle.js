@@ -79,3 +79,15 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     this.onToggle()
   }
 }
+
+toggleable.Schema = {
+  properties: {
+    toggleable: {
+      default: true,
+      type: 'boolean'
+    },
+    toggled: {
+      type: 'boolean'
+    }
+  }
+}
