@@ -22,13 +22,8 @@
               "color": "blue",
               "openings": [
                 {
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null,
-                null
+                  "direction": 0
+                }
               ],
               "type": "Terminus"
             }
@@ -41,15 +36,10 @@
             {
               "color": "red",
               "openings": [
-                null,
                 {
-                  "toggled": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
+                  "direction": 1,
+                  "toggled": true
+                }
               ],
               "type": "Terminus"
             }
@@ -73,15 +63,10 @@
             {
               "color": "blue",
               "openings": [
-                null,
-                null,
-                null,
                 {
-                  "toggled": true,
-                  "type": "Beam"
-                },
-                null,
-                null
+                  "direction": 3,
+                  "toggled": true
+                }
               ],
               "type": "Terminus"
             }

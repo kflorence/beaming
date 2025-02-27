@@ -4,16 +4,18 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
-import { arrayMergeOverwrite, getKeyFactory, merge } from './util'
+import { arrayMergeOverwrite, debounce, getKeyFactory, merge } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
+import { Gutter } from './gutter'
 
 const elements = Object.freeze({
-  configuration: document.getElementById('configuration'),
-  dialog: document.getElementById('dialog-settings'),
-  editor: document.getElementById('puzzle-editor'),
-  lock: document.getElementById('lock'),
-  recenter: document.getElementById('recenter')
+  configuration: document.getElementById('editor-configuration'),
+  editor: document.getElementById('editor'),
+  lock: document.getElementById('editor-lock'),
+  puzzle: document.getElementById('puzzle'),
+  recenter: document.getElementById('editor-recenter'),
+  wrapper: document.getElementById('editor-wrapper')
 })
 
 const localStorage = window.localStorage
@@ -24,6 +26,7 @@ export class Editor {
 
   #editor
   #eventListener = new EventListeners({ context: this })
+  #gutter
   #hover
   #layout
   #puzzle
@@ -38,16 +41,17 @@ export class Editor {
 
     this.#eventListener.add([
       { element: elements.configuration, handler: this.#onConfigurationUpdate, type: 'focusout' },
-      { element: elements.dialog, handler: this.#onDialogClose, type: 'close' },
-      { element: elements.dialog, handler: this.#onDialogOpen, type: 'open' },
       { element: puzzle.element, handler: this.#onPointerMove, type: 'pointermove' },
       { handler: this.#onPuzzleUpdate, type: Puzzle.Events.Updated },
       { element: elements.recenter, handler: this.#onRecenter, type: 'click' },
       { element: puzzle.element, handler: this.#onTap, type: 'tap' },
-      { element: elements.lock, handler: this.#toggleLock, type: 'click' }
+      { element: elements.lock, handler: this.#toggleLock, type: 'click' },
+      { type: Gutter.Events.Moved, handler: this.#onResize },
+      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) }
     ])
 
-    document.body.classList.add(Editor.ClassNames.Edit)
+    this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
+
     elements.configuration.value = state.getCurrentJSON()
     this.#updateLock()
 
@@ -64,6 +68,7 @@ export class Editor {
   }
 
   teardown () {
+    this.#gutter.teardown()
     this.#eventListener.remove()
     this.group.remove()
 
@@ -89,13 +94,13 @@ export class Editor {
     }
   }
 
-  #onDialogClose () {
+  #destroyEditor () {
     this.#editor.destroy()
     this.#editor = undefined
     this.#onConfigurationUpdate()
   }
 
-  #onDialogOpen () {
+  #createEditor () {
     const tile = this.#puzzle.selectedTile
     const options = {
       disable_array_delete_all_rows: true,
@@ -172,7 +177,20 @@ export class Editor {
     View.setCenter(this.#layout.getCenter())
   }
 
+  #onResize () {
+    // TODO store the pane width in cache via View so it will be sticky
+    this.#puzzle.resize()
+    this.#onRecenter()
+    // For some reason, without reload, setting viewSize alone breaks the project coordinate space, maybe:
+    // https://github.com/paperjs/paper.js/issues/1757
+    // Forcing a reload fixes it.
+    this.#puzzle.reload()
+  }
+
   #onTap (event) {
+    // TODO: need to create/destroy editor based on whether a tile is selected
+    //  - when unselected, display global editor
+    //  - when selected, display tile editor
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
       return

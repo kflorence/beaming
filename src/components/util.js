@@ -92,28 +92,17 @@ export function deepEqual (x, y) {
     : (x === y)
 }
 
-export function emitEvent (event, detail = null) {
-  document.dispatchEvent(new CustomEvent(event, { detail }))
-}
-
-export function entries (key, ...values) {
-  return values.map((value) => ([value[key], value]))
+export function emitEvent (type, detail = null) {
+  document.dispatchEvent(new CustomEvent(type, { detail }))
 }
 
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
   return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
 }
 
-export function getCentroid (triangle) {
-  const segments = triangle.segments
-  const vertex = segments[0].point
-  const opposite = segments[1].point.subtract(segments[1].point.subtract(segments[2].point).divide(2))
-  return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
-}
-
 export function getColorElement (color) {
   const span = document.createElement('span')
-  span.classList.add('beam')
+  span.classList.add('color')
   span.style.backgroundColor = color
   span.title = color
   return span
@@ -157,7 +146,7 @@ export function getDistance (point) {
 
 export function getIconElement (name, title) {
   const span = document.createElement('span')
-  span.classList.add('icon', 'material-symbols-outlined')
+  span.classList.add('icon')
   span.textContent = name
   span.title = title ?? capitalize(name)
   return span

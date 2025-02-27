@@ -21,18 +21,18 @@ import { View } from './view'
 import { Schema } from './schema'
 
 const elements = Object.freeze({
-  footer: document.getElementById('footer'),
-  footerMessage: document.getElementById('footer-message'),
-  headerMessage: document.getElementById('header-message'),
-  main: document.getElementById('main'),
-  next: document.getElementById('next'),
-  previous: document.getElementById('previous'),
-  puzzle: document.getElementById('puzzle'),
-  puzzleId: document.getElementById('puzzle-id'),
-  redo: document.getElementById('redo'),
-  reset: document.getElementById('reset'),
-  undo: document.getElementById('undo'),
-  title: document.querySelector('title')
+  canvas: document.getElementById('puzzle-canvas'),
+  footer: document.getElementById('puzzle-footer'),
+  footerMessage: document.getElementById('puzzle-footer-message'),
+  headerMessage: document.getElementById('puzzle-header-message'),
+  id: document.getElementById('puzzle-id'),
+  next: document.getElementById('puzzle-next'),
+  previous: document.getElementById('puzzle-previous'),
+  redo: document.getElementById('puzzle-redo'),
+  reset: document.getElementById('puzzle-reset'),
+  undo: document.getElementById('puzzle-undo'),
+  title: document.querySelector('title'),
+  wrapper: document.getElementById('puzzle-wrapper')
 })
 
 // There are various spots below that utilize setTimeout in order to process events in order and to prevent
@@ -41,7 +41,7 @@ const elements = Object.freeze({
 export class Puzzle {
   connections = []
   debug = false
-  element = elements.puzzle
+  element = elements.canvas
   error = false
   layers = {}
   message
@@ -63,9 +63,14 @@ export class Puzzle {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
     paper.settings.insertItems = false
     // noinspection JSCheckFunctionSignatures
-    paper.setup(elements.puzzle)
+    paper.setup(elements.canvas)
 
-    this.#resize()
+    if (params.has(State.ParamKeys.edit)) {
+      // This needs to be done before initial resize
+      document.body.classList.add(Editor.ClassNames.Edit)
+    }
+
+    this.resize()
 
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
@@ -74,7 +79,7 @@ export class Puzzle {
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
-      { type: 'change', element: elements.puzzleId, handler: this.#onSelect },
+      { type: 'change', element: elements.id, handler: this.#onSelect },
       { type: 'click', element: elements.next, handler: this.#next },
       { type: 'click', element: elements.previous, handler: this.#previous },
       { type: 'click', element: elements.redo, handler: this.#redo },
@@ -83,12 +88,12 @@ export class Puzzle {
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
-      { type: 'resize', element: window, handler: debounce(this.#resize) },
+      { type: 'resize', element: window, handler: debounce(this.resize) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
-      { type: 'tap', element: elements.puzzle, handler: this.#onTap }
+      { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
 
-    this.#interact = new Interact(elements.puzzle)
+    this.#interact = new Interact(elements.canvas)
     this.#updateDropdown()
 
     this.select()
@@ -205,6 +210,25 @@ export class Puzzle {
     }
 
     emitEvent(Puzzle.Events.Updated, { state: this.#state })
+  }
+
+  resize () {
+    const { width, height } = elements.wrapper.getBoundingClientRect()
+
+    const newSize = new Size(width, height)
+    if (paper.view.viewSize.equals(newSize)) {
+      // Nothing to do
+      return
+    }
+
+    elements.canvas.height = height
+    elements.canvas.width = width
+    elements.canvas.style.height = height + 'px'
+    elements.canvas.style.width = width + 'px'
+
+    // Beware: updating this without reloading will cause issues with the project coordinate space
+    // See: https://github.com/paperjs/paper.js/issues/1757
+    paper.view.viewSize = newSize
   }
 
   select (id) {
@@ -407,7 +431,7 @@ export class Puzzle {
   }
 
   #onSolved () {
-    if (this.solved || this.#editor) {
+    if (this.solved) {
       return
     }
 
@@ -484,13 +508,6 @@ export class Puzzle {
     if (this.#state.reset()) {
       this.reload()
     }
-  }
-
-  #resize () {
-    const { width, height } = elements.main.getBoundingClientRect()
-    elements.puzzle.style.height = height + 'px'
-    elements.puzzle.style.width = width + 'px'
-    paper.view.viewSize = new Size(width, height)
   }
 
   #setup () {
@@ -583,7 +600,7 @@ export class Puzzle {
   }
 
   #updateDropdown () {
-    elements.puzzleId.replaceChildren()
+    elements.id.replaceChildren()
 
     // TODO support pulling custom IDs from local cache
     const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
@@ -596,11 +613,11 @@ export class Puzzle {
       const $option = document.createElement('option')
       $option.value = option.id
       $option.innerText = option.title
-      elements.puzzleId.append($option)
+      elements.id.append($option)
     }
 
     // Select current ID
-    elements.puzzleId.value = id
+    elements.id.value = id
   }
 
   #updateBeams () {
@@ -719,7 +736,7 @@ export class Puzzle {
   static ClassNames = Object.freeze({
     Active: 'active',
     Disabled: 'disabled',
-    Icon: 'material-symbols-outlined'
+    Icon: 'icon'
   })
 
   static Events = Object.freeze({

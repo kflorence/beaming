@@ -7,7 +7,7 @@ import { Icons } from './icons'
 import { Tile } from './items/tile'
 import { Schema } from './schema'
 
-const modifiers = document.getElementById('modifiers')
+const menu = document.getElementById('puzzle-footer-menu')
 
 export class Modifier extends Stateful {
   #container
@@ -66,7 +66,7 @@ export class Modifier extends Stateful {
 
     const span = this.element = document.createElement('span')
 
-    span.classList.add('material-symbols-outlined', 'fill')
+    span.classList.add('icon', 'fill')
 
     li.append(span)
 
@@ -78,7 +78,7 @@ export class Modifier extends Stateful {
       { type: 'pointerup', handler: this.onPointerUp }
     ], { element: li })
 
-    modifiers.append(li)
+    menu.append(li)
   }
 
   /**

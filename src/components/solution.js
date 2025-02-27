@@ -17,7 +17,7 @@ export class Solution {
   }
 
   isSolved () {
-    return this.#conditions.every((condition) => condition.isMet())
+    return this.#conditions.length > 0 && this.#conditions.every((condition) => condition.isMet())
   }
 
   #conditionFactory (condition) {
@@ -41,7 +41,7 @@ export class Solution {
     return Schema.typed('solutions', type)
   }
 
-  static element = document.getElementById('solution')
+  static element = document.getElementById('puzzle-solution')
 }
 
 class SolutionCondition {
