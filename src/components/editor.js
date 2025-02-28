@@ -28,35 +28,27 @@ export class Editor {
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
-  #layout
   #puzzle
-  #state
 
-  constructor (puzzle, state) {
-    this.id = state.getId()
+  constructor (puzzle) {
+    document.body.classList.add(Editor.ClassNames.Edit)
 
     this.#puzzle = puzzle
-    this.#layout = puzzle.layout
-    this.#state = state
 
     this.#eventListener.add([
-      { element: elements.configuration, handler: this.#onConfigurationUpdate, type: 'focusout' },
-      { element: puzzle.element, handler: this.#onPointerMove, type: 'pointermove' },
-      { handler: this.#onPuzzleUpdate, type: Puzzle.Events.Updated },
-      { element: elements.recenter, handler: this.#onRecenter, type: 'click' },
-      { element: puzzle.element, handler: this.#onTap, type: 'tap' },
-      { element: elements.lock, handler: this.#toggleLock, type: 'click' },
+      { type: 'click', element: elements.lock, handler: this.#toggleLock },
+      { type: 'click', element: elements.recenter, handler: this.#onRecenter },
+      { type: 'focusout', element: elements.configuration, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onResize },
-      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) }
+      { type: 'pointermove', element: puzzle.element, handler: this.#onPointerMove },
+      { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
+      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) },
+      { type: 'tap', element: puzzle.element, handler: this.#onTap },
+      { type: Tile.Events.Deselected, handler: this.#setup },
+      { type: Tile.Events.Selected, handler: this.#setup }
     ])
 
     this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
-
-    elements.configuration.value = state.getCurrentJSON()
-    this.#updateLock()
-
-    this.group.addChildren(Editor.mark(this.#layout.getCenter(), this.#layout.parameters.circumradius / 4))
-    this.#puzzle.layers.edit.addChild(this.group)
   }
 
   getState () {
@@ -67,20 +59,26 @@ export class Editor {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
 
-  teardown () {
-    this.#gutter.teardown()
-    this.#eventListener.remove()
-    this.group.remove()
+  setup () {
+    const layout = this.#puzzle.layout
+    const state = this.#puzzle.state
 
-    if (this.#editor) {
-      this.#editor.destroy()
-    }
+    this.id = state.getId()
+
+    elements.configuration.value = state.getCurrentJSON()
+    this.#updateLock()
+
+    // TODO figure out why this isn't working anymore
+    this.group.addChildren(Editor.mark(layout.getCenter(), layout.parameters.circumradius / 4))
+    this.#puzzle.layers.edit.addChild(this.group)
+
+    this.#setup()
   }
 
   #onConfigurationUpdate () {
     try {
       const state = this.getState()
-      if (this.#state.getDiff(state) === undefined) {
+      if (this.#puzzle.state.getDiff(state) === undefined) {
         // No changes
         return
       }
@@ -94,14 +92,13 @@ export class Editor {
     }
   }
 
-  #destroyEditor () {
-    this.#editor.destroy()
-    this.#editor = undefined
-    this.#onConfigurationUpdate()
-  }
+  #setup (event) {
+    const tile = event?.detail.selectedTile
 
-  #createEditor () {
-    const tile = this.#puzzle.selectedTile
+    if (this.#editor) {
+      this.#editor.destroy()
+    }
+
     const options = {
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,
@@ -119,7 +116,7 @@ export class Editor {
       remove_button_labels: true,
       schema: tile ? Tile.Schema : Puzzle.Schema,
       show_opt_in: true,
-      startval: tile ? tile.getState() : this.#puzzle.getState(),
+      startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
       theme: 'barebones'
     }
 
@@ -130,7 +127,7 @@ export class Editor {
   }
 
   #onEditorUpdate () {
-    const state = this.#puzzle.getState()
+    const state = this.#puzzle.state.getCurrent()
     const value = this.#editor.getValue()
     const offset = this.#puzzle.selectedTile?.coordinates.offset
 
@@ -145,16 +142,19 @@ export class Editor {
 
     // Update configuration
     elements.configuration.value = JSON.stringify(newState, null, 2)
+
+    this.#onConfigurationUpdate()
   }
 
   #onPointerMove (event) {
-    const offset = this.#layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
-    const center = this.#layout.getPoint(offset)
+    const layout = this.#puzzle.layout
+    const offset = layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
+    const center = layout.getPoint(offset)
     if (!this.#hover) {
       this.#hover = new Path.RegularPolygon({
         center,
         closed: true,
-        radius: this.#layout.parameters.circumradius,
+        radius: layout.parameters.circumradius,
         opacity: 0.2,
         sides: 6,
         style: {
@@ -170,14 +170,15 @@ export class Editor {
   }
 
   #onPuzzleUpdate () {
-    elements.configuration.value = this.#state.getCurrentJSON()
+    elements.configuration.value = this.#puzzle.state.getCurrentJSON()
   }
 
   #onRecenter () {
-    View.setCenter(this.#layout.getCenter())
+    View.setCenter(this.#puzzle.layout.getCenter())
   }
 
   #onResize () {
+    console.log('resize')
     // TODO store the pane width in cache via View so it will be sticky
     this.#puzzle.resize()
     this.#onRecenter()
@@ -196,15 +197,16 @@ export class Editor {
       return
     }
 
-    const offset = this.#layout.getOffset(event.detail.point)
-    const tile = this.#puzzle.layout.getTile(offset)
+    const layout = this.#puzzle.layout
+    const offset = layout.getOffset(event.detail.point)
+    const tile = layout.getTile(offset)
 
     console.debug('editor.#onTap', offset, tile)
 
     if (tile) {
-      this.#puzzle.layout.removeTile(offset)
+      layout.removeTile(offset)
     } else {
-      this.#puzzle.layout.addTile(offset)
+      layout.addTile(offset)
     }
 
     this.#puzzle.addMove()

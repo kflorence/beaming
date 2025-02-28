@@ -7,6 +7,7 @@ export class Gutter {
 
   #eventListener = new EventListeners({ context: this })
   #isPointerDown = false
+  #previousPaneWidths = []
 
   constructor (paneA, paneB) {
     this.panes = [paneA, paneB]
@@ -21,8 +22,13 @@ export class Gutter {
     this.#eventListener.remove()
   }
 
+  #getPaneWidths () {
+    return this.panes.map((pane) => pane.width)
+  }
+
   #onPointerDown () {
     this.#isPointerDown = true
+    this.#previousPaneWidths = this.#getPaneWidths()
   }
 
   #onPointerMove (event) {
@@ -44,7 +50,10 @@ export class Gutter {
 
   #onPointerUp () {
     this.#isPointerDown = false
-    emitEvent(Gutter.Events.Moved, { gutter: this })
+    if (this.#getPaneWidths().some((width, index) => width !== this.#previousPaneWidths[index])) {
+      // The width of one of the panes has changed
+      emitEvent(Gutter.Events.Moved, { gutter: this })
+    }
   }
 
   static Events = Object.freeze({

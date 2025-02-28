@@ -47,6 +47,7 @@ export class Puzzle {
   message
   selectedTile
   solved = false
+  state
 
   #beamsUpdateDelay = 30
   #collisions = {}
@@ -57,7 +58,6 @@ export class Puzzle {
   #mask
   #maskQueue = []
   #solution
-  #state
 
   constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -65,17 +65,17 @@ export class Puzzle {
     // noinspection JSCheckFunctionSignatures
     paper.setup(elements.canvas)
 
-    if (params.has(State.ParamKeys.edit)) {
-      // This needs to be done before initial resize
-      document.body.classList.add(Editor.ClassNames.Edit)
-    }
-
-    this.resize()
-
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
     this.layers.edit = new Layer()
     this.layers.mask = new Layer()
+
+    if (params.has(State.ParamKeys.edit)) {
+      // Edit mode
+      this.#editor = new Editor(this)
+    }
+
+    this.resize()
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
@@ -97,10 +97,14 @@ export class Puzzle {
     this.#updateDropdown()
 
     this.select()
+
+    if (this.#editor) {
+      this.#editor.setup()
+    }
   }
 
   addMove () {
-    return this.#state.addMove()
+    return this.state.addMove()
   }
 
   centerOnTile (offset) {
@@ -135,10 +139,6 @@ export class Puzzle {
 
   getProjectPoint (point) {
     return this.#interact.getProjectPoint(point)
-  }
-
-  getState () {
-    return this.#state.getCurrent()
   }
 
   getTile (point) {
@@ -190,16 +190,16 @@ export class Puzzle {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
 
-    if (this.#state) {
+    if (this.state) {
       this.#teardown()
     }
 
     if (state instanceof State) {
       // Reset state
-      this.#state = state
+      this.state = state
     } else if (typeof state === 'object') {
       // Update current state
-      this.#state.update(state)
+      this.state.update(state)
     }
 
     try {
@@ -209,7 +209,7 @@ export class Puzzle {
       this.#updateActions()
     }
 
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
   resize () {
@@ -232,7 +232,7 @@ export class Puzzle {
   }
 
   select (id) {
-    if (id !== undefined && id === this.#state?.getId()) {
+    if (id !== undefined && id === this.state?.getId()) {
       // This ID is already selected
       return
     }
@@ -274,7 +274,7 @@ export class Puzzle {
     const previouslySelectedTile = this.selectedTile
 
     this.selectedTile = tile
-    this.#state.setSelectedTile(tile)
+    this.state.setSelectedTile(tile)
     this.#updateMessage(tile)
     this.#updateModifiers(tile, previouslySelectedTile)
 
@@ -290,11 +290,11 @@ export class Puzzle {
   }
 
   updateState (state) {
-    this.#state.update(state || Object.assign(this.#state.getCurrent(), { layout: this.layout.getState() }))
+    this.state.update(state || Object.assign(this.state.getCurrent(), { layout: this.layout.getState() }))
     this.#updateDropdown()
     this.#updateActions()
 
-    emitEvent(Puzzle.Events.Updated, { state: this.#state })
+    emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
   #addLayers () {
@@ -316,7 +316,7 @@ export class Puzzle {
   }
 
   #next () {
-    const id = Puzzles.visible.nextId(this.#state.getId())
+    const id = Puzzles.visible.nextId(this.state.getId())
     if (id) {
       this.select(id)
     }
@@ -487,14 +487,14 @@ export class Puzzle {
   }
 
   #previous () {
-    const id = Puzzles.visible.previousId(this.#state.getId())
+    const id = Puzzles.visible.previousId(this.state.getId())
     if (id) {
       this.select(id)
     }
   }
 
   #redo () {
-    if (this.#state.redo()) {
+    if (this.state.redo()) {
       this.reload()
     }
   }
@@ -505,13 +505,13 @@ export class Puzzle {
   }
 
   #reset () {
-    if (this.#state.reset()) {
+    if (this.state.reset()) {
       this.reload()
     }
   }
 
   #setup () {
-    const { layout, message, solution } = this.#state.getCurrent()
+    const { layout, message, solution } = this.state.getCurrent()
 
     this.layout = new Layout(layout)
     this.message = message
@@ -521,7 +521,7 @@ export class Puzzle {
 
     document.body.classList.add(Puzzle.Events.Loaded)
 
-    const selectedTileId = this.#state.getSelectedTile()
+    const selectedTileId = this.state.getSelectedTile()
     const selectedTile = selectedTileId
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
@@ -529,18 +529,10 @@ export class Puzzle {
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
-
-    if (params.has(State.ParamKeys.edit)) {
-      // Edit mode
-      this.#editor = new Editor(this, this.#state)
-    }
   }
 
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
-
-    this.#editor?.teardown()
-    this.#editor = undefined
 
     this.#removeLayers()
 
@@ -557,14 +549,14 @@ export class Puzzle {
   }
 
   #undo () {
-    if (this.#state.undo()) {
+    if (this.state.undo()) {
       this.reload()
     }
   }
 
   #updateActions () {
-    const id = this.#state.getId()
-    const title = this.#state.getTitle()
+    const id = this.state.getId()
+    const title = this.state.getTitle()
 
     // Update browser title
     elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`
@@ -573,15 +565,15 @@ export class Puzzle {
 
     const disable = []
 
-    if (!this.#state.canUndo()) {
+    if (!this.state.canUndo()) {
       disable.push(elements.undo)
     }
 
-    if (!this.#state.canRedo()) {
+    if (!this.state.canRedo()) {
       disable.push(elements.redo)
     }
 
-    if (!this.#state.canReset()) {
+    if (!this.state.canReset()) {
       disable.push(elements.reset)
     }
 
@@ -604,9 +596,9 @@ export class Puzzle {
 
     // TODO support pulling custom IDs from local cache
     const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
-    const id = this.#state?.getId()
+    const id = this.state?.getId()
     if (id !== undefined && !Puzzles.visible.ids.includes(id)) {
-      options.push({ id, title: this.#state.getTitle() })
+      options.push({ id, title: this.state.getTitle() })
     }
 
     for (const option of options) {

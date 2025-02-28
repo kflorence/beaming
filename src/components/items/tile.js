@@ -114,6 +114,8 @@ export class Tile extends Item {
     this.group.bringToFront()
     this.path.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
+
+    emitEvent(Tile.Events.Selected, { selectedTile: this, deselectedTile })
   }
 
   removeItem (item) {

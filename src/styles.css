@@ -147,14 +147,40 @@ dialog footer ul li:first-child {
 /* Editor
 /* ------------------------------------------------------------------------------------------------------------------ */
 
+#editor {
+  background-color: #eee;
+  padding: 1em;
+}
+
 #editor button,
 #editor input,
 #editor select {
-  padding: 0.2em;
+  padding: 0.5em;
 }
 
 #editor button + button {
   margin-left: 0.5em;
+}
+
+#editor div[data-schemapath="puzzle.layout.tiles"] {
+  display: none;
+}
+
+/* hides all schema paths which end in 'id' */
+#editor div[data-schemapath$="id"] {
+  display: none;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#editor .je-header {
+  display: flex;
+  font-weight: bold;
+  margin-bottom: 1em;
 }
 
 #editor .form-control label {
@@ -162,9 +188,8 @@ dialog footer ul li:first-child {
 }
 
 #editor .je-indented-panel {
-  border-bottom: 1px solid #ddd;
   margin-left: 1em;
-  padding: 0.5em 0 0.5em 0.5em;
+  padding-left: 1em;
 }
 
 #editor .je-indented-panel > b {
@@ -177,26 +202,12 @@ dialog footer ul li:first-child {
   margin-top: 0.5em;
 }
 
-#editor [data-schemapath="puzzle.layout.tiles"] {
-  display: none;
-}
-
-/* hides all schema paths which end in 'id' */
-#editor [data-schemapath$=id] {
-  display: none;
-}
-
-#editor [data-schematype=array] > .je-indented-panel {
-  border: 0;
-  margin: 0;
-  padding: 0;
-}
-
-#editor .je-header {
-  display: flex;
-}
-
 #editor .je-object__controls {
+  margin: 0;
+}
+
+#editor .je-switcher {
+  font-weight: bold;
   margin: 0;
 }
 
@@ -209,16 +220,15 @@ dialog footer ul li:first-child {
   padding-top: 0;
 }
 
-#editor .je-switcher {
-  font-weight: bold;
-  margin: 0;
-}
-
 #editor-configuration {
   box-sizing: border-box;
   height: 400px;
   padding: 1em;
   width: 100%;
+}
+
+#editor-menu {
+  border-bottom: 1px solid #ddd;
 }
 
 #editor-wrapper {
@@ -235,7 +245,6 @@ dialog footer ul li:first-child {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #gutter {
-  border-left: 1px dashed black;
   border-spacing: 2px;
   display: none;
   flex: none;
