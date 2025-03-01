@@ -16,7 +16,8 @@ export class Items {
         Reflector.Schema,
         Terminus.Schema,
         Wall.Schema
-      ]
+      ],
+      headerTemplate: 'item {{i1}}'
     },
     type: 'array'
   })

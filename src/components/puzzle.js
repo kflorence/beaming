@@ -65,10 +65,10 @@ export class Puzzle {
     // noinspection JSCheckFunctionSignatures
     paper.setup(elements.canvas)
 
+    // These layers will be added in the order they are defined
+    this.layers.mask = new Layer()
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
-    this.layers.edit = new Layer()
-    this.layers.mask = new Layer()
 
     if (params.has(State.ParamKeys.edit)) {
       // Edit mode
@@ -290,23 +290,13 @@ export class Puzzle {
   }
 
   updateState (state) {
-    this.state.update(state || Object.assign(this.state.getCurrent(), { layout: this.layout.getState() }))
+    state ??= Object.assign({ version: 0 }, this.state.getCurrent(), { layout: this.layout.getState() })
+
+    this.state.update(state)
     this.#updateDropdown()
     this.#updateActions()
 
     emitEvent(Puzzle.Events.Updated, { state: this.state })
-  }
-
-  #addLayers () {
-    // Add layers in the order we want them
-    [
-      this.layers.edit,
-      this.layout.layers.tiles,
-      this.layout.layers.items,
-      this.layers.mask,
-      this.layers.collisions,
-      this.layers.debug
-    ].forEach((layer) => paper.project.addLayer(layer))
   }
 
   #getModifiers (tile) {
@@ -500,8 +490,7 @@ export class Puzzle {
   }
 
   #removeLayers () {
-    Object.values(this.layers).forEach((layer) => layer.removeChildren())
-    paper.project.clear()
+    Object.values(this.layers).forEach((layer) => layer.remove())
   }
 
   #reset () {
@@ -517,7 +506,7 @@ export class Puzzle {
     this.message = message
     this.#solution = new Solution(solution)
 
-    this.#addLayers()
+    Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
     document.body.classList.add(Puzzle.Events.Loaded)
 
@@ -784,6 +773,7 @@ export class Puzzle {
       'layout',
       'version'
     ],
+    title: 'Puzzle',
     type: 'object'
   })
 }

@@ -1,4 +1,4 @@
-import { Group, Path, Point } from 'paper'
+import paper, { Group, Layer, Path, Point } from 'paper'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { View } from './view'
@@ -10,11 +10,13 @@ import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 
 const elements = Object.freeze({
+  cancel: document.getElementById('editor-cancel'),
   configuration: document.getElementById('editor-configuration'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
   puzzle: document.getElementById('puzzle'),
   recenter: document.getElementById('editor-recenter'),
+  update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
 })
 
@@ -28,27 +30,18 @@ export class Editor {
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
+  #layer
   #puzzle
 
   constructor (puzzle) {
     document.body.classList.add(Editor.ClassNames.Edit)
 
+    this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
+    this.#layer = new Layer()
     this.#puzzle = puzzle
 
-    this.#eventListener.add([
-      { type: 'click', element: elements.lock, handler: this.#toggleLock },
-      { type: 'click', element: elements.recenter, handler: this.#onRecenter },
-      { type: 'focusout', element: elements.configuration, handler: this.#onConfigurationUpdate },
-      { type: Gutter.Events.Moved, handler: this.#onResize },
-      { type: 'pointermove', element: puzzle.element, handler: this.#onPointerMove },
-      { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
-      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) },
-      { type: 'tap', element: puzzle.element, handler: this.#onTap },
-      { type: Tile.Events.Deselected, handler: this.#setup },
-      { type: Tile.Events.Selected, handler: this.#setup }
-    ])
-
-    this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
+    // Place this layer under all the other ones
+    paper.project.insertLayer(0, this.#layer)
   }
 
   getState () {
@@ -60,19 +53,42 @@ export class Editor {
   }
 
   setup () {
+    if (this.#editor) {
+      return
+    }
+
     const layout = this.#puzzle.layout
     const state = this.#puzzle.state
 
     this.id = state.getId()
+
+    this.#eventListener.add([
+      { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
+      { type: 'click', element: elements.lock, handler: this.#toggleLock },
+      { type: 'click', element: elements.recenter, handler: this.#onRecenter },
+      { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
+      { type: Gutter.Events.Moved, handler: this.#onResize },
+      { type: 'pointermove', element: this.#puzzle.element, handler: this.#onPointerMove },
+      { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
+      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) },
+      { type: 'tap', element: this.#puzzle.element, handler: this.#onTap },
+      { type: Tile.Events.Deselected, handler: this.#setup },
+      { type: Tile.Events.Selected, handler: this.#setup }
+    ])
 
     elements.configuration.value = state.getCurrentJSON()
     this.#updateLock()
 
     // TODO figure out why this isn't working anymore
     this.group.addChildren(Editor.mark(layout.getCenter(), layout.parameters.circumradius / 4))
-    this.#puzzle.layers.edit.addChild(this.group)
+    this.#layer.addChild(this.group)
 
     this.#setup()
+  }
+
+  #onConfigurationCancel () {
+    const tile = this.#puzzle.selectedTile
+    this.#editor.setValue(tile ? tile.getState() : this.#puzzle.state.getCurrent())
   }
 
   #onConfigurationUpdate () {
@@ -92,8 +108,8 @@ export class Editor {
     }
   }
 
-  #setup (event) {
-    const tile = event?.detail.selectedTile
+  #setup () {
+    const tile = this.#puzzle.selectedTile
 
     if (this.#editor) {
       this.#editor.destroy()
@@ -140,10 +156,7 @@ export class Editor {
 
     console.log('state', state, 'value', value, 'newState', newState)
 
-    // Update configuration
-    elements.configuration.value = JSON.stringify(newState, null, 2)
-
-    this.#onConfigurationUpdate()
+    this.#updateConfiguration(newState)
   }
 
   #onPointerMove (event) {
@@ -222,6 +235,10 @@ export class Editor {
   #toggleLock () {
     localStorage.setItem(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
+  }
+
+  #updateConfiguration (state) {
+    elements.configuration.value = JSON.stringify(state, null, 2)
   }
 
   #updateLock () {

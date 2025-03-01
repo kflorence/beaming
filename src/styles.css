@@ -148,18 +148,8 @@ dialog footer ul li:first-child {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #editor {
-  background-color: #eee;
-  padding: 1em;
-}
-
-#editor button,
-#editor input,
-#editor select {
-  padding: 0.5em;
-}
-
-#editor button + button {
-  margin-left: 0.5em;
+  background-color: #f9f9f9;
+  padding: 1em 0 1em 1em;
 }
 
 #editor div[data-schemapath="puzzle.layout.tiles"] {
@@ -172,9 +162,26 @@ dialog footer ul li:first-child {
 }
 
 #editor div[data-schematype=array] > .je-indented-panel {
+  background-color: #f9f9f9;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel > div:not(:empty, :has(> .je-indented-panel)) {
+  margin-bottom: 1em;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel > div > .je-indented-panel {
+  background-color: #f9f9f9;
   border: 0;
-  margin: 0;
+  margin: 0 0 1em 0;
   padding: 0;
+}
+
+#editor div[data-schemapath] > span:last-child {
+  margin-left: 1em;
+}
+
+#editor div[data-schematype=object] + div[data-schematype=object] {
+  margin-top: 1em;
 }
 
 #editor .je-header {
@@ -188,18 +195,15 @@ dialog footer ul li:first-child {
 }
 
 #editor .je-indented-panel {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-right: none;
+  margin: 1em 0 1em 1em;
+  padding: 1em 0 1em 1em;
+}
+
+#editor .je-indented-panel > .je-switcher {
   margin-left: 1em;
-  padding-left: 1em;
-}
-
-#editor .je-indented-panel > b {
-  display: none;
-}
-
-/* these are the spans that contain the button controls */
-#editor .je-indented-panel > span:last-child {
-  display: block;
-  margin-top: 0.5em;
 }
 
 #editor .je-object__controls {
@@ -211,13 +215,12 @@ dialog footer ul li:first-child {
   margin: 0;
 }
 
-#editor .row,
-#editor .je-indented-panel + .je-indented-panel {
-  padding-top: 0.5em;
+#editor .je-switcher + div > div[data-schematype=object] > .je-header {
+  display: none;
 }
 
-#editor .row:has(> .hide) {
-  padding-top: 0;
+#editor .row {
+  line-height: 32px;
 }
 
 #editor-configuration {
@@ -238,6 +241,36 @@ dialog footer ul li:first-child {
   user-select: none;
   /* For iOS/Safari. */
   -webkit-user-select: none;
+}
+
+#editor-wrapper button,
+#editor-wrapper input,
+#editor-wrapper select {
+  padding: 0.5em;
+}
+
+#editor-wrapper button + button {
+  margin-left: 1em;
+}
+
+#editor-wrapper details:last-child {
+  border-bottom: 0;
+}
+
+#editor-wrapper footer {
+  border-top: 1px solid #ddd;
+  display: flex;
+  padding: 1em;
+}
+
+#editor-wrapper footer,
+#editor-wrapper header {
+  box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+
+#editor-wrapper main {
+  overflow-y: scroll;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

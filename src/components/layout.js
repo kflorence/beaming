@@ -20,8 +20,11 @@ export class Layout extends Stateful {
 
     const tiles = state.tiles || {}
 
-    this.layers.items = new Layer()
+    // These layers will be added in the order they are defined
     this.layers.tiles = new Layer()
+    this.layers.items = new Layer()
+
+    Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
     this.modifiers = (state.modifiers || [])
       .map((state, index) => Modifiers.factory(null, state, index))
@@ -138,7 +141,7 @@ export class Layout extends Stateful {
   teardown () {
     this.tiles.forEach((tile) => tile.teardown())
     this.modifiers.forEach((modifier) => modifier.detach())
-    Object.values(this.layers).forEach((layer) => layer.removeChildren())
+    Object.values(this.layers).forEach((layer) => layer.remove())
   }
 
   static Schema = Object.freeze({

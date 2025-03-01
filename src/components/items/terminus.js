@@ -231,7 +231,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
     static Schema = Object.freeze({
       $id: Schema.$id('terminus', 'opening'),
-      headerTemplate: 'Opening {{i1}}',
+      headerTemplate: 'opening {{i1}}',
       properties: {
         color: Schema.color,
         direction: Schema.direction,

@@ -54,16 +54,24 @@
     </div>
     <div id="gutter"></div>
     <div class="pane" id="editor-wrapper">
-      <ul id="editor-menu" class="menu">
-        <li id="editor-lock"><span class="icon" title="Lock tiles">lock_open</span></li>
-        <li id="editor-recenter"><span class="icon" title="Re-center">recenter</span></li>
-      </ul>
-      <main id="editor"></main>
-      <details>
-        <summary><label for="editor-configuration">Configuration</label></summary>
-        <p>The current puzzle configuration. Any changes will be applied when focus is lost.</p>
-        <textarea id="editor-configuration"></textarea>
-      </details>
+      <header>
+        <ul id="editor-menu" class="menu">
+          <li id="editor-lock"><span class="icon" title="Lock tiles">lock_open</span></li>
+          <li id="editor-recenter"><span class="icon" title="Re-center">recenter</span></li>
+        </ul>
+      </header>
+      <main>
+        <div id="editor"></div>
+        <details>
+          <summary><label for="editor-configuration">Configuration</label></summary>
+          <p>The current puzzle configuration.</p>
+          <textarea id="editor-configuration"></textarea>
+        </details>
+      </main>
+      <footer>
+        <button id="editor-update">Update</button>
+        <button id="editor-cancel">Cancel</button>
+      </footer>
     </div>
     <dialog id="dialog-info">
       <header>
