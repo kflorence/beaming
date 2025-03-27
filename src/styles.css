@@ -18,6 +18,10 @@ body {
 body {
   display: flex;
   flex-direction: row;
+
+  &.gutter-horizontal {
+    flex-direction: column;
+  }
 }
 
 code {
@@ -269,6 +273,10 @@ dialog footer ul li:first-child {
   z-index: 1;
 }
 
+#editor-wrapper footer {
+  clip-path: inset(-1rem 0 0 0);
+}
+
 #editor-wrapper main {
   overflow-y: scroll;
 }
@@ -295,6 +303,19 @@ dialog footer ul li:first-child {
   position: absolute;
   width: 8px;
   z-index: 10;
+}
+
+.gutter-horizontal #gutter {
+  height: 1px;
+  width: 100%;
+}
+
+.gutter-horizontal #gutter:after {
+  cursor: ns-resize;
+  height: 8px;
+  left: 0;
+  top: -3px;
+  width: 100%;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -467,6 +488,7 @@ dialog footer ul li:first-child {
 #puzzle-wrapper {
   box-sizing: border-box;
   flex: auto;
+  overflow: hidden;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

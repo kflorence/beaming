@@ -12,6 +12,7 @@ import { Gutter } from './gutter'
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
   configuration: document.getElementById('editor-configuration'),
+  dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
   puzzle: document.getElementById('puzzle'),
@@ -26,6 +27,7 @@ export class Editor {
   group = new Group({ locked: true })
   id
 
+  #center = new Group({ locked: true })
   #editor
   #eventListener = new EventListeners({ context: this })
   #gutter
@@ -48,6 +50,10 @@ export class Editor {
     return JSON.parse(elements.configuration.value)
   }
 
+  isDockBottom () {
+    return localStorage.getItem(Editor.#key(Editor.CacheKeys.DockBottom)) === 'true'
+  }
+
   isLocked () {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
@@ -57,13 +63,13 @@ export class Editor {
       return
     }
 
-    const layout = this.#puzzle.layout
     const state = this.#puzzle.state
 
     this.id = state.getId()
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
+      { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
@@ -77,11 +83,12 @@ export class Editor {
     ])
 
     elements.configuration.value = state.getCurrentJSON()
-    this.#updateLock()
 
-    // TODO figure out why this isn't working anymore
-    this.group.addChildren(Editor.mark(layout.getCenter(), layout.parameters.circumradius / 4))
+    this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
+
+    this.#updateLock()
+    this.#updateCenter()
 
     this.#setup()
   }
@@ -142,6 +149,21 @@ export class Editor {
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
   }
 
+  #onDockUpdate () {
+    const icon = elements.dock.firstChild
+    const isDockBottom = this.#gutter.toggleOrientation()
+
+    if (isDockBottom) {
+      icon.title = 'Dock to right'
+      icon.textContent = 'dock_to_right'
+    } else {
+      icon.title = 'Dock to bottom'
+      icon.textContent = 'dock_to_bottom'
+    }
+
+    this.#onResize()
+  }
+
   #onEditorUpdate () {
     const state = this.#puzzle.state.getCurrent()
     const value = this.#editor.getValue()
@@ -188,11 +210,10 @@ export class Editor {
 
   #onRecenter () {
     View.setCenter(this.#puzzle.layout.getCenter())
+    this.#updateCenter()
   }
 
   #onResize () {
-    console.log('resize')
-    // TODO store the pane width in cache via View so it will be sticky
     this.#puzzle.resize()
     this.#onRecenter()
     // For some reason, without reload, setting viewSize alone breaks the project coordinate space, maybe:
@@ -250,6 +271,14 @@ export class Editor {
       // De-select any selected tile
       this.#puzzle.updateSelectedTile()
     }
+  }
+
+  #updateCenter () {
+    this.#center.removeChildren()
+    this.#center.addChildren(Editor.mark(
+      this.#puzzle.layout.getCenter(),
+      this.#puzzle.layout.parameters.circumradius / 4
+    ))
   }
 
   static mark (center, width) {
