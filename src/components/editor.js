@@ -50,10 +50,6 @@ export class Editor {
     return JSON.parse(elements.configuration.value)
   }
 
-  isDockBottom () {
-    return localStorage.getItem(Editor.#key(Editor.CacheKeys.DockBottom)) === 'true'
-  }
-
   isLocked () {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
@@ -115,13 +111,19 @@ export class Editor {
     }
   }
 
-  #setup () {
+  #setup (event) {
+    if (event?.type === Tile.Events.Selected && event.detail.deselectedTile) {
+      // This prevents a race condition between editor destruction and creation when switching between tiles.
+      return
+    }
+
     const tile = this.#puzzle.selectedTile
 
     if (this.#editor) {
       this.#editor.destroy()
     }
 
+    // FIXME: still not correctly selecting modifiers, see puzzle toggle in 001 configuration
     const options = {
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,
@@ -223,9 +225,6 @@ export class Editor {
   }
 
   #onTap (event) {
-    // TODO: need to create/destroy editor based on whether a tile is selected
-    //  - when unselected, display global editor
-    //  - when selected, display tile editor
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
       return

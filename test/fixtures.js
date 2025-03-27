@@ -50,7 +50,7 @@ class PuzzleFixture {
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
-    this.elements.modifiers = await this.driver.findElement(By.id('modifiers'))
+    this.elements.modifiers = await this.driver.findElement(By.id('puzzle-footer-menu'))
   }
 
   async clickModifier (name, options = {}) {

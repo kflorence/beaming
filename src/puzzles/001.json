@@ -19,7 +19,7 @@
         "0": {
           "items": [
             {
-              "color": "blue",
+              "color": "#0000ff",
               "openings": [
                 {
                   "direction": 0
@@ -34,7 +34,7 @@
         "-1": {
           "items": [
             {
-              "color": "red",
+              "color": "#ff0000",
               "openings": [
                 {
                   "direction": 1,
@@ -61,7 +61,7 @@
         "-1": {
           "items": [
             {
-              "color": "blue",
+              "color": "#0000ff",
               "openings": [
                 {
                   "direction": 3,
