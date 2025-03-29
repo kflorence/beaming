@@ -24,6 +24,7 @@ const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   footer: document.getElementById('puzzle-footer'),
   footerMessage: document.getElementById('puzzle-footer-message'),
+  headerMenu: document.getElementById('puzzle-header-menu'),
   headerMessage: document.getElementById('puzzle-header-message'),
   id: document.getElementById('puzzle-id'),
   next: document.getElementById('puzzle-next'),
@@ -242,6 +243,10 @@ export class Puzzle {
 
   unmask () {
     console.debug('unmask', this.#mask)
+    if (!this.#mask) {
+      return
+    }
+
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
     this.#mask.onUnmask(this)
@@ -490,7 +495,11 @@ export class Puzzle {
   }
 
   #removeLayers () {
-    Object.values(this.layers).forEach((layer) => layer.remove())
+    Object.values(this.layers).forEach((layer) => {
+      // For some reason children are not being removed from some layers (e.g. mask) with .remove()
+      layer.removeChildren()
+      layer.remove()
+    })
   }
 
   #reset () {
@@ -523,6 +532,9 @@ export class Puzzle {
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
+    this.#maskQueue = []
+
+    this.unmask()
     this.#removeLayers()
 
     this.#solution?.teardown()
@@ -533,8 +545,6 @@ export class Puzzle {
     this.selectedTile = undefined
     this.#collisions = {}
     this.#isUpdatingBeams = false
-    this.#mask = undefined
-    this.#maskQueue = []
   }
 
   #undo () {
@@ -550,7 +560,7 @@ export class Puzzle {
     // Update browser title
     elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`
 
-    removeClass(Puzzle.ClassNames.Disabled, ...Array.from(document.querySelectorAll('#actions li')))
+    removeClass(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children))
 
     const disable = []
 

@@ -123,7 +123,6 @@ export class Editor {
       this.#editor.destroy()
     }
 
-    // FIXME: still not correctly selecting modifiers, see puzzle toggle in 001 configuration
     const options = {
       disable_array_delete_all_rows: true,
       disable_array_delete_last_row: true,

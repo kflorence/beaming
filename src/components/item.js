@@ -62,7 +62,7 @@ export class Item extends Stateful {
   }
 
   getLayer () {
-    return this.group.parent
+    return this.group.layer
   }
 
   onTap () {}

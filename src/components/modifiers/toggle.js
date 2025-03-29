@@ -1,6 +1,5 @@
 import { Modifier } from '../modifier'
 import { Icons } from '../icons'
-import { merge } from '../util'
 
 export class Toggle extends Modifier {
   title = 'Toggle'
@@ -9,14 +8,14 @@ export class Toggle extends Modifier {
   constructor (tile, state) {
     super(...arguments)
 
-    this.toggled = state.toggled || this.parent?.items.some(item => item.toggled)
+    this.toggled = this.parent?.items.some(item => item.toggled) ?? false
     this.name = this.getName()
   }
 
   attach (tile) {
     super.attach(tile)
 
-    this.toggled = this.tile?.items.some(item => item.toggled)
+    this.toggled = tile?.items.some(item => item.toggled) ?? false
     this.update({ name: this.getName() })
   }
 
@@ -44,14 +43,7 @@ export class Toggle extends Modifier {
 
   static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
 
-  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.toggle), {
-    properties: {
-      toggled: {
-        type: 'boolean'
-      }
-    },
-    required: ['toggled']
-  }))
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.toggle))
 }
 
 /**
@@ -69,7 +61,7 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     super(...arguments)
 
     this.toggleable = !this.immutable && configuration.toggleable !== false
-    this.toggled = this.toggleable && configuration.toggled
+    this.toggled = (this.toggleable && configuration.toggled) ?? false
   }
 
   onToggle () {}

@@ -1,7 +1,6 @@
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode, getKey, jsonDiffPatch, params, url } from './util'
+import { base64decode, base64encode, getKey, jsonDiffPatch, params, uniqueId, url } from './util'
 
-const crypto = window.crypto
 const history = window.history
 const localStorage = window.localStorage
 
@@ -16,7 +15,8 @@ export class State {
   #version
 
   constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
-    this.#id = id || crypto.randomUUID().split('-')[0]
+    // When editing a puzzle from cache, append a unique ID
+    this.#id = Puzzles.has(id) && params.has(State.ParamKeys.edit) ? `${id}-${uniqueId()}` : id ?? uniqueId()
     this.#original = original || {}
     this.#deltas = deltas || []
     this.#moves = moves || []
