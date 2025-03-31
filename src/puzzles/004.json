@@ -1,101 +1,97 @@
 {
+  "version": 0,
   "layout": {
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "0": {
+          "id": "dbf74c17",
+          "type": "Tile"
+        },
+        "1": {
+          "id": "a4f181e1",
+          "type": "Tile"
+        },
+        "-1": {
+          "id": "fb798c61",
+          "type": "Tile"
+        }
+      },
+      "1": {
+        "0": {
+          "id": "c33f42c2",
+          "type": "Tile"
+        },
+        "-1": {
+          "id": "1b291584",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
+              "type": "Terminus",
+              "color": "#ff0000",
               "openings": [
-                null,
-                null,
-                null,
-                null,
                 {
-                  "type": "Beam"
-                },
-                null
+                  "direction": 1,
+                  "toggled": true
+                }
               ],
-              "type": "Terminus"
+              "id": "ef126477"
             }
           ],
           "modifiers": [
             {
-              "type": "Rotate"
+              "type": "Swap",
+              "id": "362fdc23"
             }
-          ],
-          "type": "Tile"
-        },
-        {
+          ]
+        }
+      },
+      "-1": {
+        "0": {
+          "id": "1340ed3e",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
+              "type": "Terminus",
+              "color": "#0000ff",
               "openings": [
-                null,
-                null,
-                null,
-                null,
                 {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null
+                  "direction": 4,
+                  "toggled": true
+                }
               ],
-              "type": "Terminus"
+              "id": "842d4005"
             }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
+          ]
         },
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
+        "-1": {
+          "id": "3622ae8a",
+          "type": "Tile",
           "items": [
             {
-              "color": "red",
+              "type": "Terminus",
+              "color": "#0000ff",
+              "id": "dddfa2dd",
               "openings": [
-                null,
                 {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
+                  "direction": 4
+                }
+              ]
             }
           ],
           "modifiers": [
             {
-              "type": "Swap"
+              "type": "Rotate",
+              "id": "3b976366"
             }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
+          ]
         }
-      ]
-    ],
-    "type": "even-r"
+      }
+    }
   },
   "solution": [
     {
-      "amount": 1,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 1
     }
-  ],
-  "version": 1
+  ]
 }

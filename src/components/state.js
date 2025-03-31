@@ -289,36 +289,58 @@ export class State {
   }
 
   static resolve (id) {
-    // Store each segment of the URL hash in the values array for resolution
-    const values = url.hash.substring(1).split('/').filter((path) => path !== '')
-    let state
+    let values = []
+
+    if (id !== undefined) {
+      // Explicit ID will take precedence over other resolution methods
+      values.push(id)
+    }
+
+    // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
+    values.push(...url.hash.substring(1).split('/').filter((path) => path !== ''))
+
+    if (!params.has(State.ParamKeys.edit)) {
+      // If puzzle is not being edited, check last active puzzle ID, falling back to first puzzle ID
+      values.push(State.getId() || Puzzles.visible.firstId)
+    }
 
     if (params.has(State.ParamKeys.clearCache)) {
       // If cache is being cleared, do it before attempting resolution
       State.clearCache(params.get(State.ParamKeys.clearCache))
     }
 
-    if (id === undefined) {
-      // If no explicit ID is given, try to resolve state from values array
-      if (!params.has(State.ParamKeys.edit)) {
-        // If puzzle is not being edited, check last active puzzle ID, falling back to first puzzle ID
-        id = localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
-        values.push(id)
-      }
-      values.some((value) => {
-        const encoded = localStorage.getItem(getKey(State.CacheKeys.state, value)) || value
-        try {
-          state = State.fromEncoded(encoded)
-        } catch (e) {
-          console.debug(`Could not parse state from value: ${value}`, e)
-        }
+    values = [...new Set(values)]
+    console.debug('Attempting to resolve state with values:', values)
 
-        return state !== undefined
-      })
+    let state
+    for (const value of values) {
+      // Treat value as puzzle ID, falling back to treating it as a raw encoded value
+      const encoded = localStorage.getItem(getKey(State.CacheKeys.state, value)) || value
+      try {
+        state = State.fromEncoded(encoded)
+        id = state.getId()
+        console.debug(`Resolved state from local storage for puzzle ID: ${id}.`)
+      } catch (e) {
+        console.debug(`Could not parse state from value: ${encoded}`, e)
+      }
+
+      if (Puzzles.has(value)) {
+        // Value matches puzzle ID from puzzles cache
+        id = value
+      }
+
+      // Stop resolving when an ID is found
+      if (id !== undefined) {
+        break
+      }
     }
 
-    // Fall back to loading state from puzzles cache
-    return state || State.fromId(id)
+    if (!state) {
+      console.debug(`Resolving state from puzzles cache for puzzle ID: ${id}.`)
+      return State.fromId(id)
+    }
+
+    return state
   }
 
   static CacheKeys = Object.freeze({
@@ -333,5 +355,5 @@ export class State {
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 4
+  static Version = 5
 }

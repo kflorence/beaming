@@ -33,6 +33,7 @@ class PuzzleFixture {
       '--disable-dev-shm-usage',
       '--disable-extensions',
       '--disable-gpu',
+      // Comment this out to watch the tests run in-browser
       '--headless',
       '--ignore-certificate-errors',
       '--no-sandbox',

@@ -177,7 +177,7 @@ export class Editor {
       { arrayMerge: arrayMergeOverwrite }
     )
 
-    console.log('state', state, 'value', value, 'newState', newState)
+    console.debug('state', state, 'value', value, 'newState', newState)
 
     this.#updateConfiguration(newState)
   }
