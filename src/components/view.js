@@ -1,7 +1,6 @@
 import paper from 'paper'
 import { State } from './state'
 import { emitEvent, getKeyFactory, params, pointToString, stringToPoint } from './util'
-import { Editor } from './editor'
 
 const localStorage = window.localStorage
 
@@ -29,8 +28,6 @@ export class View {
     }
   }
 
-  static #key = getKeyFactory(...[params.has(State.ParamKeys.edit) ? Editor.Key : undefined, 'view', State.getId()].filter((v) => v))
-
   static CacheKeys = Object.freeze({
     Center: 'center',
     Zoom: 'zoom'
@@ -39,4 +36,11 @@ export class View {
   static Events = Object.freeze({
     Center: 'view-center'
   })
+
+  static #key = getKeyFactory([
+    // Prefix key with 'editor' when in edit mode
+    params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
+    'view',
+    State.getId()
+  ].filter((v) => v))
 }

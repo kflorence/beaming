@@ -3,6 +3,7 @@ import { debug } from './components/debug'
 import paper, { Point } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { OffsetCoordinates } from './components/coordinates/offset'
+import { base64decode } from './components/util'
 
 if (process.env.NODE_ENV === 'production') {
   require('./analytics')
@@ -25,3 +26,4 @@ beaming.drawDebugPoint = function (x, y, style) {
 // Export
 window.beaming = beaming
 window.paper = paper
+window.util = { base64decode }

@@ -1,5 +1,5 @@
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode, getKey, jsonDiffPatch, params, uniqueId, url } from './util'
+import { base64decode, base64encode, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
 
 const history = window.history
 const localStorage = window.localStorage
@@ -16,7 +16,7 @@ export class State {
 
   constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
     // When editing a puzzle from cache, append a unique ID
-    this.#id = Puzzles.has(id) && params.has(State.ParamKeys.edit) ? `${id}-${uniqueId()}` : id ?? uniqueId()
+    this.#id = Puzzles.has(id) && params.has(State.ParamKeys.Edit) ? `${id}-${uniqueId()}` : id ?? uniqueId()
     this.#original = original || {}
     this.#deltas = deltas || []
     this.#moves = moves || []
@@ -71,6 +71,10 @@ export class State {
 
   canUndo () {
     return this.#moveIndex >= 0
+  }
+
+  clone () {
+    return new State(this.#id, this.#current)
   }
 
   encode () {
@@ -218,22 +222,22 @@ export class State {
     const data = { id }
     const hashParams = ['', id]
 
-    if (!hashParams.includes(params.get(State.ParamKeys.clearCache))) {
+    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
       // Include encoded state in URL if cache is not being cleared for this puzzle ID
       data.state = this.encode()
       hashParams.push(data.state)
-      localStorage.setItem(getKey(State.CacheKeys.state, id), data.state)
+      localStorage.setItem(State.#key(id), data.state)
     }
 
     url.hash = hashParams.join('/')
     history.pushState(data, '', url)
-    localStorage.setItem(State.CacheKeys.id, id)
+    localStorage.setItem(State.#key(State.CacheKeys.Id), id)
   }
 
   static clearCache (id) {
     if (id) {
       // Clear a single puzzle ID
-      localStorage.removeItem(getKey(State.CacheKeys.state, id))
+      localStorage.removeItem(State.#key(id))
     } else {
       localStorage.clear()
     }
@@ -285,7 +289,7 @@ export class State {
   }
 
   static getId () {
-    return localStorage.getItem(State.CacheKeys.id)
+    return localStorage.getItem(State.#key(State.CacheKeys.Id))
   }
 
   static resolve (id) {
@@ -299,61 +303,62 @@ export class State {
     // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
     values.push(...url.hash.substring(1).split('/').filter((path) => path !== ''))
 
-    if (!params.has(State.ParamKeys.edit)) {
+    if (!params.has(State.ParamKeys.Edit)) {
       // If puzzle is not being edited, check last active puzzle ID, falling back to first puzzle ID
       values.push(State.getId() || Puzzles.visible.firstId)
     }
 
-    if (params.has(State.ParamKeys.clearCache)) {
+    if (params.has(State.ParamKeys.ClearCache)) {
       // If cache is being cleared, do it before attempting resolution
-      State.clearCache(params.get(State.ParamKeys.clearCache))
+      State.clearCache(params.get(State.ParamKeys.ClearCache))
     }
 
     values = [...new Set(values)]
-    console.debug('Attempting to resolve state with values:', values)
+    console.debug('Attempting to resolve cached state with values:', values)
 
     let state
-    for (const value of values) {
-      // Treat value as puzzle ID, falling back to treating it as a raw encoded value
-      const encoded = localStorage.getItem(getKey(State.CacheKeys.state, value)) || value
-      try {
-        state = State.fromEncoded(encoded)
-        id = state.getId()
-        console.debug(`Resolved state from local storage for puzzle ID: ${id}.`)
-      } catch (e) {
-        console.debug(`Could not parse state from value: ${encoded}`, e)
-      }
-
+    for (let value of values) {
       if (Puzzles.has(value)) {
-        // Value matches puzzle ID from puzzles cache
         id = value
+        value = localStorage.getItem(State.#key(id))
+        if (value === null) {
+          // No local storage cache exists for this ID
+          break
+        }
       }
 
-      // Stop resolving when an ID is found
-      if (id !== undefined) {
-        break
+      try {
+        state = State.fromEncoded(value)
+        id = state.getId()
+        console.debug(`Successfully resolved cached state for puzzle ID '${id}'.`, state)
+        return state
+      } catch (e) {
+        console.debug(`Could not decode value: ${value}`, e)
       }
     }
 
-    if (!state) {
-      console.debug(`Resolving state from puzzles cache for puzzle ID: ${id}.`)
-      return State.fromId(id)
-    }
+    console.debug(`No cached state found for puzzle ID '${id}'.`)
 
-    return state
+    return State.fromId(id)
   }
 
   static CacheKeys = Object.freeze({
-    id: 'id',
-    state: 'state'
+    Editor: 'editor',
+    Id: 'id'
   })
 
   static ParamKeys = Object.freeze({
-    clearCache: 'clearCache',
-    edit: 'edit'
+    ClearCache: 'clearCache',
+    Edit: 'edit'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
   static Version = 5
+
+  static #key = getKeyFactory([
+    // Prefix key with 'editor' when in edit mode
+    params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
+    'state'
+  ].filter((v) => v))
 }

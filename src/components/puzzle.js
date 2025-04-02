@@ -20,6 +20,8 @@ import { Editor } from './editor'
 import { View } from './view'
 import { Schema } from './schema'
 
+const confirm = window.confirm
+
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   footer: document.getElementById('puzzle-footer'),
@@ -72,7 +74,7 @@ export class Puzzle {
     this.layers.collisions = new Layer()
     this.layers.debug = new Layer()
 
-    if (params.has(State.ParamKeys.edit)) {
+    if (params.has(State.ParamKeys.Edit)) {
       // Edit mode
       this.#editor = new Editor(this)
     }
@@ -86,7 +88,7 @@ export class Puzzle {
       { type: 'click', element: elements.previous, handler: this.#previous },
       { type: 'click', element: elements.recenter, handler: this.recenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
-      { type: 'click', element: elements.reset, handler: this.#reset },
+      { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
@@ -520,8 +522,8 @@ export class Puzzle {
   }
 
   #reset () {
-    if (this.state.reset()) {
-      this.reload()
+    if (confirm('Are you sure you want to reset this puzzle? This cannot be undone.') && this.state.reset()) {
+      setTimeout(() => this.reload())
     }
   }
 

@@ -157,7 +157,7 @@ export function getKey () {
 }
 
 export function getKeyFactory () {
-  const base = arguments
+  const base = Array.from(arguments).flat()
   return function () { return getKey(...base, ...arguments) }
 }
 

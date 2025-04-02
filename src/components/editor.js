@@ -144,7 +144,6 @@ export class Editor {
     console.debug('state', state, 'value', value, 'newState', newState)
 
     this.#updateConfiguration(newState)
-    this.#updatePlayUrl()
   }
 
   #onGutterMoved () {
@@ -176,6 +175,7 @@ export class Editor {
 
   #onPuzzleUpdate () {
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
+    this.#updatePlayUrl()
   }
 
   #onTap (event) {
@@ -260,6 +260,7 @@ export class Editor {
 
   #updateConfiguration (state) {
     elements.configuration.value = JSON.stringify(state, null, 2)
+    this.#updatePlayUrl()
   }
 
   #updateLock () {
@@ -275,7 +276,10 @@ export class Editor {
 
   #updatePlayUrl () {
     const playUrl = new URL(url)
-    playUrl.searchParams.delete(State.ParamKeys.edit)
+    playUrl.searchParams.delete(State.ParamKeys.Edit)
+    const state = this.#puzzle.state.clone()
+    console.log(state)
+    playUrl.hash = ['', State.getId(), state.encode()].join('/')
     elements.play.firstElementChild.setAttribute('href', playUrl.toString())
   }
 
@@ -297,10 +301,6 @@ export class Editor {
     ]
   }
 
-  static Key = 'editor'
-
-  static #key = getKeyFactory(Editor.Key, State.getId())
-
   static CacheKeys = Object.freeze({
     Locked: 'locked'
   })
@@ -308,4 +308,6 @@ export class Editor {
   static ClassNames = Object.freeze({
     Edit: 'edit'
   })
+
+  static #key = getKeyFactory(State.CacheKeys.Editor, State.getId())
 }
