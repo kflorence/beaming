@@ -1,6 +1,7 @@
 import paper from 'paper'
 import { State } from './state'
-import { getKeyFactory, pointToString, stringToPoint } from './util'
+import { emitEvent, getKeyFactory, params, pointToString, stringToPoint } from './util'
+import { Editor } from './editor'
 
 const localStorage = window.localStorage
 
@@ -8,6 +9,7 @@ export class View {
   static setCenter (point) {
     paper.view.center = point
     localStorage.setItem(View.#key(View.CacheKeys.Center), pointToString(point))
+    emitEvent(View.Events.Center, { point })
   }
 
   static setZoom (factor) {
@@ -27,10 +29,14 @@ export class View {
     }
   }
 
-  static #key = getKeyFactory(State.getId(), 'view')
+  static #key = getKeyFactory(...[params.has(State.ParamKeys.edit) ? Editor.Key : undefined, 'view', State.getId()].filter((v) => v))
 
   static CacheKeys = Object.freeze({
     Center: 'center',
     Zoom: 'zoom'
+  })
+
+  static Events = Object.freeze({
+    Center: 'view-center'
   })
 }

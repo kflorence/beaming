@@ -4,7 +4,7 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
-import { arrayMergeOverwrite, debounce, getKeyFactory, merge } from './util'
+import { arrayMergeOverwrite, getKeyFactory, merge, url } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
@@ -15,8 +15,8 @@ const elements = Object.freeze({
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
+  play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
-  recenter: document.getElementById('editor-recenter'),
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
 })
@@ -67,15 +67,14 @@ export class Editor {
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
-      { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
-      { type: Gutter.Events.Moved, handler: this.#onResize },
+      { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', element: this.#puzzle.element, handler: this.#onPointerMove },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
-      { type: 'resize', element: window, handler: debounce(this.#onResize.bind(this)) },
       { type: 'tap', element: this.#puzzle.element, handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
-      { type: Tile.Events.Selected, handler: this.#setup }
+      { type: Tile.Events.Selected, handler: this.#setup },
+      { type: View.Events.Center, handler: this.#onCenter }
     ])
 
     elements.configuration.value = state.getCurrentJSON()
@@ -109,6 +108,102 @@ export class Editor {
       // TODO: maybe display something to the user, too
       console.error(e)
     }
+  }
+
+  #onCenter () {
+    this.#updateCenter()
+  }
+
+  #onDockUpdate () {
+    const icon = elements.dock.firstChild
+    const isDockBottom = this.#gutter.toggleOrientation()
+
+    if (isDockBottom) {
+      icon.title = 'Dock to right'
+      icon.textContent = 'dock_to_right'
+    } else {
+      icon.title = 'Dock to bottom'
+      icon.textContent = 'dock_to_bottom'
+    }
+
+    this.#onGutterMoved()
+  }
+
+  #onEditorUpdate () {
+    const state = this.#puzzle.state.getCurrent()
+    const value = this.#editor.getValue()
+    const offset = this.#puzzle.selectedTile?.coordinates.offset
+
+    // Update state
+    const newState = merge(
+      state,
+      offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,
+      { arrayMerge: arrayMergeOverwrite }
+    )
+
+    console.debug('state', state, 'value', value, 'newState', newState)
+
+    this.#updateConfiguration(newState)
+    this.#updatePlayUrl()
+  }
+
+  #onGutterMoved () {
+    this.#puzzle.resize()
+  }
+
+  #onPointerMove (event) {
+    const layout = this.#puzzle.layout
+    const offset = layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
+    const center = layout.getPoint(offset)
+    if (!this.#hover) {
+      this.#hover = new Path.RegularPolygon({
+        center,
+        closed: true,
+        radius: layout.parameters.circumradius,
+        opacity: 0.2,
+        sides: 6,
+        style: {
+          strokeColor: 'black',
+          strokeWidth: 2
+        }
+      })
+
+      this.group.addChild(this.#hover)
+    } else {
+      this.#hover.position = center
+    }
+  }
+
+  #onPuzzleUpdate () {
+    elements.configuration.value = this.#puzzle.state.getCurrentJSON()
+  }
+
+  #onTap (event) {
+    if (this.isLocked()) {
+      // If tiles are locked, let puzzle handle it
+      return
+    }
+
+    const layout = this.#puzzle.layout
+    const offset = layout.getOffset(event.detail.point)
+    const tile = layout.getTile(offset)
+
+    console.debug('editor.#onTap', offset, tile)
+
+    if (tile) {
+      layout.removeTile(offset)
+    } else {
+      layout.addTile(offset)
+    }
+
+    this.#puzzle.addMove()
+    this.#puzzle.updateState()
+    this.#puzzle.getBeams().forEach((beam) => {
+      // Re-evaluate all the beams
+      beam.done = false
+    })
+
+    this.#puzzle.update()
   }
 
   #setup (event) {
@@ -150,110 +245,17 @@ export class Editor {
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
   }
 
-  #onDockUpdate () {
-    const icon = elements.dock.firstChild
-    const isDockBottom = this.#gutter.toggleOrientation()
-
-    if (isDockBottom) {
-      icon.title = 'Dock to right'
-      icon.textContent = 'dock_to_right'
-    } else {
-      icon.title = 'Dock to bottom'
-      icon.textContent = 'dock_to_bottom'
-    }
-
-    this.#onResize()
-  }
-
-  #onEditorUpdate () {
-    const state = this.#puzzle.state.getCurrent()
-    const value = this.#editor.getValue()
-    const offset = this.#puzzle.selectedTile?.coordinates.offset
-
-    // Update state
-    const newState = merge(
-      state,
-      offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,
-      { arrayMerge: arrayMergeOverwrite }
-    )
-
-    console.debug('state', state, 'value', value, 'newState', newState)
-
-    this.#updateConfiguration(newState)
-  }
-
-  #onPointerMove (event) {
-    const layout = this.#puzzle.layout
-    const offset = layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
-    const center = layout.getPoint(offset)
-    if (!this.#hover) {
-      this.#hover = new Path.RegularPolygon({
-        center,
-        closed: true,
-        radius: layout.parameters.circumradius,
-        opacity: 0.2,
-        sides: 6,
-        style: {
-          strokeColor: 'black',
-          strokeWidth: 2
-        }
-      })
-
-      this.group.addChild(this.#hover)
-    } else {
-      this.#hover.position = center
-    }
-  }
-
-  #onPuzzleUpdate () {
-    elements.configuration.value = this.#puzzle.state.getCurrentJSON()
-  }
-
-  #onRecenter () {
-    View.setCenter(this.#puzzle.layout.getCenter())
-    this.#updateCenter()
-  }
-
-  #onResize () {
-    this.#puzzle.resize()
-    this.#onRecenter()
-    // For some reason, without reload, setting viewSize alone breaks the project coordinate space, maybe:
-    // https://github.com/paperjs/paper.js/issues/1757
-    // Forcing a reload fixes it.
-    this.#puzzle.reload()
-  }
-
-  #onTap (event) {
-    if (this.isLocked()) {
-      // If tiles are locked, let puzzle handle it
-      return
-    }
-
-    const layout = this.#puzzle.layout
-    const offset = layout.getOffset(event.detail.point)
-    const tile = layout.getTile(offset)
-
-    console.debug('editor.#onTap', offset, tile)
-
-    if (tile) {
-      layout.removeTile(offset)
-    } else {
-      layout.addTile(offset)
-    }
-
-    this.#puzzle.addMove()
-    this.#puzzle.updateState()
-    this.#puzzle.getBeams().forEach((beam) => {
-      // Re-evaluate all the beams
-      beam.done = false
-    })
-
-    this.#puzzle.update()
-  }
-
   #toggleLock () {
     localStorage.setItem(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
+  }
+
+  #updateCenter () {
+    this.#center.removeChildren()
+    this.#center.addChildren(Editor.mark(
+      this.#puzzle.layout.getCenter(),
+      this.#puzzle.layout.parameters.circumradius / 4
+    ))
   }
 
   #updateConfiguration (state) {
@@ -271,12 +273,10 @@ export class Editor {
     }
   }
 
-  #updateCenter () {
-    this.#center.removeChildren()
-    this.#center.addChildren(Editor.mark(
-      this.#puzzle.layout.getCenter(),
-      this.#puzzle.layout.parameters.circumradius / 4
-    ))
+  #updatePlayUrl () {
+    const playUrl = new URL(url)
+    playUrl.searchParams.delete(State.ParamKeys.edit)
+    elements.play.firstElementChild.setAttribute('href', playUrl.toString())
   }
 
   static mark (center, width) {
@@ -297,7 +297,9 @@ export class Editor {
     ]
   }
 
-  static #key = getKeyFactory(State.getId(), 'editor')
+  static Key = 'editor'
+
+  static #key = getKeyFactory(Editor.Key, State.getId())
 
   static CacheKeys = Object.freeze({
     Locked: 'locked'

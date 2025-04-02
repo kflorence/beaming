@@ -29,6 +29,7 @@ const elements = Object.freeze({
   id: document.getElementById('puzzle-id'),
   next: document.getElementById('puzzle-next'),
   previous: document.getElementById('puzzle-previous'),
+  recenter: document.getElementById('puzzle-recenter'),
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
@@ -76,20 +77,21 @@ export class Puzzle {
       this.#editor = new Editor(this)
     }
 
-    this.resize()
+    this.resize(false)
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
       { type: 'change', element: elements.id, handler: this.#onSelect },
       { type: 'click', element: elements.next, handler: this.#next },
       { type: 'click', element: elements.previous, handler: this.#previous },
+      { type: 'click', element: elements.recenter, handler: this.recenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
-      { type: 'resize', element: window, handler: debounce(this.resize) },
+      { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
@@ -187,6 +189,14 @@ export class Puzzle {
     document.body.classList.add(Puzzle.Events.Mask)
   }
 
+  recenter () {
+    if (!this.layout) {
+      return
+    }
+
+    View.setCenter(this.layout.getCenter())
+  }
+
   reload (state) {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
@@ -213,7 +223,7 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
-  resize () {
+  resize (reload = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
 
     const newSize = new Size(width, height)
@@ -227,9 +237,16 @@ export class Puzzle {
     elements.canvas.style.height = height + 'px'
     elements.canvas.style.width = width + 'px'
 
-    // Beware: updating this without reloading will cause issues with the project coordinate space
-    // See: https://github.com/paperjs/paper.js/issues/1757
     paper.view.viewSize = newSize
+
+    this.recenter()
+
+    if (reload) {
+      // For some reason, without reload, setting viewSize alone breaks the project coordinate space
+      // See: https://github.com/paperjs/paper.js/issues/1757
+      // Forcing a reload fixes it.
+      this.reload()
+    }
   }
 
   select (id) {
