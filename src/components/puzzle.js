@@ -1,7 +1,7 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Size } from 'paper'
-import { addClass, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
+import { addClass, base64encode, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -108,8 +108,8 @@ export class Puzzle {
     }
   }
 
-  addMove () {
-    return this.state.addMove()
+  addMove (modifier) {
+    return this.state.addMove(modifier, this.selectedTile)
   }
 
   centerOnTile (offset) {
@@ -142,8 +142,16 @@ export class Puzzle {
     return this.#beamsUpdateDelay
   }
 
+  getMoves () {
+    return this.state.moves()
+  }
+
   getProjectPoint (point) {
     return this.#interact.getProjectPoint(point)
+  }
+
+  getSolution () {
+    return base64encode(JSON.stringify(this.getMoves()))
   }
 
   getTile (point) {
@@ -429,7 +437,7 @@ export class Puzzle {
       this.updateSelectedTile(event.detail.selectedTile)
     }
 
-    this.addMove()
+    this.addMove(modifier)
     this.updateState()
 
     this.getBeams()

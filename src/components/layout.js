@@ -111,7 +111,7 @@ export class Layout extends Stateful {
     return state
   }
 
-  getTile (offset) {
+  getTile (offset = {}) {
     return this.#tiles[offset.r]?.[offset.c]
   }
 

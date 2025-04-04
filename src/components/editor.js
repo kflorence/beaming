@@ -4,30 +4,42 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
-import { arrayMergeOverwrite, getKeyFactory, merge, url } from './util'
+import { arrayMergeOverwrite, getKeyFactory, merge, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
+import Tippy from 'tippy.js'
+import 'tippy.js/dist/tippy.css'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
   configuration: document.getElementById('editor-configuration'),
+  copy: document.getElementById('editor-copy'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
+  paste: document.getElementById('editor-paste'),
   play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
+  share: document.getElementById('editor-share'),
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
 })
 
 const localStorage = window.localStorage
 
+const tippy = Tippy(elements.share, {
+  content: 'Share URL copied to clipboard!',
+  theme: 'custom',
+  trigger: 'manual'
+})
+
 export class Editor {
   group = new Group({ locked: true })
   id
 
   #center = new Group({ locked: true })
+  #copy
   #editor
   #eventListener = new EventListeners({ context: this })
   #gutter
@@ -50,6 +62,13 @@ export class Editor {
     return JSON.parse(elements.configuration.value)
   }
 
+  getShareUrl () {
+    const playUrl = new URL(url)
+    playUrl.searchParams.delete(State.ParamKeys.Edit)
+    playUrl.hash = ['', State.getId(), this.#puzzle.state.clone().encode()].join('/')
+    return playUrl.toString()
+  }
+
   isLocked () {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
@@ -65,8 +84,11 @@ export class Editor {
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
+      { type: 'click', element: elements.copy, handler: this.#onCopy },
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
+      { type: 'click', element: elements.paste, handler: this.#onPaste },
+      { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', element: this.#puzzle.element, handler: this.#onPointerMove },
@@ -114,6 +136,16 @@ export class Editor {
     this.#updateCenter()
   }
 
+  #onCopy () {
+    if (elements.copy.classList.contains('disabled')) {
+      return
+    }
+
+    this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
+    this.#copy = this.#puzzle.selectedTile.coordinates.offset
+    this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+  }
+
   #onDockUpdate () {
     const icon = elements.dock.firstChild
     const isDockBottom = this.#gutter.toggleOrientation()
@@ -129,9 +161,8 @@ export class Editor {
     this.#onGutterMoved()
   }
 
-  #onEditorUpdate () {
+  #onEditorUpdate (value = this.#editor.getValue()) {
     const state = this.#puzzle.state.getCurrent()
-    const value = this.#editor.getValue()
     const offset = this.#puzzle.selectedTile?.coordinates.offset
 
     // Update state
@@ -148,6 +179,21 @@ export class Editor {
 
   #onGutterMoved () {
     this.#puzzle.resize()
+  }
+
+  #onPaste () {
+    if (elements.paste.classList.contains('disabled')) {
+      return
+    }
+
+    const value = JSON.parse(JSON.stringify(
+      this.#puzzle.layout.getTile(this.#copy).getState(),
+      // Remove 'id' keys
+      (k, v) => k === 'id' ? undefined : v)
+    )
+
+    this.#onEditorUpdate(value)
+    this.#onConfigurationUpdate()
   }
 
   #onPointerMove (event) {
@@ -176,6 +222,12 @@ export class Editor {
   #onPuzzleUpdate () {
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
     this.#updatePlayUrl()
+  }
+
+  async #onShare () {
+    await writeToClipboard(this.getShareUrl())
+    tippy.show()
+    setTimeout(() => tippy.hide(), 1000)
   }
 
   #onTap (event) {
@@ -207,12 +259,28 @@ export class Editor {
   }
 
   #setup (event) {
+    const tile = this.#puzzle.selectedTile
+
+    // Enable/disable the following actions based on whether a tile is selected
+    elements.copy.classList.toggle('disabled', !tile)
+    elements.paste.classList.toggle('disabled', !(tile && this.#copy))
+
     if (event?.type === Tile.Events.Selected && event.detail.deselectedTile) {
+      // Don't process select events any further if a tile was also de-selected.
       // This prevents a race condition between editor destruction and creation when switching between tiles.
       return
     }
 
-    const tile = this.#puzzle.selectedTile
+    if (this.#copy && !tile) {
+      // Remove the copied tile if no tile is selected
+      this.#puzzle.layout.getTile(this.#copy).setStyle('default')
+      this.#copy = undefined
+    }
+
+    if (this.#copy && !this.#copy.equals(tile?.coordinates.offset)) {
+      // If the copied tile is not selected, show it as copied
+      this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+    }
 
     if (this.#editor) {
       this.#editor.destroy()
@@ -239,7 +307,7 @@ export class Editor {
       theme: 'barebones'
     }
 
-    console.log(JSON.stringify(options, null, 2))
+    console.debug('Editor options', JSON.stringify(options, null, 2))
 
     this.#editor = new JSONEditor(elements.editor, options)
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
@@ -275,12 +343,7 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    const playUrl = new URL(url)
-    playUrl.searchParams.delete(State.ParamKeys.Edit)
-    const state = this.#puzzle.state.clone()
-    console.log(state)
-    playUrl.hash = ['', State.getId(), state.encode()].join('/')
-    elements.play.firstElementChild.setAttribute('href', playUrl.toString())
+    elements.play.firstElementChild.setAttribute('href', this.getShareUrl())
   }
 
   static mark (center, width) {

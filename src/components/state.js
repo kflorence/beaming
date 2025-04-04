@@ -27,7 +27,7 @@ export class State {
     this.#resetCurrent()
   }
 
-  addMove () {
+  addMove (modifier, selectedTile) {
     // Handle moving after an undo (revising history)
     if (this.#moveIndex < this.#moves.length - 1) {
       const deltaIndex = this.getDeltaIndex()
@@ -47,16 +47,15 @@ export class State {
     }
 
     const deltaIndex = this.#deltas.length - 1
-    if (!this.#moves.includes(deltaIndex)) {
-      // Don't add duplicate moves
-      this.#moves.push(deltaIndex)
+    if (this.#moves.some((move) => move.deltaIndex === deltaIndex)) {
+      console.debug(this.toString(), `addMove: ignoring duplicate move for deltaIndex ${deltaIndex}.`)
     } else {
-      console.debug(this.toString(), `addMove: ignoring duplicate move: ${deltaIndex}`)
+      this.#moves.push(new State.Move(deltaIndex, modifier, selectedTile))
     }
 
     this.#moveIndex = this.#moves.length - 1
 
-    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, deltaIndex)
+    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
 
     return this.#moveIndex
   }
@@ -73,6 +72,9 @@ export class State {
     return this.#moveIndex >= 0
   }
 
+  /**
+   * @returns {State} Creates a clone of state at current point without history
+   */
   clone () {
     return new State(this.#id, this.#current)
   }
@@ -102,7 +104,9 @@ export class State {
     console.debug(this.toString(), 'getDeltaIndex', this.#moves, this.#moveIndex, this.#deltas.length - 1)
     // If there are no moves, or the user is on the latest move, use the latest delta index
     // Otherwise, use the delta index indicated by the move
-    return this.#moveIndex < this.#moves.length - 1 ? this.#moves[this.#moveIndex + 1] : this.#deltas.length - 1
+    return this.#moveIndex < this.#moves.length - 1
+      ? this.#moves[this.#moveIndex + 1].deltaIndex
+      : this.#deltas.length - 1
   }
 
   getDiff (newState) {
@@ -143,7 +147,7 @@ export class State {
     }
 
     // Reset to the state prior to the first move
-    this.#deltas.splice(this.#moves[0] + 1)
+    this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
     this.#selectedTile = undefined
@@ -173,7 +177,7 @@ export class State {
       return
     }
 
-    console.log(this.toString(), 'undo', this.#moveIndex)
+    console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
     this.#resetCurrent()
@@ -361,4 +365,16 @@ export class State {
     params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
     'state'
   ].filter((v) => v))
+
+  static Move = class {
+    deltaIndex
+    modifierType
+    offset
+
+    constructor (deltaIndex, modifier, selectedTile) {
+      this.deltaIndex = deltaIndex
+      this.modifierType = modifier?.type
+      this.offset = selectedTile?.coordinates.offset.toString()
+    }
+  }
 }

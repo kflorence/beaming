@@ -667,6 +667,10 @@ i.fill,
   color: white;
 }
 
+.menu li a {
+  color: black;
+}
+
 .message {
   align-items: center;
   background-color: #eee;

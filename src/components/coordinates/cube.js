@@ -19,7 +19,7 @@ export class CubeCoordinates {
   }
 
   equals (other) {
-    return this.q === other.q && this.r === other.r && this.s === other.s
+    return other instanceof CubeCoordinates && other.q === this.q && other.r === this.r && other.s === this.s
   }
 
   toPoint (circumradius) {

@@ -11,6 +11,10 @@ export class OffsetCoordinates {
     return new OffsetCoordinates(this.r + offset.r, this.c + offset.c)
   }
 
+  equals (other) {
+    return other instanceof OffsetCoordinates && other.r === this.r && other.c === this.c
+  }
+
   toString () {
     return this.coordinates.join(',')
   }

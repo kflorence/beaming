@@ -256,3 +256,11 @@ export function uniqueBy (key, array) {
 export function uniqueId () {
   return crypto.randomUUID().split('-')[0]
 }
+
+export async function writeToClipboard (string) {
+  try {
+    await navigator.clipboard.writeText(string)
+  } catch (error) {
+    console.error('Could not write to clipboard.', error.message)
+  }
+}

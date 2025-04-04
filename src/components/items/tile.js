@@ -23,6 +23,7 @@ export class Tile extends Item {
       {},
       Tile.Styles,
       {
+        copy: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.copy),
         edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
       },
       state.style || {}
@@ -209,6 +210,10 @@ export class Tile extends Item {
       fillColor: new Color('white'),
       strokeColor: new Color('#666'),
       strokeWidth: 1
+    },
+    copy: {
+      strokeColor: new Color('#999'),
+      strokeWidth: 2
     },
     edit: {
       strokeColor: new Color('black'),
