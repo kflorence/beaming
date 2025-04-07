@@ -4,7 +4,7 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
-import { arrayMergeOverwrite, getKeyFactory, merge, url, writeToClipboard } from './util'
+import { getKeyFactory, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
@@ -162,20 +162,24 @@ export class Editor {
   }
 
   #onEditorUpdate (value = this.#editor.getValue()) {
-    const state = this.#puzzle.state.getCurrent()
+    const current = this.#puzzle.state.getCurrent()
     const offset = this.#puzzle.selectedTile?.coordinates.offset
 
-    // Update state
-    // FIXME: need to delete keys that exist in state but not value (e.g. if 'modifiers' is unchecked)
-    const newState = merge(
-      state,
-      offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,
-      { arrayMerge: arrayMergeOverwrite }
-    )
+    let state
+    if (offset) {
+      // Update a specific tile
+      state = current
+      state.layout.tiles[offset.r][offset.c] = value
+    } else {
+      // Update the entire state
+      state = value
+      // Tiles are not editable globally
+      state.tiles = current.tiles
+    }
 
-    console.debug('state', state, 'value', value, 'newState', newState)
+    console.debug('current', current, 'new', value, 'updated', state)
 
-    this.#updateConfiguration(newState)
+    this.#updateConfiguration(state)
   }
 
   #onGutterMoved () {

@@ -322,7 +322,7 @@ export class Puzzle {
   }
 
   updateState (state) {
-    state ??= Object.assign({ version: 0 }, this.state.getCurrent(), { layout: this.layout.getState() })
+    state ??= Object.assign(this.state.getCurrent(), { layout: this.layout.getState() })
 
     this.state.update(state)
     this.#updateDropdown()

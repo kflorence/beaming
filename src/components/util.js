@@ -28,8 +28,6 @@ export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
 
-export const arrayMergeOverwrite = (target, source) => source
-
 export function base64decode (string) {
   const binString = window.atob(base64unescape(string))
   // noinspection JSCheckFunctionSignatures
