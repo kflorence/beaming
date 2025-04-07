@@ -11,7 +11,13 @@ export class Schema {
 
   static color = {
     format: 'color',
+    title: 'color',
     type: 'string'
+  }
+
+  static colors = {
+    items: Schema.color,
+    type: 'array'
   }
 
   static direction = {

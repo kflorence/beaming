@@ -166,6 +166,7 @@ export class Editor {
     const offset = this.#puzzle.selectedTile?.coordinates.offset
 
     // Update state
+    // FIXME: need to delete keys that exist in state but not value (e.g. if 'modifiers' is unchecked)
     const newState = merge(
       state,
       offset ? { layout: { tiles: { [offset.r]: { [offset.c]: value } } } } : value,

@@ -8,12 +8,15 @@ import { View } from './view'
 import { Schema } from './schema'
 
 export class Layout extends Stateful {
+  #offset
   #tiles = {}
 
   layers = {}
   modifiers = []
+  offset
   parameters
   tiles = []
+  width
 
   constructor (state = {}) {
     super(state)
@@ -31,6 +34,8 @@ export class Layout extends Stateful {
       .filter((modifier) => modifier !== undefined)
 
     this.parameters = Tile.parameters(state.tile?.height)
+    this.offset = state.offset ?? Layout.Offsets.OddRow
+    this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
     for (const r in tiles) {
       const row = tiles[r]
@@ -50,8 +55,8 @@ export class Layout extends Stateful {
 
     const rowOffset = Math.floor(offset.r / 2)
     const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
+    const center = this.getPoint(offset)
     const coordinates = { axial, offset }
-    const center = axial.toPoint(this.parameters.circumradius).add(this.getCenter())
     const tile = new Tile(coordinates, center, this.parameters, state)
 
     this.#tiles[offset.r] ??= {}
@@ -79,11 +84,16 @@ export class Layout extends Stateful {
 
   getOffset (point) {
     return CubeCoordinates.toOffsetCoordinates(
-      CubeCoordinates.fromPoint(point.subtract(this.getCenter()), this.parameters.circumradius))
+      CubeCoordinates.fromPoint(
+        point.subtract(this.getCenter().add(this.#offset)),
+        this.parameters.circumradius
+      ))
   }
 
   getPoint (offset) {
-    return OffsetCoordinates.toAxialCoordinates(offset).toPoint(this.parameters.circumradius).add(this.getCenter())
+    return OffsetCoordinates.toAxialCoordinates(offset)
+      .toPoint(this.parameters.circumradius)
+      .add(this.getCenter().add(this.#offset))
   }
 
   getState () {
@@ -97,7 +107,7 @@ export class Layout extends Stateful {
       }
     }
 
-    const state = {}
+    const state = { offset: this.offset }
 
     if (Object.keys(tiles).length) {
       state.tiles = tiles
@@ -144,11 +154,24 @@ export class Layout extends Stateful {
     Object.values(this.layers).forEach((layer) => layer.remove())
   }
 
+  static Offsets = Object.freeze({
+    EvenRow: 'even-row',
+    OddRow: 'odd-row'
+  })
+
   static Schema = Object.freeze({
     $id: Schema.$id('layout'),
     properties: {
-      modifiers: Modifiers.Schema
+      modifiers: Modifiers.Schema,
+      offset: {
+        enum: Object.values(Layout.Offsets),
+        options: {
+          enum_titles: ['Even rows', 'Odd rows']
+        },
+        type: 'string'
+      }
     },
+    required: ['offset'],
     type: 'object'
   })
 }
