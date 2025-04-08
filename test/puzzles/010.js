@@ -9,17 +9,11 @@ describe('Puzzle 010', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(1, 1)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(2, 4)
-
-    await puzzle.clickTile(1, 5)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(0, 5)
-
-    await puzzle.clickTile(1, 0)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(2, 5)
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '1,1', tile: '0,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-1,2', tile: '0,2' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '1,2', tile: '0,-3' }
+    ])
 
     assert(await puzzle.isSolved())
   })

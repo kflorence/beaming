@@ -157,7 +157,8 @@ export class Beam extends Item {
   }
 
   getState () {
-    return this.parent.getState().openings[this.#direction]
+    // noinspection JSValidateTypes
+    return this.parent.getState().openings.find((opening) => opening.direction === this.#direction)
   }
 
   getStep (stepIndex) {
@@ -555,7 +556,8 @@ export class Beam extends Item {
   }
 
   updateState (updater, eventDetail = {}) {
-    return this.parent.updateState((state) => updater(state.openings[this.#direction]), eventDetail)
+    return this.parent.updateState((state) =>
+      updater(state.openings.find((opening) => opening.direction === this.#direction)), eventDetail)
   }
 
   updateStep (stepIndex, settings) {

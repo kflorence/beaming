@@ -195,7 +195,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (exitPortals.length > 1) {
       // Check for existing exitPortalId in beam state for this step
-      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id]
+      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[Item.Types.portal]?.exitPortalId
       if (exitPortalId !== undefined) {
         console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
         const existing = exitPortals.find((item) => item.id === exitPortalId)
@@ -217,12 +217,19 @@ export class Portal extends movable(rotatable(Item)) {
       onAdd: (step) => {
         exitPortal.update(direction, step)
         // Store this decision in beam state
-        // TODO: store this less cryptically (e.g. use "portal")
-        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }))
+        beam.updateState((state) => {
+          state.steps ??= {}
+          state.steps[step.index] ??= {}
+          state.steps[step.index][Item.Types.portal] = {
+            entryPortalId: this.id,
+            exitPortalId: exitPortal.id
+          }
+          return state
+        })
       },
       onRemove: (step) => {
         // Remove any associated beam state
-        beam.updateState((state) => { delete state.steps[step.index] })
+        beam.updateState((state) => { delete state.steps[step.index][Item.Types.portal] })
         exitPortal.update(direction)
       },
       point: exitPortal.parent.center,
