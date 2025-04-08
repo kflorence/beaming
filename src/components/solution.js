@@ -210,7 +210,7 @@ Solution.Schema = Object.freeze({
   $id: Schema.$id('solution'),
   items: {
     anyOf: [Connections.Schema, Moves.Schema],
-    headerTemplate: 'Solution {{i1}}'
+    headerTemplate: 'solution {{i1}}'
   },
   type: 'array'
 })

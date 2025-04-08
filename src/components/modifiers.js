@@ -19,7 +19,7 @@ export class Modifiers {
         Swap.Schema,
         Toggle.Schema
       ],
-      headerTemplate: 'Modifier {{i1}}'
+      headerTemplate: 'modifier {{i1}}'
     },
     minItems: 0,
     maxItems: 6,

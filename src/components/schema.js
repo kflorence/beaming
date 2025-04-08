@@ -32,19 +32,23 @@ export class Schema {
     return {
       $id: Schema.$id(path, type),
       properties: {
+        id: {
+          options: {
+            hidden: true
+          },
+          type: 'string'
+        },
         type: {
           const: type,
           options: {
-            containerAttributes: {
-              class: 'hide'
-            }
+            hidden: true
           },
           readOnly: true,
           type: 'string'
         }
       },
       required: ['type'],
-      title: type,
+      title: type.toLowerCase(),
       type: 'object'
     }
   }

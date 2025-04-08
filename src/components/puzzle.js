@@ -802,6 +802,10 @@ export class Puzzle {
       author: {
         type: 'string'
       },
+      description: {
+        format: 'textarea',
+        type: 'string'
+      },
       layout: Layout.Schema,
       solution: Solution.Schema,
       version: {

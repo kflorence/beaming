@@ -234,6 +234,12 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       properties: {
         color: Schema.colors,
         direction: Schema.direction,
+        steps: {
+          options: {
+            hidden: true
+          },
+          type: 'object'
+        },
         toggled: {
           type: 'boolean'
         }

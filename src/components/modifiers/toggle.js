@@ -34,6 +34,10 @@ export class Toggle extends Modifier {
     this.toggled = !this.toggled
 
     const items = this.tile.items.filter((item) => item.toggleable)
+    if (!items.length) {
+      return
+    }
+
     items.forEach((item) => item.toggle(this.toggled))
 
     this.update({ name: this.getName() })

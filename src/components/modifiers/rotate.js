@@ -13,6 +13,13 @@ export class Rotate extends Modifier {
     this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
   }
 
+  attach (tile) {
+    super.attach(tile)
+    if (!this.disabled) {
+      this.update({ disabled: !tile.items.some((item) => item.rotatable) })
+    }
+  }
+
   moveFilter (tile) {
     // Filter out tiles that contain no rotatable items
     return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
@@ -22,6 +29,10 @@ export class Rotate extends Modifier {
     super.onTap(event)
 
     const items = this.tile.items.filter((item) => item.rotatable)
+    if (!items.length) {
+      return
+    }
+
     items.forEach((item) => item.rotate(this.clockwise))
 
     this.dispatchEvent(Modifier.Events.Invoked, { items })

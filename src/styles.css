@@ -156,15 +156,6 @@ dialog footer ul li:first-child {
   padding: 1em 0 1em 1em;
 }
 
-#editor div[data-schemapath="puzzle.layout.tiles"] {
-  display: none;
-}
-
-/* hides all schema paths which end in 'id' */
-#editor div[data-schemapath$="id"] {
-  display: none;
-}
-
 #editor div[data-schematype=array] > .je-indented-panel {
   background-color: #f9f9f9;
 }
@@ -221,6 +212,10 @@ dialog footer ul li:first-child {
 
 #editor .je-switcher + div > div[data-schematype=object] > .je-header {
   display: none;
+}
+
+#editor .je-textarea {
+  width: calc(100% - 1em);
 }
 
 #editor .row {

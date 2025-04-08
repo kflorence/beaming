@@ -169,6 +169,12 @@ export class Layout extends Stateful {
           enum_titles: ['Even rows', 'Odd rows']
         },
         type: 'string'
+      },
+      tiles: {
+        options: {
+          hidden: true
+        },
+        type: 'object'
       }
     },
     required: ['offset'],
