@@ -33,6 +33,8 @@ export class Rotate extends Modifier {
     this.clockwise = !this.clockwise
     this.updateState((state) => { state.clockwise = this.clockwise })
     this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
+
+    this.dispatchEvent(Modifier.Events.Toggled, { clockwise: this.clockwise })
   }
 
   static Names = Object.freeze({ left: Icons.RotateLeft.name, right: Icons.RotateRight.name })

@@ -27,7 +27,7 @@ export class State {
     this.#resetCurrent()
   }
 
-  addMove (modifier, selectedTile) {
+  addMove (eventType, tile, modifier, selectedTile) {
     // Handle moving after an undo (revising history)
     if (this.#moveIndex < this.#moves.length - 1) {
       const deltaIndex = this.getDeltaIndex()
@@ -50,7 +50,7 @@ export class State {
     if (this.#moves.some((move) => move.deltaIndex === deltaIndex)) {
       console.debug(this.toString(), `addMove: ignoring duplicate move for deltaIndex ${deltaIndex}.`)
     } else {
-      this.#moves.push(new State.Move(deltaIndex, modifier, selectedTile))
+      this.#moves.push(new State.Move(deltaIndex, eventType, tile, modifier, selectedTile))
     }
 
     this.#moveIndex = this.#moves.length - 1
@@ -368,13 +368,17 @@ export class State {
 
   static Move = class {
     deltaIndex
+    eventType
     modifierType
-    offset
+    selectedTile
+    tile
 
-    constructor (deltaIndex, modifier, selectedTile) {
+    constructor (deltaIndex, eventType, tile, modifier, selectedTile) {
       this.deltaIndex = deltaIndex
+      this.eventType = eventType
       this.modifierType = modifier?.type
-      this.offset = selectedTile?.coordinates.offset.toString()
+      this.selectedTile = selectedTile?.coordinates.offset.toString()
+      this.tile = tile?.coordinates.offset.toString()
     }
   }
 }

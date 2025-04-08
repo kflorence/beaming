@@ -193,7 +193,8 @@ export class Modifier extends Stateful {
 
   static Events = Object.freeze({
     Invoked: 'modifier-invoked',
-    Moved: 'modifier-moved'
+    Moved: 'modifier-moved',
+    Toggled: 'modifier-toggled'
   })
 
   static Types = Object.freeze(Object.fromEntries([

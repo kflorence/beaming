@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 const { PuzzleFixture } = require('../fixtures.js')
 const assert = require('assert')
-const { Button } = require('selenium-webdriver')
 
 describe('Puzzle 008', function () {
   const puzzle = new PuzzleFixture('008')
@@ -10,71 +9,25 @@ describe('Puzzle 008', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(2, 4)
-
-    await puzzle.clickTile(1, 3)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(2, 2)
-
-    await puzzle.clickTile(1, 0)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(0, 1)
-    await puzzle.clickModifier('rotate', { button: Button.MIDDLE })
-    await puzzle.clickModifier('rotate')
-
-    await puzzle.clickTile(2, 4)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(2, 2)
-    await puzzle.clickModifier('toggle')
-
-    await puzzle.clickTile(2, 4)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-
-    await puzzle.clickTile(2, 4)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(2, 2)
-
-    await puzzle.clickTile(2, 4)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-    await puzzle.clickModifier('rotate', { button: Button.MIDDLE })
-    await puzzle.clickModifier('rotate', { times: 2 })
-
-    await puzzle.clickTile(2, 4)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-    await puzzle.clickModifier('rotate', { button: Button.MIDDLE })
-    await puzzle.clickModifier('rotate')
-
-    await puzzle.clickTile(1, 1)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(0, 2)
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-    await puzzle.clickModifier('rotate', { button: Button.MIDDLE })
-    await puzzle.clickModifier('rotate', { times: 2 })
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 2)
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 2)
-    await puzzle.clickModifier('toggle')
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 2)
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,0', tile: '1,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '1,-1', tile: '0,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,-1', tile: '-1,-3' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-1,-1', tile: '0,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,-1', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,1', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,1', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,-1', tile: '-1,-3' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '-1,-3', tile: '1,-1' }
+    ])
 
     assert(await puzzle.isSolved())
   })

@@ -1,6 +1,6 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, Condition, logging, until } = require('selenium-webdriver')
+const { Builder, By, Condition, logging, until, Button } = require('selenium-webdriver')
 
 logging.installConsoleHandler()
 
@@ -82,9 +82,28 @@ class PuzzleFixture {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-solved'))
   }
 
+  async solve (moves) {
+    for (const move of moves) {
+      if (move.tile) {
+        const [r, c] = move.tile.split(',')
+        await this.clickTile(r, c)
+      }
+      if (move.modifierType) {
+        await this.clickModifier(
+          move.modifierType,
+          move.eventType === 'modifier-toggled' ? { button: Button.MIDDLE } : {}
+        )
+      }
+      if (move.selectedTile) {
+        const [r, c] = move.selectedTile.split(',')
+        await this.clickTile(r, c)
+      }
+    }
+  }
+
   async #getModifier (name) {
     await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
-    return await this.driver.findElement(By.css(`.modifier-${name}:not(.disabled)`))
+    return await this.driver.findElement(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`))
   }
 
   static baseUrl = 'http://localhost:1234'

@@ -153,7 +153,8 @@ export class Tile extends Item {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
       const position = getPointBetween(
-        this.path.segments[index].point,
+        // Position icons starting at 12 o'clock (index 1)
+        this.path.segments[(index + 1) % 6].point,
         this.center,
         (length) => length / 3
       )

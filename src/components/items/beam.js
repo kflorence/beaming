@@ -554,8 +554,8 @@ export class Beam extends Item {
     return timeout === undefined ? update() : setTimeout(update, timeout)
   }
 
-  updateState (updater, dispatchEvent = true) {
-    return this.parent.updateState((state) => updater(state.openings[this.#direction]), dispatchEvent)
+  updateState (updater, eventDetail = {}) {
+    return this.parent.updateState((state) => updater(state.openings[this.#direction]), eventDetail)
   }
 
   updateStep (stepIndex, settings) {

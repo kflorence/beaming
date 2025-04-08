@@ -21,6 +21,7 @@ const elements = Object.freeze({
   paste: document.getElementById('editor-paste'),
   play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
+  reset: document.getElementById('editor-reset'),
   share: document.getElementById('editor-share'),
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
@@ -88,6 +89,7 @@ export class Editor {
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
+      { type: 'click', element: elements.reset, handler: this.#onReset },
       { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
@@ -123,7 +125,7 @@ export class Editor {
         return
       }
 
-      this.#puzzle.addMove()
+      this.#puzzle.state.addMove()
       // Need to force a reload to make sure the UI is in sync with the state
       this.#puzzle.reload(state)
     } catch (e) {
@@ -174,7 +176,7 @@ export class Editor {
       // Update the entire state
       state = value
       // Tiles are not editable globally
-      state.tiles = current.tiles
+      state.layout.tiles = current.layout.tiles
     }
 
     console.debug('current', current, 'new', value, 'updated', state)
@@ -229,6 +231,21 @@ export class Editor {
     this.#updatePlayUrl()
   }
 
+  #onReset () {
+    if (elements.reset.classList.contains('disabled')) {
+      return
+    }
+
+    const value = JSON.parse(JSON.stringify(
+      this.#puzzle.selectedTile.getState(),
+      // Remove matching keys
+      (k, v) => ['items', 'modifiers'].includes(k) ? undefined : v)
+    )
+
+    this.#onEditorUpdate(value)
+    this.#onConfigurationUpdate()
+  }
+
   async #onShare () {
     await writeToClipboard(this.getShareUrl())
     tippy.show()
@@ -253,7 +270,7 @@ export class Editor {
       layout.addTile(offset)
     }
 
-    this.#puzzle.addMove()
+    this.#puzzle.state.addMove()
     this.#puzzle.updateState()
     this.#puzzle.getBeams().forEach((beam) => {
       // Re-evaluate all the beams
@@ -268,6 +285,7 @@ export class Editor {
 
     // Enable/disable the following actions based on whether a tile is selected
     elements.copy.classList.toggle('disabled', !tile)
+    elements.reset.classList.toggle('disabled', !tile)
     elements.paste.classList.toggle('disabled', !(tile && this.#copy))
 
     if (event?.type === Tile.Events.Selected && event.detail.deselectedTile) {

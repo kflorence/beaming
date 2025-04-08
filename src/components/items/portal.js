@@ -124,7 +124,7 @@ export class Portal extends movable(rotatable(Item)) {
             const exitPortal = data.exitPortals.find((portal) => portal.parent === tile)
             if (exitPortal) {
               // Add a move, since the user made a decision
-              puzzle.addMove()
+              puzzle.state.addMove('portal-exit', tile)
               beam.addStep(this.#getStep(beam, nextStep, exitPortal))
               puzzle.unmask()
             }

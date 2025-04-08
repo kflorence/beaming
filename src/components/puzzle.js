@@ -92,6 +92,7 @@ export class Puzzle {
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
+      { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
@@ -106,10 +107,6 @@ export class Puzzle {
     if (this.#editor) {
       this.#editor.setup()
     }
-  }
-
-  addMove (modifier) {
-    return this.state.addMove(modifier, this.selectedTile)
   }
 
   centerOnTile (offset) {
@@ -433,11 +430,12 @@ export class Puzzle {
         .forEach((other) => other.update({ disabled: true }))
     }
 
-    if (event.detail.selectedTile) {
-      this.updateSelectedTile(event.detail.selectedTile)
+    const selectedTile = event.detail.selectedTile
+    if (selectedTile) {
+      this.updateSelectedTile(selectedTile)
     }
 
-    this.addMove(modifier)
+    this.state.addMove(event.type, tile, modifier, selectedTile)
     this.updateState()
 
     this.getBeams()
@@ -446,6 +444,11 @@ export class Puzzle {
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
     setTimeout(() => this.update(), 0)
+  }
+
+  #onModifierToggled (event) {
+    this.state.addMove(event.type, this.selectedTile, event.detail.modifier)
+    this.updateState()
   }
 
   #onSelect (event) {
