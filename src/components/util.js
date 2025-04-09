@@ -2,7 +2,7 @@ import * as jsonDiffPatchFactory from 'jsondiffpatch'
 import deepmerge from 'deepmerge'
 import pako from 'pako'
 import chroma from 'chroma-js'
-import { Point } from 'paper'
+import { Point, Size } from 'paper'
 
 const location = window.location
 
@@ -231,15 +231,23 @@ export function noop (value) {
 }
 
 export function pointToString (point) {
-  return `${point.x},${point.y}`
+  return [point.x, point.y].join(',')
 }
 
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
+export function sizeToString (size) {
+  return [size.width, size.height].join(',')
+}
+
 export function stringToPoint (string) {
   return new Point(string.split(','))
+}
+
+export function stringToSize (string) {
+  return new Size(string.split(','))
 }
 
 export function subtractDirection (direction, amount) {

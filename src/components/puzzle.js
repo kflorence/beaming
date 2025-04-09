@@ -24,6 +24,7 @@ const confirm = window.confirm
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
+  debug: document.getElementById('debug'),
   footer: document.getElementById('puzzle-footer'),
   footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
@@ -44,7 +45,7 @@ const elements = Object.freeze({
 // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
   connections = []
-  debug = false
+  debug = params.has('debug')
   element = elements.canvas
   error = false
   layers = {}
@@ -87,13 +88,14 @@ export class Puzzle {
       { type: 'change', element: elements.id, handler: this.#onSelect },
       { type: 'click', element: elements.next, handler: this.#next },
       { type: 'click', element: elements.previous, handler: this.#previous },
-      { type: 'click', element: elements.recenter, handler: this.recenter },
+      { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
+      { type: 'pointermove', element: elements.canvas, handler: this.#onPointerMove },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
@@ -197,12 +199,19 @@ export class Puzzle {
     document.body.classList.add(Puzzle.Events.Mask)
   }
 
-  recenter () {
+  recenter (force = false) {
     if (!this.layout) {
       return
     }
 
-    View.setCenter(this.layout.getCenter())
+    const center = View.getCenter()
+    if (center && !force) {
+      // If cache exists for this view size, use that
+      paper.view.center = center
+    } else {
+      // Otherwise set to the center of the view
+      View.setCenter(this.layout.getCenter())
+    }
   }
 
   reload (state) {
@@ -455,6 +464,29 @@ export class Puzzle {
   #onModifierToggled (event) {
     this.state.addMove(event.type, this.selectedTile, event.detail.modifier)
     this.updateState()
+  }
+
+  #onPointerMove (event) {
+    if (!this.debug) {
+      return
+    }
+
+    const point = this.#interact.getProjectPoint(Interact.point(event))
+    const result = paper.project.hitTest(point)
+
+    elements.debug.textContent = ''
+
+    switch (result?.item.data.type) {
+      case Item.Types.tile: {
+        const tile = this.layout.getTile(result.item.data.coordinates.offset)
+        elements.debug.textContent = tile.toString()
+        break
+      }
+    }
+  }
+
+  #onRecenter () {
+    this.recenter(true)
   }
 
   #onSelect (event) {

@@ -253,7 +253,7 @@ export class Editor {
   }
 
   async #onShare () {
-    await writeToClipboard(this.getShareUrl())
+    await writeToClipboard(`Beaming: try out my custom puzzle! ${this.getShareUrl()}`)
     tippy.show()
     setTimeout(() => tippy.hide(), 1000)
   }
@@ -278,6 +278,9 @@ export class Editor {
 
     this.#puzzle.state.addMove()
     this.#puzzle.updateState()
+
+    // TODO: adding/removing tiles would ideally not require a reload. but getting rid of it would require fixing
+    //  some bugs related to the beam
     this.#puzzle.reload()
   }
 

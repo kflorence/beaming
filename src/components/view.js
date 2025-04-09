@@ -1,28 +1,41 @@
 import paper from 'paper'
 import { State } from './state'
-import { emitEvent, getKeyFactory, params, pointToString, stringToPoint } from './util'
+import { emitEvent, getKeyFactory, params, pointToString, sizeToString, stringToPoint } from './util'
 
 const localStorage = window.localStorage
 
 export class View {
+  static getCenter () {
+    return localStorage.getItem(View.#key(State.getId(), sizeToString(paper.view.viewSize), View.CacheKeys.Center))
+  }
+
+  static getZoom () {
+    return localStorage.getItem(View.#key(State.getId(), View.CacheKeys.Zoom))
+  }
+
   static setCenter (point) {
     paper.view.center = point
-    localStorage.setItem(View.#key(View.CacheKeys.Center), pointToString(point))
+    if (State.getId() !== null) {
+      localStorage.setItem(
+        View.#key(State.getId(), sizeToString(paper.view.viewSize), View.CacheKeys.Center), pointToString(point))
+    }
     emitEvent(View.Events.Center, { point })
   }
 
   static setZoom (factor) {
     paper.view.zoom = factor
-    localStorage.setItem(View.#key(View.CacheKeys.Zoom), factor.toString())
+    if (State.getId() !== null) {
+      localStorage.setItem(View.#key(State.getId(), View.CacheKeys.Zoom), factor.toString())
+    }
   }
 
   static update () {
-    const center = localStorage.getItem(View.#key(View.CacheKeys.Center))
+    const center = View.getCenter()
     if (center !== null) {
       paper.view.center = stringToPoint(center)
     }
 
-    const zoom = localStorage.getItem(View.#key(View.CacheKeys.Zoom))
+    const zoom = View.getZoom()
     if (zoom !== null) {
       paper.view.zoom = Number(zoom)
     }
@@ -40,7 +53,6 @@ export class View {
   static #key = getKeyFactory([
     // Prefix key with 'editor' when in edit mode
     params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
-    'view',
-    State.getId()
+    'view'
   ].filter((v) => v))
 }

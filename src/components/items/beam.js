@@ -602,11 +602,6 @@ export class Beam extends Item {
         // Sort collision points by distance from origin point (closest collision points first)
         points.sort(getDistance(firstPoint))
 
-        if (puzzle.debug) {
-          puzzle.drawDebugPoint(firstPoint)
-          points.forEach((point) => puzzle.drawDebugPoint(point, { fillColor: 'black' }))
-        }
-
         return { points, item }
       })
       .filter((result) => result.points.length)
