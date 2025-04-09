@@ -35,6 +35,9 @@ const tippy = Tippy(elements.share, {
   trigger: 'manual'
 })
 
+// TODO: consider adding AJV validations that ensure unique keys are unique
+// See: https://github.com/ajv-validator/ajv-keywords/blob/master/README.md#uniqueitemproperties
+
 export class Editor {
   group = new Group({ locked: true })
   id
@@ -120,7 +123,10 @@ export class Editor {
   #onConfigurationUpdate () {
     try {
       const state = this.getState()
-      if (this.#puzzle.state.getDiff(state) === undefined) {
+      const diff = this.#puzzle.state.getDiff(state)
+      console.debug('onConfigurationUpdate', diff)
+
+      if (diff === undefined) {
         // No changes
         return
       }
@@ -272,12 +278,7 @@ export class Editor {
 
     this.#puzzle.state.addMove()
     this.#puzzle.updateState()
-    this.#puzzle.getBeams().forEach((beam) => {
-      // Re-evaluate all the beams
-      beam.done = false
-    })
-
-    this.#puzzle.update()
+    this.#puzzle.reload()
   }
 
   #setup (event) {

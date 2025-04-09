@@ -59,6 +59,7 @@ export class Puzzle {
   #eventListeners = new EventListeners({ context: this })
   #interact
   #isUpdatingBeams = false
+  #isTearingDown = false
   #mask
   #maskQueue = []
   #solution
@@ -319,6 +320,11 @@ export class Puzzle {
   }
 
   updateState (state) {
+    if (this.#isTearingDown) {
+      // Ignore any state updates when tearing down
+      return
+    }
+
     state ??= Object.assign(this.state.getCurrent(), { layout: this.layout.getState() })
 
     this.state.update(state)
@@ -562,6 +568,7 @@ export class Puzzle {
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
+    this.#isTearingDown = true
     this.#maskQueue = []
 
     this.unmask()
@@ -575,6 +582,7 @@ export class Puzzle {
     this.selectedTile = undefined
     this.#collisions = {}
     this.#isUpdatingBeams = false
+    this.#isTearingDown = false
   }
 
   #undo () {

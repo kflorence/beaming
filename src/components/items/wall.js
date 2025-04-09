@@ -47,6 +47,14 @@ export class Wall extends movable(rotatable(Item)) {
 
   static Schema = Object.freeze(merge([
     Item.schema(Item.Types.wall),
+    {
+      properties: {
+        immutable: {
+          default: true,
+          type: 'boolean'
+        }
+      }
+    },
     movable.Schema,
     rotatable.Schema,
     {
@@ -57,10 +65,6 @@ export class Wall extends movable(rotatable(Item)) {
           maxItems: 6,
           type: 'array',
           uniqueItems: true
-        },
-        immutable: {
-          default: true,
-          type: 'boolean'
         }
       },
       required: ['directions']

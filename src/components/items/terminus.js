@@ -265,6 +265,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
         color: Schema.colors,
         openings: {
           items: Terminus.Opening.Schema,
+          minItems: 0,
+          maxItems: 6,
           type: 'array'
         }
       }
