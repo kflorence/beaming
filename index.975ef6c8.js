@@ -30199,6 +30199,10 @@ const elements = Object.freeze({
     headerMenu: document.getElementById('puzzle-header-menu'),
     headerMessage: document.getElementById('puzzle-header-message'),
     id: document.getElementById('puzzle-id'),
+    info: document.getElementById('puzzle-info'),
+    infoAuthor: document.getElementById('puzzle-info-author'),
+    infoId: document.getElementById('puzzle-info-id'),
+    infoTitle: document.getElementById('puzzle-info-title'),
     next: document.getElementById('puzzle-next'),
     previous: document.getElementById('puzzle-previous'),
     recenter: document.getElementById('puzzle-recenter'),
@@ -30369,6 +30373,11 @@ class Puzzle {
         });
         return result ? this.layout.getTile(result.item.data.coordinates.offset) : result;
     }
+    getTitle() {
+        const id = this.state.getId();
+        const title = this.state.getTitle();
+        return id + (title ? ` - "${title}"` : '');
+    }
     mask(mask) {
         if (this.#mask) {
             if (this.#mask.equals(mask)) {
@@ -30387,6 +30396,21 @@ class Puzzle {
         mask.onMask(this);
         document.body.classList.add(Puzzle.Events.Mask);
     }
+    onError(error, message, cause) {
+        this.error = true;
+        // Support exclusion of error
+        if (typeof error === 'string') {
+            message = error;
+            cause = message;
+            error = undefined;
+        }
+        if (error) console.error(error);
+        cause = cause ?? error?.cause;
+        if (cause) console.error('cause:', cause);
+        message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.';
+        elements.headerMessage.textContent = message;
+        document.body.classList.add(Puzzle.Events.Error);
+    }
     recenter(force = false) {
         if (!this.layout) return;
         const center = (0, _view.View).getCenter();
@@ -30395,7 +30419,7 @@ class Puzzle {
         else // Otherwise set to the center of the view
         (0, _view.View).setCenter(this.layout.getCenter());
     }
-    reload(state) {
+    reload(state, onError) {
         this.error = false;
         document.body.classList.remove(Puzzle.Events.Error);
         if (this.state) this.#teardown();
@@ -30406,7 +30430,8 @@ class Puzzle {
         try {
             this.#setup();
         } catch (e) {
-            this.#onError(e, 'Puzzle configuration is invalid.');
+            if (typeof onError === 'function') onError(e);
+            else this.onError(e, 'Puzzle configuration is invalid.');
             this.#updateActions();
         }
         (0, _util.emitEvent)(Puzzle.Events.Updated, {
@@ -30423,6 +30448,7 @@ class Puzzle {
         elements.canvas.style.height = height + 'px';
         elements.canvas.style.width = width + 'px';
         (0, _paperDefault.default).view.viewSize = newSize;
+        this.#editor?.onResize(newSize);
         this.recenter();
         if (reload) // For some reason, without reload, setting viewSize alone breaks the project coordinate space
         // See: https://github.com/paperjs/paper.js/issues/1757
@@ -30508,21 +30534,6 @@ class Puzzle {
         Object.values(this.#collisions).forEach((collision)=>collision.update());
         this.getBeams().filter((otherBeam)=>otherBeam !== beam).forEach((beam)=>beam.onBeamUpdated(event, this));
         setTimeout(()=>this.update(), 0);
-    }
-    #onError(error, message, cause) {
-        this.error = true;
-        // Support exclusion of error
-        if (typeof error === 'string') {
-            message = error;
-            cause = message;
-            error = undefined;
-        }
-        if (error) console.error(error);
-        cause = cause ?? error?.cause;
-        if (cause) console.error('cause:', cause);
-        message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.';
-        elements.headerMessage.textContent = message;
-        document.body.classList.add(Puzzle.Events.Error);
     }
     #onKeyup(event) {
         if (this.debug && event.key === 's') this.update();
@@ -30641,6 +30652,7 @@ class Puzzle {
         document.body.classList.add(Puzzle.Events.Loaded);
         const selectedTileId = this.state.getSelectedTile();
         const selectedTile = selectedTileId ? this.layout.getTile(new (0, _offset.OffsetCoordinates)(...selectedTileId.split(','))) : undefined;
+        this.#updateDetails();
         this.updateSelectedTile(selectedTile);
         this.updateState();
         this.update();
@@ -30666,9 +30678,8 @@ class Puzzle {
     }
     #updateActions() {
         const id = this.state.getId();
-        const title = this.state.getTitle();
         // Update browser title
-        elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`;
+        elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`;
         (0, _util.removeClass)(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children));
         const disable = [];
         if (!this.state.canUndo()) disable.push(elements.undo);
@@ -30682,6 +30693,17 @@ class Puzzle {
         }
         (0, _util.addClass)(Puzzle.ClassNames.Disabled, ...disable);
     }
+    #updateDetails() {
+        const id = this.state.getId();
+        const author = this.state.getAuthor();
+        const title = this.state.getTitle();
+        const hide = !(author || title);
+        elements.infoAuthor.textContent = `Created by: ${author}`;
+        elements.info.classList.toggle('hide', hide);
+        elements.info.setAttribute('open', (!hide).toString());
+        elements.infoId.textContent = `Puzzle: ${id}`;
+        elements.infoTitle.textContent = `Title: "${title}"`;
+    }
     #updateDropdown() {
         elements.id.replaceChildren();
         // TODO support pulling custom IDs from local cache
@@ -30692,7 +30714,7 @@ class Puzzle {
         const id = this.state?.getId();
         if (id !== undefined && !(0, _puzzles.Puzzles).visible.ids.includes(id)) options.push({
             id,
-            title: this.state.getTitle()
+            title: this.getTitle()
         });
         for (const option of options){
             const $option = document.createElement('option');
@@ -30826,10 +30848,11 @@ class Puzzle {
         $id: (0, _schema.Schema).$id('puzzle'),
         properties: {
             author: {
+                maxLength: 72,
                 type: 'string'
             },
-            description: {
-                format: 'textarea',
+            title: {
+                maxLength: 72,
                 type: 'string'
             },
             layout: (0, _layout.Layout).Schema,
@@ -32274,6 +32297,9 @@ class State {
             version: this.#version
         }));
     }
+    getAuthor() {
+        return this.#current.author;
+    }
     getCurrent() {
         return structuredClone(this.#current);
     }
@@ -32293,7 +32319,7 @@ class State {
         return this.#id;
     }
     getTitle() {
-        return this.getId() + (this.#current?.title ? ` - ${this.#current.title}` : '');
+        return this.#current.title;
     }
     getSelectedTile() {
         return this.#selectedTile;
@@ -32459,7 +32485,7 @@ class State {
     });
     // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
     // Use this sparingly as it will reset the state of every puzzle on the users end
-    static Version = 5;
+    static Version = 6;
     static #key = (0, _util.getKeyFactory)([
         // Prefix key with 'editor' when in edit mode
         (0, _util.params).has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
@@ -32536,40 +32562,40 @@ Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id)=>[
 Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id)=>!Puzzles.hidden.has(id)));
 
 },{"388f1e0e9ef404f1":"aW13h","c78ae468f341d769":"7g0cm","970871732d2a157b":"iaK6p","bc9e0c5f7c5d01e4":"ljdPP","f3e72dc0ddab4b01":"1cnyP","5dcf17593d7a4bf0":"aIJrc","a02b60cdc8a431e2":"2F0gb","ade4d10630f08956":"1bhn7","6305a2004246bb2":"2icw5","da10656096d2af94":"b93JV","ac22c67945d4fda9":"6ZkNx","fe6acb01757b24c8":"IvGia","85499c36fcf7a4eb":"fUqeV","41bc05d099929c0d":"4XdFs","255f7590a7448490":"eKsSY","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"aW13h":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"id\":\"0cbb0588\"},\"1\":{\"type\":\"Tile\",\"id\":\"9c7f7b9a\"},\"-1\":{\"type\":\"Tile\",\"id\":\"da960fda\"}},\"1\":{\"0\":{\"items\":[{\"color\":\"#0000ff\",\"openings\":[{\"direction\":0}],\"type\":\"Terminus\"}],\"type\":\"Tile\",\"id\":\"5c2510d3\"},\"-1\":{\"items\":[{\"color\":\"#ff0000\",\"openings\":[{\"direction\":1,\"toggled\":true}],\"type\":\"Terminus\"}],\"modifiers\":[{\"type\":\"Toggle\"}],\"type\":\"Tile\",\"id\":\"e3bec484\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"id\":\"c9bedf13\"},\"-1\":{\"items\":[{\"color\":\"#0000ff\",\"openings\":[{\"direction\":3,\"toggled\":true}],\"type\":\"Terminus\"}],\"type\":\"Tile\",\"id\":\"349a7a4a\"}}}},\"solution\":[{\"amount\":1,\"type\":\"Connections\"}]}");
+module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"id\":\"0cbb0588\"},\"1\":{\"type\":\"Tile\",\"id\":\"9c7f7b9a\"},\"-1\":{\"type\":\"Tile\",\"id\":\"da960fda\"}},\"1\":{\"0\":{\"items\":[{\"openings\":[{\"color\":\"#0000ff\",\"direction\":0}],\"type\":\"Terminus\"}],\"type\":\"Tile\",\"id\":\"5c2510d3\"},\"-1\":{\"items\":[{\"openings\":[{\"color\":\"#0000ff\",\"direction\":1,\"toggled\":true}],\"type\":\"Terminus\"}],\"modifiers\":[{\"type\":\"Toggle\"}],\"type\":\"Tile\",\"id\":\"e3bec484\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"id\":\"c9bedf13\"},\"-1\":{\"items\":[{\"openings\":[{\"color\":\"#0000ff\",\"direction\":3,\"toggled\":true}],\"type\":\"Terminus\"}],\"type\":\"Tile\",\"id\":\"349a7a4a\"}}}},\"solution\":[{\"amount\":1,\"type\":\"Connections\"}]}");
 
 },{}],"7g0cm":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"id\":\"98c1b870\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#0000ff\"],\"openings\":[{\"direction\":0},{\"direction\":1},{\"direction\":2},{\"direction\":3},{\"direction\":4},{\"direction\":5}],\"id\":\"11ea04e4\"}]},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#0000ff\"],\"openings\":[{\"direction\":4},{\"direction\":0},{\"direction\":5}],\"id\":\"96eb1c1b\"}],\"id\":\"f7b48b08\"},\"-1\":{\"id\":\"a7f644b8\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":1},{\"direction\":3},{\"direction\":2}],\"id\":\"e322950f\",\"color\":[\"#0000ff\"]}]}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":5},{\"direction\":1},{\"direction\":0}],\"id\":\"5405af42\",\"color\":[\"#0000ff\"]}],\"id\":\"8f2cda31\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":0},{\"direction\":2},{\"direction\":1}],\"id\":\"176953c3\",\"color\":[\"#0000ff\"]}],\"id\":\"57bb0429\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":3},{\"direction\":5},{\"direction\":4}],\"id\":\"bcf89ade\",\"color\":[\"#0000ff\"]}],\"id\":\"2eb11c84\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":2},{\"direction\":4},{\"direction\":3}],\"id\":\"cdf38c3f\",\"color\":[\"#0000ff\"]}],\"id\":\"e2e2cc4d\"}}},\"modifiers\":[{\"type\":\"Toggle\",\"id\":\"99243a1a\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":5}]}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"id\":\"98c1b870\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#0000ff\",\"direction\":1},{\"color\":\"#0000ff\",\"direction\":2},{\"color\":\"#0000ff\",\"direction\":3},{\"color\":\"#0000ff\",\"direction\":4},{\"color\":\"#0000ff\",\"direction\":5}],\"id\":\"11ea04e4\"}]},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":4},{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#0000ff\",\"direction\":5}],\"id\":\"96eb1c1b\"}],\"id\":\"f7b48b08\"},\"-1\":{\"id\":\"a7f644b8\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1},{\"color\":\"#0000ff\",\"direction\":3},{\"color\":\"#0000ff\",\"direction\":2}],\"id\":\"e322950f\"}]}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":5},{\"color\":\"#0000ff\",\"direction\":1},{\"color\":\"#0000ff\",\"direction\":0}],\"id\":\"5405af42\"}],\"id\":\"8f2cda31\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#0000ff\",\"direction\":2},{\"color\":\"#0000ff\",\"direction\":1}],\"id\":\"176953c3\"}],\"id\":\"57bb0429\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":3},{\"color\":\"#0000ff\",\"direction\":5},{\"color\":\"#0000ff\",\"direction\":4}],\"id\":\"bcf89ade\"}],\"id\":\"2eb11c84\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":2},{\"color\":\"#0000ff\",\"direction\":4},{\"color\":\"#0000ff\",\"direction\":3}],\"id\":\"cdf38c3f\"}],\"id\":\"e2e2cc4d\"}}},\"modifiers\":[{\"type\":\"Toggle\",\"id\":\"99243a1a\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":5}]}");
 
 },{}],"iaK6p":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"modifiers\":[{\"id\":\"0f262170\",\"type\":\"Toggle\"}],\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"id\":\"04c7d967\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":0},{\"color\":[\"#ff0000\"],\"direction\":1},{\"color\":[\"#0000ff\"],\"direction\":2,\"toggled\":true},{\"color\":[\"#ff0000\"],\"direction\":3},{\"color\":[\"#0000ff\"],\"direction\":4},{\"color\":[\"#ff0000\"],\"direction\":5,\"toggled\":true}],\"id\":\"c5835edd\"}]},\"1\":{\"id\":\"e0e00401\",\"type\":\"Tile\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":5,\"toggled\":false}],\"id\":\"d21e5308\"}],\"id\":\"5acc1407\"},\"-1\":{\"id\":\"6c632460\",\"type\":\"Tile\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":2,\"toggled\":false}],\"id\":\"fb669389\"}],\"id\":\"1652ec72\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"id\":\"d0b13fc4\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#008000\"],\"direction\":0,\"toggled\":true}],\"id\":\"bbde184c\"}],\"id\":\"453b4d64\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"b45a15d3\"}]},\"-1\":{\"type\":\"Tile\",\"id\":\"59e60928\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#008000\"],\"direction\":1,\"toggled\":false}],\"id\":\"c0ae2132\"}],\"id\":\"e04bf3e8\"}},\"2\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":0},{\"direction\":1}],\"id\":\"98e62cb4\",\"color\":[\"#008000\"]}],\"id\":\"1a2e1e12\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":0,\"toggled\":false}],\"id\":\"2eee79eb\"}],\"id\":\"522b600d\"},\"-1\":{\"id\":\"ea370bb7\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":1,\"toggled\":false}],\"id\":\"b91484a6\"}]}},\"-1\":{\"0\":{\"type\":\"Tile\",\"id\":\"1848a6ad\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#008000\"],\"direction\":4,\"toggled\":false}],\"id\":\"b7729e7f\"}],\"id\":\"6a9d44bf\"},\"-1\":{\"id\":\"a7ae7f64\",\"type\":\"Tile\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#008000\"],\"direction\":3,\"toggled\":true}],\"id\":\"996a54c9\"}],\"id\":\"ee57363a\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"37e58227\"}]}},\"-2\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":4},{\"direction\":3}],\"color\":[\"#008000\"],\"id\":\"5fff1412\"}],\"id\":\"75667c33\"},\"1\":{\"id\":\"082207e9\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":4,\"toggled\":false}],\"id\":\"f1aa8307\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":3,\"toggled\":false}],\"id\":\"452cce64\"}],\"id\":\"234b7936\"}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":6}],\"version\":0}");
+module.exports = JSON.parse("{\"layout\":{\"modifiers\":[{\"id\":\"0f262170\",\"type\":\"Toggle\"}],\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"id\":\"04c7d967\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#ff0000\",\"direction\":1},{\"color\":\"#0000ff\",\"direction\":2,\"toggled\":true},{\"color\":\"#ff0000\",\"direction\":3},{\"color\":\"#0000ff\",\"direction\":4},{\"color\":\"#ff0000\",\"direction\":5,\"toggled\":true}],\"id\":\"c5835edd\"}]},\"1\":{\"id\":\"e0e00401\",\"type\":\"Tile\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":5,\"toggled\":false}],\"id\":\"d21e5308\"}],\"id\":\"5acc1407\"},\"-1\":{\"id\":\"6c632460\",\"type\":\"Tile\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":2,\"toggled\":false}],\"id\":\"fb669389\"}],\"id\":\"1652ec72\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"id\":\"d0b13fc4\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":0,\"toggled\":true}],\"id\":\"bbde184c\"}],\"id\":\"453b4d64\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"b45a15d3\"}]},\"-1\":{\"type\":\"Tile\",\"id\":\"59e60928\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":1,\"toggled\":false}],\"id\":\"c0ae2132\"}],\"id\":\"e04bf3e8\"}},\"2\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":0},{\"color\":\"#008000\",\"direction\":1}],\"id\":\"98e62cb4\"}],\"id\":\"1a2e1e12\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":0,\"toggled\":false}],\"id\":\"2eee79eb\"}],\"id\":\"522b600d\"},\"-1\":{\"id\":\"ea370bb7\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1,\"toggled\":false}],\"id\":\"b91484a6\"}]}},\"-1\":{\"0\":{\"type\":\"Tile\",\"id\":\"1848a6ad\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":4,\"toggled\":false}],\"id\":\"b7729e7f\"}],\"id\":\"6a9d44bf\"},\"-1\":{\"id\":\"a7ae7f64\",\"type\":\"Tile\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":3,\"toggled\":true}],\"id\":\"996a54c9\"}],\"id\":\"ee57363a\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"37e58227\"}]}},\"-2\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":4},{\"color\":\"#008000\",\"direction\":3}],\"id\":\"5fff1412\"}],\"id\":\"75667c33\"},\"1\":{\"id\":\"082207e9\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":4,\"toggled\":false}],\"id\":\"f1aa8307\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":3,\"toggled\":false}],\"id\":\"452cce64\"}],\"id\":\"234b7936\"}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":6}],\"version\":0}");
 
 },{}],"ljdPP":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"dbf74c17\",\"type\":\"Tile\"},\"1\":{\"id\":\"a4f181e1\",\"type\":\"Tile\"},\"-1\":{\"id\":\"fb798c61\",\"type\":\"Tile\"}},\"1\":{\"0\":{\"id\":\"c33f42c2\",\"type\":\"Tile\"},\"-1\":{\"id\":\"1b291584\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":1,\"toggled\":true}],\"id\":\"ef126477\"}],\"modifiers\":[{\"type\":\"Swap\",\"id\":\"362fdc23\"}]}},\"-1\":{\"0\":{\"id\":\"1340ed3e\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":4,\"toggled\":true}],\"id\":\"842d4005\"}]},\"-1\":{\"id\":\"3622ae8a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"id\":\"dddfa2dd\",\"openings\":[{\"direction\":4}]}],\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"3b976366\"}]}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":1}]}");
+module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"dbf74c17\",\"type\":\"Tile\"},\"1\":{\"id\":\"a4f181e1\",\"type\":\"Tile\"},\"-1\":{\"id\":\"fb798c61\",\"type\":\"Tile\"}},\"1\":{\"0\":{\"id\":\"c33f42c2\",\"type\":\"Tile\"},\"-1\":{\"id\":\"1b291584\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":1,\"toggled\":true}],\"id\":\"ef126477\"}],\"modifiers\":[{\"type\":\"Swap\",\"id\":\"362fdc23\"}]}},\"-1\":{\"0\":{\"id\":\"1340ed3e\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":4,\"toggled\":true}],\"id\":\"842d4005\"}]},\"-1\":{\"id\":\"3622ae8a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"id\":\"dddfa2dd\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":4}]}],\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"3b976366\"}]}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":1}]}");
 
 },{}],"1cnyP":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"f7e82775\",\"type\":\"Tile\"},\"1\":{\"id\":\"a6a13b50\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":4}],\"id\":\"9e1641ff\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d7cf5d82\"}]},\"-1\":{\"id\":\"da5ab990\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":1}],\"id\":\"ecb4ba7d\"}]}},\"1\":{\"0\":{\"id\":\"926dd5c2\",\"type\":\"Tile\"},\"-1\":{\"id\":\"e1f07200\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":2,\"toggled\":true}],\"id\":\"9445dc49\"}],\"modifiers\":[{\"type\":\"Swap\",\"id\":\"4db41948\"},{\"type\":\"Rotate\",\"id\":\"607154d3\",\"clockwise\":false}]}},\"-1\":{\"0\":{\"id\":\"ee3c0f2f\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":5,\"toggled\":true}],\"id\":\"ffca60ee\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"9a35f620\"}]},\"-1\":{\"id\":\"4c7af20d\",\"type\":\"Tile\"}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":2}]}");
+module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"f7e82775\",\"type\":\"Tile\"},\"1\":{\"id\":\"a6a13b50\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":4}],\"id\":\"9e1641ff\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d7cf5d82\"}]},\"-1\":{\"id\":\"da5ab990\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1}],\"id\":\"ecb4ba7d\"}]}},\"1\":{\"0\":{\"id\":\"926dd5c2\",\"type\":\"Tile\"},\"-1\":{\"id\":\"e1f07200\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":2,\"toggled\":true}],\"id\":\"9445dc49\"}],\"modifiers\":[{\"type\":\"Swap\",\"id\":\"4db41948\"},{\"type\":\"Rotate\",\"id\":\"607154d3\",\"clockwise\":false}]}},\"-1\":{\"0\":{\"id\":\"ee3c0f2f\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":5,\"toggled\":true}],\"id\":\"ffca60ee\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"9a35f620\"}]},\"-1\":{\"id\":\"4c7af20d\",\"type\":\"Tile\"}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":2}]}");
 
 },{}],"aIJrc":[function(require,module,exports,__globalThis) {
 module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"1\":{\"id\":\"a1a47835\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#ff0000\",\"direction\":2,\"toggled\":true}],\"id\":\"bbb6524d\"}]},\"-1\":{\"id\":\"d04577a8\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":5,\"toggled\":true},{\"color\":\"#ff0000\",\"direction\":3}],\"id\":\"b51d512f\"}]}},\"1\":{\"0\":{\"id\":\"2b3fd31d\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":2,\"id\":\"d5820ff1\"}]},\"-1\":{\"id\":\"15777e85\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"1c80477c\"}]}},\"-1\":{\"0\":{\"id\":\"f272960c\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"8506728c\"}]},\"-1\":{\"id\":\"671c53b3\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"c8c7367b\",\"rotation\":2}],\"modifiers\":[{\"type\":\"Swap\",\"id\":\"842a76e2\"}]}}}},\"solution\":[{\"type\":\"Connections\",\"amount\":2}]}");
 
 },{}],"2F0gb":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"31fddfab\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"e43aaf8e\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"68de9848\"},{\"type\":\"Rotate\",\"id\":\"e45bd074\"}]},\"1\":{\"id\":\"7debc40d\",\"type\":\"Tile\"},\"2\":{\"id\":\"4d3d4d5c\",\"type\":\"Tile\"},\"-1\":{\"id\":\"9a141161\",\"type\":\"Tile\"},\"-2\":{\"id\":\"4278d79d\",\"type\":\"Tile\"}},\"1\":{\"0\":{\"id\":\"07559685\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"732a68a9\"}]},\"1\":{\"id\":\"8472fea8\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"579e323e\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":1},{\"direction\":0,\"toggled\":true}],\"id\":\"7dad4af4\"}]},\"-1\":{\"id\":\"ae9deac9\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"3dca0442\"}]},\"-2\":{\"id\":\"f62e3a1a\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"5cf75411\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":0},{\"direction\":1,\"toggled\":true}],\"id\":\"d8bc4263\"}]}},\"-1\":{\"0\":{\"id\":\"9742e8a6\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"2b5cf6ac\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":2,\"toggled\":true},{\"direction\":3}],\"id\":\"e55b2e61\"}]},\"1\":{\"id\":\"78e0360f\",\"type\":\"Tile\"},\"2\":{\"id\":\"ff1eab33\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d85956fe\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#ff0000\",\"openings\":[{\"direction\":5},{\"direction\":4,\"toggled\":true}],\"id\":\"6a0bcd4f\"}]},\"-1\":{\"id\":\"55998903\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"0843c4b1\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":4},{\"direction\":5,\"toggled\":true}],\"id\":\"320b734c\"}]},\"-2\":{\"id\":\"3f752831\",\"type\":\"Tile\"},\"-3\":{\"id\":\"d8d75757\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"cac0a0ed\"}],\"items\":[{\"type\":\"Terminus\",\"color\":\"#0000ff\",\"openings\":[{\"direction\":2},{\"direction\":3,\"toggled\":true}],\"id\":\"8aeb000e\"}]}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"192b1b35\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":0},{\"type\":\"Moves\",\"amount\":4}]}");
+module.exports = JSON.parse("{\"version\":0,\"layout\":{\"tiles\":{\"0\":{\"0\":{\"id\":\"31fddfab\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"e43aaf8e\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"68de9848\"},{\"type\":\"Rotate\",\"id\":\"e45bd074\"}]},\"1\":{\"id\":\"7debc40d\",\"type\":\"Tile\"},\"2\":{\"id\":\"4d3d4d5c\",\"type\":\"Tile\"},\"-1\":{\"id\":\"9a141161\",\"type\":\"Tile\"},\"-2\":{\"id\":\"4278d79d\",\"type\":\"Tile\"}},\"1\":{\"0\":{\"id\":\"07559685\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"732a68a9\"}]},\"1\":{\"id\":\"8472fea8\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"579e323e\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":1},{\"color\":\"#ff0000\",\"direction\":0,\"toggled\":true}],\"id\":\"7dad4af4\"}]},\"-1\":{\"id\":\"ae9deac9\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"rotation\":3,\"id\":\"3dca0442\"}]},\"-2\":{\"id\":\"f62e3a1a\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"5cf75411\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":0},{\"color\":\"#0000ff\",\"direction\":1,\"toggled\":true}],\"id\":\"d8bc4263\"}]}},\"-1\":{\"0\":{\"id\":\"9742e8a6\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"2b5cf6ac\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":2,\"toggled\":true},{\"color\":\"#ff0000\",\"direction\":3}],\"id\":\"e55b2e61\"}]},\"1\":{\"id\":\"78e0360f\",\"type\":\"Tile\"},\"2\":{\"id\":\"ff1eab33\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d85956fe\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":5},{\"color\":\"#ff0000\",\"direction\":4,\"toggled\":true}],\"id\":\"6a0bcd4f\"}]},\"-1\":{\"id\":\"55998903\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"0843c4b1\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":4},{\"color\":\"#0000ff\",\"direction\":5,\"toggled\":true}],\"id\":\"320b734c\"}]},\"-2\":{\"id\":\"3f752831\",\"type\":\"Tile\"},\"-3\":{\"id\":\"d8d75757\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"cac0a0ed\"}],\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":2},{\"color\":\"#0000ff\",\"direction\":3,\"toggled\":true}],\"id\":\"8aeb000e\"}]}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"192b1b35\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":0},{\"type\":\"Moves\",\"amount\":4}]}");
 
 },{}],"1bhn7":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"even-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"7eaec543\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"aa1fa035\"}],\"id\":\"f0d256ba\"},\"1\":{\"type\":\"Tile\",\"id\":\"72c3c916\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d3451599\"}]},\"-2\":{\"type\":\"Tile\",\"id\":\"0ed739c7\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"6959428f\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"f98bee1d\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"f832a423\"}],\"id\":\"fb4b5a5c\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Filter\",\"color\":\"#ff0000\",\"id\":\"ce00988d\"}],\"id\":\"fe092f90\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":3,\"color\":[\"#ff0000\"]}],\"id\":\"df42627b\"}],\"id\":\"65654f82\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":0}],\"color\":[\"#ff0000\",\"#0000ff\"],\"id\":\"549c64b6\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"e76d0e3e\"}],\"id\":\"16730a74\"},\"-1\":{\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"6f8ceb2c\"}],\"id\":\"4f76111a\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":3}],\"color\":[\"#ff0000\",\"#0000ff\"],\"id\":\"552167d1\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"f4c9837f\"}],\"id\":\"a7d5efb6\"},\"-1\":{\"type\":\"Tile\",\"id\":\"3e72d7db\",\"modifiers\":[{\"type\":\"Toggle\",\"id\":\"11017ae0\"}]},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Filter\",\"color\":\"#0000ff\",\"id\":\"3b12ae82\"}],\"id\":\"41281869\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":0,\"color\":[\"#0000ff\"]}],\"id\":\"94852020\"}],\"id\":\"6ce87703\"}}},\"modifiers\":[{\"type\":\"Swap\",\"id\":\"2d33dc20\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":2}]}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"even-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"7eaec543\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"aa1fa035\"}],\"id\":\"f0d256ba\"},\"1\":{\"type\":\"Tile\",\"id\":\"72c3c916\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"d3451599\"}]},\"-2\":{\"type\":\"Tile\",\"id\":\"0ed739c7\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"6959428f\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"f98bee1d\"}],\"modifiers\":[{\"type\":\"Move\",\"id\":\"f832a423\"}],\"id\":\"fb4b5a5c\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Filter\",\"color\":\"#ff0000\",\"id\":\"ce00988d\"}],\"id\":\"fe092f90\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":3,\"color\":\"#ff0000\"}],\"id\":\"df42627b\"}],\"id\":\"65654f82\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#b400b4\",\"direction\":0}],\"id\":\"549c64b6\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"e76d0e3e\"}],\"id\":\"16730a74\"},\"-1\":{\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"6f8ceb2c\"}],\"id\":\"4f76111a\"}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#b400b4\",\"direction\":3}],\"id\":\"552167d1\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"f4c9837f\"}],\"id\":\"a7d5efb6\"},\"-1\":{\"type\":\"Tile\",\"id\":\"3e72d7db\",\"modifiers\":[{\"type\":\"Toggle\",\"id\":\"11017ae0\"}]},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Filter\",\"color\":\"#0000ff\",\"id\":\"3b12ae82\"}],\"id\":\"41281869\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"direction\":0,\"color\":\"#0000ff\"}],\"id\":\"94852020\"}],\"id\":\"6ce87703\"}}},\"modifiers\":[{\"type\":\"Swap\",\"id\":\"2d33dc20\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":2}]}");
 
 },{}],"2icw5":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"1\":{\"id\":\"744fba7a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#008000\"],\"openings\":[{\"direction\":3}],\"id\":\"b890e470\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"110796b4\"}]},\"2\":{\"id\":\"70dbb697\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"979a9e6d\"}]},\"3\":{\"id\":\"02825cfd\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"3af37e59\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3db9b817\"}]},\"-1\":{\"id\":\"611a4233\",\"type\":\"Tile\"},\"-2\":{\"id\":\"8a2041c5\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"021b4ba2\"}]},\"-3\":{\"id\":\"63af4b07\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#008000\"],\"openings\":[{\"direction\":1,\"toggled\":true}],\"id\":\"7ab05f54\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"1f98dd59\"}]}},\"1\":{\"1\":{\"id\":\"42aa42df\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"7bf21678\"}]},\"2\":{\"id\":\"dbaeb3de\",\"type\":\"Tile\"},\"-2\":{\"id\":\"19a43886\",\"type\":\"Tile\"},\"-3\":{\"id\":\"26bc177a\",\"type\":\"Tile\"}},\"-1\":{\"1\":{\"id\":\"51c0929a\",\"type\":\"Tile\"},\"2\":{\"id\":\"46963c5c\",\"type\":\"Tile\"},\"-3\":{\"id\":\"e21f9280\",\"type\":\"Tile\"},\"-2\":{\"id\":\"55a0cecf\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"845596b7\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"1\":{\"id\":\"744fba7a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":3}],\"id\":\"b890e470\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"110796b4\"}]},\"2\":{\"id\":\"70dbb697\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"979a9e6d\"}]},\"3\":{\"id\":\"02825cfd\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"3af37e59\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3db9b817\"}]},\"-1\":{\"id\":\"611a4233\",\"type\":\"Tile\"},\"-2\":{\"id\":\"8a2041c5\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"021b4ba2\"}]},\"-3\":{\"id\":\"63af4b07\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":1,\"toggled\":true}],\"id\":\"7ab05f54\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"1f98dd59\"}]}},\"1\":{\"1\":{\"id\":\"42aa42df\",\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"7bf21678\"}]},\"2\":{\"id\":\"dbaeb3de\",\"type\":\"Tile\"},\"-2\":{\"id\":\"19a43886\",\"type\":\"Tile\"},\"-3\":{\"id\":\"26bc177a\",\"type\":\"Tile\"}},\"-1\":{\"1\":{\"id\":\"51c0929a\",\"type\":\"Tile\"},\"2\":{\"id\":\"46963c5c\",\"type\":\"Tile\"},\"-3\":{\"id\":\"e21f9280\",\"type\":\"Tile\"},\"-2\":{\"id\":\"55a0cecf\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"845596b7\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
 
 },{}],"b93JV":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"1\":{\"id\":\"744fba7a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#008000\"],\"openings\":[{\"direction\":3}],\"id\":\"b890e470\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"110796b4\"}]},\"2\":{\"id\":\"70dbb697\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"979a9e6d\"}]},\"3\":{\"id\":\"02825cfd\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"3af37e59\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3db9b817\"}]},\"-1\":{\"id\":\"611a4233\",\"type\":\"Tile\"},\"-2\":{\"id\":\"8a2041c5\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"021b4ba2\"}]},\"-3\":{\"id\":\"63af4b07\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"color\":[\"#008000\"],\"openings\":[{\"direction\":1,\"toggled\":true}],\"id\":\"7ab05f54\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"1f98dd59\"}]}},\"1\":{\"1\":{\"type\":\"Tile\",\"id\":\"42aa42df\"},\"2\":{\"id\":\"dbaeb3de\",\"type\":\"Tile\"},\"-2\":{\"id\":\"19a43886\",\"type\":\"Tile\"},\"-3\":{\"id\":\"26bc177a\",\"type\":\"Tile\"}},\"-1\":{\"1\":{\"id\":\"51c0929a\",\"type\":\"Tile\"},\"2\":{\"id\":\"46963c5c\",\"type\":\"Tile\"},\"-3\":{\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"bb2f901a\"}],\"id\":\"690c22b2\"},\"-2\":{\"id\":\"55a0cecf\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"845596b7\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"1\":{\"id\":\"744fba7a\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":3}],\"id\":\"b890e470\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"110796b4\"}]},\"2\":{\"id\":\"70dbb697\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"979a9e6d\"}]},\"3\":{\"id\":\"02825cfd\",\"type\":\"Tile\",\"items\":[{\"type\":\"Reflector\",\"id\":\"3af37e59\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3db9b817\"}]},\"-1\":{\"id\":\"611a4233\",\"type\":\"Tile\"},\"-2\":{\"id\":\"8a2041c5\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"021b4ba2\"}]},\"-3\":{\"id\":\"63af4b07\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#008000\",\"direction\":1,\"toggled\":true}],\"id\":\"7ab05f54\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"1f98dd59\"}]}},\"1\":{\"1\":{\"type\":\"Tile\",\"id\":\"42aa42df\"},\"2\":{\"id\":\"dbaeb3de\",\"type\":\"Tile\"},\"-2\":{\"id\":\"19a43886\",\"type\":\"Tile\"},\"-3\":{\"id\":\"26bc177a\",\"type\":\"Tile\"}},\"-1\":{\"1\":{\"id\":\"51c0929a\",\"type\":\"Tile\"},\"2\":{\"id\":\"46963c5c\",\"type\":\"Tile\"},\"-3\":{\"type\":\"Tile\",\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"bb2f901a\"}],\"id\":\"690c22b2\"},\"-2\":{\"id\":\"55a0cecf\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"845596b7\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
 
 },{}],"6ZkNx":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"916477d6\"}],\"id\":\"75df857a\"},\"1\":{\"id\":\"43142953\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":5}],\"id\":\"1ce44eba\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"9ba8bd9e\"}]},\"-1\":{\"id\":\"da8da7c6\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":2,\"toggled\":true,\"steps\":{\"3\":{\"Portal\":{\"entryPortalId\":\"916477d6\",\"exitPortalId\":\"388f88d4\"}}}}],\"id\":\"5363af1f\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"9556062f\"}]}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"c2c04bc7\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"0c3fe41a\"}],\"id\":\"c92e21e3\"},\"-1\":{\"id\":\"62c320fa\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"f75c4e92\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"97b3cf21\"}]}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"88b59156\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"5871082a\"}],\"id\":\"210e5463\"},\"-1\":{\"id\":\"720d0180\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"388f88d4\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"5b0d7431\"}]}}},\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"b30a8952\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"odd-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"916477d6\"}],\"id\":\"75df857a\"},\"1\":{\"id\":\"43142953\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":5}],\"id\":\"1ce44eba\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"9ba8bd9e\"}]},\"-1\":{\"id\":\"da8da7c6\",\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":2,\"toggled\":true,\"steps\":{\"3\":{\"Portal\":{\"entryPortalId\":\"916477d6\",\"exitPortalId\":\"388f88d4\"}}}}],\"id\":\"5363af1f\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"9556062f\"}]}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"c2c04bc7\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"0c3fe41a\"}],\"id\":\"c92e21e3\"},\"-1\":{\"id\":\"62c320fa\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"f75c4e92\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"97b3cf21\"}]}},\"-1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":5,\"id\":\"88b59156\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"5871082a\"}],\"id\":\"210e5463\"},\"-1\":{\"id\":\"720d0180\",\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"388f88d4\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"5b0d7431\"}]}}},\"modifiers\":[{\"type\":\"Rotate\",\"id\":\"b30a8952\"}]},\"solution\":[{\"type\":\"Connections\",\"amount\":1}],\"version\":0}");
 
 },{}],"IvGia":[function(require,module,exports,__globalThis) {
-module.exports = JSON.parse("{\"layout\":{\"offset\":\"even-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[2,3,4],\"immutable\":true,\"id\":\"599155e1\"}],\"id\":\"190532c5\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"b1400b19\"}],\"id\":\"84eab54c\",\"modifiers\":[{\"type\":\"Lock\",\"id\":\"f1c5bbea\"}]},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":0}],\"id\":\"61f27708\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"827e9a99\"}],\"id\":\"97a17408\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"977950c8\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"2cb4c742\"}],\"id\":\"c37a03f6\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":1}],\"id\":\"73f8a5ac\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3990e750\"}],\"id\":\"c548f15d\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[3,4,5],\"immutable\":true,\"id\":\"597f2783\"}],\"id\":\"6ba442c5\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":0}],\"id\":\"9334ca61\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"524e1e3e\"}],\"id\":\"706f6c74\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"a9aad9b7\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"87f186bb\"}],\"id\":\"961e9705\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"4611479d\"}],\"id\":\"b44b0f4c\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"51e6e20a\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"dde316f3\"}],\"id\":\"255e99c6\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":1}],\"id\":\"20030ebf\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"d467956f\"}],\"id\":\"665ba31e\"},\"-4\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"e0fbb677\"}],\"id\":\"b87f2624\"}},\"2\":{\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"90899ba7\"}],\"id\":\"c5d2f81f\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":0}],\"id\":\"2aad73ec\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"55583307\"}],\"id\":\"fb70627d\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#0000ff\"],\"direction\":1}],\"id\":\"71a24791\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"505368dc\"}],\"id\":\"314490e3\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"0266f740\"}],\"id\":\"e7e92e61\"}},\"-1\":{\"0\":{\"id\":\"1b76a8a0\",\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[2,3],\"immutable\":true,\"id\":\"d74a298d\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":[\"#ff0000\"],\"direction\":0},{\"color\":[\"#0000ff\"],\"direction\":1},{\"color\":[\"#ff0000\"],\"direction\":2},{\"color\":[\"#0000ff\"],\"direction\":3},{\"color\":[\"#ff0000\"],\"direction\":4},{\"color\":[\"#0000ff\"],\"direction\":5}],\"id\":\"e7a7ae2f\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"99f4e45e\"},{\"type\":\"Rotate\",\"id\":\"44b7fd07\"},{\"type\":\"Toggle\",\"id\":\"b022e1bd\"}],\"id\":\"5a1ac900\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[4],\"immutable\":true,\"id\":\"7e95cc73\"}],\"id\":\"bc09e30f\"}},\"-2\":{\"0\":{\"id\":\"eadb402e\",\"type\":\"Tile\"},\"-1\":{\"id\":\"92e29b3a\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"d94e4efb\"},{\"type\":\"Move\",\"id\":\"8c3989d1\"},{\"type\":\"Rotate\",\"id\":\"554016e6\"},{\"type\":\"Rotate\",\"id\":\"a1a4421a\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":6}]}");
+module.exports = JSON.parse("{\"layout\":{\"offset\":\"even-row\",\"tiles\":{\"0\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[2,3,4],\"immutable\":true,\"id\":\"599155e1\"}],\"id\":\"190532c5\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"b1400b19\"}],\"id\":\"84eab54c\",\"modifiers\":[{\"type\":\"Lock\",\"id\":\"f1c5bbea\"}]},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":0}],\"id\":\"61f27708\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"827e9a99\"}],\"id\":\"97a17408\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"977950c8\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"2cb4c742\"}],\"id\":\"c37a03f6\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1}],\"id\":\"73f8a5ac\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"3990e750\"}],\"id\":\"c548f15d\"},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[3,4,5],\"immutable\":true,\"id\":\"597f2783\"}],\"id\":\"6ba442c5\"}},\"1\":{\"0\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":0}],\"id\":\"9334ca61\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"524e1e3e\"}],\"id\":\"706f6c74\"},\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"a9aad9b7\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"87f186bb\"}],\"id\":\"961e9705\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"4611479d\"}],\"id\":\"b44b0f4c\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"id\":\"51e6e20a\"}],\"modifiers\":[{\"type\":\"Immutable\",\"id\":\"dde316f3\"}],\"id\":\"255e99c6\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1}],\"id\":\"20030ebf\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"d467956f\"}],\"id\":\"665ba31e\"},\"-4\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"e0fbb677\"}],\"id\":\"b87f2624\"}},\"2\":{\"1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":0,\"id\":\"90899ba7\"}],\"id\":\"c5d2f81f\"},\"2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":0}],\"id\":\"2aad73ec\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"55583307\"}],\"id\":\"fb70627d\"},\"-3\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#0000ff\",\"direction\":1}],\"id\":\"71a24791\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"505368dc\"}],\"id\":\"314490e3\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Portal\",\"direction\":1,\"id\":\"0266f740\"}],\"id\":\"e7e92e61\"}},\"-1\":{\"0\":{\"id\":\"1b76a8a0\",\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[2,3],\"immutable\":true,\"id\":\"d74a298d\"}]},\"-1\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Terminus\",\"openings\":[{\"color\":\"#ff0000\",\"direction\":0},{\"color\":\"#0000ff\",\"direction\":1},{\"color\":\"#ff0000\",\"direction\":2},{\"color\":\"#0000ff\",\"direction\":3},{\"color\":\"#ff0000\",\"direction\":4},{\"color\":\"#0000ff\",\"direction\":5}],\"id\":\"e7a7ae2f\"}],\"modifiers\":[{\"type\":\"Lock\",\"id\":\"99f4e45e\"},{\"type\":\"Rotate\",\"id\":\"44b7fd07\"},{\"type\":\"Toggle\",\"id\":\"b022e1bd\"}],\"id\":\"5a1ac900\"},\"-2\":{\"type\":\"Tile\",\"items\":[{\"type\":\"Wall\",\"directions\":[4],\"immutable\":true,\"id\":\"7e95cc73\"}],\"id\":\"bc09e30f\"}},\"-2\":{\"0\":{\"id\":\"eadb402e\",\"type\":\"Tile\"},\"-1\":{\"id\":\"92e29b3a\",\"type\":\"Tile\"}}},\"modifiers\":[{\"type\":\"Move\",\"id\":\"d94e4efb\"},{\"type\":\"Move\",\"id\":\"8c3989d1\"},{\"type\":\"Rotate\",\"id\":\"554016e6\"},{\"type\":\"Rotate\",\"id\":\"a1a4421a\"}]},\"version\":0,\"solution\":[{\"type\":\"Connections\",\"amount\":6}]}");
 
 },{}],"fUqeV":[function(require,module,exports,__globalThis) {
 module.exports = JSON.parse("{\"layout\":{\"tiles\":[[{\"items\":[{\"color\":\"red\",\"openings\":[null,null,null,{\"on\":true,\"type\":\"Beam\"},null,null],\"type\":\"Terminus\"}],\"type\":\"Tile\"},{\"items\":[{\"rotation\":2,\"type\":\"Reflector\"}],\"type\":\"Tile\"},{\"type\":\"Tile\"},{\"items\":[{\"color\":\"red\",\"openings\":[null,null,null,null,null,{\"on\":true,\"type\":\"Beam\"}],\"type\":\"Terminus\"}],\"type\":\"Tile\"}],[{\"type\":\"Tile\"},{\"type\":\"Tile\"},{\"type\":\"Tile\"}],[null,{\"items\":[{\"rotation\":4,\"type\":\"Reflector\"}],\"type\":\"Tile\"},{\"items\":[{\"rotation\":2,\"type\":\"Reflector\"}],\"type\":\"Tile\"},{\"items\":[{\"color\":\"blue\",\"openings\":[{\"on\":true,\"type\":\"Beam\"},null,null,null,null,null],\"type\":\"Terminus\"}],\"type\":\"Tile\"}]]},\"solution\":[{\"amount\":100,\"type\":\"Connections\"}]}");
@@ -33314,7 +33340,7 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
         static Schema = Object.freeze({
             $id: (0, _schema.Schema).$id('terminus', 'opening'),
             properties: {
-                color: (0, _schema.Schema).colors,
+                color: (0, _schema.Schema).color,
                 direction: (0, _schema.Schema).direction,
                 steps: {
                     options: {
@@ -33327,6 +33353,7 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
                 }
             },
             required: [
+                'color',
                 'direction'
             ],
             title: 'opening',
@@ -33344,7 +33371,6 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
         (0, _toggle.toggleable).Schema,
         {
             properties: {
-                color: (0, _schema.Schema).colors,
                 openings: {
                     items: Terminus.Opening.Schema,
                     minItems: 0,
@@ -34546,6 +34572,8 @@ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 // TODO: consider adding AJV validations that ensure unique keys are unique
 // See: https://github.com/ajv-validator/ajv-keywords/blob/master/README.md#uniqueitemproperties
+// TODO: add ability to move the center marker. wherever it is placed will become the new center of the canvas
+// TODO: implement author / description in the UI
 parcelHelpers.export(exports, "Editor", ()=>Editor);
 var _paper = require("paper");
 var _paperDefault = parcelHelpers.interopDefault(_paper);
@@ -34622,6 +34650,13 @@ class Editor {
     }
     isLocked() {
         return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true';
+    }
+    onResize(size) {
+        if (size.width < 768 && !this.#gutter.horizontal) {
+            // Set orientation to horizontal on small screens
+            this.#gutter.toggleOrientation();
+            this.#puzzle.resize(false);
+        }
     }
     setup() {
         if (this.#editor) return;
@@ -34711,19 +34746,16 @@ class Editor {
         this.#editor.setValue(tile ? tile.getState() : this.#puzzle.state.getCurrent());
     }
     #onConfigurationUpdate() {
-        try {
-            const state = this.getState();
-            const diff = this.#puzzle.state.getDiff(state);
-            console.debug('onConfigurationUpdate', diff);
-            if (diff === undefined) // No changes
-            return;
-            this.#puzzle.state.addMove();
-            // Need to force a reload to make sure the UI is in sync with the state
-            this.#puzzle.reload(state);
-        } catch (e) {
-            // TODO: maybe display something to the user, too
-            console.error(e);
-        }
+        // Ensure the configuration is in sync with the editor value
+        this.#onEditorUpdate();
+        const state = this.getState();
+        const diff = this.#puzzle.state.getDiff(state);
+        console.debug('onConfigurationUpdate', diff);
+        if (diff === undefined) // No changes
+        return;
+        this.#puzzle.state.addMove();
+        // Need to force a reload to make sure the UI is in sync with the state
+        this.#puzzle.reload(state, this.#onError.bind(this));
     }
     #onCenter() {
         this.#updateCenter();
@@ -34746,7 +34778,9 @@ class Editor {
         }
         this.#onGutterMoved();
     }
-    #onEditorUpdate(value = this.#editor.getValue()) {
+    #onEditorUpdate(value = this.#editor?.getValue()) {
+        if (this.#puzzle.error) // No updates until error is fixed
+        return;
         const current = this.#puzzle.state.getCurrent();
         const offset = this.#puzzle.selectedTile?.coordinates.offset;
         let state;
@@ -34762,6 +34796,9 @@ class Editor {
         }
         console.debug('current', current, 'new', value, 'updated', state);
         this.#updateConfiguration(state);
+    }
+    #onError(e) {
+        this.#puzzle.onError(e, `Error: "${e.message}". Undo and try again.`);
     }
     #onGutterMoved() {
         this.#puzzle.resize();
@@ -34807,7 +34844,7 @@ class Editor {
         this.#onConfigurationUpdate();
     }
     async #onShare() {
-        await (0, _util.writeToClipboard)(`Beaming: try out my custom puzzle! ${this.getShareUrl()}`);
+        await (0, _util.writeToClipboard)(`Try out my custom puzzle: ${this.#puzzle.getTitle()} - ${this.getShareUrl()}`);
         tippy.show();
         setTimeout(()=>tippy.hide(), 1000);
     }
@@ -34872,6 +34909,7 @@ class Editor {
         this.#updateLock();
     }
     #updateCenter() {
+        if (!this.#puzzle.layout) return;
         this.#center.removeChildren();
         this.#center.addChildren(Editor.mark(this.#puzzle.layout.getCenter(), this.#puzzle.layout.parameters.circumradius / 4));
     }
@@ -47092,17 +47130,21 @@ class Gutter {
         this.horizontal = localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Horizontal)) === 'true';
         this.#eventListener.add([
             {
+                type: 'pointercancel',
+                handler: this.#onPointerUp
+            },
+            {
+                type: 'pointerdown',
                 element: this.element,
-                handler: this.#onPointerDown,
-                type: 'pointerdown'
+                handler: this.#onPointerDown
             },
             {
-                handler: this.#onPointerMove,
-                type: 'pointermove'
+                type: 'pointermove',
+                handler: this.#onPointerMove
             },
             {
-                handler: this.#onPointerUp,
-                type: 'pointerup'
+                type: 'pointerup',
+                handler: this.#onPointerUp
             }
         ]);
         this.reset();

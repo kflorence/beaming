@@ -244,6 +244,7 @@ dialog footer ul li:first-child {
 
 #editor-wrapper {
   user-select: none;
+  z-index: 1;
   background-color: #fff;
   display: none;
   box-shadow: 0 0 .5rem .25rem #00000059;
@@ -282,6 +283,7 @@ dialog footer ul li:first-child {
 
 #gutter {
   border-spacing: 2px;
+  touch-action: none;
   flex: none;
   width: 1px;
   height: 100%;
@@ -409,12 +411,14 @@ dialog footer ul li:first-child {
 #puzzle-id {
   appearance: none;
   cursor: pointer;
+  text-overflow: ellipsis;
   border: none;
   border-left: 1px solid #ddd;
+  width: 100%;
   padding: 1em 2em 1em 1em;
   font-size: 1em;
   font-weight: bold;
-  display: inline-block;
+  display: block;
 }
 
 #puzzle-id:hover {
@@ -514,7 +518,7 @@ dialog footer ul li:first-child {
 }
 
 .flex-center, .flex-left, .flex-right {
-  flex: 1;
+  flex: auto;
   align-items: stretch;
   display: flex;
 }
@@ -676,11 +680,16 @@ i.fill, .icon.fill {
     border-radius: 0;
     width: 100%;
     max-width: 100%;
+    min-height: fit-content;
+    position: relative;
     top: 0;
   }
 
   #puzzle-header .flex-left, #puzzle-header .flex-right {
+    border-top: 1px solid #ddd;
     order: 0;
+    position: relative;
+    top: -1px;
   }
 
   #puzzle-header .flex-center {
@@ -691,6 +700,16 @@ i.fill, .icon.fill {
 
   #puzzle-header-menu {
     border: 0;
+  }
+}
+
+@media (width <= 600px) {
+  #editor-menu {
+    justify-content: center;
+  }
+
+  #editor-dock {
+    display: none;
   }
 }
 
