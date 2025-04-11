@@ -115,6 +115,7 @@ export class Puzzle {
   centerOnTile (offset) {
     const tile = this.layout.getTile(offset)
     View.setCenter(tile.center)
+    return tile.equals(this.selectedTile)
   }
 
   clearDebugPoints () {

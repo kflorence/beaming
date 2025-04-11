@@ -66,8 +66,10 @@ class PuzzleFixture {
 
   async clickTile (r, c) {
     // Center on the tile we want to click on. This ensures it is visible
-    await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
-    await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    const isSelected = await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
+    if (!isSelected) {
+      await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    }
   }
 
   async isMasked () {
@@ -84,6 +86,7 @@ class PuzzleFixture {
 
   async solve (moves) {
     for (const move of moves) {
+      console.log('processing move', JSON.stringify(move))
       switch (move.eventType) {
         case 'mask-hidden': {
           await this.isNotMasked()
