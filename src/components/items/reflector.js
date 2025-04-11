@@ -1,9 +1,10 @@
 import { Path, Point, Size } from 'paper'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
-import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection, getPointFrom } from '../util'
+import { getPointBetween, getOppositeDirection, getPosition, getReflectedDirection, getPointFrom, merge } from '../util'
 import { movable } from '../modifiers/move'
 import { StepState } from '../step'
+import { Schema } from '../schema'
 
 export class Reflector extends movable(rotatable(Item)) {
   #item
@@ -11,6 +12,7 @@ export class Reflector extends movable(rotatable(Item)) {
   constructor (tile, state) {
     super(tile, state, { rotationDegrees: 30 })
 
+    // NOTE: color is not currently used for anything
     this.color = state.color || 'black'
     this.#item = Reflector.item(tile, this.color)
 
@@ -34,7 +36,7 @@ export class Reflector extends movable(rotatable(Item)) {
     return this.getSide(pointA) === this.getSide(pointB)
   }
 
-  onCollision ({ beam, collision, collisions, collisionStep, currentStep, nextStep }) {
+  onCollision ({ beam, collision, collisionStep, currentStep, nextStep }) {
     const directionFrom = getOppositeDirection(currentStep.direction)
     const directionTo = getReflectedDirection(directionFrom, this.rotation)
 
@@ -45,18 +47,12 @@ export class Reflector extends movable(rotatable(Item)) {
 
     if (directionTo === directionFrom) {
       console.debug(beam.toString(), 'stopping due to reflection back at self')
-      // Unsure why this rule was here, but it was causing a bug when re-evaluating history
-      // if (collisions.some((collision) => collision.item.type === Item.Types.beam)) {
-      //   // If there is also a beam collision in the list of collisions for this step, let that one resolve it
-      //   return
-      // } else {
       // Instead of using collisionStep, just add a collision to nextStep. This will ensure any beams that hit the
       // same side of the reflector will collide with this beam.
       return nextStep.copy({
         done: true,
         state: nextStep.state.copy(new StepState.Collision(collision.copy({ points: [nextStep.point] })))
       })
-      // }
     }
 
     // The beam will collide with a reflector twice, on entry and exit, so ignore the first one, but track in state
@@ -81,4 +77,15 @@ export class Reflector extends movable(rotatable(Item)) {
       size
     })
   }
+
+  static Schema = Object.freeze(merge([
+    Item.schema(Item.Types.reflector),
+    movable.Schema,
+    rotatable.Schema,
+    {
+      properties: {
+        direction: Schema.direction
+      }
+    }
+  ]))
 }

@@ -15,3 +15,11 @@ document.head.append(script)
 document.addEventListener('puzzle-updated', (event) => {
   doorbellOptions.properties.puzzleId = event.detail.state.getId()
 })
+
+const container = document.getElementById('feedback-container')
+const help = document.getElementById('help')
+
+document.getElementById('feedback').addEventListener('click', () => {
+  help.setAttribute('open', 'true')
+  container.scrollIntoView(true)
+})

@@ -1,5 +1,5 @@
 import { Puzzles } from '../puzzles'
-import { base64decode, base64encode, jsonDiffPatch, params, url } from './util'
+import { base64decode, base64encode, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
 
 const history = window.history
 const localStorage = window.localStorage
@@ -15,8 +15,9 @@ export class State {
   #version
 
   constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
-    this.#id = id
-    this.#original = original
+    // When editing a puzzle from cache, append a unique ID
+    this.#id = Puzzles.has(id) && params.has(State.ParamKeys.Edit) ? `${id}-${uniqueId()}` : id ?? uniqueId()
+    this.#original = original || {}
     this.#deltas = deltas || []
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
@@ -24,10 +25,9 @@ export class State {
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
-    this.#updateCache()
   }
 
-  addMove () {
+  addMove (eventType, tile, modifier, selectedTile) {
     // Handle moving after an undo (revising history)
     if (this.#moveIndex < this.#moves.length - 1) {
       const deltaIndex = this.getDeltaIndex()
@@ -47,16 +47,15 @@ export class State {
     }
 
     const deltaIndex = this.#deltas.length - 1
-    if (!this.#moves.includes(deltaIndex)) {
-      // Don't add duplicate moves
-      this.#moves.push(deltaIndex)
+    if (this.#moves.some((move) => move.deltaIndex === deltaIndex)) {
+      console.debug(this.toString(), `addMove: ignoring duplicate move for deltaIndex ${deltaIndex}.`)
     } else {
-      console.debug(this.toString(), `addMove: ignoring duplicate move: ${deltaIndex}`)
+      this.#moves.push(new State.Move(deltaIndex, eventType, tile, modifier, selectedTile))
     }
 
     this.#moveIndex = this.#moves.length - 1
 
-    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, deltaIndex)
+    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
 
     return this.#moveIndex
   }
@@ -71,6 +70,13 @@ export class State {
 
   canUndo () {
     return this.#moveIndex >= 0
+  }
+
+  /**
+   * @returns {State} Creates a clone of state at current point without history
+   */
+  clone () {
+    return new State(this.#id, this.#current)
   }
 
   encode () {
@@ -90,11 +96,21 @@ export class State {
     return structuredClone(this.#current)
   }
 
+  getCurrentJSON () {
+    return JSON.stringify(this.getCurrent(), null, 2)
+  }
+
   getDeltaIndex () {
     console.debug(this.toString(), 'getDeltaIndex', this.#moves, this.#moveIndex, this.#deltas.length - 1)
     // If there are no moves, or the user is on the latest move, use the latest delta index
     // Otherwise, use the delta index indicated by the move
-    return this.#moveIndex < this.#moves.length - 1 ? this.#moves[this.#moveIndex + 1] : this.#deltas.length - 1
+    return this.#moveIndex < this.#moves.length - 1
+      ? this.#moves[this.#moveIndex + 1].deltaIndex
+      : this.#deltas.length - 1
+  }
+
+  getDiff (newState) {
+    return jsonDiffPatch.diff(this.#current, newState)
   }
 
   getId () {
@@ -102,7 +118,7 @@ export class State {
   }
 
   getTitle () {
-    return this.getId() + (this.#current.title ? ` - ${this.#current.title}` : '')
+    return this.getId() + (this.#current?.title ? ` - ${this.#current.title}` : '')
   }
 
   getSelectedTile () {
@@ -131,7 +147,7 @@ export class State {
     }
 
     // Reset to the state prior to the first move
-    this.#deltas.splice(this.#moves[0] + 1)
+    this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
     this.#selectedTile = undefined
@@ -161,7 +177,7 @@ export class State {
       return
     }
 
-    console.log(this.toString(), 'undo', this.#moveIndex)
+    console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
     this.#resetCurrent()
@@ -171,20 +187,18 @@ export class State {
   }
 
   update (newState) {
-    const delta = jsonDiffPatch.diff(this.#current, newState)
+    const delta = this.getDiff(newState)
     console.debug(this.toString(), 'update', delta)
 
-    if (delta === undefined) {
-      // Nothing to do
-      return
+    if (delta !== undefined) {
+      // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
+      // their stringified JSON representation and parsed before being applied.
+      // See:https://github.com/benjamine/jsondiffpatch/issues/34
+      this.#deltas.push(JSON.stringify(delta))
+
+      this.#apply(delta)
     }
 
-    // It seems that the jsondiffpatch library modifies deltas on patch. To prevent that, they will be stored as
-    // their stringified JSON representation and parsed before being applied.
-    // See:https://github.com/benjamine/jsondiffpatch/issues/34
-    this.#deltas.push(JSON.stringify(delta))
-
-    this.#apply(delta)
     this.#updateCache()
   }
 
@@ -195,10 +209,6 @@ export class State {
     }
     console.debug(this.toString(), 'apply', delta)
     return jsonDiffPatch.patch(this.#current, delta)
-  }
-
-  #key (key) {
-    return State.key(key, this.getId())
   }
 
   #resetCurrent () {
@@ -213,28 +223,27 @@ export class State {
 
   #updateCache () {
     const id = this.getId()
-    const state = this.encode()
+    const data = { id }
+    const hashParams = ['', id]
 
-    url.hash = ['', id, state].join('/')
-    history.pushState({ id, state }, '', url)
-    localStorage.setItem(State.CacheKeys.id, id)
-    localStorage.setItem(this.#key(State.CacheKeys.state), state)
+    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
+      // Include encoded state in URL if cache is not being cleared for this puzzle ID
+      data.state = this.encode()
+      hashParams.push(data.state)
+      localStorage.setItem(State.#key(id), data.state)
+    }
+
+    url.hash = hashParams.join('/')
+    history.pushState(data, '', url)
+    localStorage.setItem(State.#key(State.CacheKeys.Id), id)
   }
 
   static clearCache (id) {
-    if (!id) {
-      // Clear everything
-      url.hash = ''
-      history.pushState({}, '', url)
-      id = localStorage.getItem(State.CacheKeys.id)
-      localStorage.clear()
-      // Keep current puzzle ID
-      localStorage.setItem(State.CacheKeys.id, id)
+    if (id) {
+      // Clear a single puzzle ID
+      localStorage.removeItem(State.#key(id))
     } else {
-      // Clear a single puzzle
-      url.hash = `/${id}`
-      history.pushState({ id }, '', url)
-      localStorage.removeItem(State.key(State.CacheKeys.state, id))
+      localStorage.clear()
     }
   }
 
@@ -283,71 +292,93 @@ export class State {
     return new State(id, Puzzles.get(id))
   }
 
+  static getId () {
+    return localStorage.getItem(State.#key(State.CacheKeys.Id))
+  }
+
   static resolve (id) {
+    let values = []
+
+    if (id !== undefined) {
+      // Explicit ID will take precedence over other resolution methods
+      values.push(id)
+    }
+
+    // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
+    values.push(...url.hash.substring(1).split('/').filter((path) => path !== ''))
+
+    if (!params.has(State.ParamKeys.Edit)) {
+      // If puzzle is not being edited, check last active puzzle ID, falling back to first puzzle ID
+      values.push(State.getId() || Puzzles.visible.firstId)
+    }
+
+    if (params.has(State.ParamKeys.ClearCache)) {
+      // If cache is being cleared, do it before attempting resolution
+      State.clearCache(params.get(State.ParamKeys.ClearCache))
+    }
+
+    values = [...new Set(values)]
+    console.debug('Attempting to resolve cached state with values:', values)
+
     let state
-
-    // Allow cache to be cleared via URL param
-    if (params.has(State.ParamKeys.clearCache)) {
-      State.clearCache(params.get(State.ParamKeys.clearCache))
-    }
-
-    const pathSegments = url.hash.substring(1).split('/').filter((path) => path !== '')
-
-    if (!id) {
-      // If no explicit ID is given, try to load state from URL
-      pathSegments.filter((path) => !Puzzles.has(path)).some((segment, index) => {
-        try {
-          state = State.fromEncoded(segment)
-        } catch (e) {
-          console.debug(`Could not parse state from path segment '${index}'`, e)
+    for (let value of values) {
+      if (Puzzles.has(value)) {
+        id = value
+        value = localStorage.getItem(State.#key(id))
+        if (value === null) {
+          // No local storage cache exists for this ID
+          break
         }
+      }
 
-        return state !== undefined
-      })
-    }
-
-    if (!state) {
-      // Update ID before checking for state in localStorage.
-      id = id || pathSegments[0] || localStorage.getItem(State.CacheKeys.id) || Puzzles.visible.firstId
-
-      const localState = localStorage.getItem(State.key(State.CacheKeys.state, id))
-      if (localState) {
-        try {
-          state = State.fromEncoded(localState)
-        } catch (e) {
-          console.debug(`Could not parse state with ID '${id}' from localStorage`, e)
-        }
+      try {
+        state = State.fromEncoded(value)
+        id = state.getId()
+        console.debug(`Successfully resolved cached state for puzzle ID '${id}'.`, state)
+        return state
+      } catch (e) {
+        console.debug(`Could not decode value: ${value}`, e)
       }
     }
 
-    if (!state) {
-      // Fall back to loading state from Puzzles cache by ID
-      state = State.fromId(id)
-    }
+    console.debug(`No cached state found for puzzle ID '${id}'.`)
 
-    if (!state) {
-      throw new Error(`Unable to resolve state for ID '${id}'`)
-    }
-
-    return state
-  }
-
-  static key (key, id) {
-    return `${key}:${id}`
+    return State.fromId(id)
   }
 
   static CacheKeys = Object.freeze({
-    center: 'center',
-    id: 'id',
-    state: 'state',
-    zoom: 'zoom'
+    Editor: 'editor',
+    Id: 'id'
   })
 
   static ParamKeys = Object.freeze({
-    clearCache: 'clearCache'
+    ClearCache: 'clearCache',
+    Edit: 'edit'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 3
+  static Version = 5
+
+  static #key = getKeyFactory([
+    // Prefix key with 'editor' when in edit mode
+    params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
+    'state'
+  ].filter((v) => v))
+
+  static Move = class {
+    deltaIndex
+    eventType
+    modifierType
+    selectedTile
+    tile
+
+    constructor (deltaIndex, eventType, tile, modifier, selectedTile) {
+      this.deltaIndex = deltaIndex
+      this.eventType = eventType
+      this.modifierType = modifier?.type
+      this.selectedTile = selectedTile?.coordinates.offset.toString()
+      this.tile = tile?.coordinates.offset.toString()
+    }
+  }
 }

@@ -1,15 +1,13 @@
-import { capitalize, emitEvent } from './util'
+import { capitalize, emitEvent, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
 import { Icons } from './icons'
 import { Tile } from './items/tile'
+import { Schema } from './schema'
 
-const modifiers = document.getElementById('modifiers')
-
-// Use incrementing IDs to preserve sort order
-let uniqueId = 0
+const menu = document.getElementById('puzzle-footer-menu')
 
 export class Modifier extends Stateful {
   #container
@@ -21,18 +19,20 @@ export class Modifier extends Stateful {
   element
   disabled = false
   immutable = false
+  index
   name
   parent
   tile
   title
   type
 
-  constructor (tile, state) {
+  constructor (tile, state, index) {
     // Retain ID from state if it exists, otherwise generate a new one
-    state.id ??= uniqueId++
+    state.id ??= uniqueId()
     super(state)
 
     this.id = state.id
+    this.index = index
     this.parent = tile
     this.type = state.type
   }
@@ -66,7 +66,7 @@ export class Modifier extends Stateful {
 
     const span = this.element = document.createElement('span')
 
-    span.classList.add('material-symbols-outlined', 'fill')
+    span.classList.add('icon', 'fill')
 
     li.append(span)
 
@@ -78,7 +78,7 @@ export class Modifier extends Stateful {
       { type: 'pointerup', handler: this.onPointerUp }
     ], { element: li })
 
-    modifiers.append(li)
+    menu.append(li)
   }
 
   /**
@@ -187,9 +187,14 @@ export class Modifier extends Stateful {
     return modifier.type === Modifier.Types.immutable
   }
 
+  static schema (type) {
+    return Schema.typed('modifiers', type)
+  }
+
   static Events = Object.freeze({
     Invoked: 'modifier-invoked',
-    Moved: 'modifier-moved'
+    Moved: 'modifier-moved',
+    Toggled: 'modifier-toggled'
   })
 
   static Types = Object.freeze(Object.fromEntries([

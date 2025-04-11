@@ -2,10 +2,15 @@ import { params } from './util'
 
 const console = window.console = window.console || { debug: function () {} }
 const consoleDebug = console.debug
+const enabled = params.has('debug')
+
+if (enabled) {
+  document.body.classList.add('debug')
+}
 
 export function debug (debug) {
   console.debug = debug ? consoleDebug : function () {}
 }
 
-// Silence debug logging by default
-debug(params.has('debug') ?? false)
+debug.enabled = enabled
+debug(enabled)

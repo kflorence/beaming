@@ -30,4 +30,6 @@ export class Swap extends Move {
       !tile.items.some(Move.movable)
     )
   }
+
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.swap))
 }

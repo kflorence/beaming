@@ -1,244 +1,252 @@
 {
+  "version": 0,
   "layout": {
-    "modifiers": [
-      {
-        "type": "Move"
-      }
-    ],
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "0": {
+          "id": "31fddfab",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
-              "openings": [
-                null,
-                null,
-                {
-                  "type": "Beam"
-                },
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "color": "blue",
-              "openings": [
-                null,
-                null,
-                null,
-                null,
-                {
-                  "type": "Beam"
-                },
-                {
-                  "on": true,
-                  "type": "Beam"
-                }
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "color": "red",
-              "openings": [
-                null,
-                null,
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                {
-                  "type": "Beam"
-                },
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "color": "red",
-              "openings": [
-                null,
-                null,
-                null,
-                null,
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                {
-                  "type": "Beam"
-                }
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
+              "type": "Reflector",
               "rotation": 3,
-              "type": "Reflector"
+              "id": "e43aaf8e"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock"
+              "type": "Lock",
+              "id": "68de9848"
             },
             {
-              "type": "Rotate"
+              "type": "Rotate",
+              "id": "e45bd074"
             }
-          ],
+          ]
+        },
+        "1": {
+          "id": "7debc40d",
           "type": "Tile"
         },
-        {
+        "2": {
+          "id": "4d3d4d5c",
           "type": "Tile"
         },
-        {
+        "-1": {
+          "id": "9a141161",
+          "type": "Tile"
+        },
+        "-2": {
+          "id": "4278d79d",
           "type": "Tile"
         }
-      ],
-      [
-        null,
-        {
+      },
+      "1": {
+        "0": {
+          "id": "07559685",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
-              "openings": [
-                {
-                  "type": "Beam"
-                },
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
+              "type": "Reflector",
+              "rotation": 3,
+              "id": "732a68a9"
             }
-          ],
+          ]
+        },
+        "1": {
+          "id": "8472fea8",
+          "type": "Tile",
           "modifiers": [
             {
-              "type": "Immutable"
+              "type": "Immutable",
+              "id": "579e323e"
             }
           ],
-          "type": "Tile"
-        },
-        {
           "items": [
             {
-              "rotation": 3,
-              "type": "Reflector"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "rotation": 3,
-              "type": "Reflector"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "color": "red",
+              "type": "Terminus",
+              "color": "#ff0000",
               "openings": [
                 {
-                  "on": true,
-                  "type": "Beam"
+                  "direction": 1
                 },
                 {
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
+                  "direction": 0,
+                  "toggled": true
+                }
               ],
-              "type": "Terminus"
+              "id": "7dad4af4"
             }
-          ],
+          ]
+        },
+        "-1": {
+          "id": "ae9deac9",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Reflector",
+              "rotation": 3,
+              "id": "3dca0442"
+            }
+          ]
+        },
+        "-2": {
+          "id": "f62e3a1a",
+          "type": "Tile",
           "modifiers": [
             {
-              "type": "Immutable"
+              "type": "Immutable",
+              "id": "5cf75411"
             }
           ],
-          "type": "Tile"
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#0000ff",
+              "openings": [
+                {
+                  "direction": 0
+                },
+                {
+                  "direction": 1,
+                  "toggled": true
+                }
+              ],
+              "id": "d8bc4263"
+            }
+          ]
         }
-      ]
+      },
+      "-1": {
+        "0": {
+          "id": "9742e8a6",
+          "type": "Tile",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "2b5cf6ac"
+            }
+          ],
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#ff0000",
+              "openings": [
+                {
+                  "direction": 2,
+                  "toggled": true
+                },
+                {
+                  "direction": 3
+                }
+              ],
+              "id": "e55b2e61"
+            }
+          ]
+        },
+        "1": {
+          "id": "78e0360f",
+          "type": "Tile"
+        },
+        "2": {
+          "id": "ff1eab33",
+          "type": "Tile",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "d85956fe"
+            }
+          ],
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#ff0000",
+              "openings": [
+                {
+                  "direction": 5
+                },
+                {
+                  "direction": 4,
+                  "toggled": true
+                }
+              ],
+              "id": "6a0bcd4f"
+            }
+          ]
+        },
+        "-1": {
+          "id": "55998903",
+          "type": "Tile",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "0843c4b1"
+            }
+          ],
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#0000ff",
+              "openings": [
+                {
+                  "direction": 4
+                },
+                {
+                  "direction": 5,
+                  "toggled": true
+                }
+              ],
+              "id": "320b734c"
+            }
+          ]
+        },
+        "-2": {
+          "id": "3f752831",
+          "type": "Tile"
+        },
+        "-3": {
+          "id": "d8d75757",
+          "type": "Tile",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "cac0a0ed"
+            }
+          ],
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#0000ff",
+              "openings": [
+                {
+                  "direction": 2
+                },
+                {
+                  "direction": 3,
+                  "toggled": true
+                }
+              ],
+              "id": "8aeb000e"
+            }
+          ]
+        }
+      }
+    },
+    "modifiers": [
+      {
+        "type": "Move",
+        "id": "192b1b35"
+      }
     ]
   },
   "solution": [
     {
-      "amount": 0,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 0
     },
     {
-      "amount": 4,
-      "type": "Moves"
+      "type": "Moves",
+      "amount": 4
     }
-  ],
-  "version": 2
+  ]
 }

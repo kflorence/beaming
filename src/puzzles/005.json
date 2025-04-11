@@ -1,126 +1,120 @@
 {
+  "version": 0,
   "layout": {
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "0": {
+          "id": "f7e82775",
           "type": "Tile"
         },
-        {
+        "1": {
+          "id": "a6a13b50",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
+              "type": "Terminus",
+              "color": "#ff0000",
               "openings": [
-                null,
-                null,
-                null,
-                null,
-                null,
                 {
-                  "on": true,
-                  "type": "Beam"
+                  "direction": 4
                 }
               ],
-              "type": "Terminus"
+              "id": "9e1641ff"
             }
           ],
           "modifiers": [
             {
-              "type": "Move"
+              "type": "Immutable",
+              "id": "d7cf5d82"
             }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
+          ]
+        },
+        "-1": {
+          "id": "da5ab990",
+          "type": "Tile",
           "items": [
             {
-              "color": "blue",
+              "type": "Terminus",
+              "color": "#0000ff",
               "openings": [
-                null,
                 {
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
+                  "direction": 1
+                }
               ],
-              "type": "Terminus"
+              "id": "ecb4ba7d"
             }
-          ],
+          ]
+        }
+      },
+      "1": {
+        "0": {
+          "id": "926dd5c2",
           "type": "Tile"
         },
-        {
-          "type": "Tile"
-        },
-        {
+        "-1": {
+          "id": "e1f07200",
+          "type": "Tile",
           "items": [
             {
-              "color": "red",
+              "type": "Terminus",
+              "color": "#ff0000",
               "openings": [
-                null,
-                null,
-                null,
-                null,
                 {
-                  "type": "Beam"
-                },
-                null
+                  "direction": 2,
+                  "toggled": true
+                }
               ],
-              "type": "Terminus"
+              "id": "9445dc49"
             }
           ],
           "modifiers": [
             {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "items": [
-            {
-              "color": "red",
-              "openings": [
-                null,
-                null,
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Swap"
+              "type": "Swap",
+              "id": "4db41948"
             },
             {
-              "clockwise": false,
-              "type": "Rotate"
+              "type": "Rotate",
+              "id": "607154d3",
+              "clockwise": false
+            }
+          ]
+        }
+      },
+      "-1": {
+        "0": {
+          "id": "ee3c0f2f",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "color": "#0000ff",
+              "openings": [
+                {
+                  "direction": 5,
+                  "toggled": true
+                }
+              ],
+              "id": "ffca60ee"
             }
           ],
-          "type": "Tile"
+          "modifiers": [
+            {
+              "type": "Move",
+              "id": "9a35f620"
+            }
+          ]
         },
-        {
+        "-1": {
+          "id": "4c7af20d",
           "type": "Tile"
         }
-      ]
-    ],
-    "type": "even-r"
+      }
+    }
   },
   "solution": [
     {
-      "amount": 2,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 2
     }
-  ],
-  "version": 1
+  ]
 }

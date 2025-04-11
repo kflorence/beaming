@@ -1,12 +1,13 @@
-import { capitalize, getIconElement, getTextElement } from './util'
+import { capitalize, getIconElement, getTextElement, merge } from './util'
 import { Terminus } from './items/terminus'
 import { EventListeners } from './eventListeners'
 import { Puzzle } from './puzzle'
+import { Schema } from './schema'
 
 export class Solution {
   #conditions = []
 
-  constructor (state) {
+  constructor (state = []) {
     state.forEach((condition) => this.#conditionFactory(condition))
   }
 
@@ -16,7 +17,7 @@ export class Solution {
   }
 
   isSolved () {
-    return this.#conditions.every((condition) => condition.isMet())
+    return this.#conditions.length > 0 && this.#conditions.every((condition) => condition.isMet())
   }
 
   #conditionFactory (condition) {
@@ -36,7 +37,11 @@ export class Solution {
     }
   }
 
-  static element = document.getElementById('solution')
+  static schema (type) {
+    return Schema.typed('solutions', type)
+  }
+
+  static element = document.getElementById('puzzle-solution')
 }
 
 class SolutionCondition {
@@ -114,6 +119,16 @@ class Connections extends SolutionCondition {
 
     this.#completed.textContent = this.#connections.length.toString()
   }
+
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.connections), {
+    properties: {
+      amount: {
+        minimum: 0,
+        type: 'number'
+      }
+    },
+    required: ['amount']
+  }))
 }
 
 class Moves extends SolutionCondition {
@@ -175,4 +190,27 @@ class Moves extends SolutionCondition {
     greaterThan: '>',
     lessThan: '<'
   })
+
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.moves), {
+    properties: {
+      amount: {
+        minimum: 0,
+        type: 'number'
+      },
+      operator: {
+        enum: Object.values(Moves.Operators),
+        type: 'string'
+      }
+    },
+    required: ['amount']
+  }))
 }
+
+Solution.Schema = Object.freeze({
+  $id: Schema.$id('solution'),
+  items: {
+    anyOf: [Connections.Schema, Moves.Schema],
+    headerTemplate: 'solution {{i1}}'
+  },
+  type: 'array'
+})

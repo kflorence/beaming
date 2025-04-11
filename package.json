@@ -21,7 +21,7 @@
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^131.0.4",
+    "chromedriver": "^134.0.5",
     "mocha": "^10.8.2",
     "parcel": "^2.13.3",
     "selenium-webdriver": "^4.27.0",
@@ -30,10 +30,13 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
+    "@json-editor/json-editor": "^2.15.2",
     "@types/chroma-js": "^2.4.5",
     "chroma-js": "^2.6.0",
+    "deepmerge": "^4.3.1",
     "jsondiffpatch": "^0.6.0",
     "pako": "^2.1.0",
-    "paper": "^0.12.18"
+    "paper": "^0.12.18",
+    "tippy.js": "^6.3.7"
   }
 }

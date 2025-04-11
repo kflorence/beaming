@@ -9,52 +9,32 @@ describe('Puzzle 012', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(1, 3)
-    await puzzle.clickModifier('rotate')
-
-    await puzzle.clickTile(3, 0)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(0, 3)
-    await puzzle.isMasked()
-    await puzzle.clickTile(3, 5)
-
-    await puzzle.clickTile(3, 6)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(0, 2)
-    await puzzle.isMasked()
-    await puzzle.clickTile(3, 1)
-
-    await puzzle.clickTile(4, 1)
-    await puzzle.clickModifier('rotate', { times: 3 })
-
-    await puzzle.clickTile(4, 4)
-    await puzzle.clickModifier('rotate', { times: 3 })
-
-    await puzzle.clickTile(4, 1)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(1, 4)
-    await puzzle.isMasked()
-    await puzzle.clickTile(3, 1)
-
-    await puzzle.clickTile(4, 4)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(1, 2)
-    await puzzle.isMasked()
-    await puzzle.clickTile(3, 5)
-
-    await puzzle.clickTile(3, 2)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(2, 2)
-
-    await puzzle.clickTile(3, 4)
-    await puzzle.clickModifier('move')
-    await puzzle.clickTile(2, 3)
-
-    await puzzle.clickTile(2, 0)
-    await puzzle.clickModifier('rotate', { times: 2 })
-
-    await puzzle.clickTile(2, 5)
-    await puzzle.clickModifier('rotate', { times: 4 })
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-2,0', tile: '1,-4' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-2,-1', tile: '1,2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-1,0', tile: '2,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '-1,-2', tile: '2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '0,-1', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '0,0', tile: '1,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,-1' },
+      { eventType: 'portal-exit', tile: '1,1' },
+      { eventType: 'portal-exit', tile: '1,-3' },
+      { eventType: 'portal-exit', tile: '1,1' },
+      { eventType: 'portal-exit', tile: '1,-3' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,-3' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,-3' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,2' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,2' }
+    ])
 
     assert(await puzzle.isSolved())
   })

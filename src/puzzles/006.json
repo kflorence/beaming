@@ -1,113 +1,109 @@
 {
+  "version": 0,
   "layout": {
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "1": {
+          "id": "a1a47835",
+          "type": "Tile",
           "items": [
             {
-              "rotation": 2,
-              "type": "Reflector"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Swap"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "type": "Reflector"
-            }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "items": [
-            {
+              "type": "Terminus",
               "openings": [
-                null,
-                null,
-                null,
                 {
-                  "color": "red",
-                  "type": "Beam"
+                  "color": "#0000ff",
+                  "direction": 0
                 },
-                null,
                 {
-                  "color": "blue",
-                  "on": true,
-                  "type": "Beam"
+                  "color": "#ff0000",
+                  "direction": 2,
+                  "toggled": true
                 }
               ],
-              "type": "Terminus"
+              "id": "bbb6524d"
             }
-          ],
-          "type": "Tile"
+          ]
         },
-        {
-          "type": "Tile"
-        },
-        {
+        "-1": {
+          "id": "d04577a8",
+          "type": "Tile",
           "items": [
             {
+              "type": "Terminus",
               "openings": [
                 {
-                  "color": "blue",
-                  "type": "Beam"
+                  "color": "#0000ff",
+                  "direction": 5,
+                  "toggled": true
                 },
-                null,
                 {
-                  "color": "red",
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null
+                  "color": "#ff0000",
+                  "direction": 3
+                }
               ],
-              "type": "Terminus"
+              "id": "b51d512f"
             }
-          ],
-          "type": "Tile"
+          ]
         }
-      ],
-      [
-        {
+      },
+      "1": {
+        "0": {
+          "id": "2b3fd31d",
+          "type": "Tile",
           "items": [
             {
-              "type": "Reflector"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
+              "type": "Reflector",
               "rotation": 2,
-              "type": "Reflector"
+              "id": "d5820ff1"
+            }
+          ]
+        },
+        "-1": {
+          "id": "15777e85",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Reflector",
+              "id": "1c80477c"
+            }
+          ]
+        }
+      },
+      "-1": {
+        "0": {
+          "id": "f272960c",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Reflector",
+              "id": "8506728c"
+            }
+          ]
+        },
+        "-1": {
+          "id": "671c53b3",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Reflector",
+              "id": "c8c7367b",
+              "rotation": 2
             }
           ],
           "modifiers": [
             {
-              "type": "Swap"
+              "type": "Swap",
+              "id": "842a76e2"
             }
-          ],
-          "type": "Tile"
+          ]
         }
-      ]
-    ],
-    "type": "even-r"
+      }
+    }
   },
   "solution": [
     {
-      "amount": 2,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 2
     }
-  ],
-  "version": 1
+  ]
 }

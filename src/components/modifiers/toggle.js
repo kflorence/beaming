@@ -2,27 +2,25 @@ import { Modifier } from '../modifier'
 import { Icons } from '../icons'
 
 export class Toggle extends Modifier {
-  on
   title = 'Toggle'
+  toggled
 
   constructor (tile, state) {
     super(...arguments)
 
-    // TODO: refactor to use 'toggled' everywhere
-    this.on = state.on || this.parent?.items.some(item => item.on || item.toggled)
+    this.toggled = this.parent?.items.some(item => item.toggled) ?? false
     this.name = this.getName()
   }
 
   attach (tile) {
     super.attach(tile)
 
-    // TODO: refactor to use 'toggled' everywhere
-    this.on = this.tile?.items.some(item => item.on || item.toggled)
+    this.toggled = tile?.items.some(item => item.toggled) ?? false
     this.update({ name: this.getName() })
   }
 
   getName () {
-    return Toggle.Names[this.on ? 'on' : 'off']
+    return Toggle.Names[this.toggled ? 'on' : 'off']
   }
 
   moveFilter (tile) {
@@ -33,10 +31,14 @@ export class Toggle extends Modifier {
   onTap (event) {
     super.onTap(event)
 
-    this.on = !this.on
+    this.toggled = !this.toggled
 
     const items = this.tile.items.filter((item) => item.toggleable)
-    items.forEach((item) => item.toggle(this.on))
+    if (!items.length) {
+      return
+    }
+
+    items.forEach((item) => item.toggle(this.toggled))
 
     this.update({ name: this.getName() })
 
@@ -44,6 +46,8 @@ export class Toggle extends Modifier {
   }
 
   static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
+
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.toggle))
 }
 
 /**
@@ -61,7 +65,7 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     super(...arguments)
 
     this.toggleable = !this.immutable && configuration.toggleable !== false
-    this.toggled = this.toggleable && configuration.toggled
+    this.toggled = (this.toggleable && configuration.toggled) ?? false
   }
 
   onToggle () {}
@@ -69,5 +73,17 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
   toggle (toggled) {
     this.toggled = toggled
     this.onToggle()
+  }
+}
+
+toggleable.Schema = {
+  properties: {
+    toggleable: {
+      default: true,
+      type: 'boolean'
+    },
+    toggled: {
+      type: 'boolean'
+    }
   }
 }

@@ -9,12 +9,12 @@ describe('Puzzle 004', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('rotate', { times: 3 })
-
-    await puzzle.clickTile(2, 0)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 0)
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '-1,-1', tile: '1,-1' }
+    ])
 
     assert(await puzzle.isSolved())
   })

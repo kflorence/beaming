@@ -1,11 +1,13 @@
 import * as jsonDiffPatchFactory from 'jsondiffpatch'
+import deepmerge from 'deepmerge'
 import pako from 'pako'
 import chroma from 'chroma-js'
-import { Point } from 'paper'
+import { Point, Size } from 'paper'
 
 const location = window.location
 
 export const params = new URLSearchParams(location.search)
+export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
 
 // noinspection JSCheckFunctionSignatures
@@ -88,24 +90,17 @@ export function deepEqual (x, y) {
     : (x === y)
 }
 
-export function emitEvent (event, detail = null) {
-  document.dispatchEvent(new CustomEvent(event, { detail }))
+export function emitEvent (type, detail = null) {
+  document.dispatchEvent(new CustomEvent(type, { detail }))
 }
 
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
   return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
 }
 
-export function getCentroid (triangle) {
-  const segments = triangle.segments
-  const vertex = segments[0].point
-  const opposite = segments[1].point.subtract(segments[1].point.subtract(segments[2].point).divide(2))
-  return vertex.add(opposite.subtract(vertex).multiply(2 / 3))
-}
-
 export function getColorElement (color) {
   const span = document.createElement('span')
-  span.classList.add('beam')
+  span.classList.add('color')
   span.style.backgroundColor = color
   span.title = color
   return span
@@ -149,10 +144,19 @@ export function getDistance (point) {
 
 export function getIconElement (name, title) {
   const span = document.createElement('span')
-  span.classList.add('icon', 'material-symbols-outlined')
+  span.classList.add('icon')
   span.textContent = name
   span.title = title ?? capitalize(name)
   return span
+}
+
+export function getKey () {
+  return Array.from(arguments).join(':')
+}
+
+export function getKeyFactory () {
+  const base = Array.from(arguments).flat()
+  return function () { return getKey(...base, ...arguments) }
 }
 
 export function getPointBetween (pointA, pointB, length = (length) => length / 2) {
@@ -207,25 +211,62 @@ export function getTextElement (text) {
   return span
 }
 
+export function merge (a, b, options) {
+  let args
+
+  if (Array.isArray(a)) {
+    args = a
+    options = b
+  } else {
+    args = [a, b]
+  }
+
+  return deepmerge.all(args, options)
+}
+
 export function noop (value) {
   if (value) {
     return value
   }
 }
 
+export function pointToString (point) {
+  return [point.x, point.y].join(',')
+}
+
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
+}
+
+export function sizeToString (size) {
+  return [size.width, size.height].join(',')
+}
+
+export function stringToPoint (string) {
+  return new Point(string.split(','))
+}
+
+export function stringToSize (string) {
+  return new Size(string.split(','))
 }
 
 export function subtractDirection (direction, amount) {
   return addDirection(direction, amount * -1)
 }
 
-export function uniqueBy (array, key) {
+export function uniqueBy (key, array) {
   const values = array.map((value) => value[key])
   return array.filter((value, index) => !values.includes(value[key], index + 1))
 }
 
 export function uniqueId () {
   return crypto.randomUUID().split('-')[0]
+}
+
+export async function writeToClipboard (string) {
+  try {
+    await navigator.clipboard.writeText(string)
+  } catch (error) {
+    console.error('Could not write to clipboard.', error.message)
+  }
 }

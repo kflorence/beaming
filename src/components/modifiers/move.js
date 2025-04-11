@@ -31,6 +31,13 @@ export class Move extends Modifier {
     emitEvent(Puzzle.Events.Mask, { mask })
   }
 
+  attach (tile) {
+    super.attach(tile)
+    if (!this.disabled) {
+      this.update({ disabled: !tile.items.some((item) => item.movable) })
+    }
+  }
+
   moveFilter (tile) {
     // Filter out tiles that contain no movable items
     return super.moveFilter(tile) || !tile.items.some(Move.movable)
@@ -77,6 +84,8 @@ export class Move extends Modifier {
   }
 
   static ignoreItemTypes = [Item.Types.beam, Item.Types.wall]
+
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.move))
 }
 
 /**
@@ -108,4 +117,13 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
   }
 
   onMove () {}
+}
+
+movable.Schema = {
+  properties: {
+    movable: {
+      default: true,
+      type: 'boolean'
+    }
+  }
 }

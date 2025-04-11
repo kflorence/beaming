@@ -7,7 +7,7 @@ export class EventListeners {
   }
 
   add (events, options = {}) {
-    this.#events = this.#events.concat(events.map((event) => {
+    this.#events = this.#events.concat((Array.isArray(events) ? events : [events]).map((event) => {
       event = Object.assign({}, this.#options, options, event)
       if (!event.type) {
         throw new Error('Event type is required')

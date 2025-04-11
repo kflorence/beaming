@@ -25,14 +25,15 @@ export class Beam extends Item {
   #stepIndex = -1
   #steps = []
 
-  constructor (terminus, state, configuration) {
+  constructor (terminus, state) {
     // Exclude from modification
     state.immutable = true
+    state.type = Item.Types.beam
 
     super(...arguments)
 
     this.group = null
-    this.#direction = configuration.direction
+    this.#direction = state.direction
 
     this.#path = {
       closed: false,
@@ -156,7 +157,8 @@ export class Beam extends Item {
   }
 
   getState () {
-    return this.parent.getState().openings[this.#direction]
+    // noinspection JSValidateTypes
+    return this.parent.getState().openings.find((opening) => opening.direction === this.#direction)
   }
 
   getStep (stepIndex) {
@@ -181,7 +183,7 @@ export class Beam extends Item {
   isOn () {
     const opening = this.getOpening()
     // The opening will also be on if another beam connects with it
-    return opening.on && !opening.connected
+    return opening.toggled && !opening.connected
   }
 
   isPending () {
@@ -357,16 +359,18 @@ export class Beam extends Item {
       return
     }
 
-    const tiles = event.detail.tiles || [event.detail.tile]
+    if (event) {
+      const tiles = event.detail.tiles ?? (event.detail.tile ? [event.detail.tile] : [])
 
-    // We want the first step that contains the tile the event occurred on
-    const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
-    if (stepIndex >= 0) {
-      console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
-      // Re-evaluate beginning at the step before the matched one
-      this.done = false
-      this.#stepIndex = Math.max(stepIndex - 1, 0)
-      return
+      // We want the first step that contains the tile the event occurred on
+      const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
+      if (stepIndex >= 0) {
+        console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
+        // Re-evaluate beginning at the step before the matched one
+        this.done = false
+        this.#stepIndex = Math.max(stepIndex - 1, 0)
+        return
+      }
     }
 
     if (this.isComplete()) {
@@ -448,8 +452,8 @@ export class Beam extends Item {
     )
 
     const items = uniqueBy(
-      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items),
-      'id'
+      'id',
+      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items)
     )
 
     console.debug(this.toString(), 'collision items:', items)
@@ -540,6 +544,11 @@ export class Beam extends Item {
     return this.addStep(nextStep)
   }
 
+  toggle () {
+    this.parent.toggleOpening(this.getOpening())
+    this.onModifierInvoked()
+  }
+
   toString () {
     return `[${this.type}:${this.id}:${chroma(this.getColor()).name()}]`
   }
@@ -553,8 +562,9 @@ export class Beam extends Item {
     return timeout === undefined ? update() : setTimeout(update, timeout)
   }
 
-  updateState (updater, dispatchEvent = true) {
-    return this.parent.updateState((state) => updater(state.openings[this.#direction]), dispatchEvent)
+  updateState (updater, eventDetail = {}) {
+    return this.parent.updateState((state) =>
+      updater(state.openings.find((opening) => opening.direction === this.#direction)), eventDetail)
   }
 
   updateStep (stepIndex, settings) {
@@ -598,11 +608,6 @@ export class Beam extends Item {
 
         // Sort collision points by distance from origin point (closest collision points first)
         points.sort(getDistance(firstPoint))
-
-        if (puzzle.debug) {
-          puzzle.drawDebugPoint(firstPoint)
-          points.forEach((point) => puzzle.drawDebugPoint(point, { fillColor: 'black' }))
-        }
 
         return { points, item }
       })

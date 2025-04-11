@@ -1,4 +1,6 @@
 import { OffsetCoordinates } from './offset'
+import { Point } from 'paper'
+import { sqrt3 } from '../util'
 
 /**
  * @see https://www.redblobgames.com/grids/hexagons/#coordinates
@@ -13,27 +15,21 @@ export class CubeCoordinates {
   }
 
   add (other) {
-    return CubeCoordinates.add(this, other)
+    return new CubeCoordinates(this.q + other.q, this.r + other.r)
   }
 
   equals (other) {
-    return this.q === other.q && this.r === other.r && this.s === other.s
+    return other instanceof CubeCoordinates && other.q === this.q && other.r === this.r && other.s === this.s
   }
 
-  isNeighbor (other) {
-    return CubeCoordinates.isNeighbor(this, other)
-  }
-
-  neighbor (direction) {
-    return CubeCoordinates.neighbor(this, direction)
+  toPoint (circumradius) {
+    const x = circumradius * (sqrt3 * this.q + sqrt3 / 2 * this.r)
+    const y = circumradius * (3.0 / 2 * this.r)
+    return new Point(x, y)
   }
 
   toString () {
     return this.coordinates.join(',')
-  }
-
-  static add (a, b) {
-    return new CubeCoordinates(a.q + b.q, a.r + b.r)
   }
 
   static direction (direction) {
@@ -52,18 +48,32 @@ export class CubeCoordinates {
     new CubeCoordinates(0, 1)
   ]
 
-  static isNeighbor (a, b) {
-    return CubeCoordinates.directions
-      .map((direction) => CubeCoordinates.add(a, direction))
-      .some((neighbor) => neighbor.equals(b))
+  static fromPoint (point, circumradius) {
+    const q = (sqrt3 / 3 * point.x - 1.0 / 3 * point.y) / circumradius
+    const r = (2.0 / 3 * point.y) / circumradius
+    return CubeCoordinates.round(new CubeCoordinates(q, r))
   }
 
-  static neighbor (start, direction) {
-    return CubeCoordinates.add(start, CubeCoordinates.direction(direction))
+  static round (cube) {
+    const q = Math.round(cube.q)
+    const r = Math.round(cube.r)
+    const s = Math.round(cube.s)
+
+    const qDiff = Math.abs(q - cube.q)
+    const rDiff = Math.abs(r - cube.r)
+    const sDiff = Math.abs(s - cube.s)
+
+    if (qDiff > rDiff && qDiff > sDiff) {
+      return new CubeCoordinates(-r - s, r, s)
+    } else if (rDiff > sDiff) {
+      return new CubeCoordinates(q, -q - s, s)
+    } else {
+      return new CubeCoordinates(q, r, -q - r)
+    }
   }
 
   static toOffsetCoordinates (axial) {
     const c = axial.q + (axial.r - (axial.r & 1)) / 2
-    return new OffsetCoordinates(c, axial.r)
+    return new OffsetCoordinates(axial.r, c)
   }
 }

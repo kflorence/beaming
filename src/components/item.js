@@ -1,6 +1,7 @@
 import { capitalize, uniqueId } from './util'
 import { CompoundPath, Group } from 'paper'
 import { Stateful } from './stateful'
+import { Schema } from './schema'
 
 export class Item extends Stateful {
   center
@@ -61,7 +62,7 @@ export class Item extends Stateful {
   }
 
   getLayer () {
-    return this.group.parent
+    return this.group.layer
   }
 
   onTap () {}
@@ -88,6 +89,10 @@ export class Item extends Stateful {
 
   static immutable (item) {
     return item.immutable
+  }
+
+  static schema (type) {
+    return Schema.typed('item', type)
   }
 
   static Types = Object.freeze(Object.fromEntries([

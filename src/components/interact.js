@@ -1,6 +1,7 @@
 import paper, { Point } from 'paper'
 import { Cache } from './cache'
 import { EventListeners } from './eventListeners'
+import { View } from './view'
 
 const navigator = window.navigator
 
@@ -26,6 +27,10 @@ export class Interact {
     ], { element })
   }
 
+  getProjectPoint (point) {
+    return paper.view.viewToProject(point.subtract(this.#offset))
+  }
+
   onMouseWheel (event) {
     event.preventDefault()
     this.#zoom(new Point(event.offsetX, event.offsetY), event.deltaY, 1.05)
@@ -49,7 +54,7 @@ export class Interact {
       }
 
       // Center on the cursor
-      paper.view.center = center
+      View.setCenter(center)
     }
   }
 
@@ -126,7 +131,7 @@ export class Interact {
   }
 
   onTap (event) {
-    const point = paper.view.viewToProject(Interact.point(event).subtract(this.#offset))
+    const point = this.getProjectPoint(Interact.point(event))
     this.#element.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, { detail: { event, point } }))
   }
 
@@ -156,8 +161,8 @@ export class Interact {
       .subtract(touchOffset.multiply(paper.view.zoom / zoom))
       .subtract(paper.view.center)
 
-    paper.view.zoom = zoom
-    paper.view.center = paper.view.center.add(zoomOffset)
+    View.setZoom(zoom)
+    View.setCenter(paper.view.center.add(zoomOffset))
   }
 
   static point (event) {

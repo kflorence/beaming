@@ -9,11 +9,22 @@ describe('Puzzle 003', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(2, 0)
-    await puzzle.clickModifier('rotate')
-
-    await puzzle.clickTile(0, 0)
-    await puzzle.clickModifier('rotate', { times: 3 })
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' }
+    ])
 
     assert(await puzzle.isSolved())
   })

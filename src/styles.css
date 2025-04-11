@@ -17,14 +17,11 @@ body {
 
 body {
   display: flex;
-  flex-direction: column;
-}
+  flex-direction: row;
 
-canvas {
-  display: block;
-  position: relative;
-  touch-action: none;
-  z-index: 0;
+  &.gutter-horizontal {
+    flex-direction: column;
+  }
 }
 
 code {
@@ -134,8 +131,253 @@ dialog footer ul li:first-child {
   padding: 0;
 }
 
-body > footer,
-body > header {
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Debug
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#debug {
+  background-color: #bbb;
+  border-radius: 0.5rem;
+  bottom: 1em;
+  cursor: default;
+  display: none;
+  left: 1em;
+  padding: 1em;
+  position: absolute;
+  z-index: 1;
+}
+
+.debug #debug {
+  display: block;
+}
+
+.debug #debug:empty {
+  display: none;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Doorbell.io
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#doorbell.doorbell-inline #doorbell-container {
+  background-color: #eee;
+  border: 1px solid #ccc;
+  margin: 0;
+  padding: 1em;
+  width: auto;
+}
+
+#doorbell form legend {
+  display: none;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Editor
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#editor {
+  background-color: #f9f9f9;
+  padding: 1em 0 1em 1em;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel {
+  background-color: #f9f9f9;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel > div:not(:empty, :has(> .je-indented-panel)) {
+  margin-bottom: 1em;
+}
+
+#editor div[data-schematype=array] > .je-indented-panel > div > .je-indented-panel {
+  background-color: #f9f9f9;
+  border: 0;
+  margin: 0 0 1em 0;
+  padding: 0;
+}
+
+#editor div[data-schemapath] > span:last-child {
+  margin-left: 1em;
+}
+
+#editor div[data-schematype=object] + div[data-schematype=object] {
+  margin-top: 1em;
+}
+
+#editor .je-header {
+  display: flex;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+
+#editor .form-control label {
+  margin-right: 0.5em;
+}
+
+#editor .je-indented-panel {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-right: none;
+  margin: 1em 0 1em 1em;
+  padding: 1em 0 1em 1em;
+}
+
+#editor .je-indented-panel > .je-switcher {
+  margin-left: 1em;
+}
+
+#editor .je-object__controls {
+  margin: 0;
+}
+
+#editor .je-switcher {
+  font-weight: bold;
+  margin: 0;
+}
+
+#editor .je-switcher + div > div[data-schematype=object] > .je-header {
+  display: none;
+}
+
+#editor .je-textarea {
+  width: calc(100% - 1em);
+}
+
+#editor .row {
+  line-height: 32px;
+}
+
+#editor-configuration {
+  box-sizing: border-box;
+  height: 400px;
+  padding: 1em;
+  width: 100%;
+}
+
+#editor-menu {
+  border-bottom: 1px solid #ddd;
+}
+
+#editor-wrapper {
+  background-color: white;
+  box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
+  display: none;
+  user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
+}
+
+#editor-wrapper button,
+#editor-wrapper input,
+#editor-wrapper select {
+  padding: 0.5em;
+}
+
+#editor-wrapper button + button {
+  margin-left: 1em;
+}
+
+#editor-wrapper details:last-child {
+  border-bottom: 0;
+}
+
+#editor-wrapper footer {
+  border-top: 1px solid #ddd;
+  display: flex;
+  padding: 1em;
+}
+
+#editor-wrapper footer,
+#editor-wrapper header {
+  box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+
+#editor-wrapper footer {
+  clip-path: inset(-1rem 0 0 0);
+}
+
+#editor-wrapper main {
+  overflow-y: scroll;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Gutter
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#gutter {
+  border-spacing: 2px;
+  display: none;
+  flex: none;
+  height: 100%;
+  position: relative;
+  width: 1px;
+}
+
+#gutter:after {
+  content: '';
+  cursor: ew-resize;
+  display: block;
+  height: 100%;
+  left: -3px;
+  position: absolute;
+  width: 8px;
+  z-index: 10;
+}
+
+.gutter-horizontal #gutter {
+  height: 1px;
+  width: 100%;
+}
+
+.gutter-horizontal #gutter:after {
+  cursor: ns-resize;
+  height: 8px;
+  left: 0;
+  top: -3px;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Logo
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#logo {
+  margin: 2em 0 1em 0;
+  max-width: 320px;
+  width: 75%;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Puzzle
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#puzzle {
+  position: relative;
+  container-name: puzzle;
+  container-type: inline-size;
+}
+
+#puzzle-canvas {
+  cursor: pointer;
+  display: block;
+  position: relative;
+  touch-action: none;
+  z-index: 0;
+}
+
+#puzzle-error {
+  align-items: center;
+  color: #666;
+  cursor: default;
+  display: none;
+  height: 100%;
+  font-size: 6em;
+  justify-content: center;
+  width: 100%;
+}
+
+#puzzle-footer,
+#puzzle-header {
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 0 0.5rem 0.25rem rgba(0, 0, 0, 0.35);
@@ -152,13 +394,7 @@ body > header {
   z-index: 1;
 }
 
-body > header {
-  left: 0;
-  right: 0;
-  top: 1em;
-}
-
-body > footer {
+#puzzle-footer {
   display: none;
   bottom: 1em;
   flex-flow: column wrap;
@@ -166,66 +402,11 @@ body > footer {
   right: 0;
 }
 
-body > footer.active {
+#puzzle-footer.active {
   display: flex;
 }
 
-main {
-  flex: auto;
-}
-
-#actions {
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-}
-
-#doorbell.doorbell-inline #doorbell-container {
-  background-color: #eee;
-  border: 1px solid #ccc;
-  margin: 0;
-  padding: 1em;
-  width: auto;
-}
-
-#doorbell form legend {
-  display: none;
-}
-
-#error,
-#puzzle {
-  cursor: pointer;
-}
-
-#error {
-  align-items: center;
-  color: #666;
-  display: none;
-  height: 100%;
-  font-size: 6em;
-  justify-content: center;
-}
-
-#footer-message {
-  border-bottom: 1px solid #ddd;
-}
-
-#header-message {
-  border-top: 1px solid #ddd;
-}
-
-#header-navigation {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-#logo {
-  margin: 2em 0 1em 0;
-  max-width: 320px;
-  width: 75%;
-}
-
-#modifiers {
+#puzzle-footer-menu {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -235,9 +416,33 @@ main {
   -webkit-user-select: none;
 }
 
-#modifiers li {
+#puzzle-footer-menu li {
   border: 1px solid #ddd;
   margin: 0 0 -1px -1px;
+}
+
+#puzzle-footer-message {
+  border-bottom: 1px solid #ddd;
+}
+
+#puzzle-header {
+  left: 0;
+  right: 0;
+  top: 1em;
+}
+
+#puzzle-header-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#puzzle-header-menu {
+  border-left: 1px solid #ddd;
+}
+
+#puzzle-header-message {
+  border-top: 1px solid #ddd;
 }
 
 #puzzle-id {
@@ -245,6 +450,7 @@ main {
   border: none;
   border-left: 1px solid #ddd;
   cursor: pointer;
+  display: inline-block;
   font-size: 1em;
   font-weight: bold;
   padding: 1em 2em 1em 1em;
@@ -265,49 +471,48 @@ main {
   fill: white;
 }
 
-#selector {
+#puzzle-selector {
   align-items: stretch;
   display: flex;
   position: relative;
 }
 
-#selector svg {
+#puzzle-selector svg {
   position: absolute;
   right: 0.75rem;
   top: calc(50% - 5px);
 }
 
-#solution {
+#puzzle-solution {
   align-items: center;
+  border-left: 1px solid #ddd;
   cursor: default;
   line-height: 24px;
 }
 
-#solution .icon {
+#puzzle-solution .icon {
   margin-left: 0.5em;
 }
 
-#symbols {
+#puzzle-title {
+  align-items: center;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
   display: none;
+  line-height: 24px;
+  padding: 0 1em;
+  user-select: text;
 }
 
-#version {
-  color: #999;
+#puzzle-wrapper {
+  box-sizing: border-box;
+  flex: auto;
+  overflow: hidden;
 }
 
-/** Classes */
-
-.beam {
-  color: white;
-  display: inline-block;
-  height: 1em;
-  width: 1em;
-}
-
-.beam::selection {
-  color: white;
-  background-color: black;
-}
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Classes
+/* ------------------------------------------------------------------------------------------------------------------ */
 
 .button {
   background-color: #eee;
@@ -331,6 +536,28 @@ main {
   margin: 1em 0;
 }
 
+.color {
+  color: white;
+  display: inline-block;
+  height: 1em;
+  width: 1em;
+}
+
+.color::selection {
+  color: white;
+  background-color: black;
+}
+
+.edit #editor-wrapper,
+.edit #gutter,
+.edit #puzzle-title {
+  display: flex;
+}
+
+.edit #puzzle-selector {
+  display: none;
+}
+
 .flex-center,
 .flex-left,
 .flex-right {
@@ -351,35 +578,72 @@ main {
   justify-content: flex-end;
 }
 
-.grab #puzzle {
+.grab #puzzle-canvas {
   cursor: grabbing;
 }
 
-/* https://developers.google.com/fonts/docs/material_icons */
-.material-symbols-outlined {
+.hide {
+  display: none;
+}
+
+/* See: https://developers.google.com/fonts/docs/material_icons */
+i,
+.icon {
+  direction: ltr;
+  display: inline-block;
+  /*noinspection CssNoGenericFontName*/
+  font-family: 'Material Symbols Outlined';
+  font-size: 24px;
+  font-style: normal;
   font-variation-settings:
     'FILL' 0,
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1;
   min-height: 24px;
   overflow: hidden;
+  text-transform: none;
   user-select: none;
   vertical-align: middle;
+  white-space: nowrap;
   width: 24px;
+  word-wrap: normal;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
   /* For iOS/Safari. */
   -webkit-user-select: none;
 }
 
-.material-symbols-outlined.fill {
+i.fill,
+.icon.fill {
   font-variation-settings:
     'FILL' 1,
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
-  user-select: none;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
+}
+
+.icon-arrow-down:before {
+  content: 'arrow_downward'
+}
+
+.icon-arrow-up:before {
+  content: 'arrow_upward'
+}
+
+.icon-minus:before {
+  content: 'remove'
+}
+
+.icon-plus:before {
+  content: 'add'
+}
+
+.icon-trash:before {
+  content: 'delete'
 }
 
 .menu {
@@ -422,6 +686,10 @@ main {
   color: white;
 }
 
+.menu li a {
+  color: black;
+}
+
 .message {
   align-items: center;
   background-color: #eee;
@@ -437,21 +705,24 @@ main {
   display: none;
 }
 
-.puzzle-error .flex-left,
-.puzzle-error .flex-right {
-  flex: 0;
+.pane {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.puzzle-error:not(.puzzle-loaded) #puzzle,
+.puzzle-error:not(.puzzle-loaded) #puzzle-canvas,
 .puzzle-error #modifiers {
   display: none;
 }
 
-.puzzle-error:not(.puzzle-loaded) #error {
+.puzzle-error:not(.puzzle-loaded) #puzzle-error {
   display: flex;
 }
 
-.puzzle-solved #puzzle {
+.puzzle-solved #puzzle-canvas {
   cursor: default;
 }
 
@@ -463,29 +734,30 @@ main {
   padding: 0 0.25em;
 }
 
-@media (max-width: 600px) {
-  body > header {
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Media Queries
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+@container puzzle (max-width: 600px) {
+  #puzzle-header {
+    border-radius: 0;
     max-width: 100%;
+    top: 0;
     width: 100%;
   }
 
-  body > header {
-    border-radius: 0;
-    top: 0;
-  }
-
-  body > header .flex-left,
-  body > header .flex-right {
+  #puzzle-header .flex-left,
+  #puzzle-header .flex-right {
     order: 0;
   }
 
-  body > header .flex-center {
+  #puzzle-header .flex-center {
     border-top: 1px solid #ddd;
     flex: 100%;
     order: 1;
   }
 
-  #actions {
+  #puzzle-header-menu {
     border: 0;
   }
 }

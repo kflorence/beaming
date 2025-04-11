@@ -4,7 +4,8 @@ import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
-import { coalesce, getOppositeDirection } from '../util'
+import { coalesce, getOppositeDirection, merge } from '../util'
+import { Schema } from '../schema'
 
 export class Portal extends movable(rotatable(Item)) {
   #directions = {}
@@ -123,7 +124,7 @@ export class Portal extends movable(rotatable(Item)) {
             const exitPortal = data.exitPortals.find((portal) => portal.parent === tile)
             if (exitPortal) {
               // Add a move, since the user made a decision
-              puzzle.addMove()
+              puzzle.state.addMove('portal-exit', tile)
               beam.addStep(this.#getStep(beam, nextStep, exitPortal))
               puzzle.unmask()
             }
@@ -176,7 +177,7 @@ export class Portal extends movable(rotatable(Item)) {
   }
 
   #getExitPortals (puzzle, beam, nextStep) {
-    const exitPortals = puzzle.getItems().filter((item) =>
+    const exitPortals = puzzle.layout.getItems().filter((item) =>
       // Is a portal
       item.type === Item.Types.portal &&
       // But not the entry portal
@@ -194,7 +195,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (exitPortals.length > 1) {
       // Check for existing exitPortalId in beam state for this step
-      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[this.id]
+      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[Item.Types.portal]?.exitPortalId
       if (exitPortalId !== undefined) {
         console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
         const existing = exitPortals.find((item) => item.id === exitPortalId)
@@ -216,12 +217,19 @@ export class Portal extends movable(rotatable(Item)) {
       onAdd: (step) => {
         exitPortal.update(direction, step)
         // Store this decision in beam state
-        // TODO: store this less cryptically (e.g. use "portal")
-        beam.updateState((state) => ((state.steps ??= {})[step.index] = { [this.id]: exitPortal.id }))
+        beam.updateState((state) => {
+          state.steps ??= {}
+          state.steps[step.index] ??= {}
+          state.steps[step.index][Item.Types.portal] = {
+            entryPortalId: this.id,
+            exitPortalId: exitPortal.id
+          }
+          return state
+        })
       },
       onRemove: (step) => {
         // Remove any associated beam state
-        beam.updateState((state) => { delete state.steps[step.index] })
+        beam.updateState((state) => { delete state.steps[step.index][Item.Types.portal] })
         exitPortal.update(direction)
       },
       point: exitPortal.parent.center,
@@ -237,4 +245,15 @@ export class Portal extends movable(rotatable(Item)) {
     // - direction beam was traveling when it reached the entry portal
     return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction
   }
+
+  static Schema = Object.freeze(merge([
+    Item.schema(Item.Types.portal),
+    movable.Schema,
+    rotatable.Schema,
+    {
+      properties: {
+        direction: Schema.direction
+      }
+    }
+  ]))
 }

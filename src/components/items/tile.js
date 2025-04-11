@@ -1,34 +1,57 @@
-import { Color, Path, Point } from 'paper'
+import { Color, Path } from 'paper'
 import { Item } from '../item'
-import { itemFactory } from '../itemFactory'
-import { emitEvent, getPointBetween } from '../util'
-import { modifierFactory } from '../modifierFactory'
+import { Items } from '../items'
+import { emitEvent, getPointBetween, merge, sqrt3 } from '../util'
+import { Modifiers } from '../modifiers'
 
 export class Tile extends Item {
+  coordinates
+  items
+  modifiers
+  parameters
+  path
   selected = false
 
-  #ui
+  constructor (coordinates, center, parameters, state = {}) {
+    state = Object.assign({ type: Item.Types.tile }, state)
 
-  constructor (coordinates, layout, parameters, state) {
     super(null, state, { locked: false })
 
-    this.#ui = Tile.ui(layout, parameters, state, { coordinates, type: this.type })
+    const dashWidth = parameters.circumradius / 10
 
-    this.center = this.#ui.center
+    this.styles = Object.assign(
+      {},
+      Tile.Styles,
+      {
+        copy: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.copy),
+        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
+      },
+      state.style || {}
+    )
+
+    this.center = center
     this.coordinates = coordinates
-    this.hexagon = this.#ui.hexagon
     this.parameters = parameters
-    this.styles = this.#ui.styles
 
-    this.group.addChildren([this.#ui.hexagon])
+    this.path = new Path.RegularPolygon({
+      center,
+      closed: true,
+      data: { coordinates, type: this.type },
+      radius: parameters.circumradius,
+      sides: 6,
+      style: this.styles.default
+    })
+
+    this.group.addChildren([this.path])
 
     // These need to be last, since they reference this
     this.items = (state.items || [])
-      .map((state, index) => itemFactory(this, state, index))
+      .map((state, index) => Items.factory(this, state, index))
       .filter((item) => item !== undefined)
 
     this.modifiers = (state.modifiers || [])
-      .map((state, index) => modifierFactory(this, state, index))
+      // Adding 10 to index to ensure modifiers on tiles are sorted last
+      .map((state, index) => Modifiers.factory(this, state, 10 + index))
       .filter((modifier) => modifier !== undefined)
 
     this.modifiers.forEach((modifier) => this.updateIcon(modifier))
@@ -71,7 +94,6 @@ export class Tile extends Item {
       state.modifiers = modifiers
     }
 
-    // noinspection JSValidateTypes
     return state
   }
 
@@ -81,7 +103,7 @@ export class Tile extends Item {
 
   onDeselected (selectedTile) {
     this.selected = false
-    this.#ui.hexagon.style = this.styles.default
+    this.path.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
@@ -91,8 +113,10 @@ export class Tile extends Item {
     console.debug(this.toString(), 'selected')
     this.selected = true
     this.group.bringToFront()
-    this.#ui.hexagon.style = this.styles.selected
+    this.path.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
+
+    emitEvent(Tile.Events.Selected, { selectedTile: this, deselectedTile })
   }
 
   removeItem (item) {
@@ -112,11 +136,13 @@ export class Tile extends Item {
   }
 
   setStyle (style) {
-    this.hexagon.set(this.styles[style])
+    this.path.set(this.styles[style])
   }
 
   teardown () {
+    this.items.forEach((item) => item.remove())
     this.modifiers.forEach((modifier) => modifier.detach())
+    this.remove()
   }
 
   toString () {
@@ -127,7 +153,8 @@ export class Tile extends Item {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
       const position = getPointBetween(
-        this.#ui.hexagon.segments[index].point,
+        // Position icons starting at 12 o'clock (index 1)
+        this.path.segments[(index + 1) % 6].point,
         this.center,
         (length) => length / 3
       )
@@ -144,9 +171,10 @@ export class Tile extends Item {
     }
   }
 
-  static parameters (height) {
+  static parameters (height = Tile.DefaultHeight) {
+    // AKA "size"
     const circumradius = height / 2
-    const width = Math.sqrt(3) * circumradius
+    const width = sqrt3 * circumradius
     const inradius = width / 2
     const offsetY = height * (3 / 4)
 
@@ -159,41 +187,21 @@ export class Tile extends Item {
     }
   }
 
-  static ui (layout, parameters, configuration, data) {
-    const center = new Point(
-      layout.startingOffsetX + parameters.inradius + layout.column * parameters.width,
-      layout.startingOffsetY + parameters.circumradius + layout.row * parameters.offsetY
-    )
-
-    const dashWidth = parameters.circumradius / 10
-
-    const styles = Object.assign(
-      {},
-      Tile.Styles,
-      {
-        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
-      },
-      configuration.style || {}
-    )
-
-    const hexagon = new Path.RegularPolygon({
-      center,
-      closed: true,
-      data,
-      radius: parameters.circumradius,
-      sides: 6,
-      style: styles.default
-    })
-
-    return { center, hexagon, styles }
-  }
+  static DefaultHeight = 160
 
   static Events = Object.freeze({
     Deselected: 'tile-deselected',
     Selected: 'tile-selected'
   })
 
-  static MaxModifiers = 6
+  static MaxModifiers = Modifiers.Schema.maxItems
+
+  static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
+    properties: {
+      items: Items.Schema,
+      modifiers: Modifiers.Schema
+    }
+  }))
 
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:
@@ -203,6 +211,10 @@ export class Tile extends Item {
       fillColor: new Color('white'),
       strokeColor: new Color('#666'),
       strokeWidth: 1
+    },
+    copy: {
+      strokeColor: new Color('#999'),
+      strokeWidth: 2
     },
     edit: {
       strokeColor: new Color('black'),

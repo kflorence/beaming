@@ -1,107 +1,203 @@
 {
   "layout": {
+    "offset": "odd-row",
+    "tiles": {
+      "0": {
+        "0": {
+          "id": "98c1b870",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "color": [
+                "#0000ff"
+              ],
+              "openings": [
+                {
+                  "direction": 0
+                },
+                {
+                  "direction": 1
+                },
+                {
+                  "direction": 2
+                },
+                {
+                  "direction": 3
+                },
+                {
+                  "direction": 4
+                },
+                {
+                  "direction": 5
+                }
+              ],
+              "id": "11ea04e4"
+            }
+          ]
+        },
+        "1": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "color": [
+                "#0000ff"
+              ],
+              "openings": [
+                {
+                  "direction": 4
+                },
+                {
+                  "direction": 0
+                },
+                {
+                  "direction": 5
+                }
+              ],
+              "id": "96eb1c1b"
+            }
+          ],
+          "id": "f7b48b08"
+        },
+        "-1": {
+          "id": "a7f644b8",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 1
+                },
+                {
+                  "direction": 3
+                },
+                {
+                  "direction": 2
+                }
+              ],
+              "id": "e322950f",
+              "color": [
+                "#0000ff"
+              ]
+            }
+          ]
+        }
+      },
+      "1": {
+        "0": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 5
+                },
+                {
+                  "direction": 1
+                },
+                {
+                  "direction": 0
+                }
+              ],
+              "id": "5405af42",
+              "color": [
+                "#0000ff"
+              ]
+            }
+          ],
+          "id": "8f2cda31"
+        },
+        "-1": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 0
+                },
+                {
+                  "direction": 2
+                },
+                {
+                  "direction": 1
+                }
+              ],
+              "id": "176953c3",
+              "color": [
+                "#0000ff"
+              ]
+            }
+          ],
+          "id": "57bb0429"
+        }
+      },
+      "-1": {
+        "0": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 3
+                },
+                {
+                  "direction": 5
+                },
+                {
+                  "direction": 4
+                }
+              ],
+              "id": "bcf89ade",
+              "color": [
+                "#0000ff"
+              ]
+            }
+          ],
+          "id": "2eb11c84"
+        },
+        "-1": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 2
+                },
+                {
+                  "direction": 4
+                },
+                {
+                  "direction": 3
+                }
+              ],
+              "id": "cdf38c3f",
+              "color": [
+                "#0000ff"
+              ]
+            }
+          ],
+          "id": "e2e2cc4d"
+        }
+      }
+    },
     "modifiers": [
       {
-        "type": "Toggle"
+        "type": "Toggle",
+        "id": "99243a1a"
       }
-    ],
-    "tiles": [
-      [
-        {
-          "items": [
-            {
-              "color": "blue",
-              "openings": [
-                null,
-                null,
-                null,
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "items": [
-            {
-              "color": "red",
-              "openings": [
-                null,
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "color": "blue",
-              "openings": [
-                {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
-          "type": "Tile"
-        }
-      ]
-    ],
-    "type": "even-r"
+    ]
   },
+  "version": 0,
   "solution": [
     {
-      "amount": 1,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 5
     }
-  ],
-  "version": 1
+  ]
 }

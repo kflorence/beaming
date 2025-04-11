@@ -1,17 +1,17 @@
-import chroma from 'chroma-js'
 import { Item } from '../item'
 import { Color, Path } from 'paper'
 import { movable } from '../modifiers/move'
-import { getColorElement } from '../util'
+import { getColorElement, merge } from '../util'
 import { StepState } from '../step'
+import { Schema } from '../schema'
 
 export class Filter extends movable(Item) {
-  constructor (tile, { color }) {
+  constructor (tile, state) {
     super(...arguments)
 
-    this.color = chroma.average(Array.isArray(color) ? color : [color]).hex()
+    this.color = state.color
 
-    const fillColor = new Color(color)
+    const fillColor = new Color(this.color)
     fillColor.alpha = 0.25
 
     // TODO: update to something else? prism?
@@ -22,7 +22,7 @@ export class Filter extends movable(Item) {
       sides: 3,
       style: {
         fillColor,
-        strokeColor: color,
+        strokeColor: this.color,
         strokeWidth: 2
       }
     })
@@ -42,4 +42,11 @@ export class Filter extends movable(Item) {
         : { state: new StepState({ insertAbove: this }, new StepState.Filter()) }
     )
   }
+
+  static Schema = Object.freeze(merge(Item.schema(Item.Types.filter), {
+    properties: {
+      color: Schema.color
+    },
+    required: ['color']
+  }))
 }

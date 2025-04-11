@@ -1,57 +1,46 @@
 {
+  "version": 0,
   "layout": {
-    "tiles": [
-      [
-        {
+    "tiles": {
+      "0": {
+        "0": {
+          "type": "Tile",
+          "id": "0cbb0588"
+        },
+        "1": {
+          "type": "Tile",
+          "id": "9c7f7b9a"
+        },
+        "-1": {
+          "type": "Tile",
+          "id": "da960fda"
+        }
+      },
+      "1": {
+        "0": {
           "items": [
             {
-              "color": "blue",
+              "color": "#0000ff",
               "openings": [
-                null,
-                null,
-                null,
                 {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null
+                  "direction": 0
+                }
               ],
               "type": "Terminus"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "5c2510d3"
         },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        },
-        {
-          "type": "Tile"
-        }
-      ],
-      [
-        {
+        "-1": {
           "items": [
             {
-              "color": "red",
+              "color": "#ff0000",
               "openings": [
-                null,
                 {
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null
+                  "direction": 1,
+                  "toggled": true
+                }
               ],
               "type": "Terminus"
             }
@@ -61,36 +50,38 @@
               "type": "Toggle"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "e3bec484"
+        }
+      },
+      "-1": {
+        "0": {
+          "type": "Tile",
+          "id": "c9bedf13"
         },
-        {
+        "-1": {
           "items": [
             {
-              "color": "blue",
+              "color": "#0000ff",
               "openings": [
                 {
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null,
-                null,
-                null
+                  "direction": 3,
+                  "toggled": true
+                }
               ],
               "type": "Terminus"
             }
           ],
-          "type": "Tile"
+          "type": "Tile",
+          "id": "349a7a4a"
         }
-      ]
-    ],
-    "type": "even-r"
+      }
+    }
   },
   "solution": [
     {
       "amount": 1,
       "type": "Connections"
     }
-  ],
-  "version": 1
+  ]
 }

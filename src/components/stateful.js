@@ -15,12 +15,12 @@ export class Stateful {
     this.#state = structuredClone(state)
   }
 
-  updateState (updater, dispatchEvent = false) {
+  updateState (updater, eventDetail) {
     updater(this.#state)
 
-    if (dispatchEvent) {
+    if (eventDetail) {
       // This will cause puzzle cache to update
-      emitEvent(Stateful.Events.Update, { object: this })
+      emitEvent(Stateful.Events.Update, eventDetail)
     }
 
     return this.getState()

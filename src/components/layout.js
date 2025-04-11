@@ -1,114 +1,118 @@
-import paper, { Layer } from 'paper'
+import paper, { Layer, Point } from 'paper'
 import { CubeCoordinates } from './coordinates/cube'
 import { OffsetCoordinates } from './coordinates/offset'
 import { Tile } from './items/tile'
-import { getConvertedDirection } from './util'
 import { Stateful } from './stateful'
-import { modifierFactory } from './modifierFactory'
+import { Modifiers } from './modifiers'
+import { View } from './view'
+import { Schema } from './schema'
 
 export class Layout extends Stateful {
-  #tilesByAxial = []
-  #tilesByOffset = []
+  #offset
+  #tiles = {}
 
-  items = []
   layers = {}
   modifiers = []
+  offset
+  parameters
   tiles = []
-  tileSize = 120
+  width
 
-  constructor (state) {
+  constructor (state = {}) {
     super(state)
 
-    this.type = state.type || Layout.Types.oddR
+    const tiles = state.tiles || {}
 
-    const center = paper.view.center
-    const parameters = Tile.parameters(this.tileSize)
-    const tiles = state.tiles
-
-    // Using parameters.width because we want the "stacked height", or the height of the hexagon without the points.
-    const height = tiles.length * parameters.width
-    const startingOffsetY = center.y - (height / 2)
-
-    // noinspection JSValidateTypes
+    // These layers will be added in the order they are defined
     this.layers.tiles = new Layer()
-    // noinspection JSValidateTypes
     this.layers.items = new Layer()
 
+    Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
+
     this.modifiers = (state.modifiers || [])
-      .map((state, index) => modifierFactory(null, state, index))
+      .map((state, index) => Modifiers.factory(null, state, index))
       .filter((modifier) => modifier !== undefined)
 
-    // Find the widest row
-    const widestRow = tiles.reduce((current, row, index) => {
-      const length = row.length
+    this.parameters = Tile.parameters(state.tile?.height)
+    this.offset = state.offset ?? Layout.Offsets.OddRow
+    this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
-      // Favor offset rows, since they will be wider
-      if (length > current.length || (length === current.length && this.#isOffsetRow(index))) {
-        return { index, length }
-      }
-
-      return current
-    }, { index: 0, length: 0 })
-
-    const width = (widestRow.length * parameters.width) + (this.#isOffsetRow(widestRow.index) ? parameters.inradius : 0)
-    const startingOffsetX = center.x - (width / 2)
-
-    for (let r = 0; r < tiles.length; r++) {
+    for (const r in tiles) {
       const row = tiles[r]
-      const rowByAxial = new Array(row.length).fill(null)
-      const rowByOffset = new Array(row.length).fill(null)
-      const rowOffset = Math.floor(r / 2)
-
-      for (let c = 0; c < row.length; c++) {
-        const axial = new CubeCoordinates(c - rowOffset, r)
+      for (const c in row) {
         const offset = new OffsetCoordinates(r, c)
-
-        const layout = {
-          row: r,
-          column: c,
-          // Shift row to the right if it is an offset row
-          startingOffsetX: startingOffsetX + (this.#isOffsetRow(r) ? parameters.inradius : 0),
-          startingOffsetY
-        }
-
         const state = row[c]
-        if (!state) {
-          continue
-        }
 
-        const tile = new Tile({ axial, offset }, layout, parameters, state)
-
-        this.layers.tiles.addChild(tile.group)
-
-        if (tile.items.length) {
-          this.items.push(...tile.items)
-          this.layers.items.addChildren(tile.items.map((item) => item.group))
-        }
-
-        this.tiles.push(tile)
-
-        rowByAxial[axial.q] = tile
-        rowByOffset[offset.c] = tile
+        this.addTile(offset, state)
       }
-
-      this.#tilesByAxial.push(rowByAxial)
-      this.#tilesByOffset.push(rowByOffset)
     }
+
+    View.update()
   }
 
-  getTileByAxial (axial) {
-    return (this.#tilesByAxial[axial.r] || [])[axial.q]
+  addTile (offset, state) {
+    this.removeTile(offset)
+
+    const rowOffset = Math.floor(offset.r / 2)
+    const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
+    const center = this.getPoint(offset)
+    const coordinates = { axial, offset }
+    const tile = new Tile(coordinates, center, this.parameters, state)
+
+    this.#tiles[offset.r] ??= {}
+    this.#tiles[offset.r][offset.c] = tile
+
+    this.tiles.push(tile)
+
+    this.layers.tiles.addChild(tile.group)
+
+    if (tile.items.length) {
+      this.layers.items.addChildren(tile.items.map((item) => item.group))
+    }
+
+    return tile
   }
 
-  getTileByOffset (offset) {
-    return this.#tilesByOffset[offset.r][offset.c]
+  getCenter () {
+    // The center of the canvas
+    return new Point(paper.view.viewSize.divide(2))
+  }
+
+  getItems () {
+    return this.tiles.flatMap((tile) => tile.items)
+  }
+
+  getOffset (point) {
+    return CubeCoordinates.toOffsetCoordinates(
+      CubeCoordinates.fromPoint(
+        point.subtract(this.getCenter().add(this.#offset)),
+        this.parameters.circumradius
+      ))
+  }
+
+  getPoint (offset) {
+    return OffsetCoordinates.toAxialCoordinates(offset)
+      .toPoint(this.parameters.circumradius)
+      .add(this.getCenter().add(this.#offset))
   }
 
   getState () {
-    const state = { type: this.type }
+    const tiles = {}
 
-    // Tiles are defined by offset in the puzzle state
-    state.tiles = this.#tilesByOffset.map((row) => row.map((tile) => tile?.getState() || null))
+    for (const r in this.#tiles) {
+      const row = this.#tiles[r]
+      tiles[r] ??= {}
+      for (const c in row) {
+        tiles[r][c] = row[c].getState()
+      }
+    }
+
+    const state = { offset: this.offset }
+
+    if (Object.keys(tiles).length) {
+      state.tiles = tiles
+    }
+
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
     if (modifiers.length) {
       state.modifiers = modifiers
@@ -117,8 +121,8 @@ export class Layout extends Stateful {
     return state
   }
 
-  getNeighboringTile (axial, direction) {
-    return this.getTileByAxial(CubeCoordinates.neighbor(axial, getConvertedDirection(direction)))
+  getTile (offset = {}) {
+    return this.#tiles[offset.r]?.[offset.c]
   }
 
   removeModifier (modifier) {
@@ -128,17 +132,52 @@ export class Layout extends Stateful {
     }
   }
 
+  removeTile (offset) {
+    const tile = this.getTile(offset)
+    if (!tile) {
+      return
+    }
+
+    tile.teardown()
+
+    this.tiles.splice(this.tiles.indexOf(tile), 1)
+
+    delete this.#tiles[offset.r]?.[offset.c]
+    if (Object.keys(this.#tiles[offset.r]).length === 0) {
+      delete this.#tiles[offset.r]
+    }
+  }
+
   teardown () {
+    this.tiles.forEach((tile) => tile.teardown())
     this.modifiers.forEach((modifier) => modifier.detach())
-    Object.values(this.layers).forEach((layer) => layer.removeChildren())
+    Object.values(this.layers).forEach((layer) => layer.remove())
   }
 
-  #isOffsetRow (index) {
-    return index % 2 === 0 ? this.type === Layout.Types.evenR : this.type === Layout.Types.oddR
-  }
+  static Offsets = Object.freeze({
+    EvenRow: 'even-row',
+    OddRow: 'odd-row'
+  })
 
-  static Types = Object.freeze({
-    evenR: 'even-r',
-    oddR: 'odd-r'
+  static Schema = Object.freeze({
+    $id: Schema.$id('layout'),
+    properties: {
+      modifiers: Modifiers.Schema,
+      offset: {
+        enum: Object.values(Layout.Offsets),
+        options: {
+          enum_titles: ['Even rows', 'Odd rows']
+        },
+        type: 'string'
+      },
+      tiles: {
+        options: {
+          hidden: true
+        },
+        type: 'object'
+      }
+    },
+    required: ['offset'],
+    type: 'object'
   })
 }

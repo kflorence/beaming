@@ -1,6 +1,6 @@
 require('chromedriver')
 const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, Condition, logging, until } = require('selenium-webdriver')
+const { Builder, By, Condition, logging, until, Button } = require('selenium-webdriver')
 
 logging.installConsoleHandler()
 
@@ -33,6 +33,7 @@ class PuzzleFixture {
       '--disable-dev-shm-usage',
       '--disable-extensions',
       '--disable-gpu',
+      // Comment this out to watch the tests run in-browser
       '--headless',
       '--ignore-certificate-errors',
       '--no-sandbox',
@@ -50,7 +51,7 @@ class PuzzleFixture {
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
-    this.elements.modifiers = await this.driver.findElement(By.id('modifiers'))
+    this.elements.modifiers = await this.driver.findElement(By.id('puzzle-footer-menu'))
   }
 
   async clickModifier (name, options = {}) {
@@ -65,8 +66,10 @@ class PuzzleFixture {
 
   async clickTile (r, c) {
     // Center on the tile we want to click on. This ensures it is visible
-    await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
-    await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    const isSelected = await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
+    if (!isSelected) {
+      await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    }
   }
 
   async isMasked () {
@@ -81,9 +84,39 @@ class PuzzleFixture {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-solved'))
   }
 
+  async solve (moves) {
+    for (const move of moves) {
+      console.log('processing move', JSON.stringify(move))
+      switch (move.eventType) {
+        case 'mask-hidden': {
+          await this.isNotMasked()
+          break
+        }
+        case 'masked-visible': {
+          await this.isMasked()
+          break
+        }
+      }
+      if (move.tile) {
+        const [r, c] = move.tile.split(',')
+        await this.clickTile(r, c)
+      }
+      if (move.modifierType) {
+        await this.clickModifier(
+          move.modifierType,
+          move.eventType === 'modifier-toggled' ? { button: Button.MIDDLE } : {}
+        )
+      }
+      if (move.selectedTile) {
+        const [r, c] = move.selectedTile.split(',')
+        await this.clickTile(r, c)
+      }
+    }
+  }
+
   async #getModifier (name) {
     await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
-    return await this.driver.findElement(By.css(`.modifier-${name}:not(.disabled)`))
+    return await this.driver.findElement(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`))
   }
 
   static baseUrl = 'http://localhost:1234'

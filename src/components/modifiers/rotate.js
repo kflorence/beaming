@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { addDirection, coalesce } from '../util'
+import { addDirection, coalesce, merge } from '../util'
 import { Icons } from '../icons'
 
 export class Rotate extends Modifier {
@@ -13,6 +13,13 @@ export class Rotate extends Modifier {
     this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
   }
 
+  attach (tile) {
+    super.attach(tile)
+    if (!this.disabled) {
+      this.update({ disabled: !tile.items.some((item) => item.rotatable) })
+    }
+  }
+
   moveFilter (tile) {
     // Filter out tiles that contain no rotatable items
     return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
@@ -22,6 +29,10 @@ export class Rotate extends Modifier {
     super.onTap(event)
 
     const items = this.tile.items.filter((item) => item.rotatable)
+    if (!items.length) {
+      return
+    }
+
     items.forEach((item) => item.rotate(this.clockwise))
 
     this.dispatchEvent(Modifier.Events.Invoked, { items })
@@ -33,9 +44,19 @@ export class Rotate extends Modifier {
     this.clockwise = !this.clockwise
     this.updateState((state) => { state.clockwise = this.clockwise })
     this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
+
+    this.dispatchEvent(Modifier.Events.Toggled, { clockwise: this.clockwise })
   }
 
   static Names = Object.freeze({ left: Icons.RotateLeft.name, right: Icons.RotateRight.name })
+
+  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.rotate), {
+    properties: {
+      clockwise: {
+        type: 'boolean'
+      }
+    }
+  }))
 }
 
 /**
@@ -95,5 +116,24 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
 
     this.updateState((state) => { state.rotation = this.rotation })
     this.rotateGroup(rotation)
+  }
+}
+
+rotatable.Schema = {
+  properties: {
+    direction: {
+      type: 'number'
+    },
+    rotatable: {
+      default: true,
+      type: 'boolean'
+    },
+    rotation: {
+      type: 'number'
+    },
+    rotationDegrees: {
+      enum: [30, 60, 90],
+      type: 'number'
+    }
   }
 }

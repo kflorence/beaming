@@ -1,138 +1,161 @@
 {
   "layout": {
-    "modifiers": [
-      {
-        "type": "Rotate"
-      }
-    ],
-    "tiles": [
-      [
-        {
+    "offset": "odd-row",
+    "tiles": {
+      "0": {
+        "0": {
+          "type": "Tile",
           "items": [
             {
-              "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
-              "direction": 5,
-              "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "items": [
-            {
-              "openings": [
-                null,
-                null,
-                {
-                  "color": "blue",
-                  "on": true,
-                  "type": "Beam"
-                },
-                null,
-                null,
-                null
-              ],
-              "type": "Terminus"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Immutable"
-            }
-          ],
-          "type": "Tile"
-        },
-        {
-          "items": [
-            {
+              "type": "Portal",
               "direction": 0,
-              "type": "Portal"
+              "id": "916477d6"
             }
           ],
-          "type": "Tile"
+          "id": "75df857a"
         },
-        {
+        "1": {
+          "id": "43142953",
+          "type": "Tile",
           "items": [
             {
+              "type": "Terminus",
               "openings": [
-                null,
-                null,
-                null,
-                null,
-                null,
                 {
-                  "color": "blue",
-                  "type": "Beam"
+                  "color": [
+                    "#0000ff"
+                  ],
+                  "direction": 5
                 }
               ],
-              "type": "Terminus"
+              "id": "1ce44eba"
             }
           ],
           "modifiers": [
             {
-              "type": "Immutable"
+              "type": "Lock",
+              "id": "9ba8bd9e"
             }
-          ],
-          "type": "Tile"
-        }
-      ],
-      [
-        {
-          "items": [
-            {
-              "direction": 5,
-              "type": "Portal"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "Lock"
-            }
-          ],
-          "type": "Tile"
+          ]
         },
-        {
+        "-1": {
+          "id": "da8da7c6",
+          "type": "Tile",
           "items": [
             {
-              "direction": 5,
-              "type": "Portal"
+              "type": "Terminus",
+              "openings": [
+                {
+                  "color": [
+                    "#0000ff"
+                  ],
+                  "direction": 2,
+                  "toggled": true,
+                  "steps": {
+                    "3": {
+                      "Portal": {
+                        "entryPortalId": "916477d6",
+                        "exitPortalId": "388f88d4"
+                      }
+                    }
+                  }
+                }
+              ],
+              "id": "5363af1f"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock"
+              "type": "Immutable",
+              "id": "9556062f"
+            }
+          ]
+        }
+      },
+      "1": {
+        "0": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Portal",
+              "direction": 5,
+              "id": "c2c04bc7"
             }
           ],
-          "type": "Tile"
+          "modifiers": [
+            {
+              "type": "Lock",
+              "id": "0c3fe41a"
+            }
+          ],
+          "id": "c92e21e3"
+        },
+        "-1": {
+          "id": "62c320fa",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Portal",
+              "direction": 5,
+              "id": "f75c4e92"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock",
+              "id": "97b3cf21"
+            }
+          ]
         }
-      ]
-    ],
-    "type": "even-r"
+      },
+      "-1": {
+        "0": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Portal",
+              "direction": 5,
+              "id": "88b59156"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock",
+              "id": "5871082a"
+            }
+          ],
+          "id": "210e5463"
+        },
+        "-1": {
+          "id": "720d0180",
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Portal",
+              "id": "388f88d4"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "Lock",
+              "id": "5b0d7431"
+            }
+          ]
+        }
+      }
+    },
+    "modifiers": [
+      {
+        "type": "Rotate",
+        "id": "b30a8952"
+      }
+    ]
   },
   "solution": [
     {
-      "amount": 1,
-      "type": "Connections"
+      "type": "Connections",
+      "amount": 1
     }
   ],
-  "version": 2
+  "version": 0
 }
