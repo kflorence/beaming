@@ -1,5 +1,11 @@
 {
   "layout": {
+    "modifiers": [
+      {
+        "id": "0f262170",
+        "type": "Toggle"
+      }
+    ],
     "offset": "odd-row",
     "tiles": {
       "0": {
@@ -26,7 +32,8 @@
                   "color": [
                     "#0000ff"
                   ],
-                  "direction": 2
+                  "direction": 2,
+                  "toggled": true
                 },
                 {
                   "color": [
@@ -44,7 +51,8 @@
                   "color": [
                     "#ff0000"
                   ],
-                  "direction": 5
+                  "direction": 5,
+                  "toggled": true
                 }
               ],
               "id": "c5835edd"
@@ -66,7 +74,7 @@
                     "#0000ff"
                   ],
                   "direction": 5,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "d21e5308"
@@ -89,7 +97,7 @@
                     "#ff0000"
                   ],
                   "direction": 2,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "fb669389"
@@ -100,12 +108,56 @@
       },
       "1": {
         "0": {
-          "id": "518251fd",
-          "type": "Tile"
+          "type": "Tile",
+          "id": "d0b13fc4"
+        },
+        "1": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "color": [
+                    "#008000"
+                  ],
+                  "direction": 0,
+                  "toggled": true
+                }
+              ],
+              "id": "bbde184c"
+            }
+          ],
+          "id": "453b4d64",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "b45a15d3"
+            }
+          ]
         },
         "-1": {
-          "id": "e1e4eb05",
-          "type": "Tile"
+          "type": "Tile",
+          "id": "59e60928"
+        },
+        "-2": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "color": [
+                    "#008000"
+                  ],
+                  "direction": 1,
+                  "toggled": false
+                }
+              ],
+              "id": "c0ae2132"
+            }
+          ],
+          "id": "e04bf3e8"
         }
       },
       "2": {
@@ -114,23 +166,21 @@
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#008000"
-              ],
               "openings": [
                 {
-                  "direction": 0,
-                  "toggled": true
+                  "direction": 0
                 },
                 {
-                  "direction": 1,
-                  "toggled": false
+                  "direction": 1
                 }
               ],
-              "id": "8c5b492b"
+              "id": "98e62cb4",
+              "color": [
+                "#008000"
+              ]
             }
           ],
-          "id": "1d35702f"
+          "id": "1a2e1e12"
         },
         "1": {
           "type": "Tile",
@@ -143,7 +193,7 @@
                     "#ff0000"
                   ],
                   "direction": 0,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "2eee79eb"
@@ -163,7 +213,7 @@
                     "#0000ff"
                   ],
                   "direction": 1,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "b91484a6"
@@ -173,60 +223,80 @@
       },
       "-1": {
         "0": {
-          "id": "a0cc49c0",
-          "type": "Tile"
+          "type": "Tile",
+          "id": "1848a6ad"
         },
         "1": {
           "type": "Tile",
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#008000"
-              ],
               "openings": [
                 {
+                  "color": [
+                    "#008000"
+                  ],
                   "direction": 4,
-                  "toggled": true
-                },
-                {
-                  "direction": 5,
                   "toggled": false
                 }
               ],
-              "id": "138a6347"
+              "id": "b7729e7f"
             }
           ],
-          "id": "19472116"
+          "id": "6a9d44bf"
         },
         "-1": {
           "id": "a7ae7f64",
           "type": "Tile"
         },
         "-2": {
-          "id": "e3a9743a",
           "type": "Tile",
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#008000"
-              ],
               "openings": [
                 {
-                  "direction": 2,
+                  "color": [
+                    "#008000"
+                  ],
+                  "direction": 3,
                   "toggled": true
-                },
-                {
-                  "direction": 3
                 }
               ],
-              "id": "b52e1e29"
+              "id": "996a54c9"
+            }
+          ],
+          "id": "ee57363a",
+          "modifiers": [
+            {
+              "type": "Immutable",
+              "id": "37e58227"
             }
           ]
         }
       },
       "-2": {
+        "0": {
+          "type": "Tile",
+          "items": [
+            {
+              "type": "Terminus",
+              "openings": [
+                {
+                  "direction": 4
+                },
+                {
+                  "direction": 3
+                }
+              ],
+              "color": [
+                "#008000"
+              ],
+              "id": "5fff1412"
+            }
+          ],
+          "id": "75667c33"
+        },
         "1": {
           "id": "082207e9",
           "type": "Tile",
@@ -239,7 +309,7 @@
                     "#ff0000"
                   ],
                   "direction": 4,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "f1aa8307"
@@ -257,7 +327,7 @@
                     "#0000ff"
                   ],
                   "direction": 3,
-                  "toggled": true
+                  "toggled": false
                 }
               ],
               "id": "452cce64"
@@ -266,19 +336,13 @@
           "id": "234b7936"
         }
       }
-    },
-    "modifiers": [
-      {
-        "type": "Toggle",
-        "id": "0f262170"
-      }
-    ]
+    }
   },
-  "version": 0,
   "solution": [
     {
       "type": "Connections",
       "amount": 6
     }
-  ]
+  ],
+  "version": 0
 }

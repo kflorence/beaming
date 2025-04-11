@@ -11,23 +11,19 @@ describe('Puzzle 003', function () {
   it('should be solved', async function () {
     await puzzle.solve([
       { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,-2' },
       { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,1' },
       { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,0' },
       { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,-2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,-2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,1' },
       { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,-2' }
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' }
     ])
 
     assert(await puzzle.isSolved())
