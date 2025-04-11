@@ -17,9 +17,10 @@ export class Gutter {
     this.horizontal = localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Horizontal)) === 'true'
 
     this.#eventListener.add([
-      { element: this.element, handler: this.#onPointerDown, type: 'pointerdown' },
-      { handler: this.#onPointerMove, type: 'pointermove' },
-      { handler: this.#onPointerUp, type: 'pointerup' }
+      { type: 'pointercancel', handler: this.#onPointerUp },
+      { type: 'pointerdown', element: this.element, handler: this.#onPointerDown },
+      { type: 'pointermove', handler: this.#onPointerMove },
+      { type: 'pointerup', handler: this.#onPointerUp }
     ])
 
     this.reset()

@@ -76,9 +76,7 @@
               "openings": [
                 {
                   "direction": 3,
-                  "color": [
-                    "#ff0000"
-                  ]
+                  "color": "#ff0000"
                 }
               ],
               "id": "df42627b"
@@ -93,12 +91,9 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#b400b4",
                   "direction": 0
                 }
-              ],
-              "color": [
-                "#ff0000",
-                "#0000ff"
               ],
               "id": "549c64b6"
             }
@@ -130,12 +125,9 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#b400b4",
                   "direction": 3
                 }
-              ],
-              "color": [
-                "#ff0000",
-                "#0000ff"
               ],
               "id": "552167d1"
             }
@@ -177,9 +169,7 @@
               "openings": [
                 {
                   "direction": 0,
-                  "color": [
-                    "#0000ff"
-                  ]
+                  "color": "#0000ff"
                 }
               ],
               "id": "94852020"

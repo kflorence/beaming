@@ -9,8 +9,9 @@ describe('Puzzle 001', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(1, -1)
-    await puzzle.clickModifier('toggle')
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-1' }
+    ])
 
     assert(await puzzle.isSolved())
   })

@@ -20,9 +20,9 @@
         "0": {
           "items": [
             {
-              "color": "#0000ff",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 0
                 }
               ],
@@ -35,9 +35,9 @@
         "-1": {
           "items": [
             {
-              "color": "#ff0000",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 1,
                   "toggled": true
                 }
@@ -62,9 +62,9 @@
         "-1": {
           "items": [
             {
-              "color": "#0000ff",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 3,
                   "toggled": true
                 }

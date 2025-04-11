@@ -13,9 +13,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#ff0000",
               "openings": [
                 {
+                  "color": "#ff0000",
                   "direction": 4
                 }
               ],
@@ -35,9 +35,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#0000ff",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 1
                 }
               ],
@@ -57,9 +57,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#ff0000",
               "openings": [
                 {
+                  "color": "#ff0000",
                   "direction": 2,
                   "toggled": true
                 }
@@ -87,9 +87,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#0000ff",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 5,
                   "toggled": true
                 }

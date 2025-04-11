@@ -38,6 +38,9 @@ const tippy = Tippy(elements.share, {
 // TODO: consider adding AJV validations that ensure unique keys are unique
 // See: https://github.com/ajv-validator/ajv-keywords/blob/master/README.md#uniqueitemproperties
 
+// TODO: add ability to move the center marker. wherever it is placed will become the new center of the canvas
+// TODO: implement author / description in the UI
+
 export class Editor {
   group = new Group({ locked: true })
   id
@@ -75,6 +78,14 @@ export class Editor {
 
   isLocked () {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
+  }
+
+  onResize (size) {
+    if (size.width < 768 && !this.#gutter.horizontal) {
+      // Set orientation to horizontal on small screens
+      this.#gutter.toggleOrientation()
+      this.#puzzle.resize(false)
+    }
   }
 
   setup () {
@@ -121,23 +132,21 @@ export class Editor {
   }
 
   #onConfigurationUpdate () {
-    try {
-      const state = this.getState()
-      const diff = this.#puzzle.state.getDiff(state)
-      console.debug('onConfigurationUpdate', diff)
+    // Ensure the configuration is in sync with the editor value
+    this.#onEditorUpdate()
+    const state = this.getState()
+    const diff = this.#puzzle.state.getDiff(state)
+    console.debug('onConfigurationUpdate', diff)
 
-      if (diff === undefined) {
-        // No changes
-        return
-      }
-
-      this.#puzzle.state.addMove()
-      // Need to force a reload to make sure the UI is in sync with the state
-      this.#puzzle.reload(state)
-    } catch (e) {
-      // TODO: maybe display something to the user, too
-      console.error(e)
+    if (diff === undefined) {
+      // No changes
+      return
     }
+
+    this.#puzzle.state.addMove()
+
+    // Need to force a reload to make sure the UI is in sync with the state
+    this.#puzzle.reload(state, this.#onError.bind(this))
   }
 
   #onCenter () {
@@ -169,7 +178,12 @@ export class Editor {
     this.#onGutterMoved()
   }
 
-  #onEditorUpdate (value = this.#editor.getValue()) {
+  #onEditorUpdate (value = this.#editor?.getValue()) {
+    if (this.#puzzle.error) {
+      // No updates until error is fixed
+      return
+    }
+
     const current = this.#puzzle.state.getCurrent()
     const offset = this.#puzzle.selectedTile?.coordinates.offset
 
@@ -188,6 +202,10 @@ export class Editor {
     console.debug('current', current, 'new', value, 'updated', state)
 
     this.#updateConfiguration(state)
+  }
+
+  #onError (e) {
+    this.#puzzle.onError(e, `Error: "${e.message}". Undo and try again.`)
   }
 
   #onGutterMoved () {
@@ -253,7 +271,7 @@ export class Editor {
   }
 
   async #onShare () {
-    await writeToClipboard(`Beaming: try out my custom puzzle! ${this.getShareUrl()}`)
+    await writeToClipboard(`Try out my custom puzzle: ${this.#puzzle.getTitle()} - ${this.getShareUrl()}`)
     tippy.show()
     setTimeout(() => tippy.hide(), 1000)
   }
@@ -346,6 +364,10 @@ export class Editor {
   }
 
   #updateCenter () {
+    if (!this.#puzzle.layout) {
+      return
+    }
+
     this.#center.removeChildren()
     this.#center.addChildren(Editor.mark(
       this.#puzzle.layout.getCenter(),

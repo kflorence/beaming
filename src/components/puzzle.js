@@ -30,6 +30,10 @@ const elements = Object.freeze({
   headerMenu: document.getElementById('puzzle-header-menu'),
   headerMessage: document.getElementById('puzzle-header-message'),
   id: document.getElementById('puzzle-id'),
+  info: document.getElementById('puzzle-info'),
+  infoAuthor: document.getElementById('puzzle-info-author'),
+  infoId: document.getElementById('puzzle-info-id'),
+  infoTitle: document.getElementById('puzzle-info-title'),
   next: document.getElementById('puzzle-next'),
   previous: document.getElementById('puzzle-previous'),
   recenter: document.getElementById('puzzle-recenter'),
@@ -166,6 +170,12 @@ export class Puzzle {
     return result ? this.layout.getTile(result.item.data.coordinates.offset) : result
   }
 
+  getTitle () {
+    const id = this.state.getId()
+    const title = this.state.getTitle()
+    return id + (title ? ` - "${title}"` : '')
+  }
+
   mask (mask) {
     if (this.#mask) {
       if (this.#mask.equals(mask)) {
@@ -200,6 +210,30 @@ export class Puzzle {
     document.body.classList.add(Puzzle.Events.Mask)
   }
 
+  onError (error, message, cause) {
+    this.error = true
+
+    // Support exclusion of error
+    if (typeof error === 'string') {
+      message = error
+      cause = message
+      error = undefined
+    }
+
+    if (error) {
+      console.error(error)
+    }
+
+    cause = cause ?? error?.cause
+    if (cause) {
+      console.error('cause:', cause)
+    }
+
+    message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
+    elements.headerMessage.textContent = message
+    document.body.classList.add(Puzzle.Events.Error)
+  }
+
   recenter (force = false) {
     if (!this.layout) {
       return
@@ -215,7 +249,7 @@ export class Puzzle {
     }
   }
 
-  reload (state) {
+  reload (state, onError) {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
 
@@ -234,7 +268,11 @@ export class Puzzle {
     try {
       this.#setup()
     } catch (e) {
-      this.#onError(e, 'Puzzle configuration is invalid.')
+      if (typeof onError === 'function') {
+        onError(e)
+      } else {
+        this.onError(e, 'Puzzle configuration is invalid.')
+      }
       this.#updateActions()
     }
 
@@ -256,6 +294,8 @@ export class Puzzle {
     elements.canvas.style.width = width + 'px'
 
     paper.view.viewSize = newSize
+
+    this.#editor?.onResize(newSize)
 
     this.recenter()
 
@@ -386,30 +426,6 @@ export class Puzzle {
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
     setTimeout(() => this.update(), 0)
-  }
-
-  #onError (error, message, cause) {
-    this.error = true
-
-    // Support exclusion of error
-    if (typeof error === 'string') {
-      message = error
-      cause = message
-      error = undefined
-    }
-
-    if (error) {
-      console.error(error)
-    }
-
-    cause = cause ?? error?.cause
-    if (cause) {
-      console.error('cause:', cause)
-    }
-
-    message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
-    elements.headerMessage.textContent = message
-    document.body.classList.add(Puzzle.Events.Error)
   }
 
   #onKeyup (event) {
@@ -593,6 +609,7 @@ export class Puzzle {
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
+    this.#updateDetails()
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
@@ -626,10 +643,9 @@ export class Puzzle {
 
   #updateActions () {
     const id = this.state.getId()
-    const title = this.state.getTitle()
 
     // Update browser title
-    elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${title}`
+    elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`
 
     removeClass(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children))
 
@@ -661,6 +677,19 @@ export class Puzzle {
     addClass(Puzzle.ClassNames.Disabled, ...disable)
   }
 
+  #updateDetails () {
+    const id = this.state.getId()
+    const author = this.state.getAuthor()
+    const title = this.state.getTitle()
+    const hide = !(author || title)
+
+    elements.infoAuthor.textContent = `Created by: ${author}`
+    elements.info.classList.toggle('hide', hide)
+    elements.info.setAttribute('open', (!hide).toString())
+    elements.infoId.textContent = `Puzzle: ${id}`
+    elements.infoTitle.textContent = `Title: "${title}"`
+  }
+
   #updateDropdown () {
     elements.id.replaceChildren()
 
@@ -668,7 +697,7 @@ export class Puzzle {
     const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
     const id = this.state?.getId()
     if (id !== undefined && !Puzzles.visible.ids.includes(id)) {
-      options.push({ id, title: this.state.getTitle() })
+      options.push({ id, title: this.getTitle() })
     }
 
     for (const option of options) {
@@ -841,10 +870,11 @@ export class Puzzle {
     $id: Schema.$id('puzzle'),
     properties: {
       author: {
+        maxLength: 72,
         type: 'string'
       },
-      description: {
-        format: 'textarea',
+      title: {
+        maxLength: 72,
         type: 'string'
       },
       layout: Layout.Schema,

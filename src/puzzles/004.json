@@ -27,9 +27,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#ff0000",
               "openings": [
                 {
+                  "color": "#ff0000",
                   "direction": 1,
                   "toggled": true
                 }
@@ -52,9 +52,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#0000ff",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 4,
                   "toggled": true
                 }
@@ -69,10 +69,10 @@
           "items": [
             {
               "type": "Terminus",
-              "color": "#0000ff",
               "id": "dddfa2dd",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 4
                 }
               ]

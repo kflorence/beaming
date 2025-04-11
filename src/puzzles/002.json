@@ -9,26 +9,29 @@
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#0000ff"
-              ],
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 0
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 1
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 2
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 3
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 4
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 5
                 }
               ],
@@ -41,17 +44,17 @@
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#0000ff"
-              ],
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 4
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 0
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 5
                 }
               ],
@@ -68,19 +71,19 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 1
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 3
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 2
                 }
               ],
-              "id": "e322950f",
-              "color": [
-                "#0000ff"
-              ]
+              "id": "e322950f"
             }
           ]
         }
@@ -93,19 +96,19 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 5
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 1
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 0
                 }
               ],
-              "id": "5405af42",
-              "color": [
-                "#0000ff"
-              ]
+              "id": "5405af42"
             }
           ],
           "id": "8f2cda31"
@@ -117,19 +120,19 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 0
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 2
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 1
                 }
               ],
-              "id": "176953c3",
-              "color": [
-                "#0000ff"
-              ]
+              "id": "176953c3"
             }
           ],
           "id": "57bb0429"
@@ -143,19 +146,19 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 3
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 5
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 4
                 }
               ],
-              "id": "bcf89ade",
-              "color": [
-                "#0000ff"
-              ]
+              "id": "bcf89ade"
             }
           ],
           "id": "2eb11c84"
@@ -167,19 +170,19 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#0000ff",
                   "direction": 2
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 4
                 },
                 {
+                  "color": "#0000ff",
                   "direction": 3
                 }
               ],
-              "id": "cdf38c3f",
-              "color": [
-                "#0000ff"
-              ]
+              "id": "cdf38c3f"
             }
           ],
           "id": "e2e2cc4d"

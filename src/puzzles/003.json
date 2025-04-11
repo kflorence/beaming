@@ -17,40 +17,28 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 0
                 },
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 1
                 },
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 2,
                   "toggled": true
                 },
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 3
                 },
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 4
                 },
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 5,
                   "toggled": true
                 }
@@ -70,9 +58,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 5,
                   "toggled": false
                 }
@@ -93,9 +79,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 2,
                   "toggled": false
                 }
@@ -118,9 +102,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#008000"
-                  ],
+                  "color": "#008000",
                   "direction": 0,
                   "toggled": true
                 }
@@ -147,9 +129,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#008000"
-                  ],
+                  "color": "#008000",
                   "direction": 1,
                   "toggled": false
                 }
@@ -168,16 +148,15 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#008000",
                   "direction": 0
                 },
                 {
+                  "color": "#008000",
                   "direction": 1
                 }
               ],
-              "id": "98e62cb4",
-              "color": [
-                "#008000"
-              ]
+              "id": "98e62cb4"
             }
           ],
           "id": "1a2e1e12"
@@ -189,9 +168,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 0,
                   "toggled": false
                 }
@@ -209,9 +186,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 1,
                   "toggled": false
                 }
@@ -233,9 +208,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#008000"
-                  ],
+                  "color": "#008000",
                   "direction": 4,
                   "toggled": false
                 }
@@ -256,9 +229,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#008000"
-                  ],
+                  "color": "#008000",
                   "direction": 3,
                   "toggled": true
                 }
@@ -283,14 +254,13 @@
               "type": "Terminus",
               "openings": [
                 {
+                  "color": "#008000",
                   "direction": 4
                 },
                 {
+                  "color": "#008000",
                   "direction": 3
                 }
-              ],
-              "color": [
-                "#008000"
               ],
               "id": "5fff1412"
             }
@@ -305,9 +275,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#ff0000"
-                  ],
+                  "color": "#ff0000",
                   "direction": 4,
                   "toggled": false
                 }
@@ -323,9 +291,7 @@
               "type": "Terminus",
               "openings": [
                 {
-                  "color": [
-                    "#0000ff"
-                  ],
+                  "color": "#0000ff",
                   "direction": 3,
                   "toggled": false
                 }
