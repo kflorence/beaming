@@ -84,6 +84,16 @@ class PuzzleFixture {
 
   async solve (moves) {
     for (const move of moves) {
+      switch (move.eventType) {
+        case 'mask-hidden': {
+          await this.isNotMasked()
+          break
+        }
+        case 'masked-visible': {
+          await this.isMasked()
+          break
+        }
+      }
       if (move.tile) {
         const [r, c] = move.tile.split(',')
         await this.clickTile(r, c)

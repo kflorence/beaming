@@ -12,7 +12,9 @@ describe('Puzzle 011', function () {
     await puzzle.solve([
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
+      { eventType: 'mask-visible' },
       { eventType: 'portal-exit', tile: '1,0' },
+      { eventType: 'mask-hidden' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' }
