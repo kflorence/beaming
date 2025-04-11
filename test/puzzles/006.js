@@ -9,25 +9,13 @@ describe('Puzzle 006', function () {
   before(puzzle.before)
 
   it('should be solved', async function () {
-    await puzzle.clickTile(-1, -1)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, -1)
-
-    await puzzle.clickTile(-1, -1)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(-1, 0)
-
-    await puzzle.clickTile(-1, -1)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, 1)
-
-    await puzzle.clickTile(-1, -1)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(1, -1)
-
-    await puzzle.clickTile(-1, -1)
-    await puzzle.clickModifier('swap')
-    await puzzle.clickTile(0, -1)
+    await puzzle.solve([
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,-1', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '-1,0', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,1', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,-1', tile: '-1,-1' },
+      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,-1', tile: '-1,-1' }
+    ])
 
     assert(await puzzle.isSolved())
   })

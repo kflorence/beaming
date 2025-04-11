@@ -9,11 +9,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#008000"
-              ],
               "openings": [
                 {
+                  "color": "#008000",
                   "direction": 3
                 }
               ],
@@ -73,11 +71,9 @@
           "items": [
             {
               "type": "Terminus",
-              "color": [
-                "#008000"
-              ],
               "openings": [
                 {
+                  "color": "#008000",
                   "direction": 1,
                   "toggled": true
                 }

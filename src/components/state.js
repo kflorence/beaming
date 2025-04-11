@@ -92,6 +92,10 @@ export class State {
     }))
   }
 
+  getAuthor () {
+    return this.#current.author
+  }
+
   getCurrent () {
     return structuredClone(this.#current)
   }
@@ -118,7 +122,7 @@ export class State {
   }
 
   getTitle () {
-    return this.getId() + (this.#current?.title ? ` - ${this.#current.title}` : '')
+    return this.#current.title
   }
 
   getSelectedTile () {
@@ -358,7 +362,7 @@ export class State {
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 5
+  static Version = 6
 
   static #key = getKeyFactory([
     // Prefix key with 'editor' when in edit mode
