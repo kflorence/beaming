@@ -359,16 +359,18 @@ export class Beam extends Item {
       return
     }
 
-    const tiles = event.detail.tiles || [event.detail.tile]
+    if (event) {
+      const tiles = event.detail.tiles ?? (event.detail.tile ? [event.detail.tile] : [])
 
-    // We want the first step that contains the tile the event occurred on
-    const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
-    if (stepIndex >= 0) {
-      console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
-      // Re-evaluate beginning at the step before the matched one
-      this.done = false
-      this.#stepIndex = Math.max(stepIndex - 1, 0)
-      return
+      // We want the first step that contains the tile the event occurred on
+      const stepIndex = this.#steps.findIndex((step) => tiles.some((tile) => tile.equals(step.tile)))
+      if (stepIndex >= 0) {
+        console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
+        // Re-evaluate beginning at the step before the matched one
+        this.done = false
+        this.#stepIndex = Math.max(stepIndex - 1, 0)
+        return
+      }
     }
 
     if (this.isComplete()) {
@@ -540,6 +542,11 @@ export class Beam extends Item {
     }
 
     return this.addStep(nextStep)
+  }
+
+  toggle () {
+    this.parent.toggleOpening(this.getOpening())
+    this.onModifierInvoked()
   }
 
   toString () {

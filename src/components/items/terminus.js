@@ -19,6 +19,7 @@ import { Schema } from '../schema'
 export class Terminus extends movable(rotatable(toggleable(Item))) {
   sortOrder = 2
 
+  #connections = {}
   #ui
 
   constructor (tile, state) {
@@ -100,11 +101,11 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
         done: true,
         onAdd: () => {
           nextStep.onAdd()
-          this.onConnection(opening.direction)
+          this.#onConnection(opening, beam)
         },
         onRemove: () => {
           nextStep.onRemove()
-          this.onDisconnection(opening.direction)
+          this.#onDisconnection(opening, beam)
         },
         state: nextStep.state.copy(new StepState.TerminusConnection(this, opening))
       })
@@ -114,50 +115,62 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     return collisionStep
   }
 
-  onConnection (direction) {
-    const opening = this.getOpening(direction)
+  onToggle () {
+    console.log(this.toString(), 'onToggle')
+    this.openings.forEach((opening) => this.toggleOpening(opening))
+  }
 
+  toggleOpening (opening) {
+    const beam = this.#connections[opening.direction]
+    console.log('toggleOpening', opening, beam)
+    if (beam) {
+      // Let the connecting beam handle it
+      beam.toggle()
+    } else {
+      opening.toggle()
+      this.updateState((state) => { state.openings[opening.index].toggled = opening.toggled })
+    }
+
+    this.updateOpening(opening)
+  }
+
+  update () {
+    this.beams.forEach((beam) => this.updateOpening(beam.getOpening()))
+  }
+
+  updateOpening (opening) {
+    const item = this.#ui.openings.find((item) => item.data.direction === opening.direction)
+    item.opacity = opening.toggled || opening.connected ? 1 : Terminus.#openingOffOpacity
+  }
+
+  #onConnection (opening, beam) {
     if (opening.connected) {
       // Already connected
       return
     }
 
-    opening.connect()
-    this.update()
+    this.#connections[opening.direction] = beam
 
-    emitEvent(Terminus.Events.Connection, { terminus: this, opening })
+    opening.connect()
+
+    this.updateOpening(opening)
+
+    emitEvent(Terminus.Events.Connection, { terminus: this, opening, beam })
   }
 
-  onDisconnection (direction) {
-    const opening = this.getOpening(direction)
-
+  #onDisconnection (opening, beam) {
     if (!opening.connected) {
       // Already disconnected
       return
     }
 
     opening.disconnect()
-    this.update()
 
-    emitEvent(Terminus.Events.Disconnection, { terminus: this, opening })
-  }
+    delete this.#connections[opening.direction]
 
-  onToggle () {
-    this.updateState((state) => {
-      this.openings.filter((opening) => !opening.connected).forEach((opening) => {
-        opening.toggle()
-        state.openings[opening.index].toggled = opening.toggled
-      })
-    })
-    this.update()
-  }
+    this.updateOpening(opening)
 
-  update () {
-    this.beams.forEach((beam) => {
-      const opening = beam.getOpening()
-      const item = this.#ui.openings.find((item) => item.data.direction === opening.direction)
-      item.opacity = opening.toggled ? 1 : Terminus.#openingOffOpacity
-    })
+    emitEvent(Terminus.Events.Disconnection, { terminus: this, opening, beam })
   }
 
   static #openingOffOpacity = 0.3
@@ -218,11 +231,11 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     }
 
     connect () {
-      this.connected = this.toggled = true
+      this.connected = true
     }
 
     disconnect () {
-      this.connected = this.toggled = false
+      this.connected = false
     }
 
     toggle () {
