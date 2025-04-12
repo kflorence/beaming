@@ -30240,9 +30240,16 @@ class Puzzle {
         // noinspection JSCheckFunctionSignatures
         (0, _paperDefault.default).setup(elements.canvas);
         // These layers will be added in the order they are defined
-        this.layers.mask = new (0, _paper.Layer)();
-        this.layers.collisions = new (0, _paper.Layer)();
-        this.layers.debug = new (0, _paper.Layer)();
+        const layers = [
+            'mask',
+            'collisions',
+            'debug'
+        ];
+        layers.forEach((name)=>{
+            this.layers[name] = new (0, _paper.Layer)({
+                name
+            });
+        });
         if ((0, _util.params).has((0, _state.State).ParamKeys.Edit)) // Edit mode
         this.#editor = new (0, _editor.Editor)(this);
         this.resize(false);
@@ -30517,6 +30524,7 @@ class Puzzle {
         if (id) this.select(id);
     }
     #onBeamUpdate(event) {
+        if (this.#isTearingDown) return;
         const beam = event.detail.beam;
         const state = event.detail.state;
         if (state?.has((0, _step.StepState).Collision)) {
@@ -30659,6 +30667,7 @@ class Puzzle {
     }
     #teardown() {
         document.body.classList.remove(...Object.values(Puzzle.Events));
+        this.#collisions = {};
         this.#isTearingDown = true;
         this.#maskQueue = [];
         this.unmask();
@@ -30669,7 +30678,6 @@ class Puzzle {
         this.layout?.teardown();
         this.layout = undefined;
         this.selectedTile = undefined;
-        this.#collisions = {};
         this.#isUpdatingBeams = false;
         this.#isTearingDown = false;
     }
@@ -33223,12 +33231,11 @@ class Terminus extends (0, _move.movable)((0, _rotate.rotatable)((0, _toggle.tog
         return collisionStep;
     }
     onToggle() {
-        console.log(this.toString(), 'onToggle');
         this.openings.forEach((opening)=>this.toggleOpening(opening));
     }
     toggleOpening(opening) {
         const beam = this.#connections[opening.direction];
-        console.log('toggleOpening', opening, beam);
+        console.debug('toggleOpening', opening, beam);
         if (beam) // Let the connecting beam handle it
         beam.toggle();
         else {
