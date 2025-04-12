@@ -76,9 +76,10 @@ export class Puzzle {
     paper.setup(elements.canvas)
 
     // These layers will be added in the order they are defined
-    this.layers.mask = new Layer()
-    this.layers.collisions = new Layer()
-    this.layers.debug = new Layer()
+    const layers = ['mask', 'collisions', 'debug']
+    layers.forEach((name) => {
+      this.layers[name] = new Layer({ name })
+    })
 
     if (params.has(State.ParamKeys.Edit)) {
       // Edit mode
@@ -398,6 +399,10 @@ export class Puzzle {
   }
 
   #onBeamUpdate (event) {
+    if (this.#isTearingDown) {
+      return
+    }
+
     const beam = event.detail.beam
     const state = event.detail.state
 
@@ -618,6 +623,7 @@ export class Puzzle {
   #teardown () {
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
+    this.#collisions = {}
     this.#isTearingDown = true
     this.#maskQueue = []
 
@@ -630,7 +636,6 @@ export class Puzzle {
     this.layout?.teardown()
     this.layout = undefined
     this.selectedTile = undefined
-    this.#collisions = {}
     this.#isUpdatingBeams = false
     this.#isTearingDown = false
   }

@@ -116,13 +116,12 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   onToggle () {
-    console.log(this.toString(), 'onToggle')
     this.openings.forEach((opening) => this.toggleOpening(opening))
   }
 
   toggleOpening (opening) {
     const beam = this.#connections[opening.direction]
-    console.log('toggleOpening', opening, beam)
+    console.debug('toggleOpening', opening, beam)
     if (beam) {
       // Let the connecting beam handle it
       beam.toggle()
