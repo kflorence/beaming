@@ -34658,8 +34658,8 @@ class Editor {
     isLocked() {
         return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true';
     }
-    onResize(size) {
-        if (size.width < 768 && !this.#gutter.horizontal) {
+    onResize() {
+        if (window.innerWidth < Editor.minWidth && !this.#gutter.horizontal) {
             // Set orientation to horizontal on small screens
             this.#gutter.toggleOrientation();
             this.#puzzle.resize(false);
@@ -34818,6 +34818,8 @@ class Editor {
         this.#onConfigurationUpdate();
     }
     #onPointerMove(event) {
+        if (event.pointerType !== 'mouse') // Only display the hover indicator when using a mouse
+        return;
         const layout = this.#puzzle.layout;
         const offset = layout.getOffset(this.#puzzle.getProjectPoint((0, _interact.Interact).point(event)));
         const center = layout.getPoint(offset);
@@ -34968,6 +34970,7 @@ class Editor {
     static ClassNames = Object.freeze({
         Edit: 'edit'
     });
+    static minWidth = 768;
     static #key = (0, _util.getKeyFactory)((0, _state.State).CacheKeys.Editor, (0, _state.State).getId());
 }
 

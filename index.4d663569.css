@@ -703,7 +703,7 @@ i.fill, .icon.fill {
   }
 }
 
-@media (width <= 600px) {
+@media (width <= 768px) {
   #editor-menu {
     justify-content: center;
   }
