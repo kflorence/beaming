@@ -24,7 +24,7 @@ jobs:
       - name: Run tests
         run: npm test
       - name: Build NPM package
-        run: npm run build
+        run: npm run build -- --public-url https://kflorence.github.io/beaming
       - name: Publish to Github pages
         run: |
           git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git

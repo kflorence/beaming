@@ -8,3 +8,5 @@
 !.nvmrc
 dist
 node_modules
+
+out/
