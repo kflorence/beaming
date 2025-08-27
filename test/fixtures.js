@@ -18,7 +18,7 @@ class PuzzleFixture {
   constructor (id) {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?play#/${id}`
   }
 
   async after () {

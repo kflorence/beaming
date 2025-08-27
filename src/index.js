@@ -3,15 +3,19 @@ import { debug } from './components/debug'
 import paper, { Point } from 'paper'
 import { Puzzle } from './components/puzzle'
 import { OffsetCoordinates } from './components/coordinates/offset'
-import { base64decode } from './components/util'
+import { base64decode, params } from './components/util'
 
 if (process.env.NODE_ENV === 'production') {
   require('./analytics')
-  require('./feedback')
 }
 
 const puzzle = new Puzzle()
 const beaming = { debug, puzzle }
+
+const states = ['edit', 'play']
+if (states.some((state) => params.has(state))) {
+  document.getElementById('dialog-title').close()
+}
 
 // Used by functional tests
 beaming.centerOnTile = function (r, c) {

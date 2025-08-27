@@ -22,7 +22,7 @@
         <div id="puzzle-header-wrapper">
           <div class="flex-left">
             <ul class="menu">
-              <li class="dialog" id="info"><span class="icon" title="Information">info</span></li>
+              <li data-dialog="dialog-title"><span class="icon" title="Exit">exit_to_app</span></li>
             </ul>
             <label id="puzzle-selector">
               <select id="puzzle-id" name="id"><option value="">---</option></select>
@@ -80,196 +80,194 @@
         <button id="editor-cancel">Cancel</button>
       </footer>
     </div>
-    <dialog id="dialog-info">
+    <dialog class="loading" id="dialog-title" open="true">
+      <svg-inline id="logo" src="images/logo.svg"></svg-inline>
+      <ul>
+        <li id="title-play"><a href="?play">play</a></li>
+        <li data-dialog="dialog-about">about</li>
+        <li data-dialog="dialog-settings">settings</li>
+        <li id="title-editor"><a href="?edit">editor</a></li>
+        <li id="title-quit">quit</li>
+      </ul>
+    </dialog>
+    <dialog id="dialog-about">
       <header>
-        <h1 class="flex-left">Beaming</h1>
+        <h1 class="flex-left">About</h1>
         <form class="flex-right">
           <button autofocus formmethod="dialog">
             <span class="icon" title="Close">close</span>
           </button>
         </form>
       </header>
-      <div class="flex-center">
-        <img alt="Beaming logo" id="logo" src="images/logo.svg" />
-      </div>
-      <p>
-        <em>Beaming</em> is a free, open source, browser-based puzzle game that involves directing beams through a
-        hexagonal grid. The rules and solution for each puzzle can be inferred by interaction and visual cues. Both
-        desktop and mobile devices are supported.
-      </p>
-      <div class="buttons flex-center">
-        <button class="button" id="feedback">Give Feedback</button>
-        <a class="button" href="https://buymeacoffee.com/kflorence" id="support" target="_blank">Give Support</a>
-        <a class="button" href="?edit" target="_blank">Puzzle Editor</a>
-      </div>
-      <details id="puzzle-info">
-        <summary id="puzzle-info-id"></summary>
-        <ul>
-          <li id="puzzle-info-title"></li>
-          <li id="puzzle-info-author"></li>
-        </ul>
-      </details>
-      <details>
-        <summary>The Basics</summary>
+      <main>
         <p>
-          The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
-          screen that contains <em>actions</em> that can be used to manipulate items in the puzzle. The solution
-          for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
-          of the screen.
+          <em>Beaming</em> is an open source, browser-based puzzle game that involves directing beams through a
+          hexagonal grid. The rules and solution for each puzzle can be inferred by interaction and visual cues. If
+          you'd prefer a little more guidance before you get started, you can expand the sections below for more
+          information.
         </p>
-        <h4>Actions and Attributes</h4>
-        <p>
-          The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
-          Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
-          belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
-          when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
-          can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
-          situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
-        </p>
-        <h4>Interaction</h4>
-        <p>
-          In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
-          then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
-          which are listed below and expanded upon in the <em>Actions</em> section below:
-        </p>
-        <ul>
-          <li>
-            <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
-            tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
-            either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside the
-            puzzle area.
-          </li>
-          <li>
-            <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
-            the pointer outside the action, to toggle between states. For example, the <em>Rotate</em> action can be
-            swiped to change the applied direction of rotation.
-          </li>
-        </ul>
-      </details>
-      <details>
-        <summary>Solutions</summary>
-        <p>
-          As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
-          and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
-          require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
-          more about it.
-        </p>
-        <details>
-          <summary><span class="icon fill" title="Connections">link</span> - Connections</summary>
-          <p>
-            A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
-            of the same color.
-          </p>
-        </details>
-        <details>
-          <summary><span class="icon fill" title="Moves">stacks</span> - Moves</summary>
-          <p>
-            A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
-            some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
-            multiple potential exit portals, the resulting decision will result in an additional move.
-          </p>
-        </details>
-      </details>
-      <details>
-        <summary>Attributes</summary>
-        <p>
-          As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
-          indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
-        </p>
-        <details>
-          <summary><span class="icon fill" title="Immutable">block</span> - Immutable</summary>
-          <p>
-            The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
-            disabled.
-          </p>
-        </details>
-        <details>
-          <summary><span class="icon fill" title="Locked">lock</span> - Locked</summary>
-          <p>
-            Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
-            available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
-            further actions will be available for the tile.
-          </p>
-        </details>
-      </details>
-      <details>
-        <summary>Actions</summary>
-        <p>
-          As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
-          and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
-          learn more about it.
-        </p>
-        <details>
-          <summary><span class="icon fill" title="Toggle">toggle_on</span> - Toggle</summary>
-          <p>
-            Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
-            <em>terminus</em> item will turn beams on and off.
-          </p>
-        </details>
-        <details>
-          <summary><span class="icon fill" title="Rotate">rotate_left</span> - Rotate</summary>
-          <p>
-            Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
-            (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
-            the direction of the applied rotation.
-          </p>
-        </details>
-        <details>
-          <summary><span class="icon fill" title="Move">drag_pan</span> - Move</summary>
-          <p>
-            Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
-            of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
-          </p>
-        </details>
-        <details>
-          <summary><span class="icon fill" title="Swap">swap_horiz</span> - Swap</summary>
-          <p>
-            Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
-            items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
-          </p>
-        </details>
-      </details>
-      <details id="help">
-        <summary>Help</summary>
-        <h4>Feedback</h4>
-        <p>
-          If you have a suggestion or encounter any problem, please use the form below to report them. Email address is
-          optional, but you can include it if you want to get a response back.
-        </p>
-        <section id="feedback-container"></section>
-        <h4>Troubleshooting</h4>
-        <p>
-          You might be wondering what all that stuff in the URL is. Each URL parameter is separated by a forward slash
-          (<code>/</code>). The parameter after the hash (<code>#</code>) symbol is the puzzle ID. The parameter after
-          that is the state of the current puzzle, stored base64 encoded and compressed. Both of these parameters are
-          optional and will be automatically updated when you load and interact with the game. In addition to storing
-          state in the URL, which is useful when sharing the state of a puzzle with others, state is also stored locally
-          in your browser's <code>localStorage</code> cache. If for some reason you need to clear cache for a puzzle, you
-          can insert <code>?clearCache=[puzzle ID]</code> in the URL right after the opening forward slash. If you want
-          to clear all cache, omit the <code>=[puzzle ID]</code>, or execute <code>localStorage.clear()</code> in your
-          browser's console.
-        </p>
-      </details>
-      <h3>Thanks!</h3>
-      <p>
-        This game was primarily inspired by
-        <a href="https://en.wikipedia.org/wiki/The_Talos_Principle">The Talos Principle</a> and
-        <a href="https://en.wikipedia.org/wiki/The_Witness_(2016_video_game)">The Witness</a>, two highly recommended
-        puzzle games. Additionally, this game would not have been possible without the
-        <a href="http://paperjs.org/">Paper.js</a> library.
-      </p>
-      <p>If you're enjoying the game, please consider sharing it with others!</p>
-      <p class="emoji">&#128513;</p>
-      <footer>
-        <div class="flex-left">
-          <ul>
-            <li><a href="https://github.com/kflorence/beaming">source</a></li>
-          </ul>
+        <h3>Table of Contents</h3>
+        <div class="wrapper">
+          <details id="puzzle-info">
+            <summary id="puzzle-info-id"></summary>
+            <main>
+              <ul>
+                <li id="puzzle-info-title"></li>
+                <li id="puzzle-info-author"></li>
+              </ul>
+            </main>
+          </details>
+          <details>
+            <summary>The Basics</summary>
+            <main>
+              <p>
+                The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
+                screen that contains <em>actions</em> that can be used to manipulate items in the puzzle. The solution
+                for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
+                of the screen.
+              </p>
+              <h4>Actions and Attributes</h4>
+              <p>
+                The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
+                Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
+                belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
+                when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
+                can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
+                situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
+              </p>
+              <h4>Interaction</h4>
+              <p>
+                In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
+                then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
+                which are listed below and expanded upon in the <em>Actions</em> section below:
+              </p>
+              <ul>
+                <li>
+                  <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
+                  tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
+                  either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside the
+                  puzzle area.
+                </li>
+                <li>
+                  <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
+                  the pointer outside the action, to toggle between states. For example, the <em>Rotate</em> action can be
+                  swiped to change the applied direction of rotation.
+                </li>
+              </ul>
+            </main>
+          </details>
+          <details>
+            <summary>Solution Requirements</summary>
+            <main>
+              <p>
+                As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
+                and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
+                require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
+                more about it.
+              </p>
+              <details>
+                <summary><span class="icon fill" title="Connections">link</span> - Connections</summary>
+                <p>
+                  A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
+                  of the same color.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Moves">stacks</span> - Moves</summary>
+                <p>
+                  A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
+                  some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
+                  multiple potential exit portals, the resulting decision will result in an additional move.
+                </p>
+              </details>
+            </main>
+          </details>
+          <details>
+            <summary>Attributes</summary>
+            <main>
+              <p>
+                As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
+                indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
+              </p>
+              <details>
+                <summary><span class="icon fill" title="Immutable">block</span> - Immutable</summary>
+                <p>
+                  The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
+                  disabled.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Locked">lock</span> - Locked</summary>
+                <p>
+                  Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
+                  available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
+                  further actions will be available for the tile.
+                </p>
+              </details>
+            </main>
+          </details>
+          <details>
+            <summary>Actions</summary>
+            <main>
+              <p>
+                As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
+                and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
+                learn more about it.
+              </p>
+              <details>
+                <summary><span class="icon fill" title="Toggle">toggle_on</span> - Toggle</summary>
+                <p>
+                  Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
+                  <em>terminus</em> item will turn beams on and off.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Rotate">rotate_left</span> - Rotate</summary>
+                <p>
+                  Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
+                  (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
+                  the direction of the applied rotation.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Move">drag_pan</span> - Move</summary>
+                <p>
+                  Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
+                  of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Swap">swap_horiz</span> - Swap</summary>
+                <p>
+                  Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
+                  items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                </p>
+              </details>
+            </main>
+          </details>
         </div>
-        <div class="flex-right">
-          <form><button class="button" formmethod="dialog">close</button></form>
-        </div>
-      </footer>
+        <h3>Credits</h3>
+        <ul>
+          <li>Game design by: <a href="http://kflorence.com">Kyle Florence</a></li>
+          <li>Logo design by: <a href="http://kathy-lam.com">Kathy Lam</a></li>
+          <li>Built with: <a href="http://paperjs.org">Paper.js</a></li>
+          <li>Inspired by: The Talos Principle and The Witness</li>
+          <li>Special thanks to: Kathy Lam and the Thinky Games community for playtesting and quality assurance!</li>
+        </ul>
+      </main>
+    </dialog>
+    <dialog id="dialog-settings">
+      <header>
+        <h1 class="flex-left">Settings</h1>
+        <form class="flex-right">
+          <button autofocus formmethod="dialog">
+            <span class="icon" title="Close">close</span>
+          </button>
+        </form>
+      </header>
+      <main>
+        TODO
+      </main>
     </dialog>
     <div class="hide">
       <svg id="icon-immutable" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q54 0 104-17.5t92-50.5L228-676q-33 42-50.5 92T160-480q0 134 93 227t227 93Zm252-124q33-42 50.5-92T800-480q0-134-93-227t-227-93q-54 0-104 17.5T284-732l448 448Z"/></svg>

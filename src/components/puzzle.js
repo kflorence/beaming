@@ -650,7 +650,11 @@ export class Puzzle {
     const id = this.state.getId()
 
     // Update browser title
-    elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`
+    const title = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`
+    if (elements.title.textContent !== title) {
+      // In electron, updating the title causes a "flicker" of the text, so only do it when necessary
+      elements.title.textContent = title
+    }
 
     removeClass(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children))
 
