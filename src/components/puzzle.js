@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer, Path, Size } from 'paper'
+import paper, { Layer, Path, Point, Size } from 'paper'
 import { addClass, base64encode, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -16,7 +16,6 @@ import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
 import { Tile } from './items/tile'
-import { Editor } from './editor'
 import { View } from './view'
 import { Schema } from './schema'
 
@@ -34,8 +33,6 @@ const elements = Object.freeze({
   infoAuthor: document.getElementById('puzzle-info-author'),
   infoId: document.getElementById('puzzle-info-id'),
   infoTitle: document.getElementById('puzzle-info-title'),
-  next: document.getElementById('puzzle-next'),
-  previous: document.getElementById('puzzle-previous'),
   recenter: document.getElementById('puzzle-recenter'),
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
@@ -60,9 +57,9 @@ export class Puzzle {
 
   #beamsUpdateDelay = 30
   #collisions = {}
-  #editor
   #eventListeners = new EventListeners({ context: this })
   #interact
+  #isReadOnly = false
   #isUpdatingBeams = false
   #isTearingDown = false
   #mask
@@ -75,24 +72,17 @@ export class Puzzle {
     // noinspection JSCheckFunctionSignatures
     paper.setup(elements.canvas)
 
+    this.resize(false)
+
     // These layers will be added in the order they are defined
     const layers = ['mask', 'collisions', 'debug']
     layers.forEach((name) => {
       this.layers[name] = new Layer({ name })
     })
 
-    if (params.has(State.ParamKeys.Edit)) {
-      // Edit mode
-      this.#editor = new Editor(this)
-    }
-
-    this.resize(false)
-
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
       { type: 'change', element: elements.id, handler: this.#onSelect },
-      { type: 'click', element: elements.next, handler: this.#next },
-      { type: 'click', element: elements.previous, handler: this.#previous },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
@@ -111,14 +101,11 @@ export class Puzzle {
     this.#updateDropdown()
 
     this.select()
-
-    if (this.#editor) {
-      this.#editor.setup()
-    }
   }
 
-  centerOnTile (offset) {
-    const tile = this.layout.getTile(offset)
+  // Used by functional tests
+  centerOnTile (r, c) {
+    const tile = this.layout.getTile(new OffsetCoordinates(r, c))
     View.setCenter(tile.center)
     return tile.equals(this.selectedTile)
   }
@@ -127,13 +114,13 @@ export class Puzzle {
     this.layers.debug.clear()
   }
 
-  drawDebugPoint (point, style = {}) {
+  drawDebugPoint (x, y, style = {}) {
     const circle = new Path.Circle(Object.assign({
       radius: 3,
       fillColor: 'red',
       strokeColor: 'white',
       strokeWidth: 1,
-      center: point
+      center: new Point(x, y)
     }, style))
     this.layers.debug.addChild(circle)
   }
@@ -213,6 +200,7 @@ export class Puzzle {
 
   onError (error, message, cause) {
     this.error = true
+    this.#isReadOnly = true
 
     // Support exclusion of error
     if (typeof error === 'string') {
@@ -264,6 +252,9 @@ export class Puzzle {
     } else if (typeof state === 'object') {
       // Update current state
       this.state.update(state)
+    } else if (state === false) {
+      // Re-resolve state
+      this.state = State.resolve()
     }
 
     try {
@@ -280,7 +271,7 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
-  resize (reload = true) {
+  resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
 
     const newSize = new Size(width, height)
@@ -296,8 +287,6 @@ export class Puzzle {
 
     paper.view.viewSize = newSize
 
-    this.#editor?.onResize(newSize)
-
     this.recenter()
 
     if (reload) {
@@ -305,6 +294,10 @@ export class Puzzle {
       // See: https://github.com/paperjs/paper.js/issues/1757
       // Forcing a reload fixes it.
       this.reload()
+    }
+
+    if (event) {
+      emitEvent(Puzzle.Events.Resized, { newSize })
     }
   }
 
@@ -389,13 +382,6 @@ export class Puzzle {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return this.layout.modifiers.concat(tile?.modifiers || [])
       .sort((a, b) => a.id - b.id)
-  }
-
-  #next () {
-    const id = Puzzles.visible.nextId(this.state.getId())
-    if (id) {
-      this.select(id)
-    }
   }
 
   #onBeamUpdate (event) {
@@ -521,6 +507,7 @@ export class Puzzle {
     }
 
     this.solved = true
+    this.#isReadOnly = true
 
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
@@ -543,9 +530,8 @@ export class Puzzle {
 
   #onTap (event) {
     let tile
-
-    if ((this.#editor && !this.#editor.isLocked()) || this.solved || this.error) {
-      // In a state that cannot be interacted with
+    console.log('puzzle on tap', this.#isReadOnly)
+    if (this.#isReadOnly) {
       return
     }
 
@@ -571,13 +557,6 @@ export class Puzzle {
     }
   }
 
-  #previous () {
-    const id = Puzzles.visible.previousId(this.state.getId())
-    if (id) {
-      this.select(id)
-    }
-  }
-
   #redo () {
     if (this.state.redo()) {
       this.reload()
@@ -600,6 +579,8 @@ export class Puzzle {
 
   #setup () {
     const { layout, message, solution } = this.state.getCurrent()
+
+    this.#isReadOnly = false
 
     this.layout = new Layout(layout)
     this.message = message
@@ -636,6 +617,7 @@ export class Puzzle {
     this.layout?.teardown()
     this.layout = undefined
     this.selectedTile = undefined
+    this.#isReadOnly = false
     this.#isUpdatingBeams = false
     this.#isTearingDown = false
   }
@@ -647,15 +629,6 @@ export class Puzzle {
   }
 
   #updateActions () {
-    const id = this.state.getId()
-
-    // Update browser title
-    const title = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`
-    if (elements.title.textContent !== title) {
-      // In electron, updating the title causes a "flicker" of the text, so only do it when necessary
-      elements.title.textContent = title
-    }
-
     removeClass(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children))
 
     const disable = []
@@ -670,17 +643,6 @@ export class Puzzle {
 
     if (!this.state.canReset()) {
       disable.push(elements.reset)
-    }
-
-    if (!Puzzles.visible.has(id)) {
-      // Custom puzzle
-      disable.push(elements.previous, elements.next)
-    } else {
-      if (id === Puzzles.visible.firstId) {
-        disable.push(elements.previous)
-      } else if (id === Puzzles.visible.lastId) {
-        disable.push(elements.next)
-      }
     }
 
     addClass(Puzzle.ClassNames.Disabled, ...disable)
@@ -843,6 +805,7 @@ export class Puzzle {
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'
   })

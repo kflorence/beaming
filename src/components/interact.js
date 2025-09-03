@@ -13,6 +13,7 @@ export class Interact {
   #offset
 
   constructor (element) {
+    // FIXME the offset should be updated if the bounds change
     this.#bounds = element.getBoundingClientRect()
     this.#element = element
     this.#offset = new Point(this.#bounds.left, this.#bounds.top)

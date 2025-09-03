@@ -176,13 +176,15 @@ dialog ul {
 
 #dialog-title {
   align-items: center;
+  box-sizing: border-box;
   justify-content: center;
+  padding: 2em;
 }
 
 #dialog-title ul {
   font-size: 2em;
   list-style: none;
-  margin: 2em 0;
+  margin: 2em 0 0 0;
   padding: 0;
   text-align: center;
 }
@@ -405,8 +407,8 @@ dialog ul {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #logo {
+  min-width: 160px;
   max-width: 320px;
-  width: 75%;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -414,9 +416,10 @@ dialog ul {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #puzzle {
-  position: relative;
   container-name: puzzle;
   container-type: inline-size;
+  position: relative;
+  visibility: hidden;
 }
 
 #puzzle-canvas {
@@ -612,10 +615,15 @@ dialog ul {
   background-color: black;
 }
 
+
 .edit #editor-wrapper,
 .edit #gutter,
 .edit #puzzle-title {
   display: flex;
+}
+
+.edit #puzzle {
+  visibility: visible;
 }
 
 .edit #puzzle-selector {
@@ -647,7 +655,7 @@ dialog ul {
 }
 
 .hide {
-  display: none;
+  display: none !important;
 }
 
 /* See: https://developers.google.com/fonts/docs/material_icons */
@@ -777,6 +785,11 @@ i.fill,
   overflow: hidden;
 }
 
+.play #puzzle {
+  display: block;
+  visibility: visible;
+}
+
 .puzzle-error:not(.puzzle-loaded) #puzzle-canvas,
 .puzzle-error #modifiers {
   display: none;
@@ -846,11 +859,5 @@ i.fill,
 
   #editor-dock {
     display: none;
-  }
-}
-
-@media (max-width: 1024px) {
-  dialog {
-    width: 100%;
   }
 }

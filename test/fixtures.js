@@ -66,7 +66,7 @@ class PuzzleFixture {
 
   async clickTile (r, c) {
     // Center on the tile we want to click on. This ensures it is visible
-    const isSelected = await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
+    const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
     if (!isSelected) {
       await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
     }

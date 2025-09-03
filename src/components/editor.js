@@ -13,6 +13,7 @@ import 'tippy.js/dist/tippy.css'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
+  canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
   dock: document.getElementById('editor-dock'),
@@ -51,18 +52,15 @@ export class Editor {
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
-  #layer
+  #layer = new Layer()
   #puzzle
 
   constructor (puzzle) {
-    document.body.classList.add(Editor.ClassNames.Edit)
-
-    this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
-    this.#layer = new Layer()
-    this.#puzzle = puzzle
-
     // Place this layer under all the other ones
     paper.project.insertLayer(0, this.#layer)
+
+    this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
+    this.#puzzle = puzzle
   }
 
   getState () {
@@ -84,7 +82,6 @@ export class Editor {
     if (window.innerWidth < Editor.minWidth && !this.#gutter.horizontal) {
       // Set orientation to horizontal on small screens
       this.#gutter.toggleOrientation()
-      this.#puzzle.resize(false)
     }
   }
 
@@ -92,6 +89,11 @@ export class Editor {
     if (this.#editor) {
       return
     }
+
+    this.#gutter.setup()
+
+    this.#puzzle.resize(false)
+    this.#puzzle.reload(false)
 
     const state = this.#puzzle.state
 
@@ -107,7 +109,8 @@ export class Editor {
       { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
-      { type: 'pointermove', element: this.#puzzle.element, handler: this.#onPointerMove },
+      { type: 'pointermove', handler: this.#onPointerMove },
+      { type: Puzzle.Events.Resized, handler: this.onResize },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
       { type: 'tap', element: this.#puzzle.element, handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
@@ -124,6 +127,25 @@ export class Editor {
     this.#updateCenter()
 
     this.#setup()
+  }
+
+  teardown () {
+    if (!this.#editor) {
+      return
+    }
+
+    this.#editor.destroy()
+    this.#eventListener.remove()
+    this.#gutter.teardown()
+
+    this.group.removeChildren()
+    this.group.remove()
+    this.#layer.removeChildren()
+    this.#layer.remove()
+
+    this.#copy = undefined
+    this.#editor = undefined
+    this.#hover = undefined
   }
 
   #onConfigurationCancel () {
@@ -174,8 +196,6 @@ export class Editor {
       icon.title = 'Dock to bottom'
       icon.textContent = 'dock_to_bottom'
     }
-
-    this.#onGutterMoved()
   }
 
   #onEditorUpdate (value = this.#editor?.getValue()) {
@@ -195,6 +215,7 @@ export class Editor {
     } else {
       // Update the entire state
       state = value
+      console.trace(state, current)
       // Tiles are not editable globally
       state.layout.tiles = current.layout.tiles
     }
@@ -210,6 +231,7 @@ export class Editor {
 
   #onGutterMoved () {
     this.#puzzle.resize()
+    this.#updateCenter()
   }
 
   #onPaste () {
@@ -230,6 +252,10 @@ export class Editor {
   #onPointerMove (event) {
     if (event.pointerType !== 'mouse') {
       // Only display the hover indicator when using a mouse
+      return
+    } else if (event.target !== elements.canvas) {
+      this.#hover?.remove()
+      this.#hover = undefined
       return
     }
 
@@ -282,9 +308,13 @@ export class Editor {
   }
 
   #onTap (event) {
+    console.log('editor on tap')
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
       return
+    } else {
+      // Prevent puzzle from handling this event
+      event.stopImmediatePropagation()
     }
 
     const layout = this.#puzzle.layout

@@ -31,11 +31,9 @@
           </div>
           <div class="flex-center">
             <ul id="puzzle-header-menu" class="menu">
-              <li id="puzzle-previous"><span class="icon" title="Previous Puzzle">navigate_before</span></li>
               <li id="puzzle-undo"><span class="icon" title="Undo">undo</span></li>
               <li id="puzzle-reset"><span class="icon" title="Reset">device_reset</span></li>
               <li id="puzzle-redo"><span class="icon" title="Redo">redo</span></li>
-              <li id="puzzle-next"><span class="icon" title="Next Puzzle">navigate_next</span></li>
               <li id="puzzle-recenter"><span class="icon" title="Re-center">recenter</span></li>
             </ul>
           </div>
@@ -80,13 +78,13 @@
         <button id="editor-cancel">Cancel</button>
       </footer>
     </div>
-    <dialog class="loading" id="dialog-title" open="true">
+    <dialog class="loading" id="dialog-title">
       <svg-inline id="logo" src="images/logo.svg"></svg-inline>
       <ul>
-        <li id="title-play"><a href="?play">play</a></li>
+        <li id="title-play">play</li>
         <li data-dialog="dialog-about">about</li>
         <li data-dialog="dialog-settings">settings</li>
-        <li id="title-editor"><a href="?edit">editor</a></li>
+        <li id="title-editor">editor</li>
         <li id="title-quit">quit</li>
       </ul>
     </dialog>

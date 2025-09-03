@@ -1,12 +1,26 @@
-const { app, BrowserWindow } = require('electron/main')
+const { app, BrowserWindow, ipcMain } = require('electron/main')
+const path = require('path')
+
+// Menu.setApplicationMenu(null)
 
 function createWindow () {
   const window = new BrowserWindow({
-    width: 800,
-    height: 600
+    backgroundColor: '#fff',
+    height: 768,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js')
+    },
+    width: 1024
   })
 
   window.loadFile('dist/index.html')
+
+  window.on('ready-to-show', () => {
+    // https://github.com/electron/electron/issues/10572
+    window.webContents.setZoomFactor(1)
+    window.show()
+  })
 }
 
 app.whenReady().then(() => {
@@ -17,6 +31,10 @@ app.whenReady().then(() => {
       createWindow()
     }
   })
+})
+
+ipcMain.on('quit', () => {
+  app.quit()
 })
 
 app.on('window-all-closed', () => {

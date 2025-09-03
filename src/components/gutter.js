@@ -15,7 +15,9 @@ export class Gutter {
   constructor (pane0, pane1) {
     this.panes = [pane0, pane1]
     this.horizontal = localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Horizontal)) === 'true'
+  }
 
+  setup () {
     this.#eventListener.add([
       { type: 'pointercancel', handler: this.#onPointerUp },
       { type: 'pointerdown', element: this.element, handler: this.#onPointerDown },
@@ -23,10 +25,27 @@ export class Gutter {
       { type: 'pointerup', handler: this.#onPointerUp }
     ])
 
-    this.reset()
+    this.update()
   }
 
-  reset () {
+  teardown () {
+    document.body.classList.remove(...Gutter.classNames)
+    this.panes.forEach((pane) => pane.removeAttribute('style'))
+    this.#eventListener.remove()
+  }
+
+  toggleOrientation () {
+    this.horizontal = !this.horizontal
+    localStorage.setItem(Gutter.#key(Gutter.CacheKeys.Horizontal), this.horizontal.toString())
+
+    this.update()
+
+    emitEvent(Gutter.Events.Moved, { gutter: this })
+
+    return this.horizontal
+  }
+
+  update () {
     this.panes.forEach((pane) => pane.removeAttribute('style'))
 
     document.body.classList.toggle(Gutter.ClassNames.Horizontal, this.horizontal)
@@ -35,19 +54,6 @@ export class Gutter {
       width: localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Width)),
       height: localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Height))
     })
-  }
-
-  teardown () {
-    this.#eventListener.remove()
-  }
-
-  toggleOrientation () {
-    this.horizontal = !this.horizontal
-    localStorage.setItem(Gutter.#key(Gutter.CacheKeys.Horizontal), this.horizontal.toString())
-
-    this.reset()
-
-    return this.horizontal
   }
 
   #getPaneSizes () {
@@ -120,6 +126,8 @@ export class Gutter {
   static ClassNames = Object.freeze({
     Horizontal: 'gutter-horizontal'
   })
+
+  static classNames = Object.values(Gutter.ClassNames)
 
   static Events = Object.freeze({
     Moved: 'gutter-moved'

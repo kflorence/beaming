@@ -6,9 +6,9 @@ import { Point, Size } from 'paper'
 
 const location = window.location
 
-export const params = new URLSearchParams(location.search)
 export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
+export const params = url.searchParams
 
 // noinspection JSCheckFunctionSignatures
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
