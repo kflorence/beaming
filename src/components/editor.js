@@ -215,7 +215,6 @@ export class Editor {
     } else {
       // Update the entire state
       state = value
-      console.trace(state, current)
       // Tiles are not editable globally
       state.layout.tiles = current.layout.tiles
     }
@@ -308,13 +307,9 @@ export class Editor {
   }
 
   #onTap (event) {
-    console.log('editor on tap')
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
-      return
-    } else {
-      // Prevent puzzle from handling this event
-      event.stopImmediatePropagation()
+      return this.#puzzle.tap(event)
     }
 
     const layout = this.#puzzle.layout
@@ -450,10 +445,6 @@ export class Editor {
 
   static CacheKeys = Object.freeze({
     Locked: 'locked'
-  })
-
-  static ClassNames = Object.freeze({
-    Edit: 'edit'
   })
 
   static minWidth = 768

@@ -19,7 +19,6 @@ export class Game {
   #eventListeners = new EventListeners({ context: this })
 
   constructor () {
-    // FIXME: bind editor events before puzzle events so propagation can be controlled from editor
     this.puzzle = new Puzzle()
     this.editor = new Editor(this.puzzle)
 
@@ -31,8 +30,8 @@ export class Game {
     if (params.has(Game.States.Play)) {
       document.body.classList.add(Game.States.Play)
     } else if (params.has(Game.States.Edit)) {
-      document.body.classList.add(Game.States.Edit)
       this.editor.setup()
+      document.body.classList.add(Game.States.Edit)
     } else {
       elements.title.showModal()
     }

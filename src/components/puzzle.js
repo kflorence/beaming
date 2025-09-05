@@ -18,6 +18,7 @@ import { Interact } from './interact'
 import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
+import { Game } from './game'
 
 const confirm = window.confirm
 
@@ -59,7 +60,6 @@ export class Puzzle {
   #collisions = {}
   #eventListeners = new EventListeners({ context: this })
   #interact
-  #isReadOnly = false
   #isUpdatingBeams = false
   #isTearingDown = false
   #mask
@@ -80,6 +80,8 @@ export class Puzzle {
       this.layers[name] = new Layer({ name })
     })
 
+    this.#interact = new Interact(elements.canvas)
+
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
       { type: 'change', element: elements.id, handler: this.#onSelect },
@@ -97,7 +99,6 @@ export class Puzzle {
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
 
-    this.#interact = new Interact(elements.canvas)
     this.#updateDropdown()
 
     this.select()
@@ -200,7 +201,6 @@ export class Puzzle {
 
   onError (error, message, cause) {
     this.error = true
-    this.#isReadOnly = true
 
     // Support exclusion of error
     if (typeof error === 'string') {
@@ -273,9 +273,10 @@ export class Puzzle {
 
   resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
-
+    console.log('resize', width, height)
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
+      console.log('got here')
       // Nothing to do
       return
     }
@@ -308,6 +309,35 @@ export class Puzzle {
     }
 
     this.reload(State.resolve(id))
+  }
+
+  tap (event) {
+    if (this.error || this.solved) {
+      // Can't tap
+      return
+    }
+
+    const result = paper.project.hitTest(event.detail.point)
+
+    let tile
+    switch (result?.item.data.type) {
+      case Item.Types.mask:
+        return
+      case Item.Types.tile:
+        tile = this.layout.getTile(result.item.data.coordinates.offset)
+        break
+    }
+
+    // There is an active mask
+    if (this.#mask) {
+      this.#mask.onTap(this, tile)
+    } else {
+      const previouslySelectedTile = this.updateSelectedTile(tile)
+
+      if (tile && tile === previouslySelectedTile) {
+        tile.onTap(event)
+      }
+    }
   }
 
   unmask () {
@@ -507,7 +537,6 @@ export class Puzzle {
     }
 
     this.solved = true
-    this.#isReadOnly = true
 
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
@@ -529,32 +558,12 @@ export class Puzzle {
   }
 
   #onTap (event) {
-    let tile
-    console.log('puzzle on tap', this.#isReadOnly)
-    if (this.#isReadOnly) {
+    if (params.has(Game.States.Edit)) {
+      // Let the editor handle tap events
       return
     }
 
-    const result = paper.project.hitTest(event.detail.point)
-
-    switch (result?.item.data.type) {
-      case Item.Types.mask:
-        return
-      case Item.Types.tile:
-        tile = this.layout.getTile(result.item.data.coordinates.offset)
-        break
-    }
-
-    // There is an active mask
-    if (this.#mask) {
-      this.#mask.onTap(this, tile)
-    } else {
-      const previouslySelectedTile = this.updateSelectedTile(tile)
-
-      if (tile && tile === previouslySelectedTile) {
-        tile.onTap(event)
-      }
-    }
+    return this.tap(event)
   }
 
   #redo () {
@@ -579,8 +588,6 @@ export class Puzzle {
 
   #setup () {
     const { layout, message, solution } = this.state.getCurrent()
-
-    this.#isReadOnly = false
 
     this.layout = new Layout(layout)
     this.message = message
@@ -617,7 +624,6 @@ export class Puzzle {
     this.layout?.teardown()
     this.layout = undefined
     this.selectedTile = undefined
-    this.#isReadOnly = false
     this.#isUpdatingBeams = false
     this.#isTearingDown = false
   }
