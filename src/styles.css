@@ -37,7 +37,7 @@ details {
 }
 
 details > main {
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #666;
   margin-left: 1em;
   padding-bottom: 1em;
 }
@@ -123,7 +123,7 @@ dialog > main {
 
 dialog header button {
   background: #fff;
-  border: #666 1px solid;
+  border: 1px solid #666;
   border-radius: 0.25em;
   color: #000;
   cursor: pointer;
@@ -170,6 +170,7 @@ dialog footer ul li:first-child {
 
 dialog > main {
   background-color: white;
+  border: 1px solid #666;
   border-radius: 0.25em;
   overflow: auto;
   padding: 1em;
@@ -197,7 +198,7 @@ dialog ul {
 
 #dialog-title ul li {
   background-color: #fff;
-  border: #666 1px solid;
+  border: 1px solid #666;
   border-radius: 0.25em;
   color: #000;
   cursor: pointer;
@@ -226,7 +227,7 @@ dialog ul {
 
 #debug {
   background-color: #bbb;
-  border: #666 1px solid;
+  border: 1px solid #666;
   border-radius: 0.5rem;
   bottom: 1em;
   cursor: default;
@@ -333,7 +334,7 @@ dialog ul {
 
 #editor-wrapper {
   background-color: white;
-  border-left: #666 1px solid;
+  border-left: 1px solid #666;
   box-shadow: 0 0 0.5rem 0.25rem #ccc;
   display: none;
   user-select: none;
@@ -369,12 +370,12 @@ dialog ul {
 }
 
 #editor-wrapper footer {
-  border-top: #666 1px solid;
+  border-top: 1px solid #666;
   clip-path: inset(-1rem 0 0 0);
 }
 
 #editor-wrapper header {
-  border-bottom: #666 1px solid;
+  border-bottom: 1px solid #666;
 }
 
 #editor-wrapper main {
@@ -386,7 +387,7 @@ dialog ul {
 }
 
 .gutter-horizontal #editor-wrapper header {
-  border-top: #666 1px solid;
+  border-top: 1px solid #666;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -470,7 +471,7 @@ dialog ul {
 #puzzle-footer,
 #puzzle-header {
   background-color: white;
-  border: #666 1px solid;
+  border: 1px solid #666;
   border-radius: 0.5rem;
   box-shadow: 0 0 0.5rem 0.25rem #ccc;
   margin: 0 auto;
