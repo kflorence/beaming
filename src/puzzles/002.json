@@ -196,11 +196,15 @@
       }
     ]
   },
-  "version": 0,
+  "version": 1,
   "solution": [
     {
       "type": "Connections",
       "amount": 5
+    },
+    {
+      "type": "Moves",
+      "amount": 4
     }
   ]
 }

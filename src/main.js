@@ -1,11 +1,13 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('path')
 
+// Disable default menus
 // Menu.setApplicationMenu(null)
 
 function createWindow () {
   const window = new BrowserWindow({
-    backgroundColor: '#fff',
+    // Should match body background color
+    backgroundColor: '#ccc',
     height: 768,
     show: false,
     webPreferences: {
