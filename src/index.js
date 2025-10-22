@@ -1,4 +1,5 @@
 import './dialog'
+import './settings'
 
 import { Game } from './components/game'
 

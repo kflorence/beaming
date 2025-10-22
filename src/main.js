@@ -1,11 +1,17 @@
 const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('path')
 
+const channels = Object.freeze({
+  fullscreen: 'fullscreen',
+  quit: 'quit'
+})
+
 // Disable default menus
 // Menu.setApplicationMenu(null)
 
+let window
 function createWindow () {
-  const window = new BrowserWindow({
+  window = new BrowserWindow({
     // Should match body background color
     backgroundColor: '#ccc',
     height: 768,
@@ -35,12 +41,16 @@ app.whenReady().then(() => {
   })
 })
 
-ipcMain.on('quit', () => {
-  app.quit()
-})
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+ipcMain.on(channels.fullscreen, (event, flag) => {
+  window.setFullScreen(flag)
+})
+
+ipcMain.on(channels.quit, () => {
+  app.quit()
 })

@@ -302,7 +302,7 @@ export class State {
 
   static resolve (id) {
     let values = []
-    console.log('State.resolve', id)
+
     if (id !== undefined) {
       // Explicit ID will take precedence over other resolution methods
       values.push(id)
