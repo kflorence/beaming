@@ -9,6 +9,7 @@ import { EventListeners } from './eventListeners'
 const elements = Object.freeze({
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
+  quit: document.getElementById('title-quit'),
   title: document.getElementById('dialog-title')
 })
 
@@ -24,7 +25,8 @@ export class Game {
 
     this.#eventListeners.add([
       { type: 'click', element: elements.edit, handler: this.edit },
-      { type: 'click', element: elements.play, handler: this.play }
+      { type: 'click', element: elements.play, handler: this.play },
+      { type: 'click', element: elements.quit, handler: this.quit }
     ])
 
     if (params.has(Game.States.Play)) {
@@ -69,6 +71,10 @@ export class Game {
 
     document.body.classList.add(Game.States.Play)
     elements.title.close()
+  }
+
+  quit () {
+    window.electron?.quit()
   }
 
   #reset () {

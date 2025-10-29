@@ -2,8 +2,8 @@ const { app, BrowserWindow, ipcMain } = require('electron/main')
 const path = require('path')
 
 const channels = Object.freeze({
-  fullscreen: 'fullscreen',
-  quit: 'quit'
+  quit: 'quit',
+  resizeWindow: 'resize-window'
 })
 
 // Disable default menus
@@ -29,6 +29,12 @@ function createWindow () {
     window.webContents.setZoomFactor(1)
     window.show()
   })
+
+  window.on('resize', onWindowResize)
+}
+
+function onWindowResize () {
+  window.webContents.send('window-resized', window.getBounds())
 }
 
 app.whenReady().then(() => {
@@ -47,10 +53,36 @@ app.on('window-all-closed', () => {
   }
 })
 
-ipcMain.on(channels.fullscreen, (event, flag) => {
-  window.setFullScreen(flag)
-})
-
 ipcMain.on(channels.quit, () => {
   app.quit()
+})
+
+ipcMain.on(channels.resizeWindow, (event, value, settings) => {
+  window.setFullScreen(value === 'fullscreen')
+
+  // FIXME: fullscreen is asynchronous, so need to handle this after transition completes
+  if (value === 'maximized') {
+    window.maximize()
+  } else if (window.isMaximized()) {
+    window.unmaximize()
+  }
+
+  if (value === 'custom') {
+    const bounds = {
+      height: Number(settings.height),
+      width: Number(settings.width)
+    }
+
+    if (!bounds.height) {
+      delete bounds.height
+    }
+
+    if (!bounds.width) {
+      delete bounds.width
+    }
+
+    // FIXME: establish min/max values
+    console.log('custom', bounds)
+    window.setBounds(bounds)
+  }
 })

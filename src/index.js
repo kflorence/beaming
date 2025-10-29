@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
   require('./analytics')
 }
 
-// This will only exist when running from an electron app
+// Execute initialization if running inside electron
 window.electron?.init()
 
 // Export

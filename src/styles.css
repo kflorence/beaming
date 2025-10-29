@@ -642,6 +642,9 @@ dialog ul {
   background-color: black;
 }
 
+:disabled + label {
+  color: #999;
+}
 
 .edit #editor-wrapper,
 .edit #gutter,
@@ -804,6 +807,10 @@ i.fill,
   display: none;
 }
 
+.number {
+  width: 4em;
+}
+
 .pane {
   box-sizing: border-box;
   display: flex;
@@ -848,8 +855,8 @@ i.fill,
   padding: 0.25em;
 }
 
-.settings label {
-  text-align: right;
+.settings input:disabled {
+  border: 1px solid #999;
 }
 
 .text {

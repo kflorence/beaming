@@ -264,14 +264,23 @@
         </form>
       </header>
       <main>
-        <div class="settings">
-          <label for="fullscreen">Fullscreen</label>
-          <input id="fullscreen" type="checkbox" />
-          <label for="window-width">Window Width</label>
-          <input disabled id="window-width" type="number" />
-          <label for="window-height">Window Height</label>
-          <input disabled id="window-height" type="number" />
-        </div>
+        <fieldset>
+          <legend>Window</legend>
+          <div class="settings">
+            <input id="settings-window-fullscreen" name="settings-window" type="radio" value="fullscreen" />
+            <label for="settings-window-fullscreen">Fullscreen</label>
+            <input id="settings-window-maximized" name="settings-window" type="radio" value="maximized" />
+            <label for="settings-window-maximized">Maximized</label>
+            <input checked id="settings-window-custom" name="settings-window" type="radio" value="custom" />
+            <div>
+              <label for="settings-window-custom">Custom:</label>
+              <input class="number" id="settings-window-width" type="number" />
+              <label for="settings-window-width">Width</label>
+              <input class="number" id="settings-window-height" type="number" />
+              <label for="settings-window-height">Height</label>
+            </div>
+          </div>
+        </fieldset>
       </main>
     </dialog>
     <div class="hide">
