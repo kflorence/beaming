@@ -7,7 +7,7 @@ html,
 body {
   background-color: #ccc;
   color: #333;
-  font-family: 'Noto Sons Mono', monospace;
+  font-family: 'Noto Sans Mono Variable', monospace;
   height: 100%;
   margin: 0;
   overflow: hidden;
@@ -25,7 +25,7 @@ body {
 }
 
 button {
-  font-family: 'Noto Sons Mono', monospace;
+  font-family: 'Noto Sans Mono Variable', monospace;
 }
 
 code {
@@ -694,7 +694,7 @@ i,
   direction: ltr;
   display: inline-block;
   /*noinspection CssNoGenericFontName*/
-  font-family: 'Material Symbols Outlined';
+  font-family: 'Material Symbols Outlined Variable';
   font-size: 24px;
   font-style: normal;
   font-variation-settings:

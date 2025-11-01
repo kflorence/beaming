@@ -1,3 +1,7 @@
+import '@fontsource-variable/material-symbols-outlined'
+import '@fontsource-variable/material-symbols-outlined/fill.css'
+import '@fontsource-variable/noto-sans-mono'
+
 import './dialog'
 import './settings'
 
