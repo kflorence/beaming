@@ -469,18 +469,16 @@ dialog ul {
 
 #puzzle-footer,
 #puzzle-header {
-  background-color: white;
-  border: 1px solid #666;
-  border-radius: 0.5rem;
-  box-shadow: 0 0 0.5rem 0.25rem #ccc;
-  margin: 0 auto;
-  max-width: calc(100% - 2em);
+  box-sizing: border-box;
   min-width: fit-content;
   overflow: hidden;
+  padding: 1em;
+  /* Allow user to interact with underlying canvas. */
+  pointer-events: none;
   position: absolute;
   /* Prevent Chrome from trying to open search on tap in mobile. */
   user-select: none;
-  width: fit-content;
+  width: 100%;
   /* For iOS/Safari. */
   -webkit-user-select: none;
   z-index: 1;
@@ -488,10 +486,8 @@ dialog ul {
 
 #puzzle-footer {
   display: none;
-  bottom: 1em;
+  bottom: 0;
   flex-flow: column wrap;
-  left: 0;
-  right: 0;
 }
 
 #puzzle-footer.active {
@@ -517,24 +513,9 @@ dialog ul {
   border-bottom: 1px solid #ddd;
 }
 
-#puzzle-header {
-  left: 0;
-  right: 0;
-  top: 1em;
-}
-
 #puzzle-header-wrapper {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-}
-
-#puzzle-header-menu {
-  border-left: 1px solid #ddd;
-}
-
-#puzzle-header-message {
-  border-top: 1px solid #ddd;
 }
 
 #puzzle-id {
@@ -569,6 +550,7 @@ dialog ul {
   align-items: stretch;
   display: flex;
   position: relative;
+  min-width: max-content;
 }
 
 #puzzle-selector svg {
@@ -579,7 +561,6 @@ dialog ul {
 
 #puzzle-solution {
   align-items: center;
-  border-left: 1px solid #ddd;
   cursor: default;
   line-height: 24px;
 }
@@ -665,7 +646,7 @@ dialog ul {
 .flex-right {
   align-items: stretch;
   display: flex;
-  flex: 1 auto;
+  flex: 1;
 }
 
 .flex-center {
@@ -682,6 +663,16 @@ dialog ul {
 
 .grab #puzzle-canvas {
   cursor: grabbing;
+}
+
+.group {
+  background-color: white;
+  border: 1px solid #999;
+  border-radius: 0.5rem;
+  display: flex;
+  filter: drop-shadow(0 0 0.25rem #ccc);
+  overflow: clip;
+  pointer-events: all;
 }
 
 .hide {
@@ -795,10 +786,14 @@ i.fill,
 .message {
   align-items: center;
   background-color: #eee;
+  border: 1px solid #999;
+  border-radius: 0.5em;
   display: flex;
-  flex: 100%;
+  filter: drop-shadow(0 0 0.25rem #ccc);
   justify-content: center;
+  justify-self: center;
   line-height: 24px;
+  margin: 1em 0;
   min-height: 24px;
   padding: 1em;
 }
@@ -820,7 +815,7 @@ i.fill,
 }
 
 .play #puzzle {
-  display: block;
+  display: flex;
   visibility: visible;
 }
 
@@ -875,34 +870,34 @@ i.fill,
 /* Media Queries
 /* ------------------------------------------------------------------------------------------------------------------ */
 
-@container puzzle (max-width: 600px) {
-  #puzzle-header {
-    border-radius: 0;
-    max-width: 100%;
-    min-height: fit-content;
-    position: relative;
-    top: 0;
-    width: 100%;
-  }
+/*@container puzzle (max-width: 600px) {*/
+/*  #puzzle-header {*/
+/*    border-radius: 0;*/
+/*    max-width: 100%;*/
+/*    min-height: fit-content;*/
+/*    position: relative;*/
+/*    top: 0;*/
+/*    width: 100%;*/
+/*  }*/
 
-  #puzzle-header .flex-left,
-  #puzzle-header .flex-right {
-    border-top: 1px solid #ddd;
-    order: 0;
-    position: relative;
-    top: -1px;
-  }
+/*  #puzzle-header .flex-left,*/
+/*  #puzzle-header .flex-right {*/
+/*    border-top: 1px solid #ddd;*/
+/*    order: 0;*/
+/*    position: relative;*/
+/*    top: -1px;*/
+/*  }*/
 
-  #puzzle-header .flex-center {
-    border-top: 1px solid #ddd;
-    flex: 100%;
-    order: 1;
-  }
+/*  #puzzle-header .flex-center {*/
+/*    border-top: 1px solid #ddd;*/
+/*    flex: 100%;*/
+/*    order: 1;*/
+/*  }*/
 
-  #puzzle-header-menu {
-    border: 0;
-  }
-}
+/*  #puzzle-header-menu {*/
+/*    border: 0;*/
+/*  }*/
+/*}*/
 
 @media (max-width: 768px) {
   #editor-menu {

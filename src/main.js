@@ -96,7 +96,6 @@ function onResizeWindow (event, value, settings) {
       bounds.width = Math.max(minWidth, Math.min(displaySize.width, bounds.width))
     }
 
-    console.log('custom', bounds)
     window.setBounds(bounds)
   }
 }
