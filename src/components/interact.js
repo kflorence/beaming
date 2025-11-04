@@ -2,20 +2,18 @@ import paper, { Point } from 'paper'
 import { Cache } from './cache'
 import { EventListeners } from './eventListeners'
 import { View } from './view'
+import { Puzzle } from './puzzle'
 
 const navigator = window.navigator
 
 export class Interact {
-  #bounds
   #cache = new Cache(Object.values(Interact.CacheKeys))
   #element
   #eventListener = new EventListeners({ context: this })
   #offset
 
   constructor (element) {
-    this.#bounds = element.getBoundingClientRect()
     this.#element = element
-    this.#offset = new Point(this.#bounds.left, this.#bounds.top)
     this.#eventListener.add([
       { type: 'pointercancel', handler: this.onPointerUp },
       { type: 'pointerdown', handler: this.onPointerDown },
@@ -23,8 +21,11 @@ export class Interact {
       { type: 'pointermove', handler: this.onPointerMove },
       { type: 'pointerout', handler: this.onPointerUp },
       { type: 'pointerup', handler: this.onPointerUp },
+      { type: Puzzle.Events.Resized, handler: this.onResize, element: document },
       { type: 'wheel', handler: this.onMouseWheel, options: { passive: false } }
     ], { element })
+
+    this.onResize()
   }
 
   getProjectPoint (point) {
@@ -128,6 +129,12 @@ export class Interact {
     if (this.#cache.length(Interact.CacheKeys.Move) < 2) {
       this.#cache.get(Interact.CacheKeys.Gesture).unset(Interact.GestureKeys.Pinch)
     }
+  }
+
+  onResize () {
+    const bounds = this.#element.getBoundingClientRect()
+    this.#offset = new Point(bounds.left, bounds.top)
+    console.log('onResize', bounds)
   }
 
   onTap (event) {

@@ -6,9 +6,9 @@ import { Point, Size } from 'paper'
 
 const location = window.location
 
-export const params = new URLSearchParams(location.search)
 export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
+export const params = url.searchParams
 
 // noinspection JSCheckFunctionSignatures
 export const jsonDiffPatch = jsonDiffPatchFactory.create({ objectHash: deepEqual })
@@ -142,9 +142,10 @@ export function getDistance (point) {
   return (a, b) => a.subtract(point).length - b.subtract(point).length
 }
 
-export function getIconElement (name, title) {
+export function getIconElement (name, title, fill = true) {
   const span = document.createElement('span')
-  span.classList.add('icon')
+  const classNames = ['icon'].concat(fill ? ['fill'] : [])
+  span.classList.add(...classNames)
   span.textContent = name
   span.title = title ?? capitalize(name)
   return span

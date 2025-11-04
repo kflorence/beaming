@@ -1,6 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
-import paper, { Layer, Path, Size } from 'paper'
+import paper, { Layer, Path, Point, Size } from 'paper'
 import { addClass, base64encode, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -16,9 +16,9 @@ import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
 import { Tile } from './items/tile'
-import { Editor } from './editor'
 import { View } from './view'
 import { Schema } from './schema'
+import { Game } from './game'
 
 const confirm = window.confirm
 
@@ -34,8 +34,6 @@ const elements = Object.freeze({
   infoAuthor: document.getElementById('puzzle-info-author'),
   infoId: document.getElementById('puzzle-info-id'),
   infoTitle: document.getElementById('puzzle-info-title'),
-  next: document.getElementById('puzzle-next'),
-  previous: document.getElementById('puzzle-previous'),
   recenter: document.getElementById('puzzle-recenter'),
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
@@ -60,7 +58,6 @@ export class Puzzle {
 
   #beamsUpdateDelay = 30
   #collisions = {}
-  #editor
   #eventListeners = new EventListeners({ context: this })
   #interact
   #isUpdatingBeams = false
@@ -75,24 +72,19 @@ export class Puzzle {
     // noinspection JSCheckFunctionSignatures
     paper.setup(elements.canvas)
 
+    this.resize(false)
+
     // These layers will be added in the order they are defined
     const layers = ['mask', 'collisions', 'debug']
     layers.forEach((name) => {
       this.layers[name] = new Layer({ name })
     })
 
-    if (params.has(State.ParamKeys.Edit)) {
-      // Edit mode
-      this.#editor = new Editor(this)
-    }
-
-    this.resize(false)
+    this.#interact = new Interact(elements.canvas)
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
       { type: 'change', element: elements.id, handler: this.#onSelect },
-      { type: 'click', element: elements.next, handler: this.#next },
-      { type: 'click', element: elements.previous, handler: this.#previous },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
@@ -107,18 +99,14 @@ export class Puzzle {
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
 
-    this.#interact = new Interact(elements.canvas)
     this.#updateDropdown()
 
     this.select()
-
-    if (this.#editor) {
-      this.#editor.setup()
-    }
   }
 
-  centerOnTile (offset) {
-    const tile = this.layout.getTile(offset)
+  // Used by functional tests
+  centerOnTile (r, c) {
+    const tile = this.layout.getTile(new OffsetCoordinates(r, c))
     View.setCenter(tile.center)
     return tile.equals(this.selectedTile)
   }
@@ -127,13 +115,13 @@ export class Puzzle {
     this.layers.debug.clear()
   }
 
-  drawDebugPoint (point, style = {}) {
+  drawDebugPoint (x, y, style = {}) {
     const circle = new Path.Circle(Object.assign({
       radius: 3,
       fillColor: 'red',
       strokeColor: 'white',
       strokeWidth: 1,
-      center: point
+      center: new Point(x, y)
     }, style))
     this.layers.debug.addChild(circle)
   }
@@ -264,6 +252,9 @@ export class Puzzle {
     } else if (typeof state === 'object') {
       // Update current state
       this.state.update(state)
+    } else if (state === false) {
+      // Re-resolve state
+      this.state = State.resolve()
     }
 
     try {
@@ -280,11 +271,12 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
-  resize (reload = true) {
+  resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
-
+    console.log('resize', width, height)
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
+      console.log('got here')
       // Nothing to do
       return
     }
@@ -296,8 +288,6 @@ export class Puzzle {
 
     paper.view.viewSize = newSize
 
-    this.#editor?.onResize(newSize)
-
     this.recenter()
 
     if (reload) {
@@ -305,6 +295,10 @@ export class Puzzle {
       // See: https://github.com/paperjs/paper.js/issues/1757
       // Forcing a reload fixes it.
       this.reload()
+    }
+
+    if (event) {
+      emitEvent(Puzzle.Events.Resized, { newSize })
     }
   }
 
@@ -315,6 +309,35 @@ export class Puzzle {
     }
 
     this.reload(State.resolve(id))
+  }
+
+  tap (event) {
+    if (this.error || this.solved) {
+      // Can't tap
+      return
+    }
+
+    const result = paper.project.hitTest(event.detail.point)
+
+    let tile
+    switch (result?.item.data.type) {
+      case Item.Types.mask:
+        return
+      case Item.Types.tile:
+        tile = this.layout.getTile(result.item.data.coordinates.offset)
+        break
+    }
+
+    // There is an active mask
+    if (this.#mask) {
+      this.#mask.onTap(this, tile)
+    } else {
+      const previouslySelectedTile = this.updateSelectedTile(tile)
+
+      if (tile && tile === previouslySelectedTile) {
+        tile.onTap(event)
+      }
+    }
   }
 
   unmask () {
@@ -389,13 +412,6 @@ export class Puzzle {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return this.layout.modifiers.concat(tile?.modifiers || [])
       .sort((a, b) => a.id - b.id)
-  }
-
-  #next () {
-    const id = Puzzles.visible.nextId(this.state.getId())
-    if (id) {
-      this.select(id)
-    }
   }
 
   #onBeamUpdate (event) {
@@ -525,12 +541,16 @@ export class Puzzle {
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
 
+    const p = document.createElement('p')
+    p.classList.add(Puzzle.ClassNames.Solved)
+    p.textContent = 'Puzzle solved!'
+
     const span = document.createElement('span')
     span.classList.add(Puzzle.ClassNames.Icon)
     span.textContent = 'celebration'
     span.title = 'Solved!'
 
-    elements.headerMessage.replaceChildren(span)
+    elements.headerMessage.replaceChildren(p, span)
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -542,40 +562,12 @@ export class Puzzle {
   }
 
   #onTap (event) {
-    let tile
-
-    if ((this.#editor && !this.#editor.isLocked()) || this.solved || this.error) {
-      // In a state that cannot be interacted with
+    if (params.has(Game.States.Edit)) {
+      // Let the editor handle tap events
       return
     }
 
-    const result = paper.project.hitTest(event.detail.point)
-
-    switch (result?.item.data.type) {
-      case Item.Types.mask:
-        return
-      case Item.Types.tile:
-        tile = this.layout.getTile(result.item.data.coordinates.offset)
-        break
-    }
-
-    // There is an active mask
-    if (this.#mask) {
-      this.#mask.onTap(this, tile)
-    } else {
-      const previouslySelectedTile = this.updateSelectedTile(tile)
-
-      if (tile && tile === previouslySelectedTile) {
-        tile.onTap(event)
-      }
-    }
-  }
-
-  #previous () {
-    const id = Puzzles.visible.previousId(this.state.getId())
-    if (id) {
-      this.select(id)
-    }
+    return this.tap(event)
   }
 
   #redo () {
@@ -647,11 +639,6 @@ export class Puzzle {
   }
 
   #updateActions () {
-    const id = this.state.getId()
-
-    // Update browser title
-    elements.title.textContent = `${this.#editor ? 'Editing' : 'Beaming'}: Puzzle ${this.getTitle()}`
-
     removeClass(Puzzle.ClassNames.Disabled, ...Array.from(elements.headerMenu.children))
 
     const disable = []
@@ -666,17 +653,6 @@ export class Puzzle {
 
     if (!this.state.canReset()) {
       disable.push(elements.reset)
-    }
-
-    if (!Puzzles.visible.has(id)) {
-      // Custom puzzle
-      disable.push(elements.previous, elements.next)
-    } else {
-      if (id === Puzzles.visible.firstId) {
-        disable.push(elements.previous)
-      } else if (id === Puzzles.visible.lastId) {
-        disable.push(elements.next)
-      }
     }
 
     addClass(Puzzle.ClassNames.Disabled, ...disable)
@@ -751,7 +727,12 @@ export class Puzzle {
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
         .find((colorElements) => colorElements.length > 1) || []
-      elements.footerMessage.replaceChildren(...colorElements)
+      if (colorElements.length) {
+        const container = document.createElement('div')
+        container.classList.add('colors')
+        container.replaceChildren(...colorElements)
+        elements.footerMessage.replaceChildren(container)
+      }
     }
   }
 
@@ -832,13 +813,15 @@ export class Puzzle {
   static ClassNames = Object.freeze({
     Active: 'active',
     Disabled: 'disabled',
-    Icon: 'icon'
+    Icon: 'icon',
+    Solved: 'solved'
   })
 
   static Events = Object.freeze({
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'
   })
