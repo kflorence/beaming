@@ -78,13 +78,6 @@ export class Editor {
     return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
 
-  onResize () {
-    if (window.innerWidth < Editor.minWidth && !this.#gutter.horizontal) {
-      // Set orientation to horizontal on small screens
-      this.#gutter.toggleOrientation()
-    }
-  }
-
   setup () {
     if (this.#editor) {
       return
@@ -110,7 +103,6 @@ export class Editor {
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', handler: this.#onPointerMove },
-      { type: Puzzle.Events.Resized, handler: this.onResize },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
       { type: 'tap', element: this.#puzzle.element, handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
@@ -447,6 +439,5 @@ export class Editor {
     Locked: 'locked'
   })
 
-  static minWidth = 768
   static #key = getKeyFactory(State.CacheKeys.Editor, State.getId())
 }

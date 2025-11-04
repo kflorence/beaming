@@ -541,12 +541,16 @@ export class Puzzle {
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
 
+    const p = document.createElement('p')
+    p.classList.add(Puzzle.ClassNames.Solved)
+    p.textContent = 'Puzzle solved!'
+
     const span = document.createElement('span')
     span.classList.add(Puzzle.ClassNames.Icon)
     span.textContent = 'celebration'
     span.title = 'Solved!'
 
-    elements.headerMessage.replaceChildren(span)
+    elements.headerMessage.replaceChildren(p, span)
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -723,7 +727,12 @@ export class Puzzle {
       const colorElements = tile.items
         .map((item) => item.getColorElements(tile))
         .find((colorElements) => colorElements.length > 1) || []
-      elements.footerMessage.replaceChildren(...colorElements)
+      if (colorElements.length) {
+        const container = document.createElement('div')
+        container.classList.add('colors')
+        container.replaceChildren(...colorElements)
+        elements.footerMessage.replaceChildren(container)
+      }
     }
   }
 
@@ -804,7 +813,8 @@ export class Puzzle {
   static ClassNames = Object.freeze({
     Active: 'active',
     Disabled: 'disabled',
-    Icon: 'icon'
+    Icon: 'icon',
+    Solved: 'solved'
   })
 
   static Events = Object.freeze({

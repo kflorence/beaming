@@ -471,7 +471,6 @@ dialog ul {
 #puzzle-header {
   box-sizing: border-box;
   min-width: fit-content;
-  overflow: hidden;
   padding: 1em;
   /* Allow user to interact with underlying canvas. */
   pointer-events: none;
@@ -497,8 +496,6 @@ dialog ul {
 #puzzle-footer-menu {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  margin: -1px 0;
   user-select: none;
   /* For iOS/Safari. */
   -webkit-user-select: none;
@@ -509,13 +506,11 @@ dialog ul {
   margin: 0 0 -1px -1px;
 }
 
-#puzzle-footer-message {
-  border-bottom: 1px solid #ddd;
-}
-
+#puzzle-footer-wrapper,
 #puzzle-header-wrapper {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 #puzzle-id {
@@ -623,6 +618,12 @@ dialog ul {
   background-color: black;
 }
 
+.colors {
+  align-items: center;
+  color: #666;
+  display: flex;
+}
+
 :disabled + label {
   color: #999;
 }
@@ -670,7 +671,7 @@ dialog ul {
   border: 1px solid #999;
   border-radius: 0.5rem;
   display: flex;
-  filter: drop-shadow(0 0 0.25rem #ccc);
+  filter: drop-shadow(0 0.25em 0.25rem #ccc);
   overflow: clip;
   pointer-events: all;
 }
@@ -785,21 +786,33 @@ i.fill,
 
 .message {
   align-items: center;
-  background-color: #eee;
+  background-color: #ddd;
   border: 1px solid #999;
   border-radius: 0.5em;
   display: flex;
-  filter: drop-shadow(0 0 0.25rem #ccc);
+  filter: drop-shadow(0 0.25em 0.25rem #ccc);
+  flex-flow: column;
   justify-content: center;
   justify-self: center;
   line-height: 24px;
-  margin: 1em 0;
+  margin: 1em auto;
   min-height: 24px;
   padding: 1em;
+  pointer-events: all;
 }
 
 .message:empty {
   display: none;
+}
+
+.message p {
+  margin: 0;
+
+  &.solved {
+    margin-bottom: 0.5em;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid #ccc;
+  }
 }
 
 .number {
@@ -870,41 +883,62 @@ i.fill,
 /* Media Queries
 /* ------------------------------------------------------------------------------------------------------------------ */
 
-/*@container puzzle (max-width: 600px) {*/
-/*  #puzzle-header {*/
-/*    border-radius: 0;*/
-/*    max-width: 100%;*/
-/*    min-height: fit-content;*/
-/*    position: relative;*/
-/*    top: 0;*/
-/*    width: 100%;*/
-/*  }*/
+/* These styles will also be applied to the puzzle container in editor mode (e.g. when it is docked vertically). */
+@container puzzle (max-width: 768px) {
+  #puzzle-header {
+    padding: 0;
 
-/*  #puzzle-header .flex-left,*/
-/*  #puzzle-header .flex-right {*/
-/*    border-top: 1px solid #ddd;*/
-/*    order: 0;*/
-/*    position: relative;*/
-/*    top: -1px;*/
-/*  }*/
+    .flex-center {
+      border-top: 1px solid #ddd;
+      flex: 100%;
+      order: 1;
+    }
 
-/*  #puzzle-header .flex-center {*/
-/*    border-top: 1px solid #ddd;*/
-/*    flex: 100%;*/
-/*    order: 1;*/
-/*  }*/
+    .group {
+      border: none;
+      border-radius: 0;
+      filter: none;
+    }
+  }
 
-/*  #puzzle-header-menu {*/
-/*    border: 0;*/
-/*  }*/
-/*}*/
+  #puzzle-header-wrapper {
+    background-color: white;
+    border-bottom: 1px solid #999;
+    filter: drop-shadow(0 0.25em 0.25rem #ccc);
+  }
+}
 
 @media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
   #editor-menu {
     justify-content: center;
   }
 
   #editor-dock {
     display: none;
+  }
+
+  #editor-wrapper {
+    border: 0;
+  }
+
+  #editor-wrapper header {
+    border-top: 1px solid #666;
+  }
+
+  #gutter {
+    height: 1px;
+    width: 100%;
+  }
+
+  #gutter:after {
+    cursor: ns-resize;
+    height: 8px;
+    left: 0;
+    top: -3px;
+    width: 100%;
   }
 }
