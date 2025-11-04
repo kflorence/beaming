@@ -90,7 +90,7 @@
       <ul>
         <li id="title-play">play</li>
         <li data-dialog="dialog-about">about</li>
-        <li data-dialog="dialog-settings">settings</li>
+        <li data-dialog="dialog-settings" id="title-settings">settings</li>
         <li id="title-editor">editor</li>
         <li id="title-quit">quit</li>
       </ul>
@@ -107,7 +107,7 @@
       <main>
         <p>
           <em>Beaming</em> is an open source, browser-based puzzle game that involves directing beams through a
-          hexagonal grid. The rules and solution for each puzzle can be inferred by interaction and visual cues. If
+          hexagonal grid. The rules and solutions for each puzzle can be inferred by interaction and visual cues. If
           you'd prefer a little more guidance before you get started, you can expand the sections below for more
           information.
         </p>
@@ -127,9 +127,10 @@
             <main>
               <p>
                 The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
-                screen that contains <em>actions</em> that can be used to manipulate items in the puzzle. The solution
-                for each puzzle varies. The requirements for solving a puzzle will be displayed in the upper right corner
-                of the screen.
+                screen that contains <em>actions</em> that can be used to manipulate items in the puzzle, the goal being
+                to figure out the solution for the puzzle. When you have successfully solved a puzzle, you will see a
+                message indicating as much, as well as a puzzle overlay indicating the tiles that were part of your
+                solution.
               </p>
               <h4>Actions and Attributes</h4>
               <p>
@@ -139,6 +140,11 @@
                 when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
                 can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
                 situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
+              </p>
+              <h4>Solution Requirements</h4>
+              <p>
+                The solution for each puzzle varies. The requirements for solving a puzzle will be displayed in the
+                upper right corner of the screen.
               </p>
               <h4>Interaction</h4>
               <p>
@@ -159,32 +165,6 @@
                   swiped to change the applied direction of rotation.
                 </li>
               </ul>
-            </main>
-          </details>
-          <details>
-            <summary>Solution Requirements</summary>
-            <main>
-              <p>
-                As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
-                and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
-                require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
-                more about it.
-              </p>
-              <details>
-                <summary><span class="icon fill" title="Connections">link</span> - Connections</summary>
-                <p>
-                  A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
-                  of the same color.
-                </p>
-              </details>
-              <details>
-                <summary><span class="icon fill" title="Moves">stacks</span> - Moves</summary>
-                <p>
-                  A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
-                  some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
-                  multiple potential exit portals, the resulting decision will result in an additional move.
-                </p>
-              </details>
             </main>
           </details>
           <details>
@@ -246,6 +226,32 @@
                 <p>
                   Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
                   items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                </p>
+              </details>
+            </main>
+          </details>
+          <details>
+            <summary>Solution Requirements</summary>
+            <main>
+              <p>
+                As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
+                and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
+                require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
+                more about it.
+              </p>
+              <details>
+                <summary><span class="icon fill" title="Connections">link</span> - Connections</summary>
+                <p>
+                  A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
+                  of the same color.
+                </p>
+              </details>
+              <details>
+                <summary><span class="icon fill" title="Moves">stacks</span> - Moves</summary>
+                <p>
+                  A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
+                  some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
+                  multiple potential exit portals, the resulting decision will result in an additional move.
                 </p>
               </details>
             </main>

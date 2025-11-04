@@ -37,9 +37,8 @@ details {
 }
 
 details > main {
-  border-bottom: 1px solid #666;
-  margin-left: 1em;
-  padding-bottom: 1em;
+  border-left: 1px solid #ccc;
+  padding-left: 1em;
 }
 
 details > summary {
@@ -47,12 +46,16 @@ details > summary {
   font-weight: bold;
 }
 
+#title-settings,
 #title-quit {
   display: none;
 }
 
-.electron #title-quit {
-  display: block;
+.electron {
+  #title-settings,
+  #title-quit {
+    display: block;
+  }
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -97,6 +100,7 @@ dialog details p {
 }
 
 dialog h1 {
+  color: #333;
   margin: 0;
   padding: 0;
 }
