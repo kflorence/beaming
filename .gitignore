@@ -6,6 +6,7 @@
 !.htmlnanorc
 !.npmrc
 !.nvmrc
+!.posthtmlrc
 dist
 node_modules
 out

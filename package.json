@@ -1,5 +1,7 @@
 {
   "name": "beaming",
+  "author": "Kyle Florence",
+  "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
   "version": "0.1.0",
   "main": "src/main.js",
   "source": "src/index.html",
@@ -39,7 +41,7 @@
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron/fuses": "^1.8.0",
     "@kolod/posthtml-inline-svg": "^0.3.1",
-    "chromedriver": "^134.0.5",
+    "chromedriver": "^142.0.1",
     "electron": "^37.3.1",
     "mocha": "^10.8.2",
     "parcel": "^2.16.0",

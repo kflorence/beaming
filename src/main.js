@@ -1,6 +1,11 @@
 const { app, BrowserWindow, ipcMain, screen } = require('electron/main')
 const path = require('path')
 
+// https://www.electronforge.io/config/makers/squirrel.windows#handling-startup-events
+if (require('electron-squirrel-startup')) {
+  app.quit()
+}
+
 const channels = Object.freeze({
   quit: 'quit',
   resizeWindow: 'resize-window'

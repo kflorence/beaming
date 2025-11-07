@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "posthtml-inline-svg": {
+      "cwd": "./src",
+      "tag": "svg-inline"
+    }
+  }
+}
