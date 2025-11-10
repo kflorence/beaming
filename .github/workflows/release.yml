@@ -83,7 +83,4 @@ jobs:
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v5
-      - env:
-          TAG: ${{ needs.build-web.outputs.tag }}
-      - run: |
-          # TODO: do the release
+
