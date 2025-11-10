@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.project-version.outputs.tag }}
+      version: ${{ steps.project-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,6 +36,7 @@ jobs:
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       # TODO: include tag in build (e.g. to display to user)
       - name: Generate build
         run: npm run build
@@ -80,4 +82,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.test.outputs.tag }}
-        run: gh release create "$TAG" ./artifacts --draft --generate-notes --title "$TAG"
+          VERSION: ${{ needs.test.outputs.version }}
+        run: |
+          shopt -s globstar
+          BASE_PATH=$(pwd)
+          mkdir release
+          mv artifacts/beaming-macos-latest/**/*.dmg release
+          mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
+          $(cd artifacts/beaming-web && zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .)
+          $(cd artifacts/beaming-windows-latest/squirrel.windows/x64 && zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .)
+          gh release create "$TAG" ./release --draft --generate-notes --title "$TAG"
