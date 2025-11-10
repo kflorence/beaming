@@ -36,7 +36,7 @@ jobs:
             exit 1
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
-          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
       # TODO: include tag in build (e.g. to display to user)
       - name: Build for Github pages
         run: npm run build -- --public-url https://kflorence.github.io/beaming
