@@ -82,6 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-web, build-app]
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
       - env:
           TAG: ${{ needs.build-web.outputs.tag }}
       - run: |

@@ -37,7 +37,7 @@ jobs:
       - name: Upload build archive
         uses: actions/upload-artifact@v4
         with:
-          name: beaming
+          name: beaming-web
           path: dist
           compression-level: '9'
   build:
@@ -62,3 +62,13 @@ jobs:
           name: beaming-${{ matrix.os }}
           path: out/make/**/*
           compression-level: '0'
+  temp:
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+        run: ls -R
+      - env:
+          TAG: ${{ needs.build-web.outputs.tag }}
+      - run: gh release create "${{ env.TAG }}" ./artifacts --draft --generate-notes --title "${{ env.TAG }}"
