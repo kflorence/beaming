@@ -74,10 +74,12 @@ class PuzzleFixture {
 
   async isMasked () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
+      .then(this.driver.sleep(100))
   }
 
   async isNotMasked () {
     return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
+      .then(this.driver.sleep(100))
   }
 
   async isSolved () {

@@ -89,6 +89,10 @@ jobs:
           mkdir release
           mv artifacts/beaming-macos-latest/**/*.dmg release
           mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
-          $(cd artifacts/beaming-web && zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .)
-          $(cd artifacts/beaming-windows-latest/squirrel.windows/x64 && zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .)
+          cd artifacts/beaming-web
+          zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
+          cd "$BASE_PATH"
+          cd artifacts/beaming-windows-latest/squirrel.windows/x64
+          zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
+          cd "$BASE_PATH"
           gh release create "$TAG" ./release --draft --generate-notes --title "$TAG"
