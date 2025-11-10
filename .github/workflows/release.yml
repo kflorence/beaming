@@ -113,4 +113,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.test.outputs.tag }}
-        run: gh release create "$TAG" ./release/**/* --draft --generate-notes --title "$TAG"
+        run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"
