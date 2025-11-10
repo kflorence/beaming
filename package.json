@@ -3,6 +3,7 @@
   "author": "Kyle Florence",
   "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
   "version": "0.1.0",
+  "license": "CC BY-NC 4.0",
   "main": "src/main.js",
   "source": "src/index.html",
   "targets": {
