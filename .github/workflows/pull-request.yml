@@ -63,12 +63,15 @@ jobs:
           path: out/make/**/*
           compression-level: '0'
   temp:
+    runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v5
         with:
           path: artifacts
+      - name: List artifacts
         run: ls -R
-      - env:
+      - name: Create release
+        env:
           TAG: ${{ needs.build-web.outputs.tag }}
-      - run: gh release create "${{ env.TAG }}" ./artifacts --draft --generate-notes --title "${{ env.TAG }}"
+        run: gh release create "${{ env.TAG }}" ./artifacts --draft --generate-notes --title "${{ env.TAG }}"
