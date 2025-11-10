@@ -94,7 +94,6 @@ jobs:
       - name: Prepare release artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.build-web.outputs.tag }}
           VERSION: ${{ needs.build-web.outputs.version }}
         run: |
           shopt -s globstar
@@ -112,5 +111,5 @@ jobs:
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.test.outputs.tag }}
+          TAG: ${{ needs.build-web.outputs.tag }}
         run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"

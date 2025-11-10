@@ -70,6 +70,7 @@ export class Editor {
   getShareUrl () {
     const playUrl = new URL(url)
     playUrl.searchParams.delete(State.ParamKeys.Edit)
+    playUrl.searchParams.append(State.ParamKeys.Play, 'true')
     playUrl.hash = ['', State.getId(), this.#puzzle.state.clone().encode()].join('/')
     return playUrl.toString()
   }
