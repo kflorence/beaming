@@ -46,31 +46,31 @@ jobs:
           name: beaming-web
           path: dist
           compression-level: '9'
-  build:
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-      - name: Install dependencies
-        run: npm install
-      - name: "Make: ${{ matrix.os }}"
-        run: npm run make
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: beaming-${{ matrix.os }}
-          path: out/make/**/*
-          compression-level: '0'
+#  build:
+#    strategy:
+#      matrix:
+#        os: [macos-latest, ubuntu-latest, windows-latest]
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#      - name: Setup Node
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version-file: '.nvmrc'
+#      - name: Install dependencies
+#        run: npm install
+#      - name: "Make: ${{ matrix.os }}"
+#        run: npm run make
+#      - name: Upload build artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: beaming-${{ matrix.os }}
+#          path: out/make/**/*
+#          compression-level: '0'
   temp:
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: [test]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,17 +89,17 @@ jobs:
           shopt -s globstar
           BASE_PATH=$(pwd)
           mkdir release
-          mv artifacts/beaming-macos-latest/**/*.dmg release
-          mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
+#          mv artifacts/beaming-macos-latest/**/*.dmg release
+#          mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
           cd artifacts/beaming-web
           zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
-          cd "$BASE_PATH"
-          cd artifacts/beaming-windows-latest/squirrel.windows/x64
-          zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
+#          cd "$BASE_PATH"
+#          cd artifacts/beaming-windows-latest/squirrel.windows/x64
+#          zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
           cd "$BASE_PATH"
           tree release
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.test.outputs.tag }}
-        run: gh release create "$TAG" ./release/**/* --draft --generate-notes --title "$TAG"
+        run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"
