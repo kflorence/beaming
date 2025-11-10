@@ -54,7 +54,7 @@ jobs:
         id: artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: beaming
+          name: web
           path: dist
           compression-level: '9'
   build-app:
@@ -100,12 +100,12 @@ jobs:
           shopt -s globstar
           BASE_PATH=$(pwd)
           mkdir release
-          mv artifacts/beaming-macos-latest/**/*.dmg release
-          mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
-          cd artifacts/beaming-web
+          mv artifacts/macos-latest/**/*.dmg release
+          mv artifacts/ubuntu-latest/**/*.{deb,rpm} release
+          cd artifacts/web
           zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
           cd "$BASE_PATH"
-          cd artifacts/beaming-windows-latest/squirrel.windows/x64
+          cd artifacts/windows-latest/squirrel.windows/x64
           zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
           cd "$BASE_PATH"
           tree release
