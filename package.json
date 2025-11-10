@@ -22,7 +22,6 @@
   },
   "scripts": {
     "build": "npm run clean && parcel build --public-url .",
-    "build-zip": "npm run build && (cd dist && zip -r beaming.zip .)",
     "clean": "rm -rf .parcel-cache dist out",
     "desktop": "npm run build && electron-forge start",
     "make": "npm run build && electron-forge make",

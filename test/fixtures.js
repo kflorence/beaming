@@ -115,8 +115,8 @@ class PuzzleFixture {
   }
 
   async #getModifier (name) {
-    await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
-    return await this.driver.findElement(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`))
+    return await this.driver.wait(
+      until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
   }
 
   static baseUrl = 'http://localhost:1234'
