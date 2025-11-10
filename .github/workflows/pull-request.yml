@@ -89,7 +89,7 @@ jobs:
           shopt -s globstar
           BASE_PATH=$(pwd)
           mkdir release
-          cd artifacts/beaming-web
+          cd artifacts
           zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
           cd "$BASE_PATH"
           tree release
