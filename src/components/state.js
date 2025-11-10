@@ -350,6 +350,11 @@ export class State {
     return State.fromId(id)
   }
 
+  static setParam = function (name, value) {
+    params.set(name, value)
+    history.pushState({}, '', url)
+  }
+
   static CacheKeys = Object.freeze({
     Editor: 'editor',
     Id: 'id'
@@ -357,7 +362,8 @@ export class State {
 
   static ParamKeys = Object.freeze({
     ClearCache: 'clearCache',
-    Edit: 'edit'
+    Edit: 'edit',
+    Play: 'play'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated

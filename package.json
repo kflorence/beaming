@@ -1,6 +1,14 @@
 {
   "name": "beaming",
+  "author": "Kyle Florence",
+  "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
+  "version": "0.1.0",
+  "license": "CC BY-NC 4.0",
+  "main": "src/main.js",
   "source": "src/index.html",
+  "targets": {
+    "main": false
+  },
   "browserslist": [
     "defaults"
   ],
@@ -13,28 +21,45 @@
     }
   },
   "scripts": {
-    "build": "parcel build --public-url 'https://kflorence.github.io/beaming'",
-    "build-itch": "rm -rf .parcel-cache dist && parcel build --public-url ./ && (cd dist && zip -r ../beaming.zip .)",
+    "build": "npm run clean && parcel build --public-url .",
+    "clean": "rm -rf .parcel-cache dist out",
+    "desktop": "npm run build && electron-forge start",
+    "make": "npm run build && electron-forge make",
+    "package": "npm run build && electron-forge package",
     "start": "parcel",
     "test": "npm run test-lint && npm run test-functional",
     "test-functional": "mocha test --recursive --timeout 20000",
     "test-lint": "standard"
   },
   "devDependencies": {
-    "chromedriver": "^134.0.5",
+    "@electron-forge/cli": "^7.8.3",
+    "@electron-forge/maker-deb": "^7.8.3",
+    "@electron-forge/maker-dmg": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.8.3",
+    "@electron-forge/maker-squirrel": "^7.8.3",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
+    "@electron-forge/plugin-fuses": "^7.8.3",
+    "@electron/fuses": "^1.8.0",
+    "@kolod/posthtml-inline-svg": "^0.3.1",
+    "chromedriver": "^142.0.1",
+    "electron": "^37.3.1",
     "mocha": "^10.8.2",
-    "parcel": "^2.13.3",
+    "parcel": "^2.16.0",
+    "posthtml-inline-svg": "^0.2.0",
     "selenium-webdriver": "^4.27.0",
     "standard": "^17.1.2",
     "svgo": "^3.3.2",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
+    "@fontsource-variable/material-symbols-outlined": "^5.2.27",
+    "@fontsource-variable/noto-sans-mono": "^5.2.10",
     "@json-editor/json-editor": "^2.15.2",
     "@types/chroma-js": "^2.4.5",
     "chroma-js": "^2.6.0",
     "deepmerge": "^4.3.1",
-    "jsondiffpatch": "^0.6.0",
+    "electron-squirrel-startup": "^1.0.1",
+    "jsondiffpatch": "0.7.2",
     "pako": "^2.1.0",
     "paper": "^0.12.18",
     "tippy.js": "^6.3.7"

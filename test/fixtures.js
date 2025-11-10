@@ -18,7 +18,7 @@ class PuzzleFixture {
   constructor (id) {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?play#/${id}`
   }
 
   async after () {
@@ -66,7 +66,7 @@ class PuzzleFixture {
 
   async clickTile (r, c) {
     // Center on the tile we want to click on. This ensures it is visible
-    const isSelected = await this.driver.executeScript(`return beaming.centerOnTile(${r}, ${c})`)
+    const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
     if (!isSelected) {
       await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
     }
@@ -74,10 +74,12 @@ class PuzzleFixture {
 
   async isMasked () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
+      .then(this.driver.sleep(100))
   }
 
   async isNotMasked () {
     return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
+      .then(this.driver.sleep(100))
   }
 
   async isSolved () {
@@ -115,8 +117,8 @@ class PuzzleFixture {
   }
 
   async #getModifier (name) {
-    await this.driver.wait(until.elementIsVisible(this.elements.modifiers))
-    return await this.driver.findElement(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`))
+    return await this.driver.wait(
+      until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
   }
 
   static baseUrl = 'http://localhost:1234'

@@ -1,29 +1,18 @@
+import '@fontsource-variable/material-symbols-outlined'
+import '@fontsource-variable/material-symbols-outlined/fill.css'
+import '@fontsource-variable/noto-sans-mono'
+
 import './dialog'
-import { debug } from './components/debug'
-import paper, { Point } from 'paper'
-import { Puzzle } from './components/puzzle'
-import { OffsetCoordinates } from './components/coordinates/offset'
-import { base64decode } from './components/util'
+import './settings'
+
+import { Game } from './components/game'
 
 if (process.env.NODE_ENV === 'production') {
   require('./analytics')
-  require('./feedback')
 }
 
-const puzzle = new Puzzle()
-const beaming = { debug, puzzle }
-
-// Used by functional tests
-beaming.centerOnTile = function (r, c) {
-  return puzzle.centerOnTile(new OffsetCoordinates(r, c))
-}
-
-beaming.clearDebugPoints = puzzle.clearDebugPoints.bind(puzzle)
-beaming.drawDebugPoint = function (x, y, style) {
-  return puzzle.drawDebugPoint(new Point(x, y), style)
-}
+// Execute initialization if running inside electron
+window.electron?.init()
 
 // Export
-window.beaming = beaming
-window.paper = paper
-window.util = { base64decode }
+window.game = new Game()
