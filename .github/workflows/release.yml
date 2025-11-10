@@ -72,7 +72,6 @@ jobs:
       - name: "Make: ${{ matrix.os }}"
         run: npm run make
       - name: Upload build artifacts
-        id: artifacts-${{ matrix.os }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
