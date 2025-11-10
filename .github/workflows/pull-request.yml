@@ -21,3 +21,29 @@ jobs:
         run: npx wait-on --timeout 5000 http://localhost:1234
       - name: Run tests
         run: npm test
+      - name: Verify project version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "Found version: $VERSION"
+          TAG="v${VERSION}"
+          if git tag -l "$TAG" | grep -q "$TAG"; then
+            echo "Error: Tag $TAG already exists."
+            exit 1
+          fi
+          echo "TAG=$TAG" >> $GITHUB_ENV
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: npm install
+      - name: "Make: ${{ matrix.os }}"
+        run: npm run make
