@@ -47,3 +47,8 @@ jobs:
         run: npm install
       - name: "Make: ${{ matrix.os }}"
         run: npm run make
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: make
+          path: out/make
