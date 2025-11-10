@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.project-version.outputs.tag }}
+      version: ${{ steps.project-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
           fi
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       # TODO: include tag in build (e.g. to display to user)
       - name: Build for Github pages
         run: npm run build -- --public-url https://kflorence.github.io/beaming
@@ -81,6 +83,34 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-web, build-app]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v5
-
+        with:
+          path: artifacts
+      - name: List artifacts
+        run: tree artifacts
+      - name: Prepare release artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.build-web.outputs.tag }}
+          VERSION: ${{ needs.build-web.outputs.version }}
+        run: |
+          shopt -s globstar
+          BASE_PATH=$(pwd)
+          mkdir release
+          mv artifacts/beaming-macos-latest/**/*.dmg release
+          mv artifacts/beaming-ubuntu-latest/**/*.{deb,rpm} release
+          cd artifacts/beaming-web
+          zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
+          cd "$BASE_PATH"
+          cd artifacts/beaming-windows-latest/squirrel.windows/x64
+          zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
+          cd "$BASE_PATH"
+          tree release
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.test.outputs.tag }}
+        run: gh release create "$TAG" ./release/**/* --draft --generate-notes --title "$TAG"
