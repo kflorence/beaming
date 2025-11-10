@@ -22,7 +22,7 @@
   },
   "scripts": {
     "build": "npm run clean && parcel build --public-url .",
-    "build-zip": "npm run build && (cd dist && zip -r ../beaming.zip .)",
+    "build-zip": "npm run build && (cd dist && zip -r beaming.zip .)",
     "clean": "rm -rf .parcel-cache dist out",
     "desktop": "npm run build && electron-forge start",
     "make": "npm run build && electron-forge make",
@@ -35,9 +35,9 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.8.3",
     "@electron-forge/maker-deb": "^7.8.3",
+    "@electron-forge/maker-dmg": "^7.10.2",
     "@electron-forge/maker-rpm": "^7.8.3",
     "@electron-forge/maker-squirrel": "^7.8.3",
-    "@electron-forge/maker-zip": "^7.8.3",
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron/fuses": "^1.8.0",
