@@ -18,15 +18,14 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: npm install
-      # TODO: include tag in build (e.g. to display to user)
       - name: Build
         run: npm run build -- --public-url https://kflorence.github.io/beaming
       - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           npx gh-pages -d dist -u "github-actions-bot <support+actions@github.com>" --nojekyll
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   make:
     needs: test
     uses: './.github/workflows/make.yml'
@@ -49,14 +48,10 @@ jobs:
           shopt -s globstar
           BASE_PATH=$(pwd)
           mkdir release
-          mv artifacts/macos-latest/**/*.dmg release
-          mv artifacts/ubuntu-latest/**/*.{deb,rpm} release
           cd artifacts/web
-          zip -r "${BASE_PATH}/release/beaming-${VERSION}.zip" .
+          zip -r "beaming-${VERSION}.zip" .
           cd "$BASE_PATH"
-          cd artifacts/windows-latest/squirrel.windows/x64
-          zip -r "${BASE_PATH}/release/beaming-${VERSION}-win.x64.zip" .
-          cd "$BASE_PATH"
+          mv artifacts/**/*.{deb,exe,rpm,zip} release
           tree release
       - name: Create release
         env:

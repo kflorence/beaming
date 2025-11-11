@@ -35,7 +35,6 @@ jobs:
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      # TODO: include tag in build (e.g. to display to user)
       - name: Generate build
         run: npm run build
       - name: Upload build archive

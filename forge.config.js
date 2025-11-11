@@ -13,16 +13,20 @@ module.exports = {
       config: {}
     },
     {
-      name: '@electron-forge/maker-dmg',
-      config: {}
+      name: 'build/electron-forge/maker-portable.mjs',
+      config: {
+        // eslint-disable-next-line no-template-curly-in-string
+        artifactName: '${productName}-${platform}-${arch}-${version}.${ext}',
+        icon: './src/images/icon/icon.ico'
+      }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {}
     },
     {
-      name: 'build/electron-forge/maker-portable.mjs',
-      config: {}
+      name: '@electron-forge/maker-zip',
+      platforms: ['darwin']
     }
   ],
   plugins: [

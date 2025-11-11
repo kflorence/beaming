@@ -100,8 +100,6 @@ export class Puzzle {
     ])
 
     this.#updateDropdown()
-
-    this.select()
   }
 
   // Used by functional tests
@@ -273,10 +271,8 @@ export class Puzzle {
 
   resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
-    console.log('resize', width, height)
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
-      console.log('got here')
       // Nothing to do
       return
     }

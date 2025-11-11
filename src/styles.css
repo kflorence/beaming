@@ -51,11 +51,10 @@ details > summary {
   display: none;
 }
 
-.electron {
-  #title-settings,
-  #title-quit {
-    display: block;
-  }
+#version {
+  color: #666;
+  font-size: 0.75em;
+  margin-top: 1em;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -198,7 +197,7 @@ dialog ul {
 #dialog-title ul {
   font-size: 1.5em;
   list-style: none;
-  margin: 2em 0 0 0;
+  margin: 0;
   padding: 0;
   text-align: center;
 }
@@ -209,8 +208,12 @@ dialog ul {
   border-radius: 0.25em;
   color: #000;
   cursor: pointer;
-  margin-bottom: 0.5em;
+  margin-top: 0.5em;
   padding: 0.25em 1em;
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 #dialog-title ul li:hover,
@@ -437,8 +440,10 @@ dialog ul {
 
 #logo {
   color: #333;
+  filter: drop-shadow(0 0.25em 0.25em #aaa);
   min-width: 240px;
-  max-width: 320px;
+  margin-bottom: 2em;
+  max-width: 480px;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -646,6 +651,13 @@ dialog ul {
   display: none;
 }
 
+.electron {
+  #title-settings,
+  #title-quit {
+    display: block;
+  }
+}
+
 .flex-center,
 .flex-left,
 .flex-right {
@@ -678,6 +690,11 @@ dialog ul {
   filter: drop-shadow(0 0.25em 0.25rem #ccc);
   overflow: clip;
   pointer-events: all;
+
+  &:empty,
+  &:has(> :empty) {
+    display: none;
+  }
 }
 
 .hide {
