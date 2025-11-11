@@ -1,6 +1,13 @@
 name: Test
 on:
   workflow_call:
+    outputs:
+      tag:
+        description: 'The build tag.'
+        value: ${{ jobs.build.outputs.tag }}
+      version:
+        description: 'The build version.'
+        value: ${{ jobs.build.outputs.version }}
 jobs:
   build:
     runs-on: ubuntu-latest
