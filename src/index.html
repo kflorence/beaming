@@ -20,7 +20,7 @@
           <div class="flex-left">
             <div class="group">
               <ul class="menu">
-                <li data-dialog="dialog-title"><span class="icon" title="Exit">exit_to_app</span></li>
+                <li id="back"><span class="icon" title="Exit">exit_to_app</span></li>
               </ul>
               <label id="puzzle-selector">
                 <select id="puzzle-id" name="id"><option value="">---</option></select>
@@ -94,6 +94,7 @@
         <li id="title-editor">editor</li>
         <li id="title-quit">quit</li>
       </ul>
+      <div id="version"></div>
     </dialog>
     <dialog id="dialog-about">
       <header>
@@ -297,7 +298,6 @@
       </main>
     </dialog>
     <div class="hide">
-
       <svg id="icon-immutable" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm197-147q16-12 30-26t26-30L283-733q-16 12-30 26t-26 30l450 450Z"/></svg>
       <svg id="icon-lock" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/></svg>
       <svg id="icon-move" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80 310-250l57-57 73 73v-206H235l73 72-58 58L80-480l169-169 57 57-72 72h206v-206l-73 73-57-57 170-170 170 170-57 57-73-73v206h205l-73-72 58-58 170 170-170 170-57-57 73-73H520v205l72-73 58 58L480-80Z"/></svg>

@@ -13,16 +13,18 @@ module.exports = {
       config: {}
     },
     {
-      name: '@electron-forge/maker-dmg',
-      config: {}
+      name: 'build/electron-forge/maker-portable.mjs',
+      config: {
+        icon: './src/images/icon/icon.ico'
+      }
     },
     {
       name: '@electron-forge/maker-rpm',
       config: {}
     },
     {
-      name: '@electron-forge/maker-squirrel',
-      config: {}
+      name: '@electron-forge/maker-zip',
+      platforms: ['darwin']
     }
   ],
   plugins: [

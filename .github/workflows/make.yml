@@ -1,0 +1,40 @@
+name: Make
+on:
+  workflow_call:
+jobs:
+  artifacts:
+    strategy:
+      matrix:
+        os:
+          - macos-15-intel
+          - ubuntu-latest
+          - windows-latest
+        arch:
+          - x64
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: ubuntu-24.04-arm
+            arch: armv7l
+          - os: ubuntu-24.04-arm
+            arch: arm64
+          - os: windows-latest
+            arch: ia32
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: npm install
+      - name: "Target: ${{ matrix.os }}-${{ matrix.arch }}"
+        run: npm run make -- --arch="${{ matrix.arch }}"
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: out/make/**/*
+          compression-level: '0'

@@ -7,6 +7,7 @@ import { State } from './state'
 import { EventListeners } from './eventListeners'
 
 const elements = Object.freeze({
+  back: document.getElementById('back'),
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
@@ -24,16 +25,24 @@ export class Game {
     this.editor = new Editor(this.puzzle)
 
     this.#eventListeners.add([
+      { type: 'click', element: elements.back, handler: this.back },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit }
     ])
 
     if (params.has(Game.States.Play)) {
-      document.body.classList.add(Game.States.Play)
+      this.play()
     } else if (params.has(Game.States.Edit)) {
-      this.editor.setup()
-      document.body.classList.add(Game.States.Edit)
+      this.edit()
+    } else {
+      elements.title.showModal()
+    }
+  }
+
+  back () {
+    if (elements.title.open) {
+      elements.title.close()
     } else {
       elements.title.showModal()
     }
@@ -51,6 +60,7 @@ export class Game {
 
     State.setParam(Game.States.Edit, 'true')
 
+    this.puzzle.select()
     this.editor.setup()
 
     elements.title.close()
@@ -67,6 +77,7 @@ export class Game {
     State.setParam(Game.States.Play, 'true')
 
     this.editor.teardown()
+    this.puzzle.select()
     this.puzzle.resize()
 
     document.body.classList.add(Game.States.Play)

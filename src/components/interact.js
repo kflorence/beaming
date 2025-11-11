@@ -134,7 +134,6 @@ export class Interact {
   onResize () {
     const bounds = this.#element.getBoundingClientRect()
     this.#offset = new Point(bounds.left, bounds.top)
-    console.log('onResize', bounds)
   }
 
   onTap (event) {

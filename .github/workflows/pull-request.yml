@@ -1,70 +1,10 @@
-name: Verify
+name: Pull Request
 on:
   pull_request:
     branches:
       - main
 jobs:
   test:
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.project-version.outputs.tag }}
-      version: ${{ steps.project-version.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-      - name: Install dependencies
-        run: npm install
-      - name: Run server
-        run: npm start &
-      - name: Wait
-        run: npx wait-on --timeout 5000 http://localhost:1234
-      - name: Run tests
-        run: npm test
-      - name: Verify project version
-        id: project-version
-        run: |
-          VERSION=$(jq -r '.version' package.json)
-          echo "Found version: $VERSION"
-          TAG="v${VERSION}"
-          if git tag -l "$TAG" | grep -q "$TAG"; then
-            echo "Error: Tag $TAG already exists."
-            exit 1
-          fi
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      # TODO: include tag in build (e.g. to display to user)
-      - name: Generate build
-        run: npm run build
-      - name: Upload build archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: web
-          path: dist
-          compression-level: '9'
-  build:
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-      - name: Install dependencies
-        run: npm install
-      - name: "Make: ${{ matrix.os }}"
-        run: npm run make
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.os }}
-          path: out/make/**/*
-          compression-level: '0'
+    uses: './.github/workflows/test.yml'
+  make:
+    uses: './.github/workflows/make.yml'

@@ -294,7 +294,7 @@ export class Editor {
   }
 
   async #onShare () {
-    await writeToClipboard(`Try out my custom puzzle: ${this.#puzzle.getTitle()} - ${this.getShareUrl()}`)
+    await writeToClipboard(this.getShareUrl())
     tippy.show()
     setTimeout(() => tippy.hide(), 1000)
   }

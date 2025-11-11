@@ -2,7 +2,7 @@
   "name": "beaming",
   "author": "Kyle Florence",
   "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "CC BY-NC 4.0",
   "main": "src/main.js",
   "source": "src/index.html",
@@ -12,6 +12,9 @@
   "browserslist": [
     "defaults"
   ],
+  "config": {
+    "detect_chromedriver_version": true
+  },
   "eslintConfig": {
     "env": {
       "browser": true
@@ -33,14 +36,15 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.8.3",
+    "@electron-forge/maker-base": "^7.10.2",
     "@electron-forge/maker-deb": "^7.8.3",
-    "@electron-forge/maker-dmg": "^7.10.2",
     "@electron-forge/maker-rpm": "^7.8.3",
-    "@electron-forge/maker-squirrel": "^7.8.3",
+    "@electron-forge/maker-zip": "^7.10.2",
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron/fuses": "^1.8.0",
     "@kolod/posthtml-inline-svg": "^0.3.1",
+    "app-builder-lib": "^26.0.12",
     "chromedriver": "^142.0.1",
     "electron": "^37.3.1",
     "mocha": "^10.8.2",
@@ -58,7 +62,6 @@
     "@types/chroma-js": "^2.4.5",
     "chroma-js": "^2.6.0",
     "deepmerge": "^4.3.1",
-    "electron-squirrel-startup": "^1.0.1",
     "jsondiffpatch": "0.7.2",
     "pako": "^2.1.0",
     "paper": "^0.12.18",

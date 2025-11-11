@@ -1,0 +1,45 @@
+name: Test
+on:
+  workflow_call:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.project-version.outputs.tag }}
+      version: ${{ steps.project-version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: npm install
+      - name: Run server
+        run: npm start &
+      - name: Wait
+        run: npx wait-on --timeout 5000 http://localhost:1234
+      - name: Run tests
+        run: npm test
+      - name: Verify project version
+        id: project-version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "Found version: $VERSION"
+          TAG="v${VERSION}"
+          if git tag -l "$TAG" | grep -q "$TAG"; then
+            echo "Error: Tag $TAG already exists."
+            exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Generate build
+        run: npm run build
+      - name: Upload build archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist
+          compression-level: '9'

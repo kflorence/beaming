@@ -1,10 +1,5 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron/main')
+const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron/main')
 const path = require('path')
-
-// https://www.electronforge.io/config/makers/squirrel.windows#handling-startup-events
-if (require('electron-squirrel-startup')) {
-  app.quit()
-}
 
 const channels = Object.freeze({
   quit: 'quit',
@@ -20,8 +15,10 @@ const resizeTypes = Object.freeze({
   maximized: 'maximized'
 })
 
-// Disable default menus
-// Menu.setApplicationMenu(null)
+// Disable default menus in production builds
+if (process.env.NODE_ENV === 'production') {
+  Menu.setApplicationMenu(null)
+}
 
 let display
 let window
