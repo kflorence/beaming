@@ -21,7 +21,7 @@ module.exports = {
       config: {}
     },
     {
-      name: '@electron-forge/maker-squirrel',
+      name: 'build/electron-forge/maker-portable.mjs',
       config: {}
     }
   ],
