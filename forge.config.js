@@ -16,7 +16,7 @@ module.exports = {
       name: 'build/electron-forge/maker-portable.mjs',
       config: {
         // eslint-disable-next-line no-template-curly-in-string
-        artifactName: '${name}-${platform}-${arch}-${version}.${ext}',
+        artifactName: '${name}-win32-${arch}-${version}.${ext}',
         icon: './src/images/icon/icon.ico'
       }
     },
