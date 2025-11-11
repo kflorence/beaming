@@ -17,6 +17,8 @@ export default class PortableMaker extends MakerBase {
       win: [`portable:${options.targetArch}`],
       config: {
         ...this.config,
+        // eslint-disable-next-line no-template-curly-in-string
+        artifactName: '${productName}-${platform}-${arch}-${version}.${ext}',
         directories: {
           output: resolve(options.dir, '..', 'make'),
           ...this.config?.directories
