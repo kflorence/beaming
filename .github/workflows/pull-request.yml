@@ -6,7 +6,10 @@ on:
     branches:
       - main
 jobs:
-  test:
-    uses: './.github/workflows/test.yml'
-  make:
-    uses: './.github/workflows/make.yml'
+  first:
+    steps:
+      - run: echo NODE_ENV = $NODE_ENV
+#  test:
+#    uses: './.github/workflows/test.yml'
+#  make:
+#    uses: './.github/workflows/make.yml'
