@@ -1,6 +1,4 @@
 name: Release
-env:
-  NODE_ENV: 'production'
 on:
   push:
     branches:
@@ -11,6 +9,8 @@ jobs:
   gh-pages:
     needs: test
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
