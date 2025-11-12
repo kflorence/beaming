@@ -1,4 +1,6 @@
 name: Pull Request
+env:
+  NODE_ENV: 'production'
 on:
   pull_request:
     branches:

@@ -1,4 +1,6 @@
 name: Release
+env:
+  NODE_ENV: 'production'
 on:
   push:
     branches:
