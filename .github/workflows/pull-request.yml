@@ -7,6 +7,7 @@ on:
       - main
 jobs:
   first:
+    runs-on: ubuntu-latest
     steps:
       - run: echo NODE_ENV = $NODE_ENV
 #  test:
