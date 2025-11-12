@@ -1,6 +1,4 @@
 name: Test
-env:
-  NODE_ENV: ${{ vars.NODE_ENV }}
 on:
   workflow_call:
     outputs:
@@ -12,6 +10,9 @@ on:
         value: ${{ jobs.build.outputs.version }}
 jobs:
   build:
+    environment: build
+    env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.project-version.outputs.tag }}
