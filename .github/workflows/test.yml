@@ -10,8 +10,6 @@ on:
         value: ${{ jobs.build.outputs.version }}
 jobs:
   build:
-    env:
-      NODE_ENV: ${{ vars.NODE_ENV }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.project-version.outputs.tag }}
@@ -45,6 +43,8 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Generate build
+        env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
         run: npm run build
       - name: Upload build archive
         uses: actions/upload-artifact@v4

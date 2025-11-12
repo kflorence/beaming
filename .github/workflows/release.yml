@@ -9,8 +9,6 @@ jobs:
   gh-pages:
     needs: test
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: ${{ vars.NODE_ENV }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,6 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Build
+        env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
         run: npm run build -- --public-url https://kflorence.github.io/beaming
       - name: Publish
         env:
