@@ -1,4 +1,7 @@
 name: Test
+environment: build
+env:
+  NODE_ENV: ${{ vars.NODE_ENV }}
 on:
   workflow_call:
     outputs:

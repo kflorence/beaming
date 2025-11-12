@@ -1,6 +1,5 @@
 name: Pull Request
-env:
-  NODE_ENV: 'production'
+environment: build
 on:
   pull_request:
     branches:
