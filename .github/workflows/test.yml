@@ -1,5 +1,4 @@
 name: Test
-environment: build
 env:
   NODE_ENV: ${{ vars.NODE_ENV }}
 on:
@@ -19,6 +18,7 @@ jobs:
       version: ${{ steps.project-version.outputs.version }}
     steps:
       - run: echo NODE_ENV = $NODE_ENV
+      - run: exit 1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Node

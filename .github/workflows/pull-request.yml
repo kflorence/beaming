@@ -1,11 +1,11 @@
 name: Pull Request
-environment: build
 on:
   pull_request:
     branches:
       - main
 jobs:
   test:
+    environment: build
     uses: './.github/workflows/test.yml'
 #  make:
 #    uses: './.github/workflows/make.yml'
