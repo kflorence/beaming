@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # Shouldn't need fetch-depth: 0, but see:
+          # https://github.com/actions/checkout/issues/2199
+          fetch-depth: 0
           fetch-tags: true
 #      - name: Setup Node
 #        uses: actions/setup-node@v4
