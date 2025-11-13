@@ -1,6 +1,8 @@
 const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron/main')
 const path = require('path')
 
+const args = process.argv.slice(2)
+
 const channels = Object.freeze({
   quit: 'quit',
   resizeWindow: 'resize-window'
@@ -15,8 +17,8 @@ const resizeTypes = Object.freeze({
   maximized: 'maximized'
 })
 
-// Disable default menus in production builds
-if (process.env.NODE_ENV === 'production') {
+// Disable default menus unless --debug flag is present
+if (!args.includes('--debug')) {
   Menu.setApplicationMenu(null)
 }
 

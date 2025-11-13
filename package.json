@@ -26,7 +26,7 @@
   "scripts": {
     "build": "npm run clean && parcel build --public-url .",
     "clean": "rm -rf .parcel-cache dist out",
-    "desktop": "npm run build && electron-forge start",
+    "desktop": "npm run build && electron-forge start -- -- --debug",
     "make": "npm run build && electron-forge make",
     "package": "npm run build && electron-forge package",
     "start": "parcel",
