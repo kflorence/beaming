@@ -34,7 +34,7 @@ jobs:
         run: |
           VERSION=$(jq -r '.version' package.json)
           echo "Found version: $VERSION"
-          git tag -l
+          echo $(git tag -l)
           TAG="v${VERSION}"
           if git tag -l "$TAG" | grep -q "$TAG"; then
             echo "Error: Tag $TAG already exists."
