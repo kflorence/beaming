@@ -12,14 +12,14 @@ module.exports = {
       name: '@electron-forge/maker-deb',
       config: {
         options: {
-          icon: './src/images/icon/icon.png'
+          icon: './src/images/icon.png'
         }
       }
     },
     {
       name: 'build/electron-forge/maker-portable.mjs',
       config: {
-        icon: './src/images/icon/icon.ico'
+        icon: './src/images/icon.ico'
       }
     },
     {
