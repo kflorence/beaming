@@ -21,8 +21,6 @@ jobs:
           - os: windows-latest
             arch: ia32
     runs-on: ${{ matrix.os }}
-    env:
-      NODE_ENV: ${{ vars.NODE_ENV }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +31,8 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: "Target: ${{ matrix.os }}-${{ matrix.arch }}"
+        env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
         run: npm run make -- --arch="${{ matrix.arch }}"
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

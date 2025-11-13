@@ -10,17 +10,17 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-deb',
-      config: {}
+      config: {
+        options: {
+          icon: './src/images/icon/icon.png'
+        }
+      }
     },
     {
       name: 'build/electron-forge/maker-portable.mjs',
       config: {
         icon: './src/images/icon/icon.ico'
       }
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {}
     },
     {
       name: '@electron-forge/maker-zip',

@@ -28,6 +28,7 @@ function createWindow () {
     // Should match body background color
     backgroundColor: '#ccc',
     height: 768,
+    icon: path.join(__dirname, 'images/icon.png'),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
