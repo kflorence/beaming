@@ -17,6 +17,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Shouldn't need fetch-depth: 0, but see:
+          # https://github.com/actions/checkout/issues/2199
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -39,10 +44,13 @@ jobs:
             echo "Error: Tag $TAG already exists."
             exit 1
           fi
+          echo "Tag $TAG does not exist, proceeding."
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Generate build
+        env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
         run: npm run build
       - name: Upload build archive
         uses: actions/upload-artifact@v4

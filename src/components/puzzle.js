@@ -286,7 +286,7 @@ export class Puzzle {
 
     this.recenter()
 
-    if (reload) {
+    if (reload && this.state) {
       // For some reason, without reload, setting viewSize alone breaks the project coordinate space
       // See: https://github.com/paperjs/paper.js/issues/1757
       // Forcing a reload fixes it.

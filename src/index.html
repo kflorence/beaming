@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.google-analytics.com/; script-src 'self' https://www.googletagmanager.com/; style-src 'self' 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=no" />
     <meta name="description" content="A browser-based puzzle game that involves directing beams through a hexagonal grid." />
     <meta name="robots" content="index, follow" />
@@ -75,8 +75,8 @@
       <main>
         <div id="editor"></div>
         <details>
-          <summary><label for="editor-configuration">Configuration</label></summary>
-          <p>The current puzzle configuration.</p>
+          <summary>Configuration</summary>
+          <p><label for="editor-configuration">The current puzzle configuration.</label></p>
           <textarea id="editor-configuration"></textarea>
         </details>
       </main>
