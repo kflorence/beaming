@@ -44,7 +44,6 @@ jobs:
       - run: tree artifacts
       - name: Prepare release artifacts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.test.outputs.version }}
         run: |
           shopt -s globstar
