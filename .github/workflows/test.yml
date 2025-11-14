@@ -38,9 +38,9 @@ jobs:
           mkdir -p deploy/windows-x64
           mv artifacts/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
           mkdir -p deploy/macos-arm64
-          unzip artifacts/*-darwin-arm64-*.zip deploy/macos-arm64
+          unzip artifacts/*-darwin-arm64-*.zip -d deploy/macos-arm64
           mkdir -p deploy/macos-x64
-          unzip artifacts/*-darwin-x64-*.zip deploy/macos-x64
+          unzip artifacts/*-darwin-x64-*.zip -d deploy/macos-x64
           tree deploy
 #      - name: Setup Node
 #        uses: actions/setup-node@v4
