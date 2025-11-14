@@ -42,8 +42,8 @@ jobs:
           mkdir -p deploy/macos-x64
           unzip -q artifacts/*-darwin-x64-*.zip -d deploy/macos-x64
           tree deploy
-      - name: Setup steamcmd
-        uses: CyberAndrii/setup-steamcmd@v1
+#      - name: Setup steamcmd
+#        uses: CyberAndrii/setup-steamcmd@v1
       - name: Generate auth code
         id: steam-totp
         uses: CyberAndrii/steam-totp@v1
