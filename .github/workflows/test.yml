@@ -49,7 +49,7 @@ jobs:
           shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
       - name: Setup steamcmd
         uses: CyberAndrii/setup-steamcmd@v1
-        run: |
+      - run: |
           steamcmd +set_steam_guard_code "${{ steps.steam-totp.outputs.code }}" +login "${{ secrets.STEAM_USERNAME }}" +quit
 #      - name: Deploy to Steam
 #        uses: game-ci/steam-deploy@v3
