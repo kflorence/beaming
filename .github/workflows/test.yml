@@ -15,33 +15,33 @@ jobs:
       tag: ${{ steps.project-version.outputs.tag }}
       version: ${{ steps.project-version.outputs.version }}
     steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#        with:
-#          # Shouldn't need fetch-depth: 0, but see:
-#          # https://github.com/actions/checkout/issues/2199
-#          fetch-depth: 0
-#          fetch-tags: true
-#      - run: |
-#          TAG=$(git describe --tags --abbrev=0)
-#          echo "Deploying from tag: $TAG"
-#          echo "TAG=$TAG" >> $GITHUB_ENV
-#      - name: Download release artifacts
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: |
-#          gh release download "$TAG" --dir artifacts
-#          tree artifacts
-#          shopt -s globstar
-#          mkdir -p deploy/windows-ia32
-#          mv artifacts/*-win32-ia32-*.exe deploy/windows-ia32/beaming.exe
-#          mkdir -p deploy/windows-x64
-#          mv artifacts/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
-#          mkdir -p deploy/macos-arm64
-#          unzip -q artifacts/*-darwin-arm64-*.zip -d deploy/macos-arm64
-#          mkdir -p deploy/macos-x64
-#          unzip -q artifacts/*-darwin-x64-*.zip -d deploy/macos-x64
-#          tree deploy
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Shouldn't need fetch-depth: 0, but see:
+          # https://github.com/actions/checkout/issues/2199
+          fetch-depth: 0
+          fetch-tags: true
+      - run: |
+          TAG=$(git describe --tags --abbrev=0)
+          echo "Deploying from tag: $TAG"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+      - name: Download release artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download "$TAG" --dir artifacts
+          tree artifacts
+          shopt -s globstar
+          mkdir -p deploy/windows-ia32
+          mv artifacts/*-win32-ia32-*.exe deploy/windows-ia32/beaming.exe
+          mkdir -p deploy/windows-x64
+          mv artifacts/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
+          mkdir -p deploy/macos-arm64
+          unzip -q artifacts/*-darwin-arm64-*.zip -d deploy/macos-arm64
+          mkdir -p deploy/macos-x64
+          unzip -q artifacts/*-darwin-x64-*.zip -d deploy/macos-x64
+          tree deploy
       - name: Generate auth code
         id: steam-totp
         uses: CyberAndrii/steam-totp@v1
