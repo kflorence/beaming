@@ -47,23 +47,20 @@ jobs:
         uses: CyberAndrii/steam-totp@v1
         with:
           shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
-      - name: Setup steamcmd
-        uses: CyberAndrii/setup-steamcmd@v1
-      - run: |
-          steamcmd +set_steam_guard_code "${{ steps.steam-totp.outputs.code }}" +login "${{ secrets.STEAM_USERNAME }}" +quit
-#      - name: Deploy to Steam
-#        uses: game-ci/steam-deploy@v3
-#        with:
-#          username: ${{ secrets.STEAM_USERNAME }}
-#          totp: ${{ steps.steam-totp.outputs.code }}
-#          appId: 4172230
-#          buildDescription: ${{ env.TAG }}
-#          rootPath: deploy
-#          depot1Path: windows-ia32
-#          depot2Path: windows-x64
-#          depot3Path: darwin-x64
-#          depot4Path: darwin-arm64
-#          releaseBranch: default
+      - name: Deploy to Steam
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          password: ${{ secrets.STEAM_PASSWORD }}
+          totp: ${{ steps.steam-totp.outputs.code }}
+          appId: 4172230
+          buildDescription: ${{ env.TAG }}
+          rootPath: deploy
+          depot1Path: windows-ia32
+          depot2Path: windows-x64
+          depot3Path: darwin-x64
+          depot4Path: darwin-arm64
+          releaseBranch: default
 #      - name: Setup Node
 #        uses: actions/setup-node@v4
 #        with:
