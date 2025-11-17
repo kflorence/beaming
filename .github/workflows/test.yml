@@ -58,8 +58,8 @@ jobs:
           rootPath: deploy
           depot1Path: windows-ia32
           depot2Path: windows-x64
-          depot3Path: darwin-x64
-          depot4Path: darwin-arm64
+          depot3Path: macos-x64
+          depot4Path: macos-arm64
           releaseBranch: default
 #      - name: Setup Node
 #        uses: actions/setup-node@v4
