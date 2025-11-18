@@ -1,99 +1,31 @@
 name: Test
 on:
   workflow_call:
-    outputs:
-      tag:
-        description: 'The build tag.'
-        value: ${{ jobs.build.outputs.tag }}
-      version:
-        description: 'The build version.'
-        value: ${{ jobs.build.outputs.version }}
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.project-version.outputs.tag }}
-      version: ${{ steps.project-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          # Shouldn't need fetch-depth: 0, but see:
-          # https://github.com/actions/checkout/issues/2199
-          fetch-depth: 0
-          fetch-tags: true
-      - run: |
-          TAG=$(git describe --tags --abbrev=0)
-          echo "Deploying from tag: $TAG"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-      - name: Download release artifacts
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: npm install
+      - name: Run server
+        run: npm start &
+      - name: Wait
+        run: npx wait-on --timeout 5000 http://localhost:1234
+      - name: Run tests
+        run: npm test
+      - name: Generate build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download "$TAG" --dir artifacts
-          tree artifacts
-          shopt -s globstar
-          mkdir -p deploy/windows-ia32
-          mv artifacts/*-win32-ia32-*.exe deploy/windows-ia32/beaming.exe
-          mkdir -p deploy/windows-x64
-          mv artifacts/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
-          mkdir -p deploy/macos-arm64
-          unzip -q artifacts/*-darwin-arm64-*.zip -d deploy/macos-arm64
-          mkdir -p deploy/macos-x64
-          unzip -q artifacts/*-darwin-x64-*.zip -d deploy/macos-x64
-          tree deploy
-      - name: Generate auth code
-        id: steam-totp
-        uses: CyberAndrii/steam-totp@v1
+          NODE_ENV: ${{ vars.NODE_ENV }}
+        run: npm run build
+      - name: Upload build archive
+        uses: actions/upload-artifact@v4
         with:
-          shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
-      - name: Deploy to Steam
-        uses: game-ci/steam-deploy@v3
-        with:
-          username: ${{ secrets.STEAM_USERNAME }}
-          password: ${{ secrets.STEAM_PASSWORD }}
-          totp: ${{ steps.steam-totp.outputs.code }}
-          appId: 4172230
-          buildDescription: ${{ env.TAG }}
-          rootPath: deploy
-          depot1Path: windows-ia32
-          depot2Path: windows-x64
-          depot3Path: macos-x64
-          depot4Path: macos-arm64
-          releaseBranch: default
-#      - name: Setup Node
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version-file: '.nvmrc'
-#      - name: Install dependencies
-#        run: npm install
-#      - name: Run server
-#        run: npm start &
-#      - name: Wait
-#        run: npx wait-on --timeout 5000 http://localhost:1234
-#      - name: Run tests
-#        run: npm test
-#      - name: Verify project version
-#        id: project-version
-#        run: |
-#          VERSION=$(jq -r '.version' package.json)
-#          echo "Found version: $VERSION"
-#          TAG="v${VERSION}"
-#          if git tag -l "$TAG" | grep -q "$TAG"; then
-#            echo "Error: Tag $TAG already exists."
-#            exit 1
-#          fi
-#          echo "Tag $TAG does not exist, proceeding."
-#          echo "TAG=$TAG" >> "$GITHUB_ENV"
-#          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-#          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-#      - name: Generate build
-#        env:
-#          NODE_ENV: ${{ vars.NODE_ENV }}
-#        run: npm run build
-#      - name: Upload build archive
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: web
-#          path: dist
-#          compression-level: '9'
+          name: web
+          path: dist
+          compression-level: '9'

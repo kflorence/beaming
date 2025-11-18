@@ -6,8 +6,43 @@ on:
 jobs:
   test:
     uses: './.github/workflows/test.yml'
-  gh-pages:
+  info:
     needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      latest-tag: ${{ steps.build.outputs.latest-tag }}
+      tag: ${{ steps.build.outputs.tag }}
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Shouldn't need fetch-depth: 0, but see:
+          # https://github.com/actions/checkout/issues/2199
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Get build info
+        id: build
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          TAG="v${VERSION}"
+          echo "Build tag: $TAG"
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "Latest tag: $LATEST_TAG"
+          if [[ "$TAG" == "$LATEST_TAG" ]]; then
+            echo "Build tag matches latest tag. A new release should not be created."
+          elif [[ git tag -l "$TAG" | grep -q "$TAG" ]]; then
+            echo "Error: build tag $TAG already exists."
+            exit 1
+          else
+            echo "New tag detected. A new release should be created."
+          fi
+          echo "latest-tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+  gh-pages:
+    needs: info
+    if: needs.info.outputs.tag != needs.info.outputs.latest-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,11 +64,12 @@ jobs:
           git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           npx gh-pages -d dist -u "github-actions-bot <support+actions@github.com>" --nojekyll
   make:
-    needs: test
+    needs: info
+    if: needs.info.outputs.tag != needs.info.outputs.latest-tag
     uses: './.github/workflows/make.yml'
   create:
     runs-on: ubuntu-latest
-    needs: [test, gh-pages, make]
+    needs: [info, gh-pages, make]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +80,7 @@ jobs:
       - run: tree artifacts
       - name: Prepare release artifacts
         env:
-          VERSION: ${{ needs.test.outputs.version }}
+          VERSION: ${{ needs.info.outputs.version }}
         run: |
           shopt -s globstar
           BASE_PATH=$(pwd)
@@ -57,5 +93,38 @@ jobs:
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.test.outputs.tag }}
+          TAG: ${{ needs.info.outputs.tag }}
         run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"
+      - name: Prepare deploy artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          shopt -s globstar
+          mkdir -p deploy/windows-ia32
+          mv release/*-win32-ia32-*.exe deploy/windows-ia32/beaming.exe
+          mkdir -p deploy/windows-x64
+          mv release/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
+          mkdir -p deploy/macos-arm64
+          unzip -q release/*-darwin-arm64-*.zip -d deploy/macos-arm64
+          mkdir -p deploy/macos-x64
+          unzip -q release/*-darwin-x64-*.zip -d deploy/macos-x64
+          tree deploy
+      - name: Generate auth code
+        id: steam-totp
+        uses: CyberAndrii/steam-totp@v1
+        with:
+          shared_secret: ${{ secrets.STEAM_SHARED_SECRET }}
+      - name: Upload deploy artifacts to Steam
+        uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          password: ${{ secrets.STEAM_PASSWORD }}
+          totp: ${{ steps.steam-totp.outputs.code }}
+          appId: 4172230
+          buildDescription: ${{ needs.info.outputs.tag }}
+          rootPath: deploy
+          depot1Path: windows-ia32
+          depot2Path: windows-x64
+          depot3Path: macos-x64
+          depot4Path: macos-arm64
+          releaseBranch: development

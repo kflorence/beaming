@@ -4,8 +4,42 @@ on:
     branches:
       - main
 jobs:
+  info:
+    runs-on: ubuntu-latest
+    outputs:
+      latest-tag: ${{ steps.build.outputs.latest-tag }}
+      tag: ${{ steps.build.outputs.tag }}
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Shouldn't need fetch-depth: 0, but see:
+          # https://github.com/actions/checkout/issues/2199
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Get build info
+        id: build
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          TAG="v${VERSION}"
+          echo "Build tag: $TAG"
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "Latest tag: $LATEST_TAG"
+          if [[ "$TAG" == "$LATEST_TAG" ]]; then
+            echo "Build tag matches latest tag. A new release should not be created."
+          elif [[ git tag -l "$TAG" | grep -q "$TAG" ]]; then
+            echo "Error: build tag $TAG already exists."
+            exit 1
+          else
+            echo "New tag detected. A new release should be created."
+          fi
+          echo "latest-tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
   test:
+    needs: info
+    if: needs.info.outputs.tag != needs.info.outputs.latest-tag
     uses: './.github/workflows/test.yml'
-    secrets: inherit
 #  make:
 #    uses: './.github/workflows/make.yml'
