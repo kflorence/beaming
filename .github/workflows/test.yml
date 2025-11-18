@@ -1,27 +1,12 @@
 name: Test
 on:
   workflow_call:
-    outputs:
-      tag:
-        description: 'The build tag.'
-        value: ${{ jobs.build.outputs.tag }}
-      version:
-        description: 'The build version.'
-        value: ${{ jobs.build.outputs.version }}
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.project-version.outputs.tag }}
-      version: ${{ steps.project-version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # Shouldn't need fetch-depth: 0, but see:
-          # https://github.com/actions/checkout/issues/2199
-          fetch-depth: 0
-          fetch-tags: true
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -34,20 +19,6 @@ jobs:
         run: npx wait-on --timeout 5000 http://localhost:1234
       - name: Run tests
         run: npm test
-      - name: Verify project version
-        id: project-version
-        run: |
-          VERSION=$(jq -r '.version' package.json)
-          echo "Found version: $VERSION"
-          TAG="v${VERSION}"
-          if git tag -l "$TAG" | grep -q "$TAG"; then
-            echo "Error: Tag $TAG already exists."
-            exit 1
-          fi
-          echo "Tag $TAG does not exist, proceeding."
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Generate build
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
