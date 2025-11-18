@@ -26,9 +26,9 @@ jobs:
           echo "Build tag: $TAG"
           LATEST_TAG=$(git describe --tags --abbrev=0)
           echo "Latest tag: $LATEST_TAG"
-          if [[ "$TAG" == "$LATEST_TAG" ]]; then
+          if "$TAG" == "$LATEST_TAG"; then
             echo "Build tag matches latest tag. A new release should not be created."
-          elif [[ git tag -l "$TAG" | grep -q "$TAG" ]]; then
+          elif git tag -l "$TAG" | grep -q "$TAG"; then
             echo "Error: build tag $TAG already exists."
             exit 1
           else
