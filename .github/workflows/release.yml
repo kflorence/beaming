@@ -6,13 +6,13 @@ on:
 jobs:
   test:
     uses: './.github/workflows/test.yml'
-  info:
+  build-info:
     needs: test
     runs-on: ubuntu-latest
     outputs:
-      latest-tag: ${{ steps.build.outputs.latest-tag }}
-      tag: ${{ steps.build.outputs.tag }}
-      version: ${{ steps.build.outputs.version }}
+      latest-tag: ${{ steps.build-info.outputs.latest-tag }}
+      tag: ${{ steps.build-info.outputs.tag }}
+      version: ${{ steps.build-info.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,27 +22,27 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: Get build info
-        id: build
+        id: build-info
         run: |
           VERSION=$(jq -r '.version' package.json)
           TAG="v${VERSION}"
           echo "Build tag: $TAG"
           LATEST_TAG=$(git describe --tags --abbrev=0)
           echo "Latest tag: $LATEST_TAG"
-          if [[ "$TAG" == "$LATEST_TAG" ]]; then
-            echo "Build tag matches latest tag. A new release should not be created."
-          elif [[ git tag -l "$TAG" | grep -q "$TAG" ]]; then
+          if [ "$TAG" == "$LATEST_TAG" ]; then
+            echo "Build tag matches latest tag. Skipping release process."
+          elif git tag -l "$TAG" | grep -q "$TAG"; then
             echo "Error: build tag $TAG already exists."
             exit 1
           else
-            echo "New tag detected. A new release should be created."
+            echo "New build tag detected. Starting release process."
           fi
           echo "latest-tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
   gh-pages:
-    needs: info
-    if: needs.info.outputs.tag != needs.info.outputs.latest-tag
+    needs: build-info
+    if: needs.build-info.outputs.tag != needs.build-info.outputs.latest-tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,12 +64,12 @@ jobs:
           git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
           npx gh-pages -d dist -u "github-actions-bot <support+actions@github.com>" --nojekyll
   make:
-    needs: info
-    if: needs.info.outputs.tag != needs.info.outputs.latest-tag
+    needs: build-info
+    if: needs.build-info.outputs.tag != needs.build-info.outputs.latest-tag
     uses: './.github/workflows/make.yml'
   create:
     runs-on: ubuntu-latest
-    needs: [info, gh-pages, make]
+    needs: [build-info, gh-pages, make]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
       - run: tree artifacts
       - name: Prepare release artifacts
         env:
-          VERSION: ${{ needs.info.outputs.version }}
+          VERSION: ${{ needs.build-info.outputs.version }}
         run: |
           shopt -s globstar
           BASE_PATH=$(pwd)
@@ -93,7 +93,7 @@ jobs:
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.info.outputs.tag }}
+          TAG: ${{ needs.build-info.outputs.tag }}
         run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"
       - name: Prepare deploy artifacts
         env:
@@ -121,7 +121,7 @@ jobs:
           password: ${{ secrets.STEAM_PASSWORD }}
           totp: ${{ steps.steam-totp.outputs.code }}
           appId: 4172230
-          buildDescription: ${{ needs.info.outputs.tag }}
+          buildDescription: ${{ needs.build-info.outputs.tag }}
           rootPath: deploy
           depot1Path: windows-ia32
           depot2Path: windows-x64
