@@ -104,10 +104,8 @@ jobs:
           mv release/*-win32-ia32-*.exe deploy/windows-ia32/beaming.exe
           mkdir -p deploy/windows-x64
           mv release/*-win32-x64-*.exe deploy/windows-x64/beaming.exe
-          mkdir -p deploy/macos-arm64
-          unzip -q release/*-darwin-arm64-*.zip -d deploy/macos-arm64
-          mkdir -p deploy/macos-x64
-          unzip -q release/*-darwin-x64-*.zip -d deploy/macos-x64
+          mkdir -p deploy/macos-universal
+          unzip -q release/*-darwin-universal-*.zip -d deploy/macos-universal
           tree deploy
       - name: Generate auth code
         id: steam-totp
@@ -125,6 +123,5 @@ jobs:
           rootPath: deploy
           depot1Path: windows-ia32
           depot2Path: windows-x64
-          depot3Path: macos-x64
-          depot4Path: macos-arm64
+          depot3Path: macos-universal
           releaseBranch: development

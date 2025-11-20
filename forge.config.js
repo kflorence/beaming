@@ -4,7 +4,9 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: './src/images/icon'
+    icon: './src/images/icon',
+    // See: https://github.com/electron/universal/issues/36
+    osxSign: {}
   },
   rebuildConfig: {},
   makers: [

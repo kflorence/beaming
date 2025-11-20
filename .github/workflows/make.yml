@@ -14,6 +14,8 @@ jobs:
         include:
           - os: macos-latest
             arch: arm64
+          - os: macos-latest
+            arch: universal
           - os: ubuntu-24.04-arm
             arch: armv7l
           - os: ubuntu-24.04-arm
@@ -30,7 +32,7 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: npm install
-      - name: "Target: ${{ matrix.os }}-${{ matrix.arch }}"
+      - name: "Make target: ${{ matrix.os }}-${{ matrix.arch }}"
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
         run: npm run make -- --arch="${{ matrix.arch }}"
