@@ -94,7 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.build-info.outputs.tag }}
-        run: gh release create "$TAG" ./release/* --draft --generate-notes --title "$TAG"
+        run: gh release create "$TAG" ./release/* --generate-notes --title "$TAG"
       - name: Prepare deploy artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
