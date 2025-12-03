@@ -5,10 +5,6 @@ jobs:
   artifacts:
     strategy:
       matrix:
-        arch: []
-        os:
-          - macos-latest
-          - windows-latest
         include:
           - os: macos-latest
             arch: universal
