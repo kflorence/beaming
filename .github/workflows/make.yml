@@ -5,7 +5,7 @@ jobs:
   artifacts:
     strategy:
       matrix:
-        arch:
+        arch: []
         os:
           - macos-latest
           - windows-latest
