@@ -5,7 +5,6 @@
 !.github
 !.htmlnanorc
 !.nvmrc
-!.posthtmlrc
 dist
 node_modules
 out

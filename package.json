@@ -9,7 +9,6 @@
   "targets": {
     "web": {
       "context": "browser",
-      "publicUrl": ".",
       "source": "src/index.html"
     },
     "electron": {
@@ -37,11 +36,13 @@
   },
   "scripts": {
     "build": "parcel build",
+    "build:electron": "parcel build --target=electron",
+    "build:web": "parcel build --target=web --public-url=.",
     "clean": "rm -rf .parcel-cache dist out",
     "desktop": "npm run clean && npm run build && electron-forge start -- -- --debug",
     "make": "npm run clean && npm run build && electron-forge make",
     "package": "npm run clean && npm run build && electron-forge package",
-    "start": "parcel",
+    "start": "parcel --target=web",
     "test": "npm run test:lint && npm run test:functional",
     "test:functional": "mocha test --recursive --timeout 20000",
     "test:lint": "standard"
@@ -54,14 +55,12 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron/fuses": "^1.8.0",
-    "@kolod/posthtml-inline-svg": "^0.3.1",
     "app-builder-lib": "^26.0.12",
     "chromedriver": "^142.0.1",
     "electron": "^37.3.1",
     "mocha": "^10.8.2",
     "parcel": "^2.16.0",
     "path-browserify": "^1.0.1",
-    "posthtml-inline-svg": "^0.2.0",
     "process": "^0.11.10",
     "selenium-webdriver": "^4.27.0",
     "standard": "^17.1.2",
