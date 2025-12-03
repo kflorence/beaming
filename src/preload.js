@@ -1,4 +1,7 @@
-const { contextBridge, ipcRenderer } = require('electron')
+// This file is sandboxed, so it has limited access to modules.
+// See: https://www.electronjs.org/docs/latest/tutorial/sandbox#preload-scripts
+import { contextBridge, ipcRenderer } from 'electron'
+import channels from './channels.js'
 
 const localStorage = window.localStorage
 
@@ -13,15 +16,22 @@ function init () {
 }
 
 function onWindowResized (handler) {
-  ipcRenderer.on('window-resized', (event, ...args) => { handler(...args) })
+  ipcRenderer.on(channels.windowResized, (event, ...args) => { handler(...args) })
 }
 
 function quit () {
-  ipcRenderer.send('quit')
+  ipcRenderer.send(channels.quit)
 }
 
 function resizeWindow () {
-  ipcRenderer.send('resize-window', ...Array.from(arguments))
+  ipcRenderer.send(channels.resizeWindow, ...Array.from(arguments))
+}
+
+const store = {
+  get: function (key) {
+    // TODO
+    // return ipcRenderer.invoke()
+  }
 }
 
 // Expose in the renderer under window.electron
@@ -29,5 +39,6 @@ contextBridge.exposeInMainWorld('electron', {
   init,
   onWindowResized,
   quit,
-  resizeWindow
+  resizeWindow,
+  store
 })

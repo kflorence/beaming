@@ -1,12 +1,15 @@
-const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron/main')
-const path = require('path')
+import { app, BrowserWindow, ipcMain, Menu, screen } from 'electron/main'
+import channels from './channels.js'
+import path from 'path'
+import Store from 'electron-store'
 
+const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
 
-const channels = Object.freeze({
-  quit: 'quit',
-  resizeWindow: 'resize-window'
-})
+// TODO: consider defining a schema
+const store = new Store()
+
+console.log(store.store)
 
 const minHeight = 680
 const minWidth = 340
@@ -33,12 +36,12 @@ function createWindow () {
     icon: path.join(__dirname, 'images/icon.png'),
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, '../dist/electron/preload.js')
     },
     width: 1024
   })
 
-  window.loadFile('dist/index.html').catch((e) => {
+  window.loadFile('dist/web/index.html').catch((e) => {
     console.error('Failed to load file', e)
   })
 
@@ -52,7 +55,7 @@ function createWindow () {
 }
 
 function onWindowResize () {
-  window.webContents.send('window-resized', window.getBounds())
+  window.webContents.send(channels.windowResized, window.getBounds())
 }
 
 app.whenReady().then(() => {
@@ -113,4 +116,12 @@ ipcMain.on(channels.resizeWindow, (event, value, settings) => {
   } else {
     onResizeWindow(event, value, settings)
   }
+})
+
+ipcMain.handle(channels.storeGet, (event, key) => {
+  return store.get(key)
+})
+
+ipcMain.handle(channels.storeSet, (event, key, value) => {
+  return store.set(key, value)
 })
