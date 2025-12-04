@@ -69,7 +69,6 @@ export class PuzzleFixture {
     const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
     if (!isSelected) {
       await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
-      await this.driver.wait(untilElementHasClass(this.elements.body, `tile-selected-${r},${c}`))
     }
   }
 

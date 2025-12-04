@@ -347,8 +347,6 @@ export class Puzzle {
     this.#mask.onUnmask(this)
     this.#mask = undefined
 
-    document.body.classList.remove(Puzzle.Events.Mask)
-
     const mask = this.#maskQueue.pop()
     if (mask) {
       console.debug('processing next mask in queue', mask)
@@ -360,6 +358,8 @@ export class Puzzle {
           this.mask(mask)
         }
       })
+    } else {
+      document.body.classList.remove(Puzzle.Events.Mask)
     }
   }
 
