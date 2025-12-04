@@ -1,6 +1,6 @@
-require('chromedriver')
-const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, Condition, logging, until, Button } = require('selenium-webdriver')
+import 'chromedriver'
+import chrome from 'selenium-webdriver/chrome'
+import { Builder, By, Condition, logging, until, Button } from 'selenium-webdriver'
 
 logging.installConsoleHandler()
 
@@ -69,6 +69,7 @@ class PuzzleFixture {
     const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
     if (!isSelected) {
       await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+      await this.driver.wait(untilElementHasClass(this.elements.body, `tile-selected-${r},${c}`))
     }
   }
 
