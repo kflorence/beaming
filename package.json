@@ -35,7 +35,7 @@
     }
   },
   "scripts": {
-    "build": "parcel build",
+    "build": "parcel build --public-url=.",
     "build:electron": "parcel build --target=electron",
     "build:web": "parcel build --target=web --public-url=.",
     "clean": "rm -rf .parcel-cache dist out",
