@@ -7,9 +7,8 @@ const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
 
 // TODO: consider defining a schema
+// Note: don't store anything here that is machine-specific (e.g. video settings)
 const store = new Store()
-
-console.log(store.store)
 
 const minHeight = 680
 const minWidth = 340
@@ -116,6 +115,10 @@ ipcMain.on(channels.resizeWindow, (event, value, settings) => {
   } else {
     onResizeWindow(event, value, settings)
   }
+})
+
+ipcMain.handle(channels.storeDelete, (event, key) => {
+  return store.delete(key)
 })
 
 ipcMain.handle(channels.storeGet, (event, key) => {

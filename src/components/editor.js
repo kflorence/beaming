@@ -40,7 +40,10 @@ const tippy = Tippy(elements.share, {
 // See: https://github.com/ajv-validator/ajv-keywords/blob/master/README.md#uniqueitemproperties
 
 // TODO: add ability to move the center marker. wherever it is placed will become the new center of the canvas
+// https://github.com/kflorence/beaming/issues/70
+
 // TODO: implement author / description in the UI
+// https://github.com/kflorence/beaming/issues/71
 
 export class Editor {
   group = new Group({ locked: true })
@@ -56,9 +59,6 @@ export class Editor {
   #puzzle
 
   constructor (puzzle) {
-    // Place this layer under all the other ones
-    paper.project.insertLayer(0, this.#layer)
-
     this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
     this.#puzzle = puzzle
   }
@@ -83,6 +83,9 @@ export class Editor {
     if (this.#editor) {
       return
     }
+
+    // Place this layer under all the other ones
+    paper.project.insertLayer(0, this.#layer)
 
     this.#gutter.setup()
 
@@ -440,5 +443,5 @@ export class Editor {
     Locked: 'locked'
   })
 
-  static #key = getKeyFactory(State.CacheKeys.Editor, State.getId())
+  static #key = getKeyFactory('editor', State.getId)
 }

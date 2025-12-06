@@ -2,7 +2,7 @@ import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
 import { debug } from './debug'
-import { params } from './util'
+import { params, url } from './util'
 import { State } from './state'
 import { EventListeners } from './eventListeners'
 
@@ -52,13 +52,13 @@ export class Game {
     if (document.body.classList.contains(Game.States.Edit)) {
       elements.title.close()
       return
+    } else if (document.body.classList.contains(Game.States.Play)) {
+      this.#reset()
     }
-
-    this.#reset()
 
     document.body.classList.add(Game.States.Edit)
 
-    State.setParam(Game.States.Edit, 'true')
+    State.setParam(Game.States.Edit, '')
 
     this.puzzle.select()
     this.editor.setup()
@@ -70,11 +70,11 @@ export class Game {
     if (document.body.classList.contains(Game.States.Play)) {
       elements.title.close()
       return
+    } else if (document.body.classList.contains(Game.States.Edit)) {
+      this.#reset()
     }
 
-    this.#reset()
-
-    State.setParam(Game.States.Play, 'true')
+    State.setParam(Game.States.Play, '')
 
     this.editor.teardown()
     this.puzzle.select()
@@ -89,6 +89,8 @@ export class Game {
   }
 
   #reset () {
+    // Don't carry state via URL from one context to another
+    url.hash = ''
     Game.states.forEach((state) => params.delete(state))
     document.body.classList.remove(...Game.states)
   }

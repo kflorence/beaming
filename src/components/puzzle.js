@@ -581,6 +581,10 @@ export class Puzzle {
   }
 
   #reset () {
+    if (!this.state.canReset()) {
+      return
+    }
+
     if (confirm('Are you sure you want to reset this puzzle? This cannot be undone.') && this.state.reset()) {
       setTimeout(() => this.reload())
     }
