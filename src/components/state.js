@@ -335,12 +335,16 @@ export class State {
       values.push(id)
     } else {
       // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
-      values.push(...url.hash.substring(1).split('/').filter((path) => path !== ''))
+      // Encoded state will take precedence over ID (in case there is a mismatch with local cache)
+      values.push(...url.hash.substring(1).split('/').filter((path) => path !== '').reverse())
 
       // Last active puzzle ID
-      values.push(State.getId())
+      const lastId = State.getId()
+      if (lastId !== null) {
+        values.push(lastId)
+      }
 
-      if (!params.has(State.ParamKeys.Edit)) {
+      if (values.length === 0 && !params.has(State.ParamKeys.Edit)) {
         // If puzzle is not being edited, fall back to first puzzle ID
         values.push(Puzzles.visible.firstId)
       }
@@ -374,6 +378,11 @@ export class State {
         return state
       } catch (e) {
         console.debug(`Could not decode value: ${value}`, e)
+      }
+
+      if (id !== undefined) {
+        // We found a valid puzzle ID
+        break
       }
     }
 
