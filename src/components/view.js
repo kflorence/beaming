@@ -1,23 +1,31 @@
 import paper from 'paper'
 import { State } from './state'
-import { emitEvent, getKeyFactory, params, pointToString, sizeToString, stringToPoint } from './util'
-
-const localStorage = window.localStorage
+import { Storage } from './storage'
+import { emitEvent, getKeyFactory, pointToString, sizeToString, stringToPoint } from './util'
 
 export class View {
   static getCenter () {
-    return localStorage.getItem(View.#key(State.getId(), sizeToString(paper.view.viewSize), View.CacheKeys.Center))
+    let data = Storage.get(View.#key(View.CacheKeys.Center))
+    if (data !== null) {
+      data = JSON.parse(data)
+      if (sizeToString(paper.view.viewSize) === data.size) {
+        // In order to use the center point from cache, the view size must match the cached view size
+        return stringToPoint(data.point)
+      }
+    }
+    return null
   }
 
   static getZoom () {
-    return localStorage.getItem(View.#key(State.getId(), View.CacheKeys.Zoom))
+    const zoom = Storage.get(View.#key(View.CacheKeys.Zoom))
+    return zoom === null ? zoom : Number(zoom)
   }
 
   static setCenter (point) {
     paper.view.center = point
     if (State.getId() !== null) {
-      localStorage.setItem(
-        View.#key(State.getId(), sizeToString(paper.view.viewSize), View.CacheKeys.Center), pointToString(point))
+      const data = { size: sizeToString(paper.view.viewSize), point: pointToString(point) }
+      Storage.set(View.#key(View.CacheKeys.Center), JSON.stringify(data))
     }
     emitEvent(View.Events.Center, { point })
   }
@@ -25,19 +33,19 @@ export class View {
   static setZoom (factor) {
     paper.view.zoom = factor
     if (State.getId() !== null) {
-      localStorage.setItem(View.#key(State.getId(), View.CacheKeys.Zoom), factor.toString())
+      Storage.set(View.#key(View.CacheKeys.Zoom), factor.toString())
     }
   }
 
   static update () {
     const center = View.getCenter()
     if (center !== null) {
-      paper.view.center = stringToPoint(center)
+      paper.view.center = center
     }
 
     const zoom = View.getZoom()
     if (zoom !== null) {
-      paper.view.zoom = Number(zoom)
+      paper.view.zoom = zoom
     }
   }
 
@@ -50,9 +58,5 @@ export class View {
     Center: 'view-center'
   })
 
-  static #key = getKeyFactory([
-    // Prefix key with 'editor' when in edit mode
-    params.has(State.ParamKeys.Edit) ? State.CacheKeys.Editor : undefined,
-    'view'
-  ].filter((v) => v))
+  static #key = getKeyFactory([State.getContext, 'puzzle', State.getId, 'view'])
 }

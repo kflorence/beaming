@@ -152,11 +152,11 @@ export function getIconElement (name, title, fill = true) {
 }
 
 export function getKey () {
-  return Array.from(arguments).join(':')
+  return Array.from(arguments).map((arg) => typeof arg === 'function' ? arg() : arg).filter((v) => v).join(':')
 }
 
 export function getKeyFactory () {
-  const base = Array.from(arguments).flat()
+  const base = Array.from(arguments).flat().filter((v) => v)
   return function () { return getKey(...base, ...arguments) }
 }
 

@@ -2,8 +2,9 @@ import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
 import { debug } from './debug'
-import { params } from './util'
+import { params, url } from './util'
 import { State } from './state'
+import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
 
 const elements = Object.freeze({
@@ -28,7 +29,9 @@ export class Game {
       { type: 'click', element: elements.back, handler: this.back },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
-      { type: 'click', element: elements.quit, handler: this.quit }
+      { type: 'click', element: elements.quit, handler: this.quit },
+      { type: Storage.Events.Delete, handler: this.#onStorageDelete },
+      { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
     if (params.has(Game.States.Play)) {
@@ -52,13 +55,13 @@ export class Game {
     if (document.body.classList.contains(Game.States.Edit)) {
       elements.title.close()
       return
+    } else if (document.body.classList.contains(Game.States.Play)) {
+      this.#reset()
     }
-
-    this.#reset()
 
     document.body.classList.add(Game.States.Edit)
 
-    State.setParam(Game.States.Edit, 'true')
+    State.setParam(Game.States.Edit, '')
 
     this.puzzle.select()
     this.editor.setup()
@@ -70,11 +73,11 @@ export class Game {
     if (document.body.classList.contains(Game.States.Play)) {
       elements.title.close()
       return
+    } else if (document.body.classList.contains(Game.States.Edit)) {
+      this.#reset()
     }
 
-    this.#reset()
-
-    State.setParam(Game.States.Play, 'true')
+    State.setParam(Game.States.Play, '')
 
     this.editor.teardown()
     this.puzzle.select()
@@ -88,13 +91,40 @@ export class Game {
     window.electron?.quit()
   }
 
+  #onStorageDelete (event) {
+    if (event.detail.persist === false) {
+      console.debug(Game.toString(), '#onStorageDelete', `Ignoring event '${event.type}'`, event.detail)
+      return
+    }
+
+    window.electron?.store.delete(event.detail.key).then(_ => {
+      console.debug(Game.toString(), '#onStorageDelete', event.type, event.detail)
+    })
+  }
+
+  #onStorageSet (event) {
+    if (event.detail.persist === false) {
+      console.debug(Game.toString(), '#onStorageSet', `Ignoring event '${event.type}'`, event.detail)
+      return
+    }
+
+    window.electron?.store.set(event.detail.key, event.detail.value).then(_ => {
+      console.debug(Game.toString(), '#onStorageSet', event.type, event.detail)
+    })
+  }
+
   #reset () {
+    // Don't carry state via URL from one context to another
+    url.hash = ''
     Game.states.forEach((state) => params.delete(state))
     document.body.classList.remove(...Game.states)
   }
 
   static debug = debug
   static paper = paper
+  static toString () {
+    return 'Game'
+  }
 
   static States = Object.freeze({
     Edit: State.ParamKeys.Edit,

@@ -4,6 +4,7 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
+import { Storage } from './storage'
 import { getKeyFactory, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
@@ -28,8 +29,6 @@ const elements = Object.freeze({
   wrapper: document.getElementById('editor-wrapper')
 })
 
-const localStorage = window.localStorage
-
 const tippy = Tippy(elements.share, {
   content: 'Share URL copied to clipboard!',
   theme: 'custom',
@@ -40,7 +39,10 @@ const tippy = Tippy(elements.share, {
 // See: https://github.com/ajv-validator/ajv-keywords/blob/master/README.md#uniqueitemproperties
 
 // TODO: add ability to move the center marker. wherever it is placed will become the new center of the canvas
+// https://github.com/kflorence/beaming/issues/70
+
 // TODO: implement author / description in the UI
+// https://github.com/kflorence/beaming/issues/71
 
 export class Editor {
   group = new Group({ locked: true })
@@ -56,9 +58,6 @@ export class Editor {
   #puzzle
 
   constructor (puzzle) {
-    // Place this layer under all the other ones
-    paper.project.insertLayer(0, this.#layer)
-
     this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
     this.#puzzle = puzzle
   }
@@ -76,13 +75,16 @@ export class Editor {
   }
 
   isLocked () {
-    return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
+    return Storage.get(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
 
   setup () {
     if (this.#editor) {
       return
     }
+
+    // Place this layer under all the other ones
+    paper.project.insertLayer(0, this.#layer)
 
     this.#gutter.setup()
 
@@ -382,7 +384,7 @@ export class Editor {
   }
 
   #toggleLock () {
-    localStorage.setItem(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
@@ -440,5 +442,5 @@ export class Editor {
     Locked: 'locked'
   })
 
-  static #key = getKeyFactory(State.CacheKeys.Editor, State.getId())
+  static #key = getKeyFactory('editor', State.getId)
 }

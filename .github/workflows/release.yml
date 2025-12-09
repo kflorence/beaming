@@ -56,7 +56,7 @@ jobs:
       - name: Build
         env:
           NODE_ENV: ${{ vars.NODE_ENV }}
-        run: npm run build -- --public-url https://kflorence.github.io/beaming
+        run: npm run build:web -- --public-url https://kflorence.github.io/beaming
       - name: Publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

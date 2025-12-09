@@ -1,6 +1,6 @@
 /* eslint-env mocha */
-const { PuzzleFixture } = require('../fixtures.js')
-const assert = require('assert')
+import { PuzzleFixture } from '../fixtures.js'
+import assert from 'assert'
 
 describe('Puzzle 005', function () {
   const puzzle = new PuzzleFixture('005')

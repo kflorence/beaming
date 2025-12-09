@@ -439,6 +439,7 @@ dialog ul {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #logo {
+  aspect-ratio: 1 / 1;
   color: #333;
   filter: drop-shadow(0 0.25em 0.25em #aaa);
   min-width: 240px;
@@ -645,10 +646,6 @@ dialog ul {
 
 .edit #puzzle {
   visibility: visible;
-}
-
-.edit #puzzle-selector {
-  display: none;
 }
 
 .electron {
@@ -908,6 +905,7 @@ i.fill,
 @container puzzle (max-width: 768px) {
   #puzzle-header {
     padding: 0;
+    pointer-events: all;
 
     .flex-center {
       border-top: 1px solid #ddd;

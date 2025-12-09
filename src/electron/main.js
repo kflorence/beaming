@@ -1,12 +1,15 @@
-const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron/main')
-const path = require('path')
+import { app, BrowserWindow, ipcMain, Menu, screen } from 'electron/main'
+import channels from './channels.js'
+import path from 'path'
+import Store from 'electron-store'
 
+const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
+const debug = args.includes('--debug')
 
-const channels = Object.freeze({
-  quit: 'quit',
-  resizeWindow: 'resize-window'
-})
+// TODO: consider defining a schema
+// Note: don't store anything here that is machine-specific (e.g. video settings)
+const store = new Store()
 
 const minHeight = 680
 const minWidth = 340
@@ -17,8 +20,8 @@ const resizeTypes = Object.freeze({
   maximized: 'maximized'
 })
 
-// Disable default menus unless --debug flag is present
-if (!args.includes('--debug')) {
+if (!debug) {
+  // Disable default menus when not running in debug mode
   Menu.setApplicationMenu(null)
 }
 
@@ -30,15 +33,15 @@ function createWindow () {
     // Should match body background color
     backgroundColor: '#ccc',
     height: 768,
-    icon: path.join(__dirname, 'images/icon.png'),
+    icon: path.join(__dirname, '../images/icon.png'),
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, '../../dist/electron/preload.js')
     },
     width: 1024
   })
 
-  window.loadFile('dist/index.html').catch((e) => {
+  window.loadFile('dist/web/index.html').catch((e) => {
     console.error('Failed to load file', e)
   })
 
@@ -52,23 +55,11 @@ function createWindow () {
 }
 
 function onWindowResize () {
-  window.webContents.send('window-resized', window.getBounds())
+  window.webContents.send(channels.windowResized, window.getBounds())
 }
 
-app.whenReady().then(() => {
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+ipcMain.handle(channels.debug, () => {
+  return debug
 })
 
 ipcMain.on(channels.quit, () => {
@@ -112,5 +103,38 @@ ipcMain.on(channels.resizeWindow, (event, value, settings) => {
     window.once('leave-full-screen', () => onResizeWindow(event, value, settings))
   } else {
     onResizeWindow(event, value, settings)
+  }
+})
+
+ipcMain.handle(channels.storeDelete, (event, key) => {
+  return store.delete(key)
+})
+
+ipcMain.handle(channels.storeGet, (event, key) => {
+  return key === undefined ? store.store : store.get(key)
+})
+
+ipcMain.handle(channels.storeSet, (event, key, value) => {
+  if (typeof key === 'object') {
+    value = key
+    key = undefined
+  }
+
+  return store.set(key, value)
+})
+
+app.whenReady().then(() => {
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
   }
 })

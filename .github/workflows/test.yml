@@ -27,5 +27,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web
-          path: dist
+          path: dist/web
           compression-level: '9'

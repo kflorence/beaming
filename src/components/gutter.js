@@ -1,7 +1,6 @@
 import { EventListeners } from './eventListeners'
+import { Storage } from './storage'
 import { deepEqual, emitEvent, getKeyFactory } from './util'
-
-const localStorage = window.localStorage
 
 export class Gutter {
   element = document.getElementById('gutter')
@@ -14,7 +13,7 @@ export class Gutter {
 
   constructor (pane0, pane1) {
     this.panes = [pane0, pane1]
-    this.horizontal = localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Horizontal)) === 'true'
+    this.horizontal = Storage.get(Gutter.#key(Gutter.CacheKeys.Horizontal)) === 'true'
   }
 
   setup () {
@@ -36,7 +35,7 @@ export class Gutter {
 
   toggleOrientation () {
     this.horizontal = !this.horizontal
-    localStorage.setItem(Gutter.#key(Gutter.CacheKeys.Horizontal), this.horizontal.toString())
+    Storage.set(Gutter.#key(Gutter.CacheKeys.Horizontal), this.horizontal.toString())
 
     this.update()
 
@@ -51,8 +50,8 @@ export class Gutter {
     document.body.classList.toggle(Gutter.ClassNames.Horizontal, this.horizontal)
 
     this.#updatePane({
-      width: localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Width)),
-      height: localStorage.getItem(Gutter.#key(Gutter.CacheKeys.Height))
+      width: Storage.get(Gutter.#key(Gutter.CacheKeys.Width)),
+      height: Storage.get(Gutter.#key(Gutter.CacheKeys.Height))
     })
   }
 
@@ -88,10 +87,11 @@ export class Gutter {
       const [pane] = this.panes
       const bounds = pane.getBoundingClientRect()
 
+      // Don't persist these values since they are machine dependent
       if (this.horizontal) {
-        localStorage.setItem(Gutter.#key(Gutter.CacheKeys.Height), bounds.height.toString())
+        Storage.set(Gutter.#key(Gutter.CacheKeys.Height), bounds.height.toString(), false)
       } else {
-        localStorage.setItem(Gutter.#key(Gutter.CacheKeys.Width), bounds.width.toString())
+        Storage.set(Gutter.#key(Gutter.CacheKeys.Width), bounds.width.toString(), false)
       }
 
       emitEvent(Gutter.Events.Moved, { gutter: this })

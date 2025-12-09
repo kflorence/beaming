@@ -1,6 +1,6 @@
 /* eslint-env mocha */
-const { PuzzleFixture } = require('../fixtures.js')
-const assert = require('assert')
+import { PuzzleFixture } from '../fixtures.js'
+import assert from 'assert'
 
 describe('Puzzle 011', function () {
   const puzzle = new PuzzleFixture('011')
@@ -13,9 +13,7 @@ describe('Puzzle 011', function () {
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
       { eventType: 'mask-visible' },
-      { eventType: 'portal-exit', tile: '1,0' },
-      // FIXME: For some reason the test is flaky without selecting the tile again
-      { eventType: 'portal-exit', tile: '1,0' },
+      { eventType: 'portal-exit', tile: '1,0', selectedTile: '1,0' },
       { eventType: 'mask-hidden' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
       { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },

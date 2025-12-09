@@ -3,9 +3,8 @@
 !.gitattributes
 !.gitignore
 !.github
-!.htmlnanorc
 !.nvmrc
-!.posthtmlrc
+!.parcelrc
 dist
 node_modules
 out

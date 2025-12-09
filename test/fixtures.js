@@ -1,13 +1,13 @@
-require('chromedriver')
-const chrome = require('selenium-webdriver/chrome')
-const { Builder, By, Condition, logging, until, Button } = require('selenium-webdriver')
+import 'chromedriver'
+import chrome from 'selenium-webdriver/chrome.js'
+import { Builder, By, Condition, logging, until, Button } from 'selenium-webdriver'
 
 logging.installConsoleHandler()
 
 const logger = logging.getLogger('')
 logger.setLevel(logging.Level.DEBUG)
 
-class PuzzleFixture {
+export class PuzzleFixture {
   driver
   elements = {
     body: undefined,
@@ -134,8 +134,4 @@ function untilElementDoesNotHaveClass (element, name) {
   return new Condition('until element does not have class', function () {
     return element.getAttribute('class').then((classes) => classes.split(' ').every((className) => name !== className))
   })
-}
-
-module.exports = {
-  PuzzleFixture
 }
