@@ -2,9 +2,9 @@
   "name": "beaming",
   "author": "Kyle Florence",
   "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "CC BY-NC 4.0",
-  "main": "src/main.js",
+  "main": "src/electron/main.js",
   "type": "module",
   "targets": {
     "web": {
@@ -13,7 +13,7 @@
     },
     "electron": {
       "context": "electron-renderer",
-      "source": "src/preload.js"
+      "source": "src/electron/preload.js"
     },
     "main": false
   },
@@ -39,9 +39,9 @@
     "build:electron": "parcel build --target=electron",
     "build:web": "parcel build --target=web --public-url=.",
     "clean": "rm -rf .parcel-cache dist out",
-    "desktop": "npm run clean && npm run build && electron-forge start -- -- --debug",
-    "make": "npm run clean && npm run build && electron-forge make",
-    "package": "npm run clean && npm run build && electron-forge package",
+    "desktop": "npm run clean && TARGET=electron npm run build && electron-forge start -- -- --debug",
+    "make": "npm run clean && TARGET=electron npm run build && electron-forge make",
+    "package": "npm run clean && TARGET=electron npm run build && electron-forge package",
     "start": "parcel --target=web",
     "test": "npm run test:lint && npm run test:functional",
     "test:functional": "mocha test --recursive --timeout 20000",
@@ -55,11 +55,12 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron/fuses": "^1.8.0",
+    "@parcel/optimizer-htmlnano": "^2.16.3",
     "app-builder-lib": "^26.0.12",
     "chromedriver": "^142.0.1",
     "electron": "^37.3.1",
     "mocha": "^10.8.2",
-    "parcel": "^2.16.0",
+    "parcel": "^2.16.2",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "selenium-webdriver": "^4.27.0",

@@ -3,13 +3,14 @@ import '@fontsource-variable/material-symbols-outlined/fill.css'
 import '@fontsource-variable/noto-sans-mono'
 
 import './dialog'
-import './settings'
 
 import { Game } from './components/game'
 import pkg from '../package.json'
 
-if (process.env.NODE_ENV === 'production') {
-  require('./analytics')
+if (process.env.TARGET === 'electron') {
+  import('./electron/settings.js')
+} else if (process.env.NODE_ENV === 'production') {
+  import('./analytics')
 }
 
 // Set build version from package.json

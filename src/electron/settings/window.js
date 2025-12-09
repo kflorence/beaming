@@ -1,3 +1,5 @@
+import { Keys } from './keys.js'
+
 const localStorage = window.localStorage
 const name = 'settings-window'
 const settings = document.getElementsByName(name)
@@ -23,16 +25,16 @@ function getValue () {
 }
 
 function update (value) {
-  localStorage.setItem('settings:window', value)
+  localStorage.setItem(Keys.window, value)
 
   windowHeight.disabled = windowWidth.disabled = !(value === Values.custom)
 
   if (value === Values.custom) {
     if (Number(windowHeight.value)) {
-      localStorage.setItem('settings:window:height', windowHeight.value)
+      localStorage.setItem(Keys.windowHeight, windowHeight.value)
     }
     if (Number(windowWidth.value)) {
-      localStorage.setItem('settings:window:width', windowWidth.value)
+      localStorage.setItem(Keys.windowWidth, windowWidth.value)
     }
   }
 

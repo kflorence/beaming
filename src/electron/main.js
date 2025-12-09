@@ -32,10 +32,10 @@ function createWindow () {
     // Should match body background color
     backgroundColor: '#ccc',
     height: 768,
-    icon: path.join(__dirname, 'images/icon.png'),
+    icon: path.join(__dirname, '../images/icon.png'),
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, '../dist/electron/preload.js')
+      preload: path.join(__dirname, '../../dist/electron/preload.js')
     },
     width: 1024
   })
@@ -122,9 +122,14 @@ ipcMain.handle(channels.storeDelete, (event, key) => {
 })
 
 ipcMain.handle(channels.storeGet, (event, key) => {
-  return store.get(key)
+  return key === undefined ? store.store : store.get(key)
 })
 
 ipcMain.handle(channels.storeSet, (event, key, value) => {
+  if (typeof key === 'object') {
+    value = key
+    key = undefined
+  }
+
   return store.set(key, value)
 })
