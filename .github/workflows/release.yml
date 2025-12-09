@@ -87,7 +87,7 @@ jobs:
           cd artifacts/web
           zip -r "beaming-${VERSION}.zip" .
           cd "$BASE_PATH"
-          mv artifacts/**/*.{deb,exe,zip} release
+          mv artifacts/**/*.{exe,zip} release
           tree release
       - name: Create release
         env:
