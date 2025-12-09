@@ -41,6 +41,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
   gh-pages:
+    needs: build-info
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
