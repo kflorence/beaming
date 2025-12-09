@@ -1,0 +1,2 @@
+(0,("undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:"undefined"!=typeof window?window:"undefined"!=typeof global?global:{}).parcelRequiref3c5.register)("g1sMX",function(e,t){let n=document.createElement("script");n.setAttribute("src","https://www.googletagmanager.com/gtag/js?id=G-HXLD6EE5NS"),document.head.append(n);let o=window.dataLayer=window.dataLayer||[];function a(){o.push(arguments)}a("js",new Date),a("config","G-HXLD6EE5NS")});
+//# sourceMappingURL=analytics.b46b8cc6.js.map
