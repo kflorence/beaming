@@ -16,8 +16,14 @@ if (process.env.TARGET === 'electron') {
 // Set build version from package.json
 document.getElementById('version').textContent = `v${pkg.version}`
 
-// Execute initialization if running inside electron
-window.electron?.init()
+async function init () {
+  if (window.electron) {
+    // Wait for electron initialization to complete first
+    await window.electron.init()
+  }
 
-// Export
-window.game = new Game()
+  window.game = new Game()
+}
+
+// Use an immediately invoked function here to get around not being able to use top-level await in browser
+(async () => init())()

@@ -1,5 +1,6 @@
 // Channel names shared between preload and main
 export default Object.freeze({
+  debug: 'debug',
   quit: 'quit',
   resizeWindow: 'resize-window',
   storeDelete: 'store-delete',

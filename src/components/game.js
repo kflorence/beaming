@@ -4,6 +4,7 @@ import paper from 'paper'
 import { debug } from './debug'
 import { params, url } from './util'
 import { State } from './state'
+import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
 
 const elements = Object.freeze({
@@ -28,7 +29,9 @@ export class Game {
       { type: 'click', element: elements.back, handler: this.back },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
-      { type: 'click', element: elements.quit, handler: this.quit }
+      { type: 'click', element: elements.quit, handler: this.quit },
+      { type: Storage.Events.Delete, handler: this.#onStorageDelete },
+      { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
     if (params.has(Game.States.Play)) {
@@ -88,6 +91,28 @@ export class Game {
     window.electron?.quit()
   }
 
+  #onStorageDelete (event) {
+    if (event.detail.persist === false) {
+      console.debug(Game.toString(), '#onStorageDelete', `Ignoring event '${event.type}'`, event.detail)
+      return
+    }
+
+    window.electron?.store.delete(event.detail.key).then(_ => {
+      console.debug(Game.toString(), '#onStorageDelete', event.type, event.detail)
+    })
+  }
+
+  #onStorageSet (event) {
+    if (event.detail.persist === false) {
+      console.debug(Game.toString(), '#onStorageSet', `Ignoring event '${event.type}'`, event.detail)
+      return
+    }
+
+    window.electron?.store.set(event.detail.key, event.detail.value).then(_ => {
+      console.debug(Game.toString(), '#onStorageSet', event.type, event.detail)
+    })
+  }
+
   #reset () {
     // Don't carry state via URL from one context to another
     url.hash = ''
@@ -97,6 +122,9 @@ export class Game {
 
   static debug = debug
   static paper = paper
+  static toString () {
+    return 'Game'
+  }
 
   static States = Object.freeze({
     Edit: State.ParamKeys.Edit,

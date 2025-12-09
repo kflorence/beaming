@@ -1,16 +1,7 @@
 import { params } from './util'
 
-const console = window.console = window.console || { debug: function () {} }
-const consoleDebug = console.debug
-const enabled = params.has('debug')
-
-if (enabled) {
-  document.body.classList.add('debug')
-}
-
 export function debug (debug) {
-  console.debug = debug ? consoleDebug : function () {}
+  document.body.classList.toggle('debug', debug)
 }
 
-debug.enabled = enabled
-debug(enabled)
+debug(params.has('debug'))

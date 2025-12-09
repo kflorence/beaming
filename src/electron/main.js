@@ -5,6 +5,7 @@ import Store from 'electron-store'
 
 const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
+const debug = args.includes('--debug')
 
 // TODO: consider defining a schema
 // Note: don't store anything here that is machine-specific (e.g. video settings)
@@ -19,8 +20,8 @@ const resizeTypes = Object.freeze({
   maximized: 'maximized'
 })
 
-// Disable default menus unless --debug flag is present
-if (!args.includes('--debug')) {
+if (!debug) {
+  // Disable default menus when not running in debug mode
   Menu.setApplicationMenu(null)
 }
 
@@ -57,20 +58,8 @@ function onWindowResize () {
   window.webContents.send(channels.windowResized, window.getBounds())
 }
 
-app.whenReady().then(() => {
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+ipcMain.handle(channels.debug, () => {
+  return debug
 })
 
 ipcMain.on(channels.quit, () => {
@@ -132,4 +121,20 @@ ipcMain.handle(channels.storeSet, (event, key, value) => {
   }
 
   return store.set(key, value)
+})
+
+app.whenReady().then(() => {
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })

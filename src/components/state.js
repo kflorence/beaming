@@ -1,8 +1,8 @@
 import { Puzzles } from '../puzzles'
+import { Storage } from './storage'
 import { base64decode, base64encode, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
 
 const history = window.history
-const localStorage = window.localStorage
 
 // TODO: move this class into Puzzle.State
 export class State {
@@ -247,21 +247,16 @@ export class State {
       // Include encoded state in URL if cache is not being cleared for this puzzle ID
       data.state = this.encode()
       hashParams.push(data.state)
-      localStorage.setItem(State.#key(id), data.state)
+      Storage.set(State.#key(id), data.state)
     }
 
     url.hash = hashParams.join('/')
     history.pushState(data, '', url)
-    localStorage.setItem(State.#key(), id)
+    Storage.set(State.#key(), id)
   }
 
   static clearCache (id) {
-    if (id) {
-      // Clear a single puzzle ID
-      localStorage.removeItem(State.#key(id))
-    } else {
-      localStorage.clear()
-    }
+    Storage.delete(id === undefined ? id : State.#key(id))
   }
 
   static fromEncoded (state) {
@@ -324,7 +319,7 @@ export class State {
   }
 
   static getId () {
-    return localStorage.getItem(State.#key())
+    return Storage.get(State.#key())
   }
 
   static resolve (id) {
@@ -366,7 +361,7 @@ export class State {
       }
 
       // Attempt to load from cache using value as ID
-      const cached = localStorage.getItem(State.#key(value))
+      const cached = Storage.get(State.#key(value))
       if (cached !== null) {
         value = cached
       }

@@ -1,12 +1,11 @@
 import paper from 'paper'
 import { State } from './state'
+import { Storage } from './storage'
 import { emitEvent, getKeyFactory, pointToString, sizeToString, stringToPoint } from './util'
-
-const localStorage = window.localStorage
 
 export class View {
   static getCenter () {
-    let data = localStorage.getItem(View.#key(View.CacheKeys.Center))
+    let data = Storage.get(View.#key(View.CacheKeys.Center))
     if (data !== null) {
       data = JSON.parse(data)
       if (sizeToString(paper.view.viewSize) === data.size) {
@@ -18,7 +17,7 @@ export class View {
   }
 
   static getZoom () {
-    const zoom = localStorage.getItem(View.#key(View.CacheKeys.Zoom))
+    const zoom = Storage.get(View.#key(View.CacheKeys.Zoom))
     return zoom === null ? zoom : Number(zoom)
   }
 
@@ -26,7 +25,7 @@ export class View {
     paper.view.center = point
     if (State.getId() !== null) {
       const data = { size: sizeToString(paper.view.viewSize), point: pointToString(point) }
-      localStorage.setItem(View.#key(View.CacheKeys.Center), JSON.stringify(data))
+      Storage.set(View.#key(View.CacheKeys.Center), JSON.stringify(data))
     }
     emitEvent(View.Events.Center, { point })
   }
@@ -34,7 +33,7 @@ export class View {
   static setZoom (factor) {
     paper.view.zoom = factor
     if (State.getId() !== null) {
-      localStorage.setItem(View.#key(View.CacheKeys.Zoom), factor.toString())
+      Storage.set(View.#key(View.CacheKeys.Zoom), factor.toString())
     }
   }
 

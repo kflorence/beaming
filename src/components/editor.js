@@ -4,6 +4,7 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
+import { Storage } from './storage'
 import { getKeyFactory, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
@@ -27,8 +28,6 @@ const elements = Object.freeze({
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
 })
-
-const localStorage = window.localStorage
 
 const tippy = Tippy(elements.share, {
   content: 'Share URL copied to clipboard!',
@@ -76,7 +75,7 @@ export class Editor {
   }
 
   isLocked () {
-    return localStorage.getItem(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
+    return Storage.get(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
 
   setup () {
@@ -385,7 +384,7 @@ export class Editor {
   }
 
   #toggleLock () {
-    localStorage.setItem(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
