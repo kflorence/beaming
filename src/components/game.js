@@ -2,10 +2,11 @@ import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
 import { debug } from './debug'
-import { params, url } from './util'
+import { emitEvent, params, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
+import { Keys } from '../electron/settings/keys.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -30,6 +31,7 @@ export class Game {
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit },
+      { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
@@ -91,26 +93,35 @@ export class Game {
     window.electron?.quit()
   }
 
+  async #onSettingsCacheClear (event) {
+    console.debug(Game.toString(event.type))
+    url.hash = ''
+    window.localStorage.clear()
+    await window.electron?.store.delete()
+    this.puzzle.select()
+    emitEvent(Keys.cacheCleared)
+  }
+
   #onStorageDelete (event) {
+    console.debug(Game.toString(event.type), event.detail)
+
     if (event.detail.persist === false) {
-      console.debug(Game.toString(), '#onStorageDelete', `Ignoring event '${event.type}'`, event.detail)
+      console.debug(Game.toString(event.type), 'Ignoring')
       return
     }
 
-    window.electron?.store.delete(event.detail.key).then(_ => {
-      console.debug(Game.toString(), '#onStorageDelete', event.type, event.detail)
-    })
+    window.electron?.store.delete(event.detail.key)
   }
 
   #onStorageSet (event) {
+    console.debug(Game.toString(event.type), event.detail)
+
     if (event.detail.persist === false) {
-      console.debug(Game.toString(), '#onStorageSet', `Ignoring event '${event.type}'`, event.detail)
+      console.debug(Game.toString(event.type), 'Ignoring')
       return
     }
 
-    window.electron?.store.set(event.detail.key, event.detail.value).then(_ => {
-      console.debug(Game.toString(), '#onStorageSet', event.type, event.detail)
-    })
+    window.electron?.store.set(event.detail.key, event.detail.value)
   }
 
   #reset () {
@@ -123,7 +134,7 @@ export class Game {
   static debug = debug
   static paper = paper
   static toString () {
-    return 'Game'
+    return ['Game', ...arguments].join(':')
   }
 
   static States = Object.freeze({

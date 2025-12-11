@@ -25,6 +25,7 @@ body {
 }
 
 button {
+  cursor: pointer;
   font-family: 'Noto Sans Mono Variable', monospace;
 }
 
@@ -44,6 +45,10 @@ details > main {
 details > summary {
   cursor: pointer;
   font-weight: bold;
+}
+
+input {
+  cursor: pointer;
 }
 
 #title-settings,
@@ -185,6 +190,29 @@ dialog > main {
 dialog ul {
   margin: 0 0 0 1em;
   padding: 0 0 0 1em;
+}
+
+#dialog-settings button,
+#dialog-settings input {
+  border: 1px solid #333;
+  border-radius: 0.25em;
+  justify-self: start;
+  margin: 0;
+  padding: 0.5em;
+}
+
+#dialog-settings button.danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+#dialog-settings input:disabled {
+  border: 1px solid #999;
+}
+
+#dialog-settings fieldset p {
+  margin: 1em 0;
 }
 
 #dialog-title {
@@ -871,18 +899,6 @@ i.fill,
   display: grid;
   grid-template-columns: max-content max-content;
   grid-gap: 1em;
-}
-
-.settings input {
-  border: 1px solid #333;
-  border-radius: 0.25em;
-  justify-self: start;
-  margin: 0;
-  padding: 0.25em;
-}
-
-.settings input:disabled {
-  border: 1px solid #999;
 }
 
 .text {

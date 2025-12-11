@@ -10,7 +10,6 @@ import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import Tippy from 'tippy.js'
-import 'tippy.js/dist/tippy.css'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
