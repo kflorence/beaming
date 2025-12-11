@@ -107,7 +107,11 @@ ipcMain.on(channels.resizeWindow, (event, value, settings) => {
 })
 
 ipcMain.handle(channels.storeDelete, (event, key) => {
-  return store.delete(key)
+  if (key === undefined) {
+    store.clear()
+  } else {
+    store.delete(key)
+  }
 })
 
 ipcMain.handle(channels.storeGet, (event, key) => {
@@ -116,11 +120,10 @@ ipcMain.handle(channels.storeGet, (event, key) => {
 
 ipcMain.handle(channels.storeSet, (event, key, value) => {
   if (typeof key === 'object') {
-    value = key
-    key = undefined
+    store.set(key)
+  } else {
+    store.set(key, value)
   }
-
-  return store.set(key, value)
 })
 
 app.whenReady().then(() => {

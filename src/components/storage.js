@@ -3,7 +3,7 @@ import { emitEvent, getKey } from './util.js'
 const localStorage = window.localStorage
 
 export class Storage {
-  static delete (key, persist = true) {
+  static delete (key = undefined, persist = true) {
     if (key === undefined) {
       localStorage.clear()
     } else {
