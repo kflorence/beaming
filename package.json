@@ -80,7 +80,7 @@
     "jsondiffpatch": "0.7.2",
     "pako": "^2.1.0",
     "paper": "^0.12.18",
-    "steamworks-ffi-node": "^0.6.9",
+    "steamworks-ffi-node": "^0.6.10",
     "tippy.js": "^6.3.7"
   }
 }

@@ -1,4 +1,4 @@
-import SteamworksSDK from 'steamworks-ffi-node'
+import { SteamworksSDK } from 'steamworks-ffi-node'
 
 export default class Steam {
   #interval
@@ -7,7 +7,7 @@ export default class Steam {
   appId = 4172230
 
   constructor () {
-    this.#sdk = SteamworksSDK.default.getInstance()
+    this.#sdk = SteamworksSDK.getInstance()
   }
 
   setup () {
