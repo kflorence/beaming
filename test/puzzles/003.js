@@ -10,20 +10,34 @@ describe('Puzzle 003', function () {
 
   it('should be solved', async function () {
     await puzzle.solve([
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '2,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-2,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '1,-2' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '-1,1' },
-      { eventType: 'modifier-invoked', modifierType: 'Toggle', tile: '0,0' }
+      { type: 'tile-select', tile: '2,-1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '2,1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-2,1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-2,-1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '0,0' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '1,-2' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '1,-2' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-2,-1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-2,0' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '2,0' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-2,-1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '1,-2' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '-1,1' },
+      { type: 'modifier-invoke', modifier: 'Toggle' },
+      { type: 'tile-select', tile: '0,0' },
+      { type: 'modifier-invoke', modifier: 'Toggle' }
     ])
 
     assert(await puzzle.isSolved())

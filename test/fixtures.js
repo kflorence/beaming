@@ -54,71 +54,86 @@ export class PuzzleFixture {
     this.elements.modifiers = await this.driver.findElement(By.id('puzzle-footer-menu'))
   }
 
-  async clickModifier (name, options = {}) {
+  async invokeModifier (name, options = {}) {
     const times = options.times ?? 1
-    const origin = this.#getModifier(name)
+    const origin = await this.#getModifier(name)
     const actions = this.driver.actions({ async: true }).move({ origin })
     for (let i = 0; i < times; i++) {
       actions.press(options.button).release(options.button)
     }
-    await actions.perform()
+    return actions.perform()
   }
 
-  async clickTile (r, c) {
+  async clickTile (r, c, onlyIfNotSelected = false) {
     // Center on the tile we want to click on. This ensures it is visible
     const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
-    if (!isSelected) {
-      await this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    if (!isSelected || !onlyIfNotSelected) {
+      // Only click on an already selected tile if onlyIfNotSelected is false
+      return this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
     }
+
+    return Promise.resolve()
   }
 
   async isMasked () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
-      .then(this.driver.sleep(100))
   }
 
   async isNotMasked () {
     return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
-      .then(this.driver.sleep(100))
   }
 
   async isSolved () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-solved'))
   }
 
-  async solve (moves) {
-    for (const move of moves) {
-      console.log('processing move', JSON.stringify(move))
-      switch (move.eventType) {
-        case 'mask-hidden': {
-          await this.isNotMasked()
-          break
+  async process (action) {
+    console.log('processing action', JSON.stringify(action))
+    switch (action.type) {
+      case 'modifier-invoke': {
+        await this.invokeModifier(action.modifier, action.options || {})
+        break
+      }
+      case 'tile-click': {
+        await this.clickTile(...action.tile.split(','))
+        break
+      }
+      case 'tile-select': {
+        await this.selectTile(...action.tile.split(','))
+        break
+      }
+      case 'wait': {
+        switch (action.for) {
+          case 'mask-hidden': {
+            await this.isNotMasked()
+            break
+          }
+          case 'mask-visible': {
+            await this.isMasked()
+            break
+          }
         }
-        case 'masked-visible': {
-          await this.isMasked()
-          break
-        }
+        break
       }
-      if (move.tile) {
-        const [r, c] = move.tile.split(',')
-        await this.clickTile(r, c)
-      }
-      if (move.modifierType) {
-        await this.clickModifier(
-          move.modifierType,
-          move.eventType === 'modifier-toggled' ? { button: Button.MIDDLE } : {}
-        )
-      }
-      if (move.selectedTile) {
-        const [r, c] = move.selectedTile.split(',')
-        await this.clickTile(r, c)
+      default: {
+        throw new Error(`unrecognized action type: ${action.type}`)
       }
     }
   }
 
+  async selectTile (r, c) {
+    await this.clickTile(r, c, true)
+    return this.driver.wait(untilElementHasClass(this.elements.body, `tile-selected_${r}_${c}`))
+  }
+
+  async solve (actions) {
+    for (const action of actions) {
+      await this.process(action)
+    }
+  }
+
   async #getModifier (name) {
-    return await this.driver.wait(
-      until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
+    return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
   }
 
   static baseUrl = 'http://localhost:1234'

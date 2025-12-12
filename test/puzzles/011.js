@@ -10,14 +10,13 @@ describe('Puzzle 011', function () {
 
   it('should be solved', async function () {
     await puzzle.solve([
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
-      { eventType: 'mask-visible' },
-      { eventType: 'portal-exit', tile: '1,0', selectedTile: '1,0' },
-      { eventType: 'mask-hidden' },
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '1,-1' }
+      { type: 'tile-select', tile: '0,0' },
+      { type: 'modifier-invoke', modifier: 'Rotate', options: { times: 2 } },
+      { type: 'wait', for: 'mask-visible' },
+      { type: 'tile-click', tile: '1,0' },
+      { type: 'wait', for: 'mask-hidden' },
+      { type: 'tile-select', tile: '1,-1' },
+      { type: 'modifier-invoke', modifier: 'Rotate', options: { times: 3 } }
     ])
 
     assert(await puzzle.isSolved())

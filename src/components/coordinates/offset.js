@@ -15,8 +15,8 @@ export class OffsetCoordinates {
     return other instanceof OffsetCoordinates && other.r === this.r && other.c === this.c
   }
 
-  toString () {
-    return this.coordinates.join(',')
+  toString (separator = ',') {
+    return this.coordinates.join(separator)
   }
 
   static normalize (coordinate) {
