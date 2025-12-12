@@ -8,7 +8,12 @@ export default {
     asar: true,
     icon: './src/images/icon',
     // See: https://github.com/electron/universal/issues/36
-    osxSign: {}
+    osxSign: {},
+    // See: https://electron.github.io/packager/main/interfaces/OsxUniversalOptions.html
+    osxUniversal: {
+      mergeASARs: true,
+      x64ArchFiles: 'Contents/Resources/app.asar.unpacked/node_modules/koffi/build/koffi/*/koffi.node'
+    }
   },
   rebuildConfig: {},
   makers: [

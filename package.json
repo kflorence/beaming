@@ -57,7 +57,7 @@
     "@electron/fuses": "^1.8.0",
     "@parcel/optimizer-htmlnano": "^2.16.3",
     "app-builder-lib": "^26.0.12",
-    "chromedriver": "^142.0.1",
+    "chromedriver": "^143.0.1",
     "cross-env": "^10.1.0",
     "electron": "^37.3.1",
     "mocha": "^10.8.2",
@@ -80,6 +80,7 @@
     "jsondiffpatch": "0.7.2",
     "pako": "^2.1.0",
     "paper": "^0.12.18",
+    "steamworks-ffi-node": "^0.6.9",
     "tippy.js": "^6.3.7"
   }
 }

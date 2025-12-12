@@ -10,13 +10,17 @@ Additionally, the game comes with a built-in puzzle editor, allowing users to cr
 
 :grinning:
 
-## Online
+## Versions
 
-The [free online version](https://kflorence.github.io/beaming/) of beaming built for the web will only include the ability to create and play individual puzzles. The online version can also be useful for sharing puzzles you've created with people who don't own the game, and/or for troubleshooting purposes.
+I'm a strong supporter of open source as a means of knowledge sharing, education and user customization, which is why this project is entirely open source. That of course means you can enjoy most of it without having to pay anything. That said, any support is appreciated. Even sharing the game with others is helpful.
 
-## Steam
+### Online Version
 
-A paid version of the game will be available on Steam. This version will include additional functionality from the version available for free online. For example, it will include a more cohesive "world" in which the individual puzzles reside, providing another level of gameplay to experience. It will also be integrated with Steam, including the Steam Workshop, where users can upload puzzles they create.
+A free version of the game is [available online](https://kflorence.github.io/beaming/) which contains most of the basic game functionality. The online version can also be useful for sharing puzzles you've created with people who don't own the game on Steam, and/or for troubleshooting purposes. If you would like to support development of the game outside of Steam, [you can do so here](https://buymeacoffee.com/kflorence).
+
+### Steam Version
+
+A paid version of the game is [available on Steam](https://store.steampowered.com/app/4172230/Beaming/). In addition to everything in the online version, this will also include integrations with Steam cloud storage, achievements and Steam Workshop for sharing and playing user generated puzzles.
 
 ## License
 

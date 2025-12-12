@@ -5,6 +5,7 @@
 !.github
 !.nvmrc
 !.parcelrc
+steam_appid.txt
 dist
 node_modules
 out
