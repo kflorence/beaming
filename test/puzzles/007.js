@@ -10,10 +10,16 @@ describe('Puzzle 007', function () {
 
   it('should be solved', async function () {
     await puzzle.solve([
-      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '0,-2', tile: '1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '0,2', tile: '1,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Rotate', tile: '0,0' },
-      { eventType: 'modifier-invoked', modifierType: 'Move', selectedTile: '0,1', tile: '0,0' }
+      { type: 'tile-select', tile: '1,-1' },
+      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'tile-click', tile: '0,-2' },
+      { type: 'tile-select', tile: '1,0' },
+      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'tile-click', tile: '0,2' },
+      { type: 'tile-select', tile: '0,0' },
+      { type: 'modifier-invoke', modifier: 'Rotate' },
+      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'tile-click', tile: '0,1' }
     ])
 
     assert(await puzzle.isSolved())

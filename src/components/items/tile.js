@@ -106,7 +106,7 @@ export class Tile extends Item {
     this.path.style = this.styles.default
     this.items.forEach((item) => item.onDeselected())
 
-    document.body.classList.remove(`tile-selected-${this.coordinates.offset.toString()}`)
+    document.body.classList.remove(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
     emitEvent(Tile.Events.Deselected, { selectedTile, deselectedTile: this })
   }
@@ -118,7 +118,7 @@ export class Tile extends Item {
     this.path.style = this.styles.selected
     this.items.forEach((item) => item.onSelected())
 
-    document.body.classList.add(`tile-selected-${this.coordinates.offset.toString()}`)
+    document.body.classList.add(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
     emitEvent(Tile.Events.Selected, { selectedTile: this, deselectedTile })
   }

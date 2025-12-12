@@ -2,7 +2,7 @@
   "name": "beaming",
   "author": "Kyle Florence",
   "description": "A browser-based puzzle game that involves directing beams through a hexagonal grid.",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "CC BY-NC 4.0",
   "main": "src/electron/main.js",
   "type": "module",
@@ -80,7 +80,7 @@
     "jsondiffpatch": "0.7.2",
     "pako": "^2.1.0",
     "paper": "^0.12.18",
-    "steamworks-ffi-node": "^0.6.9",
+    "steamworks-ffi-node": "^0.6.10",
     "tippy.js": "^6.3.7"
   }
 }

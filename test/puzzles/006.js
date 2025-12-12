@@ -10,11 +10,21 @@ describe('Puzzle 006', function () {
 
   it('should be solved', async function () {
     await puzzle.solve([
-      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,-1', tile: '-1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '-1,0', tile: '-1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,1', tile: '-1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '1,-1', tile: '-1,-1' },
-      { eventType: 'modifier-invoked', modifierType: 'Swap', selectedTile: '0,-1', tile: '-1,-1' }
+      { type: 'tile-select', tile: '-1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'tile-click', tile: '0,-1' },
+      { type: 'tile-select', tile: '-1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'tile-click', tile: '-1,0' },
+      { type: 'tile-select', tile: '-1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'tile-click', tile: '0,1' },
+      { type: 'tile-select', tile: '-1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'tile-click', tile: '1,-1' },
+      { type: 'tile-select', tile: '-1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'tile-click', tile: '0,-1' }
     ])
 
     assert(await puzzle.isSolved())
