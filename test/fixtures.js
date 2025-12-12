@@ -1,6 +1,6 @@
 import 'chromedriver'
 import chrome from 'selenium-webdriver/chrome.js'
-import { Builder, By, Condition, logging, until, Button } from 'selenium-webdriver'
+import { Builder, By, Condition, logging, until } from 'selenium-webdriver'
 
 logging.installConsoleHandler()
 
