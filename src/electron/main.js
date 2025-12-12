@@ -1,14 +1,16 @@
 import { app, BrowserWindow, ipcMain, Menu, screen } from 'electron/main'
 import channels from './channels.js'
 import path from 'path'
+import Steam from './steam.js'
 import Store from 'electron-store'
 
 const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
 const debug = args.includes('--debug')
 
+const steam = new Steam()
+
 // TODO: consider defining a schema
-// Note: don't store anything here that is machine-specific (e.g. video settings)
 const store = new Store()
 
 const minHeight = 680
@@ -129,11 +131,17 @@ ipcMain.handle(channels.storeSet, (event, key, value) => {
 app.whenReady().then(() => {
   createWindow()
 
+  steam.setup()
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
     }
   })
+})
+
+app.on('before-quit', () => {
+  steam.teardown()
 })
 
 app.on('window-all-closed', () => {

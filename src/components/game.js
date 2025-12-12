@@ -134,7 +134,7 @@ export class Game {
   static debug = debug
   static paper = paper
   static toString () {
-    return ['Game', ...arguments].join(':')
+    return '[' + ['Game', ...arguments].join(':') + ']'
   }
 
   static States = Object.freeze({
