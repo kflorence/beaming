@@ -16,9 +16,11 @@ const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
+  delete: document.getElementById('editor-delete'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
+  new: document.getElementById('editor-new'),
   paste: document.getElementById('editor-paste'),
   play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
@@ -45,11 +47,11 @@ const tippy = Tippy(elements.share, {
 
 export class Editor {
   group = new Group({ locked: true })
-  id
 
   #center = new Group({ locked: true })
   #copy
   #editor
+  #editors = {}
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
@@ -59,6 +61,11 @@ export class Editor {
   constructor (puzzle) {
     this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
     this.#puzzle = puzzle
+  }
+
+  getId () {
+    const tile = this.#puzzle.selectedTile
+    return tile ? tile.coordinates.offset.toString() : 'root'
   }
 
   getState () {
@@ -77,6 +84,10 @@ export class Editor {
     return Storage.get(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
   }
 
+  select (id) {
+    // TODO
+  }
+
   setup () {
     if (this.#editor) {
       return
@@ -90,15 +101,13 @@ export class Editor {
     this.#puzzle.resize(false)
     this.#puzzle.reload(false)
 
-    const state = this.#puzzle.state
-
-    this.id = state.getId()
-
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.copy, handler: this.#onCopy },
+      { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
+      { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
       { type: 'click', element: elements.reset, handler: this.#onReset },
       { type: 'click', element: elements.share, handler: this.#onShare },
@@ -112,6 +121,7 @@ export class Editor {
       { type: View.Events.Center, handler: this.#onCenter }
     ])
 
+    const state = this.#puzzle.state
     elements.configuration.value = state.getCurrentJSON()
 
     this.group.addChild(this.#center)
@@ -128,7 +138,11 @@ export class Editor {
       return
     }
 
-    this.#editor.destroy()
+    for (const [id, editor] of Object.entries(this.#editors)) {
+      editor.destroy()
+      delete this.#editors[id]
+    }
+
     this.#eventListener.remove()
     this.#gutter.teardown()
 
@@ -179,6 +193,10 @@ export class Editor {
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
   }
 
+  #onDelete () {
+    // TODO
+  }
+
   #onDockUpdate () {
     const icon = elements.dock.firstChild
     const isDockBottom = this.#gutter.toggleOrientation()
@@ -225,6 +243,10 @@ export class Editor {
   #onGutterMoved () {
     this.#puzzle.resize()
     this.#updateCenter()
+  }
+
+  #onNew () {
+    // TODO
   }
 
   #onPaste () {
@@ -328,6 +350,7 @@ export class Editor {
 
   #setup (event) {
     const tile = this.#puzzle.selectedTile
+    const id = this.getId()
 
     // Enable/disable the following actions based on whether a tile is selected
     elements.copy.classList.toggle('disabled', !tile)
@@ -352,34 +375,51 @@ export class Editor {
     }
 
     if (this.#editor) {
-      this.#editor.destroy()
+      const activeId = this.#editor.element.dataset.tile ?? 'root'
+      console.debug(`De-activating editor: ${activeId}`)
+      this.#editor.off('change')
+      this.#editor.element.classList.add('hide')
     }
 
-    const options = {
-      disable_array_delete_all_rows: true,
-      disable_array_delete_last_row: true,
-      disable_collapse: true,
-      disable_edit_json: true,
-      disable_properties: true,
-      enforce_const: true,
-      form_name_root: 'puzzle',
-      // There is no support for material icons, so we have to hack it into another icon lib
-      iconlib: 'fontawesome3',
-      keep_oneof_values: false,
-      // Enabling this causes items to not match in anyOf :(
-      // no_additional_properties: true,
-      prompt_before_delete: false,
-      remove_button_labels: true,
-      schema: tile ? Tile.Schema : Puzzle.Schema,
-      show_opt_in: true,
-      startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
-      theme: 'barebones'
+    if (this.#editors[id]) {
+      console.debug(`Activating editor: ${id}`)
+      this.#editor = this.#editors[id]
+    } else {
+      console.debug(`Creating editor: ${id}`)
+      const options = {
+        disable_array_delete_all_rows: true,
+        disable_array_delete_last_row: true,
+        disable_collapse: true,
+        disable_edit_json: true,
+        disable_properties: true,
+        enforce_const: true,
+        form_name_root: 'puzzle',
+        // There is no support for material icons, so we have to hack it into another icon lib
+        iconlib: 'fontawesome3',
+        keep_oneof_values: false,
+        // Enabling this causes items to not match in anyOf :(
+        // no_additional_properties: true,
+        prompt_before_delete: false,
+        remove_button_labels: true,
+        schema: tile ? Tile.Schema : Puzzle.Schema,
+        show_opt_in: true,
+        startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
+        theme: 'barebones'
+      }
+
+      const element = document.createElement('div')
+      if (tile) {
+        element.dataset.tile = id
+      }
+
+      elements.editor.append(element)
+
+      console.debug('Editor options', JSON.stringify(options, null, 2))
+      this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 
-    console.debug('Editor options', JSON.stringify(options, null, 2))
-
-    this.#editor = new JSONEditor(elements.editor, options)
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
+    this.#editor.element.classList.remove('hide')
   }
 
   #toggleLock () {
@@ -402,6 +442,10 @@ export class Editor {
   #updateConfiguration (state) {
     elements.configuration.value = JSON.stringify(state, null, 2)
     this.#updatePlayUrl()
+  }
+
+  #updateDropdown () {
+    // TODO
   }
 
   #updateLock () {
