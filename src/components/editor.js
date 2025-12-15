@@ -5,24 +5,29 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { getKeyFactory, url, writeToClipboard } from './util'
+import { classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import Tippy from 'tippy.js'
+
+const confirm = window.confirm
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
   canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
+  delete: document.getElementById('editor-delete'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
+  new: document.getElementById('editor-new'),
   paste: document.getElementById('editor-paste'),
   play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
   reset: document.getElementById('editor-reset'),
+  select: document.getElementById('select'),
   share: document.getElementById('editor-share'),
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
@@ -45,11 +50,11 @@ const tippy = Tippy(elements.share, {
 
 export class Editor {
   group = new Group({ locked: true })
-  id
 
   #center = new Group({ locked: true })
   #copy
   #editor
+  #editors = {}
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
@@ -59,6 +64,15 @@ export class Editor {
   constructor (puzzle) {
     this.#gutter = new Gutter(elements.puzzle, elements.wrapper)
     this.#puzzle = puzzle
+  }
+
+  getId () {
+    const tile = this.#puzzle.selectedTile
+    return tile ? tile.coordinates.offset.toString() : 'root'
+  }
+
+  getPuzzleIds () {
+    return JSON.parse(Storage.get(Editor.key(Editor.CacheKeys.Ids)) ?? '[]')
   }
 
   getState () {
@@ -74,7 +88,22 @@ export class Editor {
   }
 
   isLocked () {
-    return Storage.get(Editor.#key(Editor.CacheKeys.Locked)) === 'true'
+    return Storage.get(Editor.key(State.getId(), Editor.CacheKeys.Locked)) === 'true'
+  }
+
+  select (id) {
+    this.teardown()
+    this.#puzzle.select(id)
+
+    // Add this ID to the puzzle IDs cache, if it's not already there
+    const ids = this.getPuzzleIds()
+    const updatedIds = Array.from(new Set([...ids, this.#puzzle.state.getId()]))
+    console.debug('Updated list of editor puzzle IDs:', updatedIds)
+
+    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(updatedIds))
+
+    this.#updateDropdown()
+    this.setup()
   }
 
   setup () {
@@ -90,15 +119,13 @@ export class Editor {
     this.#puzzle.resize(false)
     this.#puzzle.reload(false)
 
-    const state = this.#puzzle.state
-
-    this.id = state.getId()
-
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.copy, handler: this.#onCopy },
+      { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
+      { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
       { type: 'click', element: elements.reset, handler: this.#onReset },
       { type: 'click', element: elements.share, handler: this.#onShare },
@@ -112,6 +139,7 @@ export class Editor {
       { type: View.Events.Center, handler: this.#onCenter }
     ])
 
+    const state = this.#puzzle.state
     elements.configuration.value = state.getCurrentJSON()
 
     this.group.addChild(this.#center)
@@ -128,7 +156,13 @@ export class Editor {
       return
     }
 
-    this.#editor.destroy()
+    Object.keys(this.#editors).forEach((id) => {
+      const editor = this.#editors[id]
+      editor.element.remove()
+      editor.destroy()
+      delete this.#editors[id]
+    })
+
     this.#eventListener.remove()
     this.#gutter.teardown()
 
@@ -163,6 +197,11 @@ export class Editor {
 
     // Need to force a reload to make sure the UI is in sync with the state
     this.#puzzle.reload(state, this.#onError.bind(this))
+
+    if (diff.title) {
+      // Title was changed
+      this.#updateDropdown()
+    }
   }
 
   #onCenter () {
@@ -177,6 +216,35 @@ export class Editor {
     this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+  }
+
+  #onDelete () {
+    if (!confirm('Are you sure you want to delete this puzzle? This cannot be undone.')) {
+      return
+    }
+
+    // Update editor puzzle IDs
+    const id = this.#puzzle.state.getId()
+    const ids = this.getPuzzleIds()
+    const index = ids.indexOf(id)
+    ids.splice(index, 1)
+
+    console.debug(Editor.toString('#onDelete'), id, ids)
+    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(ids))
+
+    // Remove local storage cache for puzzle ID
+    Storage.delete(State.key(id))
+    Storage.delete(View.key(View.CacheKeys.Center))
+    Storage.delete(View.key(View.CacheKeys.Zoom))
+
+    // Unset the current puzzle ID
+    Storage.delete(State.key())
+
+    // Clear URL cache
+    url.hash = ''
+
+    // Select the last available puzzle ID by default
+    this.select(ids[ids.length - 1])
   }
 
   #onDockUpdate () {
@@ -225,6 +293,10 @@ export class Editor {
   #onGutterMoved () {
     this.#puzzle.resize()
     this.#updateCenter()
+  }
+
+  #onNew () {
+    this.select(uniqueId())
   }
 
   #onPaste () {
@@ -328,6 +400,7 @@ export class Editor {
 
   #setup (event) {
     const tile = this.#puzzle.selectedTile
+    const id = this.getId()
 
     // Enable/disable the following actions based on whether a tile is selected
     elements.copy.classList.toggle('disabled', !tile)
@@ -352,38 +425,55 @@ export class Editor {
     }
 
     if (this.#editor) {
-      this.#editor.destroy()
+      const activeId = this.#editor.element.dataset.tile ?? 'root'
+      console.debug(`De-activating editor: ${activeId}`)
+      this.#editor.off('change')
+      this.#editor.element.classList.add('hide')
     }
 
-    const options = {
-      disable_array_delete_all_rows: true,
-      disable_array_delete_last_row: true,
-      disable_collapse: true,
-      disable_edit_json: true,
-      disable_properties: true,
-      enforce_const: true,
-      form_name_root: 'puzzle',
-      // There is no support for material icons, so we have to hack it into another icon lib
-      iconlib: 'fontawesome3',
-      keep_oneof_values: false,
-      // Enabling this causes items to not match in anyOf :(
-      // no_additional_properties: true,
-      prompt_before_delete: false,
-      remove_button_labels: true,
-      schema: tile ? Tile.Schema : Puzzle.Schema,
-      show_opt_in: true,
-      startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
-      theme: 'barebones'
+    if (this.#editors[id]) {
+      console.debug(`Activating editor: ${id}`)
+      this.#editor = this.#editors[id]
+    } else {
+      console.debug(`Creating editor: ${id}`)
+      const options = {
+        disable_array_delete_all_rows: true,
+        disable_array_delete_last_row: true,
+        disable_collapse: true,
+        disable_edit_json: true,
+        disable_properties: true,
+        enforce_const: true,
+        form_name_root: 'puzzle',
+        // There is no support for material icons, so we have to hack it into another icon lib
+        iconlib: 'fontawesome3',
+        keep_oneof_values: false,
+        // Enabling this causes items to not match in anyOf :(
+        // no_additional_properties: true,
+        prompt_before_delete: false,
+        remove_button_labels: true,
+        schema: tile ? Tile.Schema : Puzzle.Schema,
+        show_opt_in: true,
+        startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
+        theme: 'barebones'
+      }
+
+      const element = document.createElement('div')
+      if (tile) {
+        element.dataset.tile = id
+      }
+
+      elements.editor.append(element)
+
+      console.debug('Editor options', JSON.stringify(options, null, 2))
+      this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 
-    console.debug('Editor options', JSON.stringify(options, null, 2))
-
-    this.#editor = new JSONEditor(elements.editor, options)
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
+    this.#editor.element.classList.remove('hide')
   }
 
   #toggleLock () {
-    Storage.set(Editor.#key(Editor.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(Editor.key(State.getId(), Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
@@ -402,6 +492,21 @@ export class Editor {
   #updateConfiguration (state) {
     elements.configuration.value = JSON.stringify(state, null, 2)
     this.#updatePlayUrl()
+  }
+
+  #updateDropdown () {
+    elements.select.replaceChildren()
+
+    this.getPuzzleIds().forEach((id) => {
+      const config = State.fromCache(id)
+      const $option = document.createElement('option')
+      $option.value = id
+      $option.innerText = config.getTitle() || id
+      elements.select.append($option)
+    })
+
+    // Select current ID
+    elements.select.value = this.#puzzle.state.getId()
   }
 
   #updateLock () {
@@ -437,9 +542,12 @@ export class Editor {
     ]
   }
 
+  static toString = classToString('Editor')
+
   static CacheKeys = Object.freeze({
+    Ids: 'ids',
     Locked: 'locked'
   })
 
-  static #key = getKeyFactory('editor', State.getId)
+  static key = getKeyFactory(State.CacheKeys.Edit, 'editor')
 }

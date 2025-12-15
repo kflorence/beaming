@@ -5,7 +5,7 @@ import { emitEvent, getKeyFactory, pointToString, sizeToString, stringToPoint } 
 
 export class View {
   static getCenter () {
-    let data = Storage.get(View.#key(View.CacheKeys.Center))
+    let data = Storage.get(View.key(View.CacheKeys.Center))
     if (data !== null) {
       data = JSON.parse(data)
       if (sizeToString(paper.view.viewSize) === data.size) {
@@ -17,7 +17,7 @@ export class View {
   }
 
   static getZoom () {
-    const zoom = Storage.get(View.#key(View.CacheKeys.Zoom))
+    const zoom = Storage.get(View.key(View.CacheKeys.Zoom))
     return zoom === null ? zoom : Number(zoom)
   }
 
@@ -25,7 +25,7 @@ export class View {
     paper.view.center = point
     if (State.getId() !== null) {
       const data = { size: sizeToString(paper.view.viewSize), point: pointToString(point) }
-      Storage.set(View.#key(View.CacheKeys.Center), JSON.stringify(data))
+      Storage.set(View.key(View.CacheKeys.Center), JSON.stringify(data))
     }
     emitEvent(View.Events.Center, { point })
   }
@@ -33,7 +33,7 @@ export class View {
   static setZoom (factor) {
     paper.view.zoom = factor
     if (State.getId() !== null) {
-      Storage.set(View.#key(View.CacheKeys.Zoom), factor.toString())
+      Storage.set(View.key(View.CacheKeys.Zoom), factor.toString())
     }
   }
 
@@ -58,5 +58,5 @@ export class View {
     Center: 'view-center'
   })
 
-  static #key = getKeyFactory([State.getContext, 'puzzle', State.getId, 'view'])
+  static key = getKeyFactory([State.getContext, 'puzzle', State.getId, 'view'])
 }

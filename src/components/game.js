@@ -2,7 +2,7 @@ import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
 import { debug } from './debug'
-import { emitEvent, params, url } from './util'
+import { classToString, emitEvent, params, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
@@ -13,6 +13,7 @@ const elements = Object.freeze({
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
+  select: document.getElementById('select'),
   title: document.getElementById('dialog-title')
 })
 
@@ -27,6 +28,7 @@ export class Game {
     this.editor = new Editor(this.puzzle)
 
     this.#eventListeners.add([
+      { type: 'change', element: elements.select, handler: this.#onSelect },
       { type: 'click', element: elements.back, handler: this.back },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
@@ -65,8 +67,7 @@ export class Game {
 
     State.setParam(Game.States.Edit, '')
 
-    this.puzzle.select()
-    this.editor.setup()
+    this.editor.select()
 
     elements.title.close()
   }
@@ -91,6 +92,14 @@ export class Game {
 
   quit () {
     window.electron?.quit()
+  }
+
+  #onSelect (event) {
+    if (params.has(Game.States.Play)) {
+      this.puzzle.select(event.target.value)
+    } else if (params.has(Game.States.Edit)) {
+      this.editor.select(event.target.value)
+    }
   }
 
   async #onSettingsCacheClear (event) {
@@ -125,6 +134,7 @@ export class Game {
   }
 
   #reset () {
+    elements.select.replaceChildren()
     // Don't carry state via URL from one context to another
     url.hash = ''
     Game.states.forEach((state) => params.delete(state))
@@ -133,9 +143,7 @@ export class Game {
 
   static debug = debug
   static paper = paper
-  static toString () {
-    return '[' + ['Game', ...arguments].join(':') + ']'
-  }
+  static toString = classToString('Game')
 
   static States = Object.freeze({
     Edit: State.ParamKeys.Edit,

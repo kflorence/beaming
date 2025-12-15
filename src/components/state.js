@@ -247,20 +247,27 @@ export class State {
       // Include encoded state in URL if cache is not being cleared for this puzzle ID
       data.state = this.encode()
       hashParams.push(data.state)
-      Storage.set(State.#key(id), data.state)
+      Storage.set(State.key(id), data.state)
     }
 
     url.hash = hashParams.join('/')
     history.pushState(data, '', url)
-    Storage.set(State.#key(), id)
+    Storage.set(State.key(), id)
   }
 
   static clearCache (id) {
-    Storage.delete(id === undefined ? id : State.#key(id))
+    Storage.delete(id === undefined ? id : State.key(id))
   }
 
-  static fromEncoded (state) {
-    state = JSON.parse(base64decode(state))
+  static fromCache (id) {
+    const str = Storage.get(State.key(id))
+    if (str) {
+      return State.fromEncoded(str)
+    }
+  }
+
+  static fromEncoded (str) {
+    const state = JSON.parse(base64decode(str))
 
     if (state.id === undefined) {
       console.warn('Invalid cache, ignoring.')
@@ -268,7 +275,7 @@ export class State {
     }
 
     if (state.version !== State.Version) {
-      console.debug(
+      console.warn(
         'Invalidating cache due to version mismatch. ' +
         `Ours: ${State.Version}, theirs: ${state.version}.`
       )
@@ -279,7 +286,7 @@ export class State {
     if (Puzzles.has(state.id)) {
       const original = Puzzles.get(state.id)
       if (original && original.version !== state.original?.version) {
-        console.debug(
+        console.warn(
           `Invalidating cache for puzzle ${state.id} due to version mismatch. ` +
           `Ours: ${original.version}, theirs: ${state.original?.version}.`
         )
@@ -319,7 +326,7 @@ export class State {
   }
 
   static getId () {
-    return Storage.get(State.#key())
+    return Storage.get(State.key())
   }
 
   static resolve (id) {
@@ -361,7 +368,7 @@ export class State {
       }
 
       // Attempt to load from cache using value as ID
-      const cached = Storage.get(State.#key(value))
+      const cached = Storage.get(State.key(value))
       if (cached !== null) {
         value = cached
       }
@@ -407,7 +414,7 @@ export class State {
   // Use this sparingly as it will reset the state of every puzzle on the users end
   static Version = 6
 
-  static #key = getKeyFactory([State.getContext, 'puzzle'])
+  static key = getKeyFactory([State.getContext, 'puzzle'])
 
   static Move = class {
     deltaIndex

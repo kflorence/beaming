@@ -364,6 +364,8 @@ dialog ul {
 
 #editor-menu {
   border-bottom: 1px solid #ddd;
+  flex-wrap: wrap;
+  min-width: fit-content;
 }
 
 #editor-wrapper {
@@ -551,7 +553,7 @@ dialog ul {
   justify-content: center;
 }
 
-#puzzle-id {
+#select {
   appearance: none;
   border: none;
   border-left: 1px solid #ddd;
@@ -564,29 +566,29 @@ dialog ul {
   width: 100%;
 }
 
-#puzzle-id:hover {
+#select:hover {
   background-color: #eee;
 }
 
-#puzzle-id:focus-visible {
+#select:focus-visible {
   background-color: #333;
   color: white;
   fill: white;
   outline: none;
 }
 
-#puzzle-id:focus-visible + svg {
+#select:focus-visible + svg {
   fill: white;
 }
 
-#puzzle-selector {
+#selector {
   align-items: stretch;
   display: flex;
   position: relative;
   min-width: max-content;
 }
 
-#puzzle-selector svg {
+#selector svg {
   position: absolute;
   right: 0.75rem;
   top: calc(50% - 5px);
@@ -796,7 +798,7 @@ i.fill,
 
 .menu li {
   align-items: center;
-  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
   cursor: pointer;
   display: flex;
   padding: 1em;
@@ -807,7 +809,7 @@ i.fill,
   cursor: default;
 }
 
-.menu li:first-child {
+.menu li:last-child {
   border: none;
 }
 

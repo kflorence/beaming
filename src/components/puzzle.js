@@ -1,7 +1,17 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Point, Size } from 'paper'
-import { addClass, base64encode, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
+import {
+  addClass,
+  appendOption,
+  base64encode,
+  debounce,
+  emitEvent,
+  fuzzyEquals,
+  noop,
+  params,
+  removeClass
+} from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -29,7 +39,6 @@ const elements = Object.freeze({
   footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
   headerMessage: document.getElementById('puzzle-header-message'),
-  id: document.getElementById('puzzle-id'),
   info: document.getElementById('puzzle-info'),
   infoAuthor: document.getElementById('puzzle-info-author'),
   infoId: document.getElementById('puzzle-info-id'),
@@ -38,6 +47,7 @@ const elements = Object.freeze({
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
+  select: document.getElementById('select'),
   title: document.querySelector('title'),
   wrapper: document.getElementById('puzzle-wrapper')
 })
@@ -84,7 +94,6 @@ export class Puzzle {
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
-      { type: 'change', element: elements.id, handler: this.#onSelect },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
@@ -398,7 +407,6 @@ export class Puzzle {
     state ??= Object.assign(this.state.getCurrent(), { layout: this.layout.getState() })
 
     this.state.update(state)
-    this.#updateDropdown()
     this.#updateActions()
 
     emitEvent(Puzzle.Events.Updated, { state: this.state })
@@ -523,10 +531,6 @@ export class Puzzle {
     this.recenter(true)
   }
 
-  #onSelect (event) {
-    this.select(event.target.value)
-  }
-
   #onSolved () {
     if (this.solved) {
       return
@@ -607,6 +611,7 @@ export class Puzzle {
       : undefined
 
     this.#updateDetails()
+    this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
@@ -672,24 +677,23 @@ export class Puzzle {
   }
 
   #updateDropdown () {
-    elements.id.replaceChildren()
-
-    // TODO support pulling custom IDs from local cache
-    const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
-    const id = this.state?.getId()
-    if (id !== undefined && !Puzzles.visible.ids.includes(id)) {
-      options.push({ id, title: this.getTitle() })
+    if (params.has(Game.States.Edit)) {
+      // The editor will handle the dropdown
+      return
     }
 
-    for (const option of options) {
-      const $option = document.createElement('option')
-      $option.value = option.id
-      $option.innerText = option.title
-      elements.id.append($option)
+    const ids = Array.from(Puzzles.visible.ids)
+    if (elements.select.children.length === 0) {
+      appendOption(elements.select, { value: '', text: '——', disabled: true })
+      // TODO support pulling custom IDs from local cache
+      ids.map((id) => ({ value: id, text: Puzzles.titles[id] })).forEach((option) => {
+        appendOption(elements.select, option)
+      })
     }
 
     // Select current ID
-    elements.id.value = id
+    const id = this.state?.getId()
+    elements.select.value = ids.includes(id) ? id : ''
   }
 
   #updateBeams () {
