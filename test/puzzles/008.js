@@ -25,7 +25,7 @@ describe('Puzzle 008', function () {
       { type: 'modifier-invoke', modifier: 'Swap' },
       { type: 'tile-select', tile: '1,-1' },
       { type: 'modifier-invoke', modifier: 'Rotate', options: { times: 2 } },
-      { type: 'modifier-invoke', modifier: 'Swap', selectedTile: '1,1', tile: '1,-1' },
+      { type: 'modifier-invoke', modifier: 'Swap' },
       { type: 'tile-click', tile: '1,1' },
       { type: 'tile-select', tile: '1,-1' },
       { type: 'modifier-invoke', modifier: 'Rotate' },
