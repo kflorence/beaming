@@ -51,8 +51,6 @@ input {
   cursor: pointer;
 }
 
-#editor-delete,
-#editor-new,
 #title-settings,
 #title-quit {
   display: none;
@@ -366,6 +364,8 @@ dialog ul {
 
 #editor-menu {
   border-bottom: 1px solid #ddd;
+  flex-wrap: wrap;
+  min-width: fit-content;
 }
 
 #editor-wrapper {
@@ -668,8 +668,6 @@ dialog ul {
   color: #999;
 }
 
-.edit #editor-delete,
-.edit #editor-new,
 .edit #editor-wrapper,
 .edit #gutter,
 .edit #puzzle-title {
@@ -800,7 +798,7 @@ i.fill,
 
 .menu li {
   align-items: center;
-  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
   cursor: pointer;
   display: flex;
   padding: 1em;
@@ -811,7 +809,7 @@ i.fill,
   cursor: default;
 }
 
-.menu li:first-child {
+.menu li:last-child {
   border: none;
 }
 

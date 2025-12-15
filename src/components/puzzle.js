@@ -1,7 +1,17 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import paper, { Layer, Path, Point, Size } from 'paper'
-import { addClass, base64encode, debounce, emitEvent, fuzzyEquals, noop, params, removeClass } from './util'
+import {
+  addClass,
+  appendOption,
+  base64encode,
+  debounce,
+  emitEvent,
+  fuzzyEquals,
+  noop,
+  params,
+  removeClass
+} from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
 import { Modifier } from './modifier'
@@ -672,19 +682,18 @@ export class Puzzle {
       return
     }
 
+    const ids = Array.from(Puzzles.visible.ids)
     if (elements.select.children.length === 0) {
+      appendOption(elements.select, { value: '', text: '——', disabled: true })
       // TODO support pulling custom IDs from local cache
-      const options = Array.from(Puzzles.visible.ids).map((id) => ({ id, title: Puzzles.titles[id] }))
-      for (const option of options) {
-        const $option = document.createElement('option')
-        $option.value = option.id
-        $option.innerText = option.title
-        elements.select.append($option)
-      }
+      ids.map((id) => ({ value: id, text: Puzzles.titles[id] })).forEach((option) => {
+        appendOption(elements.select, option)
+      })
     }
 
     // Select current ID
-    elements.select.value = this.state?.getId()
+    const id = this.state?.getId()
+    elements.select.value = ids.includes(id) ? id : ''
   }
 
   #updateBeams () {

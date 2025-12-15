@@ -28,6 +28,16 @@ export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
 
+export function appendOption (element, option) {
+  const $option = document.createElement('option')
+  $option.value = option.value
+  $option.innerText = option.text
+  if (option.disabled) {
+    $option.disabled = option.disabled
+  }
+  element.append($option)
+}
+
 export function base64decode (string) {
   const binString = window.atob(base64unescape(string))
   // noinspection JSCheckFunctionSignatures
@@ -54,6 +64,12 @@ function base64unescape (string) {
 
 export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function classToString (name) {
+  return function () {
+    return '[' + [name, ...arguments].join(':') + ']'
+  }
 }
 
 export function coalesce (...args) {

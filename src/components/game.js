@@ -2,7 +2,7 @@ import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
 import { debug } from './debug'
-import { emitEvent, params, url } from './util'
+import { classToString, emitEvent, params, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
@@ -67,8 +67,7 @@ export class Game {
 
     State.setParam(Game.States.Edit, '')
 
-    this.puzzle.select()
-    this.editor.setup()
+    this.editor.select()
 
     elements.title.close()
   }
@@ -144,9 +143,7 @@ export class Game {
 
   static debug = debug
   static paper = paper
-  static toString () {
-    return '[' + ['Game', ...arguments].join(':') + ']'
-  }
+  static toString = classToString('Game')
 
   static States = Object.freeze({
     Edit: State.ParamKeys.Edit,
