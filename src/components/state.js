@@ -13,9 +13,10 @@ export class State {
   #moves
   #original
   #selectedTile
+  #solution
   #version
 
-  constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
+  constructor (id, original, deltas, moveIndex, moves, solution, selectedTile, version) {
     if (id === undefined) {
       if (params.has(State.ParamKeys.Edit)) {
         // This will happen when editing a new puzzle in the editor from scratch
@@ -35,6 +36,7 @@ export class State {
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
     this.#selectedTile = selectedTile
+    this.#solution = solution ?? []
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
@@ -100,6 +102,7 @@ export class State {
       deltas: this.#deltas,
       moveIndex: this.#moveIndex,
       moves: this.#moves,
+      solution: this.#solution,
       selectedTile: this.#selectedTile,
       version: this.#version
     }))
@@ -134,12 +137,16 @@ export class State {
     return this.#id
   }
 
-  getTitle () {
-    return this.#current.title
-  }
-
   getSelectedTile () {
     return this.#selectedTile
+  }
+
+  getSolution () {
+    return this.#solution
+  }
+
+  getTitle () {
+    return this.#current.title
   }
 
   moves () {
@@ -167,6 +174,7 @@ export class State {
     this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
+    this.#solution = []
     this.#selectedTile = undefined
 
     State.clearCache(this.getId())
@@ -185,6 +193,11 @@ export class State {
     }
   }
 
+  setSolution (tiles) {
+    this.#solution = tiles.map((tile) => tile.coordinates.offset.toString())
+    this.#updateCache()
+  }
+
   toString () {
     return `[State:${this.#deltas.length - 1}:${this.#moveIndex}]`
   }
@@ -197,6 +210,7 @@ export class State {
     console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
+    this.#solution = []
     this.#resetCurrent()
     this.#updateCache()
 
@@ -302,6 +316,7 @@ export class State {
       state.deltas,
       state.moveIndex,
       state.moves,
+      state.solution,
       state.selectedTile,
       state.version
     )

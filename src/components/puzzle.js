@@ -541,6 +541,9 @@ export class Puzzle {
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
 
+    // Store the solution in cache
+    this.state.setSolution(this.layout.tiles.filter(this.#mask.tileFilter))
+
     const p = document.createElement('p')
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
