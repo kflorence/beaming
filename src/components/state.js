@@ -1,6 +1,7 @@
 import { Puzzles } from '../puzzles'
 import { Storage } from './storage'
-import { base64decode, base64encode, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
+import { base64decode, base64encode, classToString, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
+import { View } from './view.js'
 
 const history = window.history
 
@@ -31,7 +32,7 @@ export class State {
     }
 
     this.#id = id
-    this.#original = original || {}
+    this.#original = original || { id }
     this.#deltas = deltas || []
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
@@ -160,7 +161,7 @@ export class State {
 
     this.#moveIndex++
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -180,7 +181,7 @@ export class State {
     State.clearCache(this.getId())
 
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -189,13 +190,13 @@ export class State {
     const id = tile?.coordinates.offset.toString()
     if (this.#selectedTile !== id) {
       this.#selectedTile = id
-      this.#updateCache()
+      this.updateCache()
     }
   }
 
   setSolution (tiles) {
     this.#solution = tiles.map((tile) => tile.coordinates.offset.toString())
-    this.#updateCache()
+    this.updateCache()
   }
 
   toString () {
@@ -212,7 +213,7 @@ export class State {
     this.#moveIndex--
     this.#solution = []
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -230,7 +231,24 @@ export class State {
       this.#apply(delta)
     }
 
-    this.#updateCache()
+    this.updateCache()
+  }
+
+  updateCache () {
+    const id = this.getId()
+    const data = { id }
+    const hashParams = ['', id]
+
+    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
+      // Include encoded state in URL if cache is not being cleared for this puzzle ID
+      data.state = this.encode()
+      hashParams.push(data.state)
+      Storage.set(State.key(id), data.state)
+    }
+
+    url.hash = hashParams.join('/')
+    history.pushState(data, '', url)
+    Storage.set(State.key(), id)
   }
 
   #apply (delta) {
@@ -252,25 +270,38 @@ export class State {
     this.#deltas.filter((delta, index) => index <= deltaIndex).forEach((delta) => this.#apply(delta))
   }
 
-  #updateCache () {
-    const id = this.getId()
-    const data = { id }
-    const hashParams = ['', id]
-
-    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
-      // Include encoded state in URL if cache is not being cleared for this puzzle ID
-      data.state = this.encode()
-      hashParams.push(data.state)
-      Storage.set(State.key(id), data.state)
-    }
-
-    url.hash = hashParams.join('/')
-    history.pushState(data, '', url)
-    Storage.set(State.key(), id)
-  }
-
   static clearCache (id) {
     Storage.delete(id === undefined ? id : State.key(id))
+  }
+
+  static decode (str) {
+    if (str) {
+      return JSON.parse(base64decode(str))
+    }
+  }
+
+  static delete (id) {
+    if (Puzzles.has(id)) {
+      // Can't delete puzzles that exist in configuration
+      return
+    }
+
+    const ids = State.remove(id)
+
+    // Remove associated puzzle from cache
+    Storage.delete(State.key(id))
+    Storage.delete(View.key(View.CacheKeys.Center))
+    Storage.delete(View.key(View.CacheKeys.Zoom))
+
+    // Currently selected puzzle
+    if (State.getId() === id) {
+      Storage.delete(State.key())
+
+      // Clear URL cache
+      url.hash = ''
+    }
+
+    return ids
   }
 
   static fromCache (id) {
@@ -280,10 +311,14 @@ export class State {
     }
   }
 
-  static fromEncoded (str) {
-    const state = JSON.parse(base64decode(str))
+  static fromConfig (id) {
+    return new State(id, Puzzles.get(id))
+  }
 
-    if (state.id === undefined) {
+  static fromEncoded (str) {
+    const state = State.decode(str)
+
+    if (!state || state.id === undefined) {
       console.warn('Invalid cache, ignoring.')
       return
     }
@@ -322,14 +357,8 @@ export class State {
     )
   }
 
-  static fromId (id) {
-    const config = Puzzles.get(id)
-    if (config) {
-      console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
-    } else {
-      console.debug(`No state found for puzzle ID '${id}' in source configuration.`)
-    }
-    return new State(id, config)
+  static getState (id) {
+    return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
   }
 
   static getContext () {
@@ -342,6 +371,10 @@ export class State {
 
   static getId () {
     return Storage.get(State.key())
+  }
+
+  static getIds () {
+    return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
   }
 
   static resolve (id) {
@@ -363,7 +396,7 @@ export class State {
 
       if (values.length === 0 && !params.has(State.ParamKeys.Edit)) {
         // If puzzle is not being edited, fall back to first puzzle ID
-        values.push(Puzzles.visible.firstId)
+        values.push(Puzzles.firstId)
       }
     }
 
@@ -405,7 +438,12 @@ export class State {
 
     console.debug(`No locally cached state found for puzzle ID '${id}'.`)
 
-    return State.fromId(id)
+    state = State.fromConfig(id)
+    if (state) {
+      console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
+    }
+
+    return state
   }
 
   static setParam = function (name, value) {
@@ -416,6 +454,7 @@ export class State {
   static CacheKeys = Object.freeze({
     Edit: 'edit',
     Id: 'id',
+    Ids: 'ids',
     Play: 'play'
   })
 
@@ -430,6 +469,22 @@ export class State {
   static Version = 6
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
+
+  static toString = classToString('State')
+
+  static add (id) {
+    const ids = Array.from(new Set([...State.getIds(), id]))
+    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    return ids
+  }
+
+  static remove (id) {
+    const ids = State.getIds()
+    const index = ids.indexOf(id)
+    ids.splice(index, 1)
+    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    return ids
+  }
 
   static Move = class {
     deltaIndex

@@ -29,12 +29,14 @@ import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
+import { Imports } from './import.js'
 
 const confirm = window.confirm
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   debug: document.getElementById('debug'),
+  delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
   footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
@@ -107,8 +109,6 @@ export class Puzzle {
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
-
-    this.#updateDropdown()
   }
 
   // Used by functional tests
@@ -252,7 +252,6 @@ export class Puzzle {
     if (this.state) {
       this.#teardown()
     }
-
     if (state instanceof State) {
       // Reset state
       this.state = state
@@ -314,6 +313,9 @@ export class Puzzle {
     }
 
     this.reload(State.resolve(id))
+
+    // Can't remove puzzles that exist in configuration
+    elements.delete.classList.toggle('hide', Puzzles.has(this.state.getId()))
   }
 
   tap (event) {
@@ -600,6 +602,9 @@ export class Puzzle {
   #setup () {
     const { layout, message, solution } = this.state.getCurrent()
 
+    this.state.updateCache()
+    State.add(this.state.getId())
+
     this.layout = new Layout(layout)
     this.message = message
     this.#solution = new Solution(solution)
@@ -685,18 +690,31 @@ export class Puzzle {
       return
     }
 
-    const ids = Array.from(Puzzles.visible.ids)
-    if (elements.select.children.length === 0) {
-      appendOption(elements.select, { value: '', text: '——', disabled: true })
-      // TODO support pulling custom IDs from local cache
-      ids.map((id) => ({ value: id, text: Puzzles.titles[id] })).forEach((option) => {
-        appendOption(elements.select, option)
+    elements.select.replaceChildren()
+
+    // TODO: once levels are implemented, this should just use State.getIds()
+    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
+    const customIds = []
+    ids.forEach((id) => {
+      if (Puzzles.has(id)) {
+        appendOption(elements.select, { value: id, text: Puzzles.titles[id] })
+      } else {
+        customIds.push(id)
+      }
+    })
+
+    if (customIds.length) {
+      const customGroup = document.createElement('optgroup')
+      customGroup.label = '———'
+      customIds.forEach((id) => {
+        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
       })
+
+      elements.select.append(customGroup)
     }
 
     // Select current ID
-    const id = this.state?.getId()
-    elements.select.value = ids.includes(id) ? id : ''
+    elements.select.value = this.state?.getId()
   }
 
   #updateBeams () {
@@ -864,6 +882,10 @@ export class Puzzle {
   static Schema = Object.freeze({
     $id: Schema.$id('puzzle'),
     properties: {
+      id: {
+        readOnly: true,
+        type: 'string'
+      },
       author: {
         maxLength: 72,
         type: 'string'
@@ -872,14 +894,21 @@ export class Puzzle {
         maxLength: 72,
         type: 'string'
       },
+      description: {
+        format: 'textarea',
+        maxLength: 144,
+        type: 'string'
+      },
       layout: Layout.Schema,
       solution: Solution.Schema,
+      imports: Imports.Schema,
       version: {
         default: 0,
         type: 'number'
       }
     },
     required: [
+      'id',
       'layout',
       'version'
     ],

@@ -5,20 +5,17 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
+import { appendOption, classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import Tippy from 'tippy.js'
-
-const confirm = window.confirm
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
   canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
-  delete: document.getElementById('editor-delete'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
@@ -71,10 +68,6 @@ export class Editor {
     return tile ? tile.coordinates.offset.toString() : 'root'
   }
 
-  getPuzzleIds () {
-    return JSON.parse(Storage.get(Editor.key(Editor.CacheKeys.Ids)) ?? '[]')
-  }
-
   getState () {
     return JSON.parse(elements.configuration.value)
   }
@@ -83,7 +76,7 @@ export class Editor {
     const playUrl = new URL(url)
     playUrl.searchParams.delete(State.ParamKeys.Edit)
     playUrl.searchParams.append(State.ParamKeys.Play, 'true')
-    playUrl.hash = ['', State.getId(), this.#puzzle.state.clone().encode()].join('/')
+    playUrl.hash = ['', State.getId(), this.#puzzle.state.encode()].join('/')
     return playUrl.toString()
   }
 
@@ -94,14 +87,6 @@ export class Editor {
   select (id) {
     this.teardown()
     this.#puzzle.select(id)
-
-    // Add this ID to the puzzle IDs cache, if it's not already there
-    const ids = this.getPuzzleIds()
-    const updatedIds = Array.from(new Set([...ids, this.#puzzle.state.getId()]))
-    console.debug('Updated list of editor puzzle IDs:', updatedIds)
-
-    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(updatedIds))
-
     this.#updateDropdown()
     this.setup()
   }
@@ -117,12 +102,10 @@ export class Editor {
     this.#gutter.setup()
 
     this.#puzzle.resize(false)
-    this.#puzzle.reload(false)
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.copy, handler: this.#onCopy },
-      { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
       { type: 'click', element: elements.new, handler: this.#onNew },
@@ -216,35 +199,6 @@ export class Editor {
     this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
-  }
-
-  #onDelete () {
-    if (!confirm('Are you sure you want to delete this puzzle? This cannot be undone.')) {
-      return
-    }
-
-    // Update editor puzzle IDs
-    const id = this.#puzzle.state.getId()
-    const ids = this.getPuzzleIds()
-    const index = ids.indexOf(id)
-    ids.splice(index, 1)
-
-    console.debug(Editor.toString('#onDelete'), id, ids)
-    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(ids))
-
-    // Remove local storage cache for puzzle ID
-    Storage.delete(State.key(id))
-    Storage.delete(View.key(View.CacheKeys.Center))
-    Storage.delete(View.key(View.CacheKeys.Zoom))
-
-    // Unset the current puzzle ID
-    Storage.delete(State.key())
-
-    // Clear URL cache
-    url.hash = ''
-
-    // Select the last available puzzle ID by default
-    this.select(ids[ids.length - 1])
   }
 
   #onDockUpdate () {
@@ -497,12 +451,8 @@ export class Editor {
   #updateDropdown () {
     elements.select.replaceChildren()
 
-    this.getPuzzleIds().forEach((id) => {
-      const config = State.fromCache(id)
-      const $option = document.createElement('option')
-      $option.value = id
-      $option.innerText = config.getTitle() || id
-      elements.select.append($option)
+    State.getIds().forEach((id) => {
+      appendOption(elements.select, { value: id, text: State.fromCache(id)?.getTitle() || id })
     })
 
     // Select current ID
@@ -545,7 +495,6 @@ export class Editor {
   static toString = classToString('Editor')
 
   static CacheKeys = Object.freeze({
-    Ids: 'ids',
     Locked: 'locked'
   })
 

@@ -51,6 +51,7 @@ input {
   cursor: pointer;
 }
 
+#editor-new,
 #title-settings,
 #title-quit {
   display: none;
@@ -668,6 +669,7 @@ dialog ul {
   color: #999;
 }
 
+.edit #editor-new,
 .edit #editor-wrapper,
 .edit #gutter,
 .edit #puzzle-title {
@@ -676,6 +678,10 @@ dialog ul {
 
 .edit #puzzle {
   visibility: visible;
+}
+
+.edit #puzzle-header-wrapper .menu:last-child {
+  border-left: #ddd 1px solid;
 }
 
 .electron {
