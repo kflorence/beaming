@@ -1,5 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
+import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Size } from 'paper'
 import {
   addClass,
@@ -30,8 +31,6 @@ import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
 import { Imports } from './import.js'
-
-const confirm = window.confirm
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
@@ -594,9 +593,10 @@ export class Puzzle {
       return
     }
 
-    if (confirm('Are you sure you want to reset this puzzle? This cannot be undone.') && this.state.reset()) {
+    confirm('Are you sure you want to reset this puzzle? This cannot be undone.', () => {
+      this.state.reset()
       setTimeout(() => this.reload())
-    }
+    })
   }
 
   #setup () {

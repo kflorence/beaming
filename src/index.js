@@ -3,7 +3,7 @@ import '@fontsource-variable/material-symbols-outlined/fill.css'
 import '@fontsource-variable/noto-sans-mono'
 import 'tippy.js/dist/tippy.css'
 
-import './dialog'
+import './components/dialog.js'
 
 import { Game } from './components/game'
 import pkg from '../package.json'
@@ -11,7 +11,7 @@ import pkg from '../package.json'
 if (process.env.TARGET === 'electron') {
   import('./electron/settings.js')
 } else if (process.env.NODE_ENV === 'production') {
-  import('./analytics')
+  import('./components/analytics.js')
 }
 
 // Set build version from package.json

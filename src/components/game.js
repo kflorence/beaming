@@ -1,3 +1,4 @@
+import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
@@ -7,8 +8,6 @@ import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
 import { Keys } from '../electron/settings/keys.js'
-
-const confirm = window.confirm
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -107,16 +106,13 @@ export class Game {
   }
 
   #onDelete () {
-    if (!confirm('Are you sure you want to remove this puzzle? This cannot be undone.')) {
-      return
-    }
-
-    const ids = State.delete(this.puzzle.state.getId())
-    this.select(ids[ids.length - 1])
+    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', () => {
+      const ids = State.delete(this.puzzle.state.getId())
+      this.select(ids[ids.length - 1])
+    })
   }
 
   #onSelect (event) {
-    console.log('select', event.target.value)
     this.select(event.target.value)
   }
 

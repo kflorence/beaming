@@ -25,8 +25,11 @@ body {
 }
 
 button {
-  cursor: pointer;
   font-family: 'Noto Sans Mono Variable', monospace;
+
+  &:not(:disabled,.disabled) {
+    cursor: pointer;
+  }
 }
 
 code {
@@ -73,17 +76,30 @@ dialog {
   box-sizing: border-box;
   display: none;
   flex-direction: column;
+  outline: none;
+  overflow: auto;
+  padding: 1em;
+  position: fixed;
+}
+
+dialog.fullscreen {
   height: 100vh;
   left: 0;
   margin: 0;
   max-height: 100vh;
   max-width: 100vw;
-  outline: none;
-  overflow: auto;
-  padding: 1em;
-  position: fixed;
   top: 0;
   width: 100vw;
+}
+
+dialog.confirm {
+  border: 1px solid #666;
+  border-radius: 0.25em;
+  filter: drop-shadow(0 0.25em 0.25rem #ccc);
+
+  button {
+    margin: 0 0.5em;
+  }
 }
 
 dialog[open] {
@@ -639,7 +655,10 @@ dialog ul {
 .button:hover {
   background-color: #ddd;
   border-color: #aaa;
-  cursor: pointer;
+
+  &:not(:disabled,.disabled) {
+    cursor: pointer;
+  }
 }
 
 .buttons {
@@ -899,7 +918,7 @@ i.fill,
   cursor: default;
 }
 
-.puzzle-solved footer {
+.puzzle-solved #puzzle-footer {
   display: none;
 }
 
