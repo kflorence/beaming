@@ -6,6 +6,10 @@ import { Stateful } from './stateful'
 import { Modifiers } from './modifiers'
 import { View } from './view'
 import { Schema } from './schema'
+import { State } from './state.js'
+import { Puzzles } from '../puzzles/index.js'
+import { Imports } from './import.js'
+import { classToString } from './util.js'
 
 export class Layout extends Stateful {
   #offset
@@ -37,6 +41,44 @@ export class Layout extends Stateful {
     this.offset = state.offset ?? Layout.Offsets.OddRow
     this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
+    const imports = state.imports || []
+    for (const i of imports) {
+      console.debug(Layout.toString(), `importing from puzzle ${i.id}`)
+
+      const state = Puzzles.has(i.id) ? State.fromConfig(i.id) : State.fromCache(i.id)
+      if (!state) {
+        throw new Error(`Could not resolve import: ${i.id} -- invalid ID.`)
+      }
+
+      // Cloning will squash any history into the base config
+      const config = state.clone().getConfig()
+      for (const r in config.layout.tiles) {
+        const row = config.layout.tiles[r]
+        for (const c in row) {
+          const offsetC = Number(c) + Number(i.offset.c)
+          const offsetR = Number(r) + Number(i.offset.r)
+
+          const tile = tiles[offsetR]?.[offsetC]
+          if (tile) {
+            if (tile.ref === i.id) {
+              console.debug(
+                Layout.toString(),
+                `Ignoring tile from puzzle '${i.id}' at '${offsetR},${offsetC}' as it has already been imported.`)
+              continue
+            }
+            throw new Error(
+              `Collision with parent detected when importing from puzzle '${i.id}' at '${offsetR},${offsetC}'.`)
+          }
+
+          // Keep a reference in tile state to the puzzle it was imported from
+          row[c].ref = i.id
+          tiles[offsetR] ??= {}
+          tiles[offsetR][offsetC] = row[c]
+          console.debug(Layout.toString(), `Imported tile from puzzle '${i.id}' at '${offsetR},${offsetC}'.`)
+        }
+      }
+    }
+
     for (const r in tiles) {
       const row = tiles[r]
       for (const c in row) {
@@ -57,6 +99,7 @@ export class Layout extends Stateful {
     const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
     const center = this.getPoint(offset)
     const coordinates = { axial, offset }
+    console.log('addTile', coordinates, center)
     const tile = new Tile(coordinates, center, this.parameters, state)
 
     this.#tiles[offset.r] ??= {}
@@ -97,17 +140,27 @@ export class Layout extends Stateful {
   }
 
   getState () {
+    const config = super.getState()
+    const imports = config.imports || {}
     const tiles = {}
 
     for (const r in this.#tiles) {
       const row = this.#tiles[r]
-      tiles[r] ??= {}
       for (const c in row) {
-        tiles[r][c] = row[c].getState()
+        const tile = row[c].getState()
+        // Don't include tiles in the state if their associated import was removed
+        if (!tile.ref || imports[tile.ref]) {
+          tiles[r] ??= {}
+          tiles[r][c] = tile
+        }
       }
     }
 
     const state = { offset: this.offset }
+
+    if (Object.keys(imports).length) {
+      state.imports = imports
+    }
 
     if (Object.keys(tiles).length) {
       state.tiles = tiles
@@ -162,7 +215,6 @@ export class Layout extends Stateful {
   static Schema = Object.freeze({
     $id: Schema.$id('layout'),
     properties: {
-      modifiers: Modifiers.Schema,
       offset: {
         enum: Object.values(Layout.Offsets),
         options: {
@@ -170,6 +222,8 @@ export class Layout extends Stateful {
         },
         type: 'string'
       },
+      modifiers: Modifiers.Schema,
+      imports: Imports.Schema,
       tiles: {
         options: {
           hidden: true
@@ -180,4 +234,6 @@ export class Layout extends Stateful {
     required: ['offset'],
     type: 'object'
   })
+
+  static toString = classToString('Layout')
 }

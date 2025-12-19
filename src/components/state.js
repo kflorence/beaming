@@ -113,6 +113,10 @@ export class State {
     return this.#current.author
   }
 
+  getConfig () {
+    return structuredClone(this.#original)
+  }
+
   getCurrent () {
     return structuredClone(this.#current)
   }

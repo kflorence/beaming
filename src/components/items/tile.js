@@ -10,6 +10,7 @@ export class Tile extends Item {
   modifiers
   parameters
   path
+  ref
   selected = false
 
   constructor (coordinates, center, parameters, state = {}) {
@@ -32,6 +33,7 @@ export class Tile extends Item {
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
+    this.ref = state.ref
 
     this.path = new Path.RegularPolygon({
       center,
@@ -82,6 +84,11 @@ export class Tile extends Item {
 
   getState () {
     const state = { id: this.id, type: this.type }
+
+    if (this.ref) {
+      // This property will be set if this tile was imported from one puzzle into another
+      state.ref = this.ref
+    }
 
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())

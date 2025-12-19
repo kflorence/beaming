@@ -901,7 +901,6 @@ export class Puzzle {
       },
       layout: Layout.Schema,
       solution: Solution.Schema,
-      imports: Imports.Schema,
       version: {
         default: 0,
         type: 'number'
