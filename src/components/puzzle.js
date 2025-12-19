@@ -30,7 +30,6 @@ import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
-import { Imports } from './import.js'
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
