@@ -250,6 +250,7 @@ export class Puzzle {
     if (this.state) {
       this.#teardown()
     }
+
     if (state instanceof State) {
       // Reset state
       this.state = state

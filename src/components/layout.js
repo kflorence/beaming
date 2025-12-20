@@ -12,6 +12,7 @@ import { Imports } from './import.js'
 import { classToString } from './util.js'
 
 export class Layout extends Stateful {
+  #imports = {}
   #offset
   #tiles = {}
 
@@ -26,6 +27,17 @@ export class Layout extends Stateful {
     super(state)
 
     const tiles = state.tiles || {}
+
+    // Remove all previously imported tiles from state, they will be re-added below. This will ensure that any tiles
+    // that were previously imported but deleted in the imported puzzle will be removed.
+    for (const r in tiles) {
+      const row = tiles[r]
+      for (const c in row) {
+        if (row[c].ref) {
+          delete tiles[r][c]
+        }
+      }
+    }
 
     // These layers will be added in the order they are defined
     this.layers.tiles = new Layer()
@@ -55,6 +67,9 @@ export class Layout extends Stateful {
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
+          // FIXME: this doesn't correctly place tiles currently, even though the math makes sense.
+          // For example, when importing a cluster of three tiles at [-1,-1], [0,0] and [-1,0] with an offset of [1,1],
+          // the tile at [0,0] gets shifted to [1,1] but visually it should be at [1,0].
           const offsetC = Number(c) + Number(i.offset.c)
           const offsetR = Number(r) + Number(i.offset.r)
 
@@ -99,7 +114,6 @@ export class Layout extends Stateful {
     const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
     const center = this.getPoint(offset)
     const coordinates = { axial, offset }
-    console.log('addTile', coordinates, center)
     const tile = new Tile(coordinates, center, this.parameters, state)
 
     this.#tiles[offset.r] ??= {}
@@ -141,15 +155,24 @@ export class Layout extends Stateful {
 
   getState () {
     const config = super.getState()
-    const imports = config.imports || {}
+
+    this.#imports = {}
+
+    if (config.imports) {
+      // Update imports cache
+      config.imports.forEach((i) => { this.#imports[i.id] = i })
+    }
+
     const tiles = {}
 
     for (const r in this.#tiles) {
       const row = this.#tiles[r]
       for (const c in row) {
         const tile = row[c].getState()
+        console.log(tile, this.#imports[tile.ref])
         // Don't include tiles in the state if their associated import was removed
-        if (!tile.ref || imports[tile.ref]) {
+        if (!(tile.ref && !this.#imports[tile.ref])) {
+          console.log('got here')
           tiles[r] ??= {}
           tiles[r][c] = tile
         }
@@ -158,8 +181,8 @@ export class Layout extends Stateful {
 
     const state = { offset: this.offset }
 
-    if (Object.keys(imports).length) {
-      state.imports = imports
+    if (config.imports?.length) {
+      state.imports = config.imports
     }
 
     if (Object.keys(tiles).length) {
@@ -176,6 +199,10 @@ export class Layout extends Stateful {
 
   getTile (offset = {}) {
     return this.#tiles[offset.r]?.[offset.c]
+  }
+
+  isImported (tile) {
+    return tile.ref && this.#imports[tile.ref]
   }
 
   removeModifier (modifier) {

@@ -102,7 +102,7 @@ export class Editor {
 
     this.#gutter.setup()
 
-    this.#puzzle.resize(false)
+    this.#puzzle.resize()
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
@@ -170,7 +170,7 @@ export class Editor {
     this.#onEditorUpdate()
     const state = this.getState()
     const diff = this.#puzzle.state.getDiff(state)
-    console.debug('onConfigurationUpdate', diff)
+    console.debug(Editor.toString('onConfigurationUpdate'), diff)
 
     if (diff === undefined) {
       // No changes
@@ -236,7 +236,7 @@ export class Editor {
       state.layout.tiles = current.layout.tiles
     }
 
-    console.debug('current', current, 'new', value, 'updated', state)
+    console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
 
     this.#updateConfiguration(state)
   }
@@ -337,9 +337,15 @@ export class Editor {
     const offset = layout.getOffset(event.detail.point)
     const tile = layout.getTile(offset)
 
-    console.debug('editor.#onTap', offset, tile)
+    console.debug(Editor.toString('#onTap'), offset, tile)
 
     if (tile) {
+      if (layout.isImported(tile)) {
+        console.debug(Editor.toString('#onTap'), 'Ignoring deletion since tile has been imported.')
+        // TODO: there should be some visual indication that a tile is imported and cannot be deleted
+        return
+      }
+
       layout.removeTile(offset)
     } else {
       layout.addTile(offset)
@@ -381,16 +387,16 @@ export class Editor {
 
     if (this.#editor) {
       const activeId = this.#editor.element.dataset.tile ?? 'root'
-      console.debug(`De-activating editor: ${activeId}`)
+      console.debug(Editor.toString('#setup'), `De-activating editor: ${activeId}`)
       this.#editor.off('change')
       this.#editor.element.classList.add('hide')
     }
 
     if (this.#editors[id]) {
-      console.debug(`Activating editor: ${id}`)
+      console.debug(Editor.toString('#setup'), `Activating editor: ${id}`)
       this.#editor = this.#editors[id]
     } else {
-      console.debug(`Creating editor: ${id}`)
+      console.debug(Editor.toString('#setup'), `Creating editor: ${id}`)
       const options = {
         disable_array_delete_all_rows: true,
         disable_array_delete_last_row: true,
@@ -419,7 +425,7 @@ export class Editor {
 
       elements.editor.append(element)
 
-      console.debug('Editor options', JSON.stringify(options, null, 2))
+      console.debug(Editor.toString('#setup'), JSON.stringify(options, null, 2))
       this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 
