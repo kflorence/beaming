@@ -510,7 +510,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!this.debug) {
+    if (!this.debug || params.has(State.ParamKeys.Edit)) {
       return
     }
 

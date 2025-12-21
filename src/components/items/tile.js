@@ -20,15 +20,13 @@ export class Tile extends Item {
 
     const dashWidth = parameters.circumradius / 10
 
-    this.styles = Object.assign(
-      {},
-      Tile.Styles,
-      {
-        copy: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.copy),
-        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
-      },
-      state.style || {}
-    )
+    this.styles = {}
+    Object.entries(Tile.Styles).forEach(([name, style]) => {
+      this.styles[name] = Object.assign({}, style, state.style?.[name] || {})
+      if (this.styles[name].dashArray === true) {
+        this.styles[name].dashArray = [dashWidth, dashWidth]
+      }
+    })
 
     this.center = center
     this.coordinates = coordinates
@@ -209,6 +207,12 @@ export class Tile extends Item {
 
   static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
     properties: {
+      ref: {
+        options: {
+          hidden: true
+        },
+        type: 'object'
+      },
       items: Items.Schema,
       modifiers: Modifiers.Schema
     }
@@ -224,10 +228,12 @@ export class Tile extends Item {
       strokeWidth: 1
     },
     copy: {
+      dashArray: true,
       strokeColor: new Color('#999'),
       strokeWidth: 2
     },
     edit: {
+      dashArray: true,
       strokeColor: new Color('black'),
       strokeWidth: 2
     },

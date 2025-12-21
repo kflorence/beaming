@@ -7,9 +7,8 @@ import { Modifiers } from './modifiers'
 import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
-import { Puzzles } from '../puzzles/index.js'
 import { Imports } from './import.js'
-import { classToString } from './util.js'
+import { classToString, params } from './util.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -28,12 +27,19 @@ export class Layout extends Stateful {
 
     const tiles = state.tiles || {}
 
-    // Remove all previously imported tiles from state, they will be re-added below. This will ensure that any tiles
-    // that were previously imported but deleted in the imported puzzle will be removed.
+    // Remove any previously imported tiles from state.
+    const imports = {}
     for (const r in tiles) {
       const row = tiles[r]
       for (const c in row) {
-        if (row[c].ref) {
+        const ref = row[c].ref
+        if (ref) {
+          const tile = tiles[r][c]
+          // Keep a reference to the previous state of the tile, at its location in the puzzle that owns it, so it can
+          // be carried over if the tile is still being imported
+          imports[ref.id] ??= {}
+          imports[ref.id][ref.offset.r] ??= {}
+          imports[ref.id][ref.offset.r][ref.offset.c] = tile
           delete tiles[r][c]
         }
       }
@@ -53,62 +59,86 @@ export class Layout extends Stateful {
     this.offset = state.offset ?? Layout.Offsets.OddRow
     this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
-    const imports = state.imports || []
-    for (const i of imports) {
-      console.debug(Layout.toString(), `importing from puzzle ${i.id}`)
+    this.#imports = {}
 
-      const state = Puzzles.has(i.id) ? State.fromConfig(i.id) : State.fromCache(i.id)
-      if (!state) {
-        throw new Error(`Could not resolve import: ${i.id} -- invalid ID.`)
-      }
+    if (state.imports) {
+      state.imports.forEach((imp, i) => {
+        const { cache, id, offset } = imp
+        console.debug(Layout.toString(), `importing from puzzle ${id}, offset ${offset}`)
 
-      // Cloning will squash any history into the base config
-      const config = state.clone().getConfig()
-      for (const r in config.layout.tiles) {
-        const row = config.layout.tiles[r]
-        for (const c in row) {
-          // FIXME: this doesn't correctly place tiles currently, even though the math makes sense.
-          // For example, when importing a cluster of three tiles at [-1,-1], [0,0] and [-1,0] with an offset of [1,1],
-          // the tile at [0,0] gets shifted to [1,1] but visually it should be at [1,0].
-          const offsetC = Number(c) + Number(i.offset.c)
-          const offsetR = Number(r) + Number(i.offset.r)
+        this.#imports[id] = imp
 
-          const tile = tiles[offsetR]?.[offsetC]
-          if (tile) {
-            if (tile.ref === i.id) {
-              console.debug(
-                Layout.toString(),
-                `Ignoring tile from puzzle '${i.id}' at '${offsetR},${offsetC}' as it has already been imported.`)
-              continue
-            }
-            throw new Error(
-              `Collision with parent detected when importing from puzzle '${i.id}' at '${offsetR},${offsetC}'.`)
-          }
-
-          // Keep a reference in tile state to the puzzle it was imported from
-          row[c].ref = i.id
-          tiles[offsetR] ??= {}
-          tiles[offsetR][offsetC] = row[c]
-          console.debug(Layout.toString(), `Imported tile from puzzle '${i.id}' at '${offsetR},${offsetC}'.`)
+        // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+        // This will ensure the latest version will always get cached in the puzzle if cacheImports is true.
+        // Note: cloning here will cause any history to get squashed into the base config
+        const source = (State.fromCache(id) || State.fromConfig(id) || State.fromEncoded(cache)).clone()
+        const config = source.getConfig()
+        if (!config.layout) {
+          throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
         }
-      }
+
+        // Need to convert offsets into cube/axial coordinates to generate the proper offsets for each tile below.
+        // This is because the offsets cannot be applied statically across tiles, because they are different depending
+        // on where in the grid the tile is located (due to the even/odd offsetting of tiles).
+        const anchorAxial = OffsetCoordinates.toAxialCoordinates(new OffsetCoordinates(offset.r, offset.c))
+
+        if (state.cacheImports) {
+          // Include the imported puzzle's configuration in the current puzzle's configuration.
+          // This is only necessary for custom puzzles, since official puzzles can be loaded from configuration.
+          state.imports[i].cache = source.encode()
+        } else {
+          delete state.imports[i].cache
+        }
+
+        for (const r in config.layout.tiles) {
+          const row = config.layout.tiles[r]
+          for (const c in row) {
+            const tileOffset = new OffsetCoordinates(Number(r), Number(c))
+            const tileAxial = OffsetCoordinates.toAxialCoordinates(tileOffset)
+            const translatedOffset = CubeCoordinates.toOffsetCoordinates(anchorAxial.add(tileAxial))
+
+            if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
+              throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
+            }
+
+            // Carry over any previous state changes for the tile
+            const tile = Object.assign(row[c], imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
+
+            // Keep a reference to the puzzle and location the tile was imported from in state
+            tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
+            tiles[translatedOffset.r] ??= {}
+            tiles[translatedOffset.r][translatedOffset.c] = tile
+            console.debug(Layout.toString(), `Imported tile from puzzle '${id}' to '${translatedOffset}'.`)
+          }
+        }
+      })
     }
 
     for (const r in tiles) {
       const row = tiles[r]
       for (const c in row) {
-        const offset = new OffsetCoordinates(r, c)
-        const state = row[c]
-
-        this.addTile(offset, state)
+        this.addTile(new OffsetCoordinates(r, c), row[c])
       }
     }
+
+    this.setState(state)
 
     View.update()
   }
 
-  addTile (offset, state) {
+  addTile (offset, state = {}) {
     this.removeTile(offset)
+
+    if (params.has(State.ParamKeys.Edit) && state.ref) {
+      const config = this.#imports[state.ref.id]
+      if (config.color) {
+        state.style = {
+          default: {
+            fillColor: config.color
+          }
+        }
+      }
+    }
 
     const rowOffset = Math.floor(offset.r / 2)
     const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
@@ -156,30 +186,17 @@ export class Layout extends Stateful {
   getState () {
     const config = super.getState()
 
-    this.#imports = {}
-
-    if (config.imports) {
-      // Update imports cache
-      config.imports.forEach((i) => { this.#imports[i.id] = i })
-    }
-
     const tiles = {}
 
     for (const r in this.#tiles) {
       const row = this.#tiles[r]
       for (const c in row) {
-        const tile = row[c].getState()
-        console.log(tile, this.#imports[tile.ref])
-        // Don't include tiles in the state if their associated import was removed
-        if (!(tile.ref && !this.#imports[tile.ref])) {
-          console.log('got here')
-          tiles[r] ??= {}
-          tiles[r][c] = tile
-        }
+        tiles[r] ??= {}
+        tiles[r][c] = row[c].getState()
       }
     }
 
-    const state = { offset: this.offset }
+    const state = { cacheImports: config.cacheImports, offset: this.offset }
 
     if (config.imports?.length) {
       state.imports = config.imports
@@ -199,10 +216,6 @@ export class Layout extends Stateful {
 
   getTile (offset = {}) {
     return this.#tiles[offset.r]?.[offset.c]
-  }
-
-  isImported (tile) {
-    return tile.ref && this.#imports[tile.ref]
   }
 
   removeModifier (modifier) {
@@ -249,6 +262,11 @@ export class Layout extends Stateful {
         },
         type: 'string'
       },
+      cacheImports: {
+        default: true,
+        format: 'checkbox',
+        type: 'boolean'
+      },
       modifiers: Modifiers.Schema,
       imports: Imports.Schema,
       tiles: {
@@ -258,7 +276,7 @@ export class Layout extends Stateful {
         type: 'object'
       }
     },
-    required: ['offset'],
+    required: ['cacheImports', 'offset'],
     type: 'object'
   })
 

@@ -7,6 +7,7 @@ import './components/dialog.js'
 
 import { Game } from './components/game'
 import pkg from '../package.json'
+import paper from 'paper'
 
 if (process.env.TARGET === 'electron') {
   import('./electron/settings.js')
@@ -16,6 +17,8 @@ if (process.env.TARGET === 'electron') {
 
 // Set build version from package.json
 document.getElementById('version').textContent = `v${pkg.version}`
+
+window.paper = paper
 
 async function init () {
   if (window.electron) {

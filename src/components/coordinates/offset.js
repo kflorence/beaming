@@ -33,12 +33,12 @@ export class OffsetCoordinates {
   static Schema = Object.freeze({
     $id: Schema.$id('offset'),
     properties: {
-      c: {
-        title: 'column',
-        type: 'number'
-      },
       r: {
         title: 'row',
+        type: 'number'
+      },
+      c: {
+        title: 'column',
         type: 'number'
       }
     },

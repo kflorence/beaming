@@ -6,12 +6,19 @@ export class Import {
     $id: Schema.$id('import'),
     headerTemplate: 'puzzle {{i1}}',
     properties: {
+      cache: {
+        options: {
+          hidden: true
+        },
+        type: 'string'
+      },
       // TODO consider adding conditions and filters
       id: {
         minLength: 3,
         type: 'string'
       },
-      offset: OffsetCoordinates.Schema
+      offset: OffsetCoordinates.Schema,
+      color: Schema.color
     },
     required: ['id', 'offset'],
     type: 'object'

@@ -16,6 +16,7 @@ const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
+  debug: document.getElementById('debug'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
@@ -55,7 +56,7 @@ export class Editor {
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
-  #layer = new Layer()
+  #layer = new Layer({ name: 'editor' })
   #puzzle
 
   constructor (puzzle) {
@@ -97,9 +98,6 @@ export class Editor {
       return
     }
 
-    // Place this layer under all the other ones
-    paper.project.insertLayer(0, this.#layer)
-
     this.#gutter.setup()
 
     this.#puzzle.resize()
@@ -125,6 +123,8 @@ export class Editor {
 
     const state = this.#puzzle.state
     elements.configuration.value = state.getCurrentJSON()
+
+    paper.project.addLayer(this.#layer)
 
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
@@ -270,6 +270,8 @@ export class Editor {
   }
 
   #onPointerMove (event) {
+    elements.debug.textContent = ''
+
     if (event.pointerType !== 'mouse') {
       // Only display the hover indicator when using a mouse
       return
@@ -299,9 +301,12 @@ export class Editor {
     } else {
       this.#hover.position = center
     }
+
+    elements.debug.textContent = `[${offset.r},${offset.c}]`
   }
 
   #onPuzzleUpdate () {
+    this.#layer.bringToFront()
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
     this.#updatePlayUrl()
   }
@@ -340,9 +345,8 @@ export class Editor {
     console.debug(Editor.toString('#onTap'), offset, tile)
 
     if (tile) {
-      if (layout.isImported(tile)) {
-        console.debug(Editor.toString('#onTap'), 'Ignoring deletion since tile has been imported.')
-        // TODO: there should be some visual indication that a tile is imported and cannot be deleted
+      if (tile.ref) {
+        console.debug(Editor.toString('#onTap'), 'Ignoring removal of imported tile.')
         return
       }
 

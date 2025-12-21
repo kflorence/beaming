@@ -320,6 +320,10 @@ export class State {
   }
 
   static fromEncoded (str) {
+    if (!str) {
+      return
+    }
+
     const state = State.decode(str)
 
     if (!state || state.id === undefined) {

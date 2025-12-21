@@ -329,6 +329,10 @@ dialog ul {
   margin-top: 1em;
 }
 
+#editor .je-checkbox {
+  margin: 0 10px 0 0;
+}
+
 #editor .je-header {
   display: flex;
   font-weight: bold;
