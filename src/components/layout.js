@@ -8,7 +8,8 @@ import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
-import { classToString, params } from './util.js'
+import { classToString } from './util.js'
+import { ModifierFilter } from './modifier.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -26,6 +27,16 @@ export class Layout extends Stateful {
     super(state)
 
     const tiles = state.tiles || {}
+
+    // These layers will be added in the order they are defined
+    this.layers.tiles = new Layer()
+    this.layers.items = new Layer()
+
+    Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
+
+    this.parameters = Tile.parameters(state.tile?.height)
+    this.offset = state.offset ?? Layout.Offsets.OddRow
+    this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
     // Remove any previously imported tiles from state.
     const imports = {}
@@ -45,28 +56,14 @@ export class Layout extends Stateful {
       }
     }
 
-    // These layers will be added in the order they are defined
-    this.layers.tiles = new Layer()
-    this.layers.items = new Layer()
-
-    Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
-
-    this.modifiers = (state.modifiers || [])
-      .map((state, index) => Modifiers.factory(null, state, index))
-      .filter((modifier) => modifier !== undefined)
-
-    this.parameters = Tile.parameters(state.tile?.height)
-    this.offset = state.offset ?? Layout.Offsets.OddRow
-    this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
     this.#imports = {}
-
     state.importsCache ??= {}
     state.imports ??= []
     for (const imp of state.imports) {
       const { id, offset } = imp
-      console.debug(Layout.toString(), `importing from puzzle ${id}, offset ${offset}`)
+      console.debug(Layout.toString(), `importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, imp)
 
-      this.#imports[id] = imp
+      this.#imports[id] = structuredClone(imp)
 
       // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
       // This will ensure the latest version will always get cached in the puzzle if cache is true.
@@ -94,19 +91,17 @@ export class Layout extends Stateful {
         delete state.importsCache[id]
       }
 
-      const filters = (imp.filters ?? []).map((filter) => ImportFilter.factory(filter))
-      if (
-        filters
-          .filter((filter) => filter.type === ImportFilter.Types.Condition)
-          .some((condition) => !condition.apply(source))
-      ) {
-        // If any filter fails, nothing will be imported.
+      const importFilters = (imp.filters ?? []).map((filter) => ImportFilter.factory(filter))
+      const conditionFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Condition)
+      if (!conditionFilters.every((filter) => filter.apply(source))) {
+        // If any condition filter fails, nothing will be imported.
         continue
       }
 
       const config = source.clone().getConfig()
+      config.layout ??= {}
       config.layout.tiles ??= []
-      const tileFilters = filters.filter((filter) => filter.type === ImportFilter.Types.Tile)
+      const tileFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Tile)
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
@@ -124,12 +119,7 @@ export class Layout extends Stateful {
           // Keep a reference to the puzzle and location the tile was imported from in state
           tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
 
-          if (tileFilters.some((filter) => {
-            const result = filter.apply(source, translatedOffset, tile)
-            console.log('result', result)
-            return !result
-          })) {
-            console.log('got here')
+          if (!tileFilters.every((filter) => filter.apply(source, translatedOffset, tile))) {
             // If any filter fails, the tile will not be imported.
             continue
           }
@@ -137,9 +127,23 @@ export class Layout extends Stateful {
           tiles[translatedOffset.r] ??= {}
           tiles[translatedOffset.r][translatedOffset.c] = tile
           console.debug(Layout.toString(), `Imported tile from puzzle '${id}' to '${translatedOffset}'.`)
+
+          // Consider this import seen if at least one tile was added
+          this.#imports[id].seen = imp.seen ?? true
         }
       }
     }
+
+    state.modifiers ??= []
+    this.modifiers = state.modifiers
+      .filter((modifier) => {
+        // Exclude any modifiers with filters that fail
+        return (modifier.filters ?? [])
+          .map((filter) => ModifierFilter.factory(filter))
+          .every((filter) => filter.apply(state, this))
+      })
+      .map((state, index) => Modifiers.factory(null, state, index))
+      .filter((modifier) => modifier !== undefined)
 
     for (const r in tiles) {
       const row = tiles[r]
@@ -156,7 +160,7 @@ export class Layout extends Stateful {
   addTile (offset, state = {}) {
     this.removeTile(offset)
 
-    if (params.has(State.ParamKeys.Edit) && state.ref) {
+    if (state.ref) {
       const config = this.#imports[state.ref.id]
       if (config.color) {
         state.style = {
@@ -190,6 +194,10 @@ export class Layout extends Stateful {
   getCenter () {
     // The center of the canvas
     return new Point(paper.view.viewSize.divide(2))
+  }
+
+  getImports () {
+    return structuredClone(this.#imports)
   }
 
   getItems () {
@@ -237,9 +245,8 @@ export class Layout extends Stateful {
       state.tiles = tiles
     }
 
-    const modifiers = this.modifiers.map((modifier) => modifier.getState())
-    if (modifiers.length) {
-      state.modifiers = modifiers
+    if (config.modifiers.length) {
+      state.modifiers = config.modifiers
     }
 
     return state

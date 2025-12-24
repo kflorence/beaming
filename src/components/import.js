@@ -1,49 +1,25 @@
 import { Schema } from './schema.js'
 import { OffsetCoordinates } from './coordinates/offset.js'
 import { merge } from './util.js'
+import { Filter } from './filter.js'
 
-export class ImportFilter {
-  id
-  name
-  state
-  type
-
-  constructor (state) {
-    this.name = state.name
-    this.state = state
-    this.type = state.type
-    this.id = Schema.$id(this.type, this.name)
-  }
-
-  apply (state) {}
-
+export class ImportFilter extends Filter {
   static factory (state) {
-    const id = Schema.$id(state.type, state.name)
-    switch (id) {
-      case ImportFilterConditionSolved.Id: {
+    switch (true) {
+      case (state.type === ImportFilter.Types.Condition && state.name === ImportFilter.Names.Solved): {
         return new ImportFilterConditionSolved(state)
       }
-      case ImportFilterTileInSolution.Id: {
+      case (state.type === ImportFilter.Types.Tile && state.name === ImportFilter.Names.InSolution): {
         return new ImportFilterTileInSolution(state)
       }
       default: {
-        throw new Error(`Unknown filter: ${id}.`)
+        throw new Error(`Unknown filter: ${state.type}, ${state.name}.`)
       }
     }
   }
 
   static schema (type, name) {
-    return merge(Schema.typed('import-filter', type, name), {
-      properties: {
-        name: {
-          const: name,
-          options: {
-            hidden: true
-          }
-        }
-      },
-      required: ['name']
-    })
+    return super.schema('import', type, name)
   }
 
   static Names = Object.freeze({
@@ -59,16 +35,15 @@ export class ImportFilter {
 
 export class ImportFilterConditionSolved extends ImportFilter {
   apply (state) {
-    const solution = state.getSolution()
-    return (this.state.solved === true && solution !== undefined) ||
-      (this.state.solved === false && solution === undefined)
+    return this.state.solved === (state.getSolution() !== undefined)
   }
 
-  static Id = Schema.$id(ImportFilter.Types.Condition, ImportFilter.Names.Solved)
+  static Name = ImportFilter.Names.Solved
+  static Type = ImportFilter.Types.Condition
 
   // This filter will include/exclude the import based on whether the imported puzzle has been solved
   static Schema = Object.freeze(merge(
-    ImportFilter.schema(ImportFilter.Types.Condition, ImportFilter.Names.Solved),
+    ImportFilter.schema(this.Type, this.Name),
     {
       properties: {
         solved: {
@@ -82,14 +57,15 @@ export class ImportFilterConditionSolved extends ImportFilter {
 
 export class ImportFilterTileInSolution extends ImportFilter {
   apply (state, offset, tile) {
-    return state.getSolution().includes(offset.toString())
+    return this.state.inSolution === state.getSolution().includes(offset.toString())
   }
 
-  static Id = Schema.$id(ImportFilter.Types.Tile, ImportFilter.Names.InSolution)
+  static Name = ImportFilter.Names.InSolution
+  static Type = ImportFilter.Types.Tile
 
   // This filter will include/exclude tiles based on whether they are included in the puzzle solution
   static Schema = Object.freeze(merge(
-    ImportFilter.schema(ImportFilter.Types.Tile, ImportFilter.Names.InSolution),
+    ImportFilter.schema(this.Type, this.Name),
     {
       properties: {
         inSolution: {
@@ -113,6 +89,8 @@ export class Import {
       offset: OffsetCoordinates.Schema,
       cache: {
         default: true,
+        description: 'Cache the imported puzzle in the current puzzle configuration. ' +
+          'This should be set to true when importing non-official puzzles.',
         type: 'boolean'
       },
       color: Schema.color,
@@ -125,6 +103,10 @@ export class Import {
           headerTemplate: 'filter {{i1}}'
         },
         type: 'array'
+      },
+      seen: {
+        description: 'Mark the import as seen by the user. This should only be used for testing purposes.',
+        type: 'boolean'
       }
     },
     required: ['id', 'offset'],

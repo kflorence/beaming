@@ -1,4 +1,4 @@
-import { capitalize, emitEvent, uniqueId } from './util'
+import { capitalize, emitEvent, merge, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -6,6 +6,7 @@ import { Item } from './item'
 import { Icons } from './icons'
 import { Tile } from './items/tile'
 import { Schema } from './schema'
+import { Filter } from './filter.js'
 
 const menu = document.getElementById('puzzle-footer-menu')
 
@@ -188,7 +189,19 @@ export class Modifier extends Stateful {
   }
 
   static schema (type) {
-    return Schema.typed('modifiers', type)
+    return merge(Schema.typed('modifiers', type), {
+      properties: {
+        filters: {
+          items: {
+            anyOf: [
+              ModifierFilterImportSeen.Schema
+            ],
+            headerTemplate: 'filter {{i1}}'
+          },
+          type: 'array'
+        }
+      }
+    })
   }
 
   static Events = Object.freeze({
@@ -205,4 +218,53 @@ export class Modifier extends Stateful {
     'swap',
     'toggle'
   ].map((type) => [type, capitalize(type)])))
+}
+
+export class ModifierFilter extends Filter {
+  static factory (state) {
+    switch (true) {
+      case state.type === ModifierFilter.Types.Import && state.name === ModifierFilter.Names.Seen: {
+        return new ModifierFilterImportSeen(state)
+      }
+      default:
+        throw new Error(`Unknown filter: ${state.type}, ${state.name}.`)
+    }
+  }
+
+  static schema (type, name) {
+    return super.schema('modifier', type, name)
+  }
+
+  static Names = Object.freeze({
+    Seen: 'seen'
+  })
+
+  static Types = Object.freeze({
+    Import: 'import'
+  })
+}
+
+export class ModifierFilterImportSeen extends ModifierFilter {
+  apply (state, layout) {
+    return this.state.seen === layout.getImports()[this.state.importId]?.seen ?? false
+  }
+
+  static Name = ModifierFilter.Names.Seen
+  static Type = ModifierFilter.Types.Import
+
+  static Schema = Object.freeze(merge(
+    ModifierFilter.schema(this.Type, this.Name),
+    {
+      properties: {
+        importId: {
+          type: 'string'
+        },
+        seen: {
+          default: true,
+          type: 'boolean'
+        }
+      },
+      required: ['importId', 'seen']
+    }
+  ))
 }

@@ -369,11 +369,17 @@ dialog ul {
 }
 
 #editor .je-textarea {
+  padding: 0.25em;
   width: calc(100% - 1em);
 }
 
 #editor .row {
   line-height: 32px;
+}
+
+#editor .row p {
+  margin-left: 1em;
+  line-height: normal;
 }
 
 #editor-configuration {

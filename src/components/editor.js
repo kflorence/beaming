@@ -166,9 +166,9 @@ export class Editor {
   }
 
   #onConfigurationUpdate () {
-    // Ensure the configuration is in sync with the editor value
-    this.#onEditorUpdate()
     const state = this.getState()
+    // Ensure the configuration is in sync with the editor value
+    this.#onEditorUpdate(state)
     const diff = this.#puzzle.state.getDiff(state)
     console.debug(Editor.toString('onConfigurationUpdate'), diff)
 
