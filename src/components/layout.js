@@ -70,15 +70,13 @@ export class Layout extends Stateful {
 
       // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
       // This will ensure the latest version will always get cached in the puzzle if cache is true.
-      // Note: cloning here will cause any history to get squashed into the base config
       const source = (
         State.fromCache(id) ||
         State.fromConfig(id) ||
         State.fromEncoded(state.importsCache[id])
-      ).clone()
+      )
 
-      const config = source.getConfig()
-      if (!config.layout) {
+      if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
 
@@ -90,7 +88,8 @@ export class Layout extends Stateful {
       if (imp.cache === true) {
         // Include the imported puzzle's configuration in the current puzzle's configuration.
         // This is only necessary for custom puzzles, since official puzzles can be loaded from configuration.
-        state.importsCache[id] = source.encode()
+        // Note: cloning here will cause any history to get squashed into the base config
+        state.importsCache[id] = source.clone().encode()
       } else {
         delete state.importsCache[id]
       }
@@ -99,14 +98,15 @@ export class Layout extends Stateful {
       if (
         filters
           .filter((filter) => filter.type === ImportFilter.Types.Condition)
-          .some((condition) => !condition.apply(config))
+          .some((condition) => !condition.apply(source))
       ) {
-        // If any condition fails, nothing will be imported.
+        // If any filter fails, nothing will be imported.
         continue
       }
 
-      // const tileFilters = filters.filter((filter) => filter.type === ImportFilter.Types.Tile)
-
+      const config = source.clone().getConfig()
+      config.layout.tiles ??= []
+      const tileFilters = filters.filter((filter) => filter.type === ImportFilter.Types.Tile)
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
@@ -121,10 +121,19 @@ export class Layout extends Stateful {
           // Carry over any previous state changes for the tile
           const tile = Object.assign(row[c], imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
 
-          // TODO filter tiles
-
           // Keep a reference to the puzzle and location the tile was imported from in state
           tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
+
+          if (tileFilters.some((filter) => {
+            const result = filter.apply(source, translatedOffset, tile)
+            console.log('result', result)
+            return !result
+          })) {
+            console.log('got here')
+            // If any filter fails, the tile will not be imported.
+            continue
+          }
+
           tiles[translatedOffset.r] ??= {}
           tiles[translatedOffset.r][translatedOffset.c] = tile
           console.debug(Layout.toString(), `Imported tile from puzzle '${id}' to '${translatedOffset}'.`)

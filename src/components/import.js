@@ -23,8 +23,8 @@ export class ImportFilter {
       case ImportFilterConditionSolved.Id: {
         return new ImportFilterConditionSolved(state)
       }
-      case ImportFilterTileConnected.Id: {
-        return new ImportFilterTileConnected(state)
+      case ImportFilterTileInSolution.Id: {
+        return new ImportFilterTileInSolution(state)
       }
       default: {
         throw new Error(`Unknown filter: ${id}.`)
@@ -47,7 +47,7 @@ export class ImportFilter {
   }
 
   static Names = Object.freeze({
-    Connected: 'connected',
+    InSolution: 'in-solution',
     Solved: 'solved'
   })
 
@@ -59,8 +59,9 @@ export class ImportFilter {
 
 export class ImportFilterConditionSolved extends ImportFilter {
   apply (state) {
-    return (this.state.solved === true && state.solution !== undefined) ||
-      (this.state.solved === false && state.solution === undefined)
+    const solution = state.getSolution()
+    return (this.state.solved === true && solution !== undefined) ||
+      (this.state.solved === false && solution === undefined)
   }
 
   static Id = Schema.$id(ImportFilter.Types.Condition, ImportFilter.Names.Solved)
@@ -79,23 +80,23 @@ export class ImportFilterConditionSolved extends ImportFilter {
   ))
 }
 
-export class ImportFilterTileConnected extends ImportFilter {
-  apply (state) {
-
+export class ImportFilterTileInSolution extends ImportFilter {
+  apply (state, offset, tile) {
+    return state.getSolution().includes(offset.toString())
   }
 
-  static Id = Schema.$id(ImportFilter.Types.Tile, ImportFilter.Names.Connected)
+  static Id = Schema.$id(ImportFilter.Types.Tile, ImportFilter.Names.InSolution)
 
-  // This filter will include/exclude tiles based on whether they contain a connected beam
+  // This filter will include/exclude tiles based on whether they are included in the puzzle solution
   static Schema = Object.freeze(merge(
-    ImportFilter.schema(ImportFilter.Types.Tile, ImportFilter.Names.Connected),
+    ImportFilter.schema(ImportFilter.Types.Tile, ImportFilter.Names.InSolution),
     {
       properties: {
-        connected: {
+        inSolution: {
           type: 'boolean'
         }
       },
-      required: ['connected']
+      required: ['inSolution']
     }
   ))
 }
@@ -119,7 +120,7 @@ export class Import {
         items: {
           anyOf: [
             ImportFilterConditionSolved.Schema,
-            ImportFilterTileConnected.Schema
+            ImportFilterTileInSolution.Schema
           ],
           headerTemplate: 'filter {{i1}}'
         },

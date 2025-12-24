@@ -602,7 +602,7 @@ export class Puzzle {
   #setup () {
     const { layout, message, solution } = this.state.getCurrent()
 
-    this.state.updateCache()
+    this.state.setSolution([])
     State.add(this.state.getId())
 
     this.layout = new Layout(layout)
