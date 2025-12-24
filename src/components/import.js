@@ -6,8 +6,11 @@ import { Filter } from './filter.js'
 export class ImportFilter extends Filter {
   static factory (state) {
     switch (true) {
-      case (state.type === ImportFilter.Types.Condition && state.name === ImportFilter.Names.Solved): {
-        return new ImportFilterConditionSolved(state)
+      case (state.type === ImportFilter.Types.Puzzle && state.name === ImportFilter.Names.Solved): {
+        return new ImportFilterPuzzleSolved(state)
+      }
+      case (state.type === ImportFilter.Types.Item && state.name === ImportFilter.Names.Exclusion): {
+        return new ImportFilterItemExclusion(state)
       }
       case (state.type === ImportFilter.Types.Tile && state.name === ImportFilter.Names.InSolution): {
         return new ImportFilterTileInSolution(state)
@@ -23,28 +26,49 @@ export class ImportFilter extends Filter {
   }
 
   static Names = Object.freeze({
+    Exclusion: 'exclusion',
     InSolution: 'in-solution',
     Solved: 'solved'
   })
 
   static Types = Object.freeze({
-    Condition: 'condition',
+    Puzzle: 'puzzle',
+    Item: 'item',
     Tile: 'tile'
   })
 }
 
-export class ImportFilterConditionSolved extends ImportFilter {
+export class ImportFilterItemExclusion extends ImportFilter {
+  apply () {
+    return false
+  }
+
+  static Name = ImportFilter.Names.Exclusion
+  static Type = ImportFilter.Types.Item
+
+  static Schema = Object.freeze(merge(
+    ImportFilter.schema(this.Type, this.Name),
+    {
+      description: 'Don\'t import items from tiles.',
+      options: {
+        containerAttributes: { class: 'empty' }
+      }
+    }
+  ))
+}
+
+export class ImportFilterPuzzleSolved extends ImportFilter {
   apply (state) {
     return this.state.solved === (state.getSolution() !== undefined)
   }
 
   static Name = ImportFilter.Names.Solved
-  static Type = ImportFilter.Types.Condition
+  static Type = ImportFilter.Types.Puzzle
 
-  // This filter will include/exclude the import based on whether the imported puzzle has been solved
   static Schema = Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
+      description: 'Conditionally import the puzzle depending on whether or not the user has solved it.',
       properties: {
         solved: {
           type: 'boolean'
@@ -63,10 +87,10 @@ export class ImportFilterTileInSolution extends ImportFilter {
   static Name = ImportFilter.Names.InSolution
   static Type = ImportFilter.Types.Tile
 
-  // This filter will include/exclude tiles based on whether they are included in the puzzle solution
   static Schema = Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
+      description: 'Conditionally include tiles based on whether they were included in the puzzle solution.',
       properties: {
         inSolution: {
           type: 'boolean'
@@ -97,7 +121,8 @@ export class Import {
       filters: {
         items: {
           anyOf: [
-            ImportFilterConditionSolved.Schema,
+            ImportFilterItemExclusion.Schema,
+            ImportFilterPuzzleSolved.Schema,
             ImportFilterTileInSolution.Schema
           ],
           headerTemplate: 'filter {{i1}}'

@@ -92,15 +92,19 @@ export class Layout extends Stateful {
       }
 
       const importFilters = (imp.filters ?? []).map((filter) => ImportFilter.factory(filter))
-      const conditionFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Condition)
-      if (!conditionFilters.every((filter) => filter.apply(source))) {
-        // If any condition filter fails, nothing will be imported.
+      if (
+        !importFilters
+          .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
+          .every((filter) => filter.apply(source))
+      ) {
+        // If any filter fails, this puzzle will not be imported.
         continue
       }
 
       const config = source.clone().getConfig()
       config.layout ??= {}
       config.layout.tiles ??= []
+      const itemFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Item)
       const tileFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Tile)
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
@@ -122,6 +126,10 @@ export class Layout extends Stateful {
           if (!tileFilters.every((filter) => filter.apply(source, translatedOffset, tile))) {
             // If any filter fails, the tile will not be imported.
             continue
+          }
+
+          if (tile.items) {
+            tile.items = tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
           }
 
           tiles[translatedOffset.r] ??= {}
