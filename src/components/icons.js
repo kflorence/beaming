@@ -4,6 +4,7 @@ export class Icons {
   static Immutable = new Symbol('icon-immutable', 'block')
   static Lock = new Symbol('icon-lock', 'lock')
   static Move = new Symbol('icon-move', 'drag_pan')
+  static Puzzle = new Symbol('icon-puzzle', 'extension')
   static RotateLeft = new Symbol('icon-rotate-left', 'rotate_left')
   static RotateRight = new Symbol('icon-rotate-right', 'rotate_right')
   static Swap = new Symbol('icon-swap', 'swap_horiz')
@@ -14,6 +15,7 @@ export class Icons {
     Icons.Immutable,
     Icons.Lock,
     Icons.Move,
+    Icons.Puzzle,
     Icons.RotateLeft,
     Icons.RotateRight,
     Icons.Swap,

@@ -99,6 +99,7 @@ export class Item extends Stateful {
     'beam',
     'collision',
     'filter',
+    'icon',
     'mask',
     'portal',
     'reflector',
