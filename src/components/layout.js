@@ -109,16 +109,17 @@ export class Layout extends Stateful {
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
+          const tile = row[c]
           const tileOffset = new OffsetCoordinates(Number(r), Number(c))
           const tileAxial = OffsetCoordinates.toAxialCoordinates(tileOffset)
           const translatedOffset = CubeCoordinates.toOffsetCoordinates(anchorAxial.add(tileAxial))
 
-          if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
-            throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
+          if (tile.items) {
+            tile.items = tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
           }
 
           // Carry over any previous state changes for the tile
-          const tile = Object.assign(row[c], imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
+          Object.assign(tile, imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
 
           // Keep a reference to the puzzle and location the tile was imported from in state
           tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
@@ -128,8 +129,9 @@ export class Layout extends Stateful {
             continue
           }
 
-          if (tile.items) {
-            tile.items = tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+          if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
+            // There is already a tile at this location
+            throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
           }
 
           tiles[translatedOffset.r] ??= {}

@@ -4,18 +4,20 @@ import { Item } from '../item.js'
 import { Icons } from '../icons.js'
 
 export class Icon extends movable(Item) {
-  name
+  id
 
   constructor (tile, state) {
     super(...arguments)
 
-    this.name = state.name
+    this.id = ['icon', state.name].join('-')
 
     const data = { collidable: true }
-    const style = { fillColor: '#333' }
+    const style = { fillColor: '#ccc', strokeColor: '#333' }
 
-    this.symbol = Icons.ByName[this.name]
-    this.symbol.place(tile.center, { data, style })
+    this.symbol = Icons.ById[this.id]
+    this.item = this.symbol.place(tile.center, { data, style, strokeScaling: false })
+    this.item.scale(1.5)
+    this.group.addChild(this.item)
   }
 
   onCollision ({ collisionStep }) {
@@ -36,10 +38,6 @@ export class Icon extends movable(Item) {
     {
       properties: {
         name: {
-          type: 'string'
-        },
-        type: {
-          enum: ['modifier'],
           type: 'string'
         }
       },

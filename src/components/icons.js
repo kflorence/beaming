@@ -23,5 +23,6 @@ export class Icons {
     Icons.ToggleOn
   ])
 
+  static ById = Object.freeze(Object.fromEntries(Icons.All.map((icon) => [icon.id, icon])))
   static ByName = Object.freeze(Object.fromEntries(Icons.All.map((icon) => [icon.name, icon])))
 }
