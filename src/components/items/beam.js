@@ -582,7 +582,7 @@ export class Beam extends Item {
     }
   }
 
-  #getCollisions (items, currentStep, nextStep, puzzle) {
+  #getCollisions (items, currentStep, nextStep) {
     const segments = [currentStep.point, nextStep.point]
     const path = new Path({ segments })
     const firstPoint = segments[0]
