@@ -106,7 +106,7 @@ export class Editor {
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.copy, handler: this.#onCopy },
-      { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
+      { type: 'click', element: elements.dock, handler: this.#toggleDock },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
       { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
@@ -130,6 +130,7 @@ export class Editor {
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
 
+    this.#updateDock()
     this.#updateLock()
     this.#updateCenter()
 
@@ -201,19 +202,6 @@ export class Editor {
     this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
-  }
-
-  #onDockUpdate () {
-    const icon = elements.dock.firstChild
-    const isDockBottom = this.#gutter.toggleOrientation()
-
-    if (isDockBottom) {
-      icon.title = 'Dock to right'
-      icon.className = 'ph-fill ph-square-half'
-    } else {
-      icon.title = 'Dock to bottom'
-      icon.className = 'ph-fill ph-square-half-bottom'
-    }
   }
 
   #onEditorUpdate (value = this.#editor?.getValue()) {
@@ -437,6 +425,11 @@ export class Editor {
     this.#editor.element.classList.remove('hide')
   }
 
+  #toggleDock () {
+    this.#gutter.toggleOrientation()
+    this.#updateDock()
+  }
+
   #toggleLock () {
     Storage.set(Editor.key(State.getId(), Editor.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
@@ -457,6 +450,17 @@ export class Editor {
   #updateConfiguration (state) {
     elements.configuration.value = JSON.stringify(state, null, 2)
     this.#updatePlayUrl()
+  }
+
+  #updateDock () {
+    const icon = elements.dock.firstChild
+    if (this.#gutter.horizontal) {
+      icon.title = 'Dock to right'
+      icon.className = 'ph-bold ph-square-split-horizontal'
+    } else {
+      icon.title = 'Dock to bottom'
+      icon.className = 'ph-bold ph-square-split-vertical'
+    }
   }
 
   #updateDropdown () {
