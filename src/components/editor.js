@@ -10,6 +10,7 @@ import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import Tippy from 'tippy.js'
+import { Phosphor } from './iconlib.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
@@ -208,10 +209,10 @@ export class Editor {
 
     if (isDockBottom) {
       icon.title = 'Dock to right'
-      icon.textContent = 'dock_to_right'
+      icon.className = 'ph-fill ph-square-half'
     } else {
       icon.title = 'Dock to bottom'
-      icon.textContent = 'dock_to_bottom'
+      icon.className = 'ph-fill ph-square-half-bottom'
     }
   }
 
@@ -409,8 +410,7 @@ export class Editor {
         disable_properties: true,
         enforce_const: true,
         form_name_root: 'puzzle',
-        // There is no support for material icons, so we have to hack it into another icon lib
-        iconlib: 'fontawesome3',
+        iconlib: Phosphor.name,
         keep_oneof_values: false,
         // Enabling this causes items to not match in anyOf :(
         // no_additional_properties: true,
@@ -473,7 +473,7 @@ export class Editor {
   #updateLock () {
     const locked = this.isLocked()
     const icon = elements.lock.firstChild
-    icon.textContent = locked ? 'lock' : 'lock_open'
+    icon.className = 'ph-bold ph-' + (locked ? 'lock' : 'lock-open')
     icon.title = (locked ? 'Unlock' : 'Lock') + ' tiles'
     if (!locked) {
       // De-select any selected tile

@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier'
 import { addDirection, coalesce, merge } from '../util'
-import { Icons } from '../icons'
+import { Symbols } from '../symbols.js'
 
 export class Rotate extends Modifier {
   clockwise
@@ -10,7 +10,6 @@ export class Rotate extends Modifier {
     super(...arguments)
 
     this.clockwise = coalesce(true, state.clockwise, configuration.clockwise)
-    this.name = Rotate.Names[this.clockwise ? 'right' : 'left']
   }
 
   attach (tile) {
@@ -18,6 +17,10 @@ export class Rotate extends Modifier {
     if (!this.disabled) {
       this.update({ disabled: !tile.items.some((item) => item.rotatable) })
     }
+  }
+
+  getSymbol () {
+    return this.clockwise ? Symbols.RotateRight : Symbols.RotateLeft
   }
 
   moveFilter (tile) {
@@ -43,12 +46,10 @@ export class Rotate extends Modifier {
 
     this.clockwise = !this.clockwise
     this.updateState((state) => { state.clockwise = this.clockwise })
-    this.update({ name: Rotate.Names[this.clockwise ? 'right' : 'left'] })
+    this.update()
 
     this.dispatchEvent(Modifier.Events.Toggled, { clockwise: this.clockwise })
   }
-
-  static Names = Object.freeze({ left: Icons.RotateLeft.name, right: Icons.RotateRight.name })
 
   static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.rotate), {
     properties: {

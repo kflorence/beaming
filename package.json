@@ -71,9 +71,9 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "@fontsource-variable/material-symbols-outlined": "^5.2.27",
     "@fontsource-variable/noto-sans-mono": "^5.2.10",
     "@json-editor/json-editor": "^2.15.2",
+    "@phosphor-icons/web": "^2.1.2",
     "@types/chroma-js": "^2.4.5",
     "chroma-js": "^2.6.0",
     "deepmerge": "^4.3.1",

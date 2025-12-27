@@ -158,13 +158,11 @@ export function getDistance (point) {
   return (a, b) => a.subtract(point).length - b.subtract(point).length
 }
 
-export function getIconElement (name, title, fill = true) {
-  const span = document.createElement('span')
-  const classNames = ['icon'].concat(fill ? ['fill'] : [])
-  span.classList.add(...classNames)
-  span.textContent = name
-  span.title = title ?? capitalize(name)
-  return span
+export function getIconElement (name, title, fill = false) {
+  const i = document.createElement('i')
+  i.classList.add(fill ? 'ph-fill' : 'ph-bold', `ph-${name}`)
+  i.title = title ?? capitalize(name)
+  return i
 }
 
 export function getKey () {

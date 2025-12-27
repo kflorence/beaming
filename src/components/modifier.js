@@ -3,7 +3,6 @@ import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
-import { Icons } from './icons'
 import { Tile } from './items/tile'
 import { Schema } from './schema'
 import { Filter } from './filter.js'
@@ -21,7 +20,6 @@ export class Modifier extends Stateful {
   disabled = false
   immutable = false
   index
-  name
   parent
   tile
   title
@@ -65,11 +63,8 @@ export class Modifier extends Stateful {
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
     li.dataset.id = this.id.toString()
 
-    const span = this.element = document.createElement('span')
-
-    span.classList.add('icon', 'fill')
-
-    li.append(span)
+    this.element = document.createElement('i')
+    li.append(this.element)
 
     this.update()
 
@@ -105,9 +100,7 @@ export class Modifier extends Stateful {
     return other instanceof Modifier && this.id === other.id
   }
 
-  getSymbol () {
-    return Icons.ByName[this.name]
-  }
+  getSymbol () {}
 
   move (tile) {
     this.parent?.removeModifier(this)
@@ -146,9 +139,6 @@ export class Modifier extends Stateful {
           break
         }
       }
-
-      // Keep the tile icon in sync
-      this.parent?.updateIcon(this)
     }
 
     this.#down = false
@@ -161,12 +151,12 @@ export class Modifier extends Stateful {
   }
 
   toString () {
-    return [this.name, this.id].join(':')
+    return [this.type, this.id].join(':')
   }
 
   update (options) {
     options = Object.assign(
-      { disabled: this.disabled, name: this.name, title: this.title },
+      { disabled: this.disabled, title: this.title },
       options || {}
     )
 
@@ -174,13 +164,16 @@ export class Modifier extends Stateful {
       this.disabled = options.disabled
     }
 
-    this.name = options.name
     this.title = options.title
 
     if (this.#container) {
+      const symbol = this.getSymbol()
       this.#container.classList.toggle('disabled', this.disabled)
-      this.element.textContent = this.name
+      this.element.className = `ph-${symbol.weight} ph-${symbol.name}`
       this.element.title = this.title
+
+      // Keep the tile icon in sync
+      this.parent?.updateIcon(this)
     }
   }
 

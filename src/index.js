@@ -1,6 +1,6 @@
-import '@fontsource-variable/material-symbols-outlined'
-import '@fontsource-variable/material-symbols-outlined/fill.css'
 import '@fontsource-variable/noto-sans-mono'
+import '@phosphor-icons/web/src/bold/style.css'
+import '@phosphor-icons/web/src/fill/style.css'
 import 'tippy.js/dist/tippy.css'
 
 import './components/dialog.js'

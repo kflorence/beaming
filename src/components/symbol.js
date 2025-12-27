@@ -6,11 +6,13 @@ export class Symbol {
   id
   item
   name
+  weight
 
-  constructor (id, name) {
+  constructor (id, name, weight) {
+    this.element = document.getElementById(id)
     this.id = id
     this.name = name
-    this.element = document.getElementById(this.id)
+    this.weight = weight
   }
 
   getItem () {
@@ -36,4 +38,9 @@ export class Symbol {
 
     return this.definition.place(position)
   }
+
+  static Weights = Object.freeze({
+    Bold: 'bold',
+    Fill: 'fill'
+  })
 }

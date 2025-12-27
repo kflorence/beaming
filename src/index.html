@@ -20,25 +20,25 @@
           <div class="flex-left">
             <div class="group">
               <ul class="menu">
-                <li id="back"><span class="icon" title="Exit">exit_to_app</span></li>
+                <li id="back"><i class="ph-fill ph-arrow-circle-left" title="Exit"></i></li>
               </ul>
               <label id="selector">
                 <select id="select"></select>
                 <svg height="10px" width="10px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
               </label>
               <ul class="menu">
-                <li id="delete"><span class="icon" title="Remove Puzzle">delete</span></li>
-                <li id="editor-new"><span class="icon" title="Create New Puzzle">new_window</span></li>
+                <li id="delete"><i class="ph-bold ph-trash" title="Remove Puzzle"></i></li>
+                <li id="editor-new"><i class="ph-bold ph-file-plus" title="Create New Puzzle"></i></li>
               </ul>
             </div>
           </div>
           <div class="flex-center">
             <div class="group">
               <ul id="puzzle-header-menu" class="menu">
-                <li id="puzzle-undo"><span class="icon" title="Undo">undo</span></li>
-                <li id="puzzle-reset"><span class="icon" title="Reset">device_reset</span></li>
-                <li id="puzzle-redo"><span class="icon" title="Redo">redo</span></li>
-                <li id="puzzle-recenter"><span class="icon" title="Re-center">recenter</span></li>
+                <li id="puzzle-undo"><i class="ph-bold ph-arrow-u-up-left" title="Undo"></i></li>
+                <li id="puzzle-reset"><i class="ph-bold ph-clock-counter-clockwise" title="Reset"></i></li>
+                <li id="puzzle-redo"><i class="ph-bold ph-arrow-u-up-right" title="Redo"></i></li>
+                <li id="puzzle-recenter"><i class="ph-bold ph-arrows-in" title="Re-center">recenter</i></li>
               </ul>
             </div>
           </div>
@@ -67,13 +67,13 @@
     <div class="pane" id="editor-wrapper">
       <header>
         <ul id="editor-menu" class="menu">
-          <li id="editor-lock"><span class="icon" title="Lock tiles">lock_open</span></li>
-          <li id="editor-copy" class="disabled"><span class="icon" title="Copy tile">content_copy</span></li>
-          <li id="editor-paste" class="disabled"><span class="icon" title="Paste tile">content_paste</span></li>
-          <li id="editor-reset" class="disabled"><span class="icon" title="Reset tile">device_reset</span></li>
-          <li id="editor-play"><a href="" target="_blank"><span class="icon" title="Play puzzle">play_arrow</span></a></li>
-          <li id="editor-share"><span class="icon" title="Share puzzle">share</span></li>
-          <li id="editor-dock"><span class="icon" title="Dock editor to bottom">dock_to_bottom</span></li>
+          <li id="editor-lock"><i class="ph-bold ph-lock-open" title="Lock tiles"></i></li>
+          <li id="editor-copy" class="disabled"><i class="ph-bold ph-copy" title="Copy tile"></i></li>
+          <li id="editor-paste" class="disabled"><i class="ph-bold ph-clipboard-text" title="Paste tile"></i></li>
+          <li id="editor-reset" class="disabled"><i class="ph-bold ph-clock-counter-clockwise" title="Reset tile"></i></li>
+          <li id="editor-play"><a href="" target="_blank"><i class="ph-bold ph-play" title="Play puzzle"></i></a></li>
+          <li id="editor-share"><i class="ph-bold ph-share-network" title="Share puzzle"></i></li>
+          <li id="editor-dock"><i class="ph-fill ph-square-half-bottom" title="Dock editor to bottom"></i></li>
         </ul>
       </header>
       <main>
@@ -105,7 +105,7 @@
         <h1 class="flex-left">About</h1>
         <form class="flex-right">
           <button autofocus formmethod="dialog">
-            <span class="icon" title="Close">close</span>
+            <i class="ph-bold ph-x" title="Close"></i>
           </button>
         </form>
       </header>
@@ -180,14 +180,14 @@
                 indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
               </p>
               <details>
-                <summary><span class="icon fill" title="Immutable">block</span> - Immutable</summary>
+                <summary><i class="ph-fill ph-prohibit-inset" title="Immutable">block</i> - Immutable</summary>
                 <p>
                   The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
                   disabled.
                 </p>
               </details>
               <details>
-                <summary><span class="icon fill" title="Locked">lock</span> - Locked</summary>
+                <summary><i class="ph-fill ph-lock" title="Locked">lock</i> - Locked</summary>
                 <p>
                   Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
                   available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
@@ -205,14 +205,14 @@
                 learn more about it.
               </p>
               <details>
-                <summary><span class="icon fill" title="Toggle">toggle_on</span> - Toggle</summary>
+                <summary><i class="ph-fill ph-toggle-left" title="Toggle"></i> - Toggle</summary>
                 <p>
                   Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
                   <em>terminus</em> item will turn beams on and off.
                 </p>
               </details>
               <details>
-                <summary><span class="icon fill" title="Rotate">rotate_left</span> - Rotate</summary>
+                <summary><i class="ph-bold ph-arrow-counter-clockwise" title="Rotate"></i> - Rotate</summary>
                 <p>
                   Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
                   (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
@@ -220,14 +220,14 @@
                 </p>
               </details>
               <details>
-                <summary><span class="icon fill" title="Move">drag_pan</span> - Move</summary>
+                <summary><i class="ph-bold ph-arrows-out-cardinal" title="Move"></i> - Move</summary>
                 <p>
                   Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
                   of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
                 </p>
               </details>
               <details>
-                <summary><span class="icon fill" title="Swap">swap_horiz</span> - Swap</summary>
+                <summary><i class="ph-bold ph-swap" title="Swap"></i> - Swap</summary>
                 <p>
                   Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
                   items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
@@ -245,14 +245,14 @@
                 more about it.
               </p>
               <details>
-                <summary><span class="icon fill" title="Connections">link</span> - Connections</summary>
+                <summary><i class="ph-bold ph-link-simple-horizontal" title="Connections">link</i> - Connections</summary>
                 <p>
                   A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
                   of the same color.
                 </p>
               </details>
               <details>
-                <summary><span class="icon fill" title="Moves">stacks</span> - Moves</summary>
+                <summary><i class="ph-bold ph-stack" title="Moves">stacks</i> - Moves</summary>
                 <p>
                   A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
                   some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
@@ -277,7 +277,7 @@
         <h1 class="flex-left">Settings</h1>
         <form class="flex-right">
           <button autofocus formmethod="dialog">
-            <span class="icon" title="Close">close</span>
+            <i class="ph-bold ph-x" title="Close">close</i>
           </button>
         </form>
       </header>
@@ -319,15 +319,15 @@
       </dialog>
     </template>
     <div class="hide">
-      <svg id="icon-immutable" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm197-147q16-12 30-26t26-30L283-733q-16 12-30 26t-26 30l450 450Z"/></svg>
-      <svg id="icon-lock" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M240-80q-33 0-56.5-23.5T160-160v-400q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v400q0 33-23.5 56.5T720-80H240Zm240-200q33 0 56.5-23.5T560-360q0-33-23.5-56.5T480-440q-33 0-56.5 23.5T400-360q0 33 23.5 56.5T480-280ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Z"/></svg>
-      <svg id="icon-move" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-80 310-250l57-57 73 73v-206H235l73 72-58 58L80-480l169-169 57 57-72 72h206v-206l-73 73-57-57 170-170 170 170-57 57-73-73v206h205l-73-72 58-58 170 170-170 170-57-57 73-73H520v205l72-73 58 58L480-80Z"/></svg>
-      <svg id="icon-puzzle" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M352-120H200q-33 0-56.5-23.5T120-200v-152q48 0 84-30.5t36-77.5q0-47-36-77.5T120-568v-152q0-33 23.5-56.5T200-800h160q0-42 29-71t71-29q42 0 71 29t29 71h160q33 0 56.5 23.5T800-720v160q42 0 71 29t29 71q0 42-29 71t-71 29v160q0 33-23.5 56.5T720-120H568q0-50-31.5-85T460-240q-45 0-76.5 35T352-120Z"/></svg>
-      <svg id="icon-rotate-left" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-80q-50-5-96-24.5T256-156l56-58q29 21 61.5 34t66.5 18v82Zm80 0v-82q104-15 172-93.5T760-438q0-117-81.5-198.5T480-718h-8l64 64-56 56-160-160 160-160 56 58-62 62h6q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-438q0 137-91 238.5T520-80ZM198-214q-32-42-51.5-88T122-398h82q5 34 18 66.5t34 61.5l-58 56Zm-76-264q6-51 25-98t51-86l58 56q-21 29-34 61.5T204-478h-82Z"/></svg>
-      <svg id="icon-rotate-right" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M522-80v-82q34-5 66.5-18t61.5-34l56 58q-42 32-88 51.5T522-80Zm-80 0Q304-98 213-199.5T122-438q0-75 28.5-140.5t77-114q48.5-48.5 114-77T482-798h6l-62-62 56-58 160 160-160 160-56-56 64-64h-8q-117 0-198.5 81.5T202-438q0 104 68 182.5T442-162v82Zm322-134-58-56q21-29 34-61.5t18-66.5h82q-5 50-24.5 96T764-214Zm76-264h-82q-5-34-18-66.5T706-606l58-56q32 39 51 86t25 98Z"/></svg>
-      <svg id="icon-swap" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-160 80-360l200-200 56 57-103 103h287v80H233l103 103-56 57Zm400-240-56-57 103-103H440v-80h287L624-743l56-57 200 200-200 200Z"/></svg>
-      <svg id="icon-toggle-off" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-240q-100 0-170-70T40-480q0-100 70-170t170-70h400q100 0 170 70t70 170q0 100-70 170t-170 70H280Zm0-120q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Z"/></svg>
-      <svg id="icon-toggle-on" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M280-240q-100 0-170-70T40-480q0-100 70-170t170-70h400q100 0 170 70t70 170q0 100-70 170t-170 70H280Zm400-120q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Z"/></svg>
+      <svg id="icon-immutable" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,141.66a8,8,0,0,1-11.32,0l-64-64a8,8,0,0,1,11.32-11.32l64,64A8,8,0,0,1,165.66,165.66Z"></path></svg>
+      <svg id="icon-lock" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80Zm-80,84a12,12,0,1,1,12-12A12,12,0,0,1,128,164Zm32-84H96V56a32,32,0,0,1,64,0Z"></path></svg>
+      <svg id="icon-move" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M87.51,64.49a12,12,0,0,1,0-17l32-32a12,12,0,0,1,17,0l32,32a12,12,0,0,1-17,17L140,53V96a12,12,0,0,1-24,0V53L104.49,64.49A12,12,0,0,1,87.51,64.49Zm64,127L140,203V160a12,12,0,0,0-24,0v43l-11.51-11.52a12,12,0,0,0-17,17l32,32a12,12,0,0,0,17,0l32-32a12,12,0,0,0-17-17Zm89-72-32-32a12,12,0,0,0-17,17L203,116H160a12,12,0,0,0,0,24h43l-11.52,11.51a12,12,0,0,0,17,17l32-32A12,12,0,0,0,240.49,119.51ZM53,140H96a12,12,0,0,0,0-24H53l11.52-11.51a12,12,0,1,0-17-17l-32,32a12,12,0,0,0,0,17l32,32a12,12,0,1,0,17-17Z"></path></svg>
+      <svg id="icon-puzzle" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M165.78,224H208a16,16,0,0,0,16-16V170.35A8,8,0,0,0,212.94,163a23.37,23.37,0,0,1-8.94,1.77c-13.23,0-24-11.1-24-24.73s10.77-24.73,24-24.73a23.37,23.37,0,0,1,8.94,1.77A8,8,0,0,0,224,109.65V72a16,16,0,0,0-16-16H171.78a35.36,35.36,0,0,0,.22-4,36,36,0,0,0-72,0,35.36,35.36,0,0,0,.22,4H64A16,16,0,0,0,48,72v32.22a35.36,35.36,0,0,0-4-.22,36,36,0,0,0,0,72,35.36,35.36,0,0,0,4-.22V208a16,16,0,0,0,16,16h42.22"></path></svg>
+      <svg id="icon-rotate-left" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M228,128a100,100,0,0,1-98.66,100H128a99.39,99.39,0,0,1-68.62-27.29,12,12,0,0,1,16.48-17.45,76,76,0,1,0-1.57-109c-.13.13-.25.25-.39.37L54.89,92H72a12,12,0,0,1,0,24H24a12,12,0,0,1-12-12V56a12,12,0,0,1,24,0V76.72L57.48,57.06A100,100,0,0,1,228,128Z"></path></svg>
+      <svg id="icon-rotate-right" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M244,56v48a12,12,0,0,1-12,12H184a12,12,0,1,1,0-24H201.1l-19-17.38c-.13-.12-.26-.24-.38-.37A76,76,0,1,0,127,204h1a75.53,75.53,0,0,0,52.15-20.72,12,12,0,0,1,16.49,17.45A99.45,99.45,0,0,1,128,228h-1.37A100,100,0,1,1,198.51,57.06L220,76.72V56a12,12,0,0,1,24,0Z"></path></svg>
+      <svg id="icon-swap" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M228,48V152a20,20,0,0,1-20,20H112.92a12,12,0,0,1-17.41,16.49l-20-20a12,12,0,0,1,0-17l20-20A12,12,0,0,1,112.92,148H204V52H100a12,12,0,0,1-24,0V48A20,20,0,0,1,96,28H208A20,20,0,0,1,228,48ZM168,192a12,12,0,0,0-12,12H52V108h91.08a12,12,0,0,0,17.41,16.49l20-20a12,12,0,0,0,0-17l-20-20A12,12,0,0,0,143.08,84H48a20,20,0,0,0-20,20V208a20,20,0,0,0,20,20H160a20,20,0,0,0,20-20v-4A12,12,0,0,0,168,192Z"></path></svg>
+      <svg id="icon-toggle-off" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M176,56H80a72,72,0,0,0,0,144h96a72,72,0,0,0,0-144ZM80,168a40,40,0,1,1,40-40A40,40,0,0,1,80,168Z"></path></svg>
+      <svg id="icon-toggle-on" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#000000" viewBox="0 0 256 256"><path d="M176,56H80a72,72,0,0,0,0,144h96a72,72,0,0,0,0-144Zm0,112a40,40,0,1,1,40-40A40,40,0,0,1,176,168Z"></path></svg>
     </div>
   </body>
   <script type="module" src="index.js"></script>

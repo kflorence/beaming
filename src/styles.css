@@ -50,6 +50,16 @@ details > summary {
   font-weight: bold;
 }
 
+i {
+  font-size: 24px;
+  letter-spacing: normal;
+  text-transform: none;
+  user-select: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
 input {
   cursor: pointer;
 }
@@ -631,7 +641,7 @@ dialog ul {
   line-height: 24px;
 }
 
-#puzzle-solution .icon {
+#puzzle-solution i {
   margin-left: 0.5em;
 }
 
@@ -767,66 +777,6 @@ dialog ul {
   display: none !important;
 }
 
-/* See: https://developers.google.com/fonts/docs/material_icons */
-i,
-.icon {
-  direction: ltr;
-  display: inline-block;
-  /*noinspection CssNoGenericFontName*/
-  font-family: 'Material Symbols Outlined Variable';
-  font-size: 24px;
-  font-style: normal;
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-  font-weight: normal;
-  letter-spacing: normal;
-  line-height: 1;
-  min-height: 24px;
-  overflow: hidden;
-  text-transform: none;
-  user-select: none;
-  vertical-align: middle;
-  white-space: nowrap;
-  width: 24px;
-  word-wrap: normal;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
-}
-
-i.fill,
-.icon.fill {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-.icon-arrow-down:before {
-  content: 'arrow_downward'
-}
-
-.icon-arrow-up:before {
-  content: 'arrow_upward'
-}
-
-.icon-minus:before {
-  content: 'remove'
-}
-
-.icon-plus:before {
-  content: 'add'
-}
-
-.icon-trash:before {
-  content: 'delete'
-}
-
 .menu {
   align-items: stretch;
   display: flex;
@@ -869,6 +819,8 @@ i.fill,
 
 .menu li a {
   color: black;
+  display: flex;
+  text-decoration: none;
 }
 
 .message {
