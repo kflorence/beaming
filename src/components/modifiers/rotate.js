@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier'
 import { addDirection, coalesce, merge } from '../util'
-import { Symbols } from '../symbols.js'
+import { Icons } from '../icon.js'
 
 export class Rotate extends Modifier {
   clockwise
@@ -19,8 +19,8 @@ export class Rotate extends Modifier {
     }
   }
 
-  getSymbol () {
-    return this.clockwise ? Symbols.RotateRight : Symbols.RotateLeft
+  getIcon () {
+    return this.clockwise ? Icons.RotateRight : Icons.RotateLeft
   }
 
   moveFilter (tile) {
@@ -51,7 +51,7 @@ export class Rotate extends Modifier {
     this.dispatchEvent(Modifier.Events.Toggled, { clockwise: this.clockwise })
   }
 
-  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.rotate), {
+  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.Rotate), {
     properties: {
       clockwise: {
         type: 'boolean'

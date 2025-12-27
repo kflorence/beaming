@@ -1,4 +1,4 @@
-import { capitalize, emitEvent, merge, uniqueId } from './util'
+import { emitEvent, merge, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
@@ -45,9 +45,9 @@ export class Modifier extends Stateful {
     // Disable by default if: modifier is immutable
     this.disabled = this.immutable ||
       // The tile contains an immutable modifier
-      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable) ||
+      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
       // The tile has no interactable items
-      !this.tile?.items.some((item) => item.type !== Item.Types.beam) ||
+      !this.tile?.items.some((item) => item.type !== Item.Types.Beam) ||
       (
         // The tile being attached to is not this modifier's parent
         !this.tile?.equals(this.parent) && (
@@ -63,7 +63,7 @@ export class Modifier extends Stateful {
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
     li.dataset.id = this.id.toString()
 
-    this.element = document.createElement('i')
+    this.element = this.getIcon().getElement()
     li.append(this.element)
 
     this.update()
@@ -100,7 +100,7 @@ export class Modifier extends Stateful {
     return other instanceof Modifier && this.id === other.id
   }
 
-  getSymbol () {}
+  getIcon () {}
 
   move (tile) {
     this.parent?.removeModifier(this)
@@ -167,9 +167,8 @@ export class Modifier extends Stateful {
     this.title = options.title
 
     if (this.#container) {
-      const symbol = this.getSymbol()
       this.#container.classList.toggle('disabled', this.disabled)
-      this.element.className = `ph-${symbol.weight} ph-${symbol.name}`
+      this.element.className = this.getIcon().className
       this.element.title = this.title
 
       // Keep the tile icon in sync
@@ -178,7 +177,7 @@ export class Modifier extends Stateful {
   }
 
   static immutable (modifier) {
-    return modifier.type === Modifier.Types.immutable
+    return modifier.type === Modifier.Types.Immutable
   }
 
   static schema (type) {
@@ -203,14 +202,17 @@ export class Modifier extends Stateful {
     Toggled: 'modifier-toggled'
   })
 
-  static Types = Object.freeze(Object.fromEntries([
-    'immutable',
-    'lock',
-    'move',
-    'rotate',
-    'swap',
-    'toggle'
-  ].map((type) => [type, capitalize(type)])))
+  static Types = Object.freeze({
+    Immutable: 'immutable',
+    Lock: 'lock',
+    Move: 'move',
+    Puzzle: 'puzzle',
+    Rotate: 'rotate',
+    StickyItems: 'sticky-items',
+    StickyModifiers: 'sticky-modifiers',
+    Swap: 'swap',
+    Toggle: 'toggle'
+  })
 }
 
 export class ModifierFilter extends Filter {

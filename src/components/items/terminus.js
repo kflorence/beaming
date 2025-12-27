@@ -268,7 +268,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   })
 
   static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.terminus),
+    Item.schema(Item.Types.Terminus),
     movable.Schema,
     rotatable.Schema,
     toggleable.Schema,

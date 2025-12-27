@@ -5,14 +5,14 @@
       "0": {
         "0": {
           "id": "f7e82775",
-          "type": "Tile"
+          "type": "tile"
         },
         "1": {
           "id": "a6a13b50",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -24,17 +24,17 @@
           ],
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "d7cf5d82"
             }
           ]
         },
         "-1": {
           "id": "da5ab990",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -49,14 +49,14 @@
       "1": {
         "0": {
           "id": "926dd5c2",
-          "type": "Tile"
+          "type": "tile"
         },
         "-1": {
           "id": "e1f07200",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -69,11 +69,11 @@
           ],
           "modifiers": [
             {
-              "type": "Swap",
+              "type": "swap",
               "id": "4db41948"
             },
             {
-              "type": "Rotate",
+              "type": "rotate",
               "id": "607154d3",
               "clockwise": false
             }
@@ -83,10 +83,10 @@
       "-1": {
         "0": {
           "id": "ee3c0f2f",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -99,21 +99,21 @@
           ],
           "modifiers": [
             {
-              "type": "Move",
+              "type": "move",
               "id": "9a35f620"
             }
           ]
         },
         "-1": {
           "id": "4c7af20d",
-          "type": "Tile"
+          "type": "tile"
         }
       }
     }
   },
   "solution": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 2
     }
   ]

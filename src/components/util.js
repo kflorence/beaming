@@ -66,6 +66,10 @@ export function capitalize (string) {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
+export function className () {
+  return [...arguments].join('-')
+}
+
 export function classToString (name) {
   return function () {
     return '[' + [name, ...arguments].join(':') + ']'
@@ -156,13 +160,6 @@ export function getColorElements (colors) {
 
 export function getDistance (point) {
   return (a, b) => a.subtract(point).length - b.subtract(point).length
-}
-
-export function getIconElement (name, title, fill = false) {
-  const i = document.createElement('i')
-  i.classList.add(fill ? 'ph-fill' : 'ph-bold', `ph-${name}`)
-  i.title = title ?? capitalize(name)
-  return i
 }
 
 export function getKey () {

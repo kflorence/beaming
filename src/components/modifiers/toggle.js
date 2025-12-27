@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { Symbols } from '../symbols.js'
+import { Icons } from '../icon.js'
 
 export class Toggle extends Modifier {
   title = 'Toggle'
@@ -17,8 +17,8 @@ export class Toggle extends Modifier {
     super.attach(tile)
   }
 
-  getSymbol () {
-    return this.toggled ? Symbols.ToggleOn : Symbols.ToggleOff
+  getIcon () {
+    return this.toggled ? Icons.ToggleOn : Icons.ToggleOff
   }
 
   moveFilter (tile) {
@@ -47,7 +47,7 @@ export class Toggle extends Modifier {
     this.toggled = this.parent?.items.some(item => item.toggled) ?? false
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.toggle))
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Toggle))
 }
 
 /**

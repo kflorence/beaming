@@ -11,13 +11,13 @@ describe('Puzzle 009', function () {
   it('should be solved', async function () {
     await puzzle.solve([
       { type: 'tile-select', tile: '0,2' },
-      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'modifier-invoke', modifier: 'move' },
       { type: 'tile-click', tile: '1,2' },
       { type: 'tile-select', tile: '0,-2' },
-      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'modifier-invoke', modifier: 'move' },
       { type: 'tile-click', tile: '-1,-3' },
       { type: 'tile-select', tile: '0,1' },
-      { type: 'modifier-invoke', modifier: 'Move' },
+      { type: 'modifier-invoke', modifier: 'move' },
       { type: 'tile-click', tile: '-1,2' }
     ])
 

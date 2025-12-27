@@ -1,13 +1,13 @@
 import { Modifier } from '../modifier'
-import { Symbols } from '../symbols.js'
+import { Icons } from '../icon.js'
 
 export class Immutable extends Modifier {
   immutable = true
   title = 'Immutable'
 
-  getSymbol () {
-    return Symbols.Immutable
+  getIcon () {
+    return Icons.Immutable
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.immutable))
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Immutable))
 }

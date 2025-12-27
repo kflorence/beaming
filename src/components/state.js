@@ -474,7 +474,7 @@ export class State {
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 6
+  static Version = 7
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
 

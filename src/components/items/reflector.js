@@ -79,7 +79,7 @@ export class Reflector extends movable(rotatable(Item)) {
   }
 
   static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.reflector),
+    Item.schema(Item.Types.Reflector),
     movable.Schema,
     rotatable.Schema,
     {

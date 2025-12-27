@@ -30,4 +30,4 @@ export class Phosphor extends AbstractIconLib {
   static Name = 'phosphor'
 }
 
-JSONEditor.defaults.iconlibs[Phosphor.name] = Phosphor
+JSONEditor.defaults.iconlibs[Phosphor.Name] = Phosphor

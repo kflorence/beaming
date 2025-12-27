@@ -2,7 +2,7 @@ import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
 import { Item } from '../item'
-import { Symbols } from '../symbols.js'
+import { Icons } from '../icon.js'
 
 export class Move extends Modifier {
   #mask
@@ -16,8 +16,8 @@ export class Move extends Modifier {
     }
   }
 
-  getSymbol () {
-    return Symbols.Move
+  getIcon () {
+    return Icons.Move
   }
 
   moveFilter (tile) {
@@ -86,9 +86,9 @@ export class Move extends Modifier {
     return item.movable
   }
 
-  static ignoreItemTypes = [Item.Types.beam, Item.Types.wall]
+  static ignoreItemTypes = [Item.Types.Beam, Item.Types.Wall]
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.move))
+  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Move))
 }
 
 /**

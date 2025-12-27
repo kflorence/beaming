@@ -1,8 +1,9 @@
-import { capitalize, getIconElement, getTextElement, merge } from './util'
+import { getTextElement, merge } from './util'
 import { Terminus } from './items/terminus'
 import { EventListeners } from './eventListeners'
 import { Puzzle } from './puzzle'
 import { Schema } from './schema'
+import { Icons } from './icon.js'
 
 export class Solution {
   #conditions = []
@@ -22,11 +23,11 @@ export class Solution {
 
   #conditionFactory (condition) {
     switch (condition.type) {
-      case SolutionCondition.Types.connections: {
+      case SolutionCondition.Types.Connections: {
         this.#conditions.push(new Connections(condition))
         break
       }
-      case SolutionCondition.Types.moves: {
+      case SolutionCondition.Types.Moves: {
         this.#conditions.push(new Moves(condition))
         break
       }
@@ -59,10 +60,10 @@ class SolutionCondition {
 
   update () {}
 
-  static Types = Object.freeze(Object.fromEntries([
-    'connections',
-    'moves'
-  ].map((type) => [type, capitalize(type)])))
+  static Types = Object.freeze({
+    Connections: 'connections',
+    Moves: 'moves'
+  })
 }
 
 class Connections extends SolutionCondition {
@@ -81,7 +82,7 @@ class Connections extends SolutionCondition {
       completed,
       getTextElement('/'),
       required,
-      getIconElement('link-simple-horizontal', 'Connections')
+      Icons.Connections.getElement()
     ]
 
     super(state, elements)
@@ -120,7 +121,7 @@ class Connections extends SolutionCondition {
     this.#completed.textContent = this.#connections.length.toString()
   }
 
-  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.connections), {
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.Connections), {
     properties: {
       amount: {
         minimum: 0,
@@ -153,7 +154,7 @@ class Moves extends SolutionCondition {
       completed,
       getTextElement(state.operator),
       required,
-      getIconElement('stack', 'Moves')
+      Icons.Moves.getElement()
     ]
 
     super(state, elements)
@@ -191,7 +192,7 @@ class Moves extends SolutionCondition {
     lessThan: '<'
   })
 
-  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.moves), {
+  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.Moves), {
     properties: {
       amount: {
         minimum: 0,

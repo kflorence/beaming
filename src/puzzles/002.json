@@ -5,10 +5,10 @@
       "0": {
         "0": {
           "id": "98c1b870",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -40,10 +40,10 @@
           ]
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -65,10 +65,10 @@
         },
         "-1": {
           "id": "a7f644b8",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -90,10 +90,10 @@
       },
       "1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -114,10 +114,10 @@
           "id": "8f2cda31"
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -140,10 +140,10 @@
       },
       "-1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -164,10 +164,10 @@
           "id": "2eb11c84"
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -191,7 +191,7 @@
     },
     "modifiers": [
       {
-        "type": "Toggle",
+        "type": "toggle",
         "id": "99243a1a"
       }
     ]
@@ -199,11 +199,11 @@
   "version": 1,
   "solution": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 5
     },
     {
-      "type": "Moves",
+      "type": "moves",
       "amount": 4
     }
   ]

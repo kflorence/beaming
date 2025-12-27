@@ -133,7 +133,7 @@ export class Puzzle {
 
   getBeams () {
     return this.layout.getItems()
-      .filter((item) => item.type === Item.Types.terminus)
+      .filter((item) => item.type === Item.Types.Terminus)
       .flatMap((terminus) => terminus.beams)
   }
 
@@ -156,7 +156,7 @@ export class Puzzle {
   getTile (point) {
     const result = paper.project.hitTest(point.ceil(), {
       fill: true,
-      match: (result) => result.item.data.type === Item.Types.tile,
+      match: (result) => result.item.data.type === Item.Types.Tile,
       segments: true,
       stroke: true,
       tolerance: 0
@@ -327,9 +327,9 @@ export class Puzzle {
 
     let tile
     switch (result?.item.data.type) {
-      case Item.Types.mask:
+      case Item.Types.Mask:
         return
-      case Item.Types.tile:
+      case Item.Types.Tile:
         tile = this.layout.getTile(result.item.data.coordinates.offset)
         break
     }
@@ -473,7 +473,7 @@ export class Puzzle {
       // Modifier does not belong to a tile
       !modifier.parent &&
       // Tile has a lock modifier
-      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock) &&
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock) &&
       // Tile does not already have a modifier of this type
       !tile.modifiers.some((other) => other.type === modifier.type) &&
       // Tile has less than the maximum number of modifiers
@@ -520,7 +520,7 @@ export class Puzzle {
     elements.debug.textContent = ''
 
     switch (result?.item.data.type) {
-      case Item.Types.tile: {
+      case Item.Types.Tile: {
         const tile = this.layout.getTile(result.item.data.coordinates.offset)
         elements.debug.textContent = tile.toString()
         break
@@ -771,7 +771,7 @@ export class Puzzle {
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
-  static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
+  static #connectedBeams = (item) => item.type === Item.Types.Beam && item.isConnected()
 
   static Collision = class {
     constructor (layer, beams, point, item = undefined) {

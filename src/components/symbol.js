@@ -1,4 +1,5 @@
 import paper, { SymbolDefinition } from 'paper'
+import { className } from './util.js'
 
 export class Symbol {
   definition
@@ -6,18 +7,17 @@ export class Symbol {
   id
   item
   name
-  weight
 
-  constructor (id, name, weight) {
+  constructor (name) {
+    const id = className(Symbol.IdPrefix, name)
     this.element = document.getElementById(id)
     this.id = id
     this.name = name
-    this.weight = weight
   }
 
   getItem () {
     if (!this.item) {
-      this.item = paper.project.importSVG(this.element)
+      this.item = paper.project.importSVG(this.element, { expandShapes: true, insert: false })
       // By default, symbols will be excluded from beam collisions
       this.item.data.collidable = false
       // By default, symbols cannot be clicked on
@@ -39,8 +39,19 @@ export class Symbol {
     return this.definition.place(position)
   }
 
-  static Weights = Object.freeze({
-    Bold: 'bold',
-    Fill: 'fill'
-  })
+  static IdPrefix = 'symbol'
 }
+
+export const Symbols = Object.freeze({
+  Immutable: new Symbol('immutable'),
+  Lock: new Symbol('lock'),
+  Move: new Symbol('move'),
+  Puzzle: new Symbol('puzzle'),
+  RotateLeft: new Symbol('rotate-left'),
+  RotateRight: new Symbol('rotate-right'),
+  StickyItems: new Symbol('sticky-items'),
+  StickyModifiers: new Symbol('sticky-modifiers'),
+  Swap: new Symbol('swap'),
+  ToggleOff: new Symbol('toggle-off'),
+  ToggleOn: new Symbol('toggle-on')
+})

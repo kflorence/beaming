@@ -46,7 +46,7 @@ export class Wall extends movable(rotatable(Item)) {
   }
 
   static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.wall),
+    Item.schema(Item.Types.Wall),
     {
       properties: {
         immutable: {

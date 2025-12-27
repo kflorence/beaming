@@ -5,28 +5,28 @@
       "0": {
         "0": {
           "id": "dbf74c17",
-          "type": "Tile"
+          "type": "tile"
         },
         "1": {
           "id": "a4f181e1",
-          "type": "Tile"
+          "type": "tile"
         },
         "-1": {
           "id": "fb798c61",
-          "type": "Tile"
+          "type": "tile"
         }
       },
       "1": {
         "0": {
           "id": "c33f42c2",
-          "type": "Tile"
+          "type": "tile"
         },
         "-1": {
           "id": "1b291584",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -39,7 +39,7 @@
           ],
           "modifiers": [
             {
-              "type": "Swap",
+              "type": "swap",
               "id": "362fdc23"
             }
           ]
@@ -48,10 +48,10 @@
       "-1": {
         "0": {
           "id": "1340ed3e",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -65,10 +65,10 @@
         },
         "-1": {
           "id": "3622ae8a",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "id": "dddfa2dd",
               "openings": [
                 {
@@ -80,7 +80,7 @@
           ],
           "modifiers": [
             {
-              "type": "Rotate",
+              "type": "rotate",
               "id": "3b976366"
             }
           ]
@@ -90,7 +90,7 @@
   },
   "solution": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 1
     }
   ]

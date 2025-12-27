@@ -1,39 +1,47 @@
+import { Modifier } from '../modifier.js'
 import { movable } from '../modifiers/move.js'
 import { merge } from '../util.js'
 import { Item } from '../item.js'
-import { Symbols } from '../symbols.js'
 import { Schema } from '../schema.js'
+import { Modifiers } from '../modifiers.js'
 
-export class Icon extends movable(Item) {
+export class ModifierItem extends movable(Item) {
   color
-  id
+  item
+  modifier
+  name
 
   constructor (tile, state) {
     super(...arguments)
 
-    this.color = state.color ?? Icon.DefaultColor
-    this.id = ['icon', state.name].join('-')
+    this.color = state.color ?? ModifierItem.DefaultColor
+    this.name = state.name
 
     const data = { collidable: true }
     const style = { fillColor: this.color }
 
-    this.symbol = Symbols.ById[this.id]
+    // The modifier will attach to the tile if the item is sticky or if the tile has the StickyItems modifier
+    const parent = (ModifierItem.Sticky.includes(this.name) ||
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyItems))
+      ? tile
+      : null
+    this.modifier = Modifiers.factory(parent, { type: state.name })
+
     // Not using .place() here because SymbolItem doesn't allow updates and doesn't work with collisions
     // For some reason the imported SVGs have a Shape along with a Path item. We only need the Path item.
-    this.item = this.symbol.getItem().children[1].clone({ insert: false }).set({
+    this.item = this.modifier.getIcon().symbol.getItem().children[1].clone({ insert: false })
+    this.item.set({
       data,
       position: tile.center,
       style,
       strokeScaling: false
     })
 
-    // As imported, it is 24x24px
-    this.item.scale(1.5)
     this.group.addChild(this.item)
   }
 
   onCollision ({ collisionStep, nextStep }) {
-    if (this.color === Icon.DefaultColor || nextStep.color === this.color) {
+    if (this.color === ModifierItem.DefaultColor || nextStep.color === this.color) {
       // Collided with an icon of matching color, or the default wildcard color
       return nextStep.copy({
         done: true,
@@ -50,22 +58,21 @@ export class Icon extends movable(Item) {
 
   static DefaultColor = '#333'
 
-  static Names = Object.freeze({
-    Puzzle: 'puzzle'
-  })
-
   static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.icon),
+    Item.schema(Item.Types.Modifier),
     movable.Schema,
     {
       properties: {
         color: Schema.color,
         name: {
-          enum: [Icon.Names.Puzzle],
+          enum: [Modifier.Types.Puzzle],
           type: 'string'
         }
       },
       required: ['name']
     }
   ]))
+
+  // These modifiers will always stick to the tile
+  static Sticky = Object.freeze([Modifier.Types.Puzzle])
 }

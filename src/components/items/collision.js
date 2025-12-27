@@ -3,7 +3,7 @@ import { Path } from 'paper'
 
 export class Collision extends Item {
   constructor (state) {
-    super(null, state, { type: Item.Types.collision })
+    super(null, state, { type: Item.Types.Collision })
 
     const { center, color } = state
 

@@ -398,7 +398,7 @@ export class Editor {
         disable_properties: true,
         enforce_const: true,
         form_name_root: 'puzzle',
-        iconlib: Phosphor.name,
+        iconlib: Phosphor.Name,
         keep_oneof_values: false,
         // Enabling this causes items to not match in anyOf :(
         // no_additional_properties: true,

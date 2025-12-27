@@ -1,5 +1,5 @@
-import { capitalize, uniqueId } from './util'
-import { CompoundPath, Group } from 'paper'
+import { uniqueId } from './util'
+import { CompoundPath, Group, PathItem } from 'paper'
 import { Stateful } from './stateful'
 import { Schema } from './schema'
 
@@ -53,7 +53,7 @@ export class Item extends Stateful {
       // Must explicitly add insert: false for clone
       // https://github.com/paperjs/paper.js/issues/1721
       children: this.group.clone({ insert: false }).children
-        .filter((child) => child.data.collidable !== false)
+        .filter((child) => child instanceof PathItem && child.data.collidable !== false)
     })
   }
 
@@ -95,16 +95,16 @@ export class Item extends Stateful {
     return Schema.typed('item', type)
   }
 
-  static Types = Object.freeze(Object.fromEntries([
-    'beam',
-    'collision',
-    'filter',
-    'icon',
-    'mask',
-    'portal',
-    'reflector',
-    'terminus',
-    'tile',
-    'wall'
-  ].map((type) => [type, capitalize(type)])))
+  static Types = Object.freeze({
+    Beam: 'beam',
+    Collision: 'collision',
+    Filter: 'filter',
+    Mask: 'mask',
+    Modifier: 'modifier',
+    Portal: 'portal',
+    Reflector: 'reflector',
+    Terminus: 'terminus',
+    Tile: 'tile',
+    Wall: 'wall'
+  })
 }

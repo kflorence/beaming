@@ -14,7 +14,7 @@ export class Tile extends Item {
   selected = false
 
   constructor (coordinates, center, parameters, state = {}) {
-    state = Object.assign({ type: Item.Types.tile }, state)
+    state = Object.assign({ type: Item.Types.Tile }, state)
 
     super(null, state, { locked: false })
 
@@ -89,7 +89,7 @@ export class Tile extends Item {
     }
 
     // Filter out beams, which are not stored in state
-    const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())
+    const items = this.items.filter((item) => item.type !== Item.Types.Beam).map((item) => item.getState())
     if (items.length) {
       state.items = items
     }
@@ -168,15 +168,15 @@ export class Tile extends Item {
         (length) => length / 3
       )
       const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
-      const symbol = modifier.getSymbol()
-      const icon = symbol.place(position, { style })
-      icon.data = { id: modifier.id, name: symbol.name, type: modifier.type }
-      const childIndex = this.group.children.findIndex((icon) => icon.data.id === modifier.id)
+      const icon = modifier.getIcon()
+      const item = icon.symbol.place(position, { style })
+      item.data = { id: modifier.id, name: icon.symbol.name, type: modifier.type }
+      const childIndex = this.group.children.findIndex((item) => item.data.id === modifier.id)
       if (childIndex >= 0) {
         // Update existing
-        this.group.children[childIndex].replaceWith(icon)
+        this.group.children[childIndex].replaceWith(item)
       } else {
-        this.group.addChild(icon)
+        this.group.addChild(item)
       }
     }
   }
@@ -206,7 +206,7 @@ export class Tile extends Item {
 
   static MaxModifiers = Modifiers.Schema.maxItems
 
-  static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
+  static Schema = Object.freeze(merge(Item.schema(Item.Types.Tile), {
     properties: {
       ref: {
         options: {
