@@ -5,6 +5,7 @@ import { Reflector } from './items/reflector'
 import { Wall } from './items/wall'
 import { Item } from './item'
 import { Schema } from './schema'
+import { Icon } from './items/icon.js'
 
 export class Items {
   static Schema = Object.freeze({
@@ -12,6 +13,7 @@ export class Items {
     items: {
       anyOf: [
         Filter.Schema,
+        Icon.Schema,
         Portal.Schema,
         Reflector.Schema,
         Terminus.Schema,
@@ -28,6 +30,9 @@ export class Items {
     switch (state.type) {
       case Item.Types.filter:
         item = new Filter(...arguments)
+        break
+      case Item.Types.icon:
+        item = new Icon(...arguments)
         break
       case Item.Types.portal:
         item = new Portal(...arguments)

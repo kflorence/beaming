@@ -1,5 +1,6 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
+import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Size } from 'paper'
 import {
   addClass,
@@ -30,11 +31,10 @@ import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
 
-const confirm = window.confirm
-
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
   debug: document.getElementById('debug'),
+  delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
   footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
@@ -107,8 +107,6 @@ export class Puzzle {
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
-
-    this.#updateDropdown()
   }
 
   // Used by functional tests
@@ -314,6 +312,9 @@ export class Puzzle {
     }
 
     this.reload(State.resolve(id))
+
+    // Can't remove puzzles that exist in configuration
+    elements.delete.classList.toggle('hide', Puzzles.has(this.state.getId()))
   }
 
   tap (event) {
@@ -509,7 +510,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!this.debug) {
+    if (!this.debug || params.has(State.ParamKeys.Edit)) {
       return
     }
 
@@ -540,6 +541,9 @@ export class Puzzle {
 
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
+
+    // Store the solution in cache
+    this.state.setSolution(this.layout.tiles.filter(this.#mask.tileFilter))
 
     const p = document.createElement('p')
     p.classList.add(Puzzle.ClassNames.Solved)
@@ -589,13 +593,17 @@ export class Puzzle {
       return
     }
 
-    if (confirm('Are you sure you want to reset this puzzle? This cannot be undone.') && this.state.reset()) {
+    confirm('Are you sure you want to reset this puzzle? This cannot be undone.', () => {
+      this.state.reset()
       setTimeout(() => this.reload())
-    }
+    })
   }
 
   #setup () {
     const { layout, message, solution } = this.state.getCurrent()
+
+    this.state.setSolution([])
+    State.add(this.state.getId())
 
     this.layout = new Layout(layout)
     this.message = message
@@ -682,18 +690,31 @@ export class Puzzle {
       return
     }
 
-    const ids = Array.from(Puzzles.visible.ids)
-    if (elements.select.children.length === 0) {
-      appendOption(elements.select, { value: '', text: '——', disabled: true })
-      // TODO support pulling custom IDs from local cache
-      ids.map((id) => ({ value: id, text: Puzzles.titles[id] })).forEach((option) => {
-        appendOption(elements.select, option)
+    elements.select.replaceChildren()
+
+    // TODO: once levels are implemented, this should just use State.getIds()
+    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
+    const customIds = []
+    ids.forEach((id) => {
+      if (Puzzles.has(id)) {
+        appendOption(elements.select, { value: id, text: Puzzles.titles[id] })
+      } else {
+        customIds.push(id)
+      }
+    })
+
+    if (customIds.length) {
+      const customGroup = document.createElement('optgroup')
+      customGroup.label = '———'
+      customIds.forEach((id) => {
+        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
       })
+
+      elements.select.append(customGroup)
     }
 
     // Select current ID
-    const id = this.state?.getId()
-    elements.select.value = ids.includes(id) ? id : ''
+    elements.select.value = this.state?.getId()
   }
 
   #updateBeams () {
@@ -861,12 +882,21 @@ export class Puzzle {
   static Schema = Object.freeze({
     $id: Schema.$id('puzzle'),
     properties: {
+      id: {
+        readOnly: true,
+        type: 'string'
+      },
       author: {
         maxLength: 72,
         type: 'string'
       },
       title: {
         maxLength: 72,
+        type: 'string'
+      },
+      description: {
+        format: 'textarea',
+        maxLength: 144,
         type: 'string'
       },
       layout: Layout.Schema,
@@ -877,6 +907,7 @@ export class Puzzle {
       }
     },
     required: [
+      'id',
       'layout',
       'version'
     ],

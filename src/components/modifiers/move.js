@@ -2,13 +2,39 @@ import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
 import { Item } from '../item'
-import { Icons } from '../icons'
+import { Symbols } from '../symbols.js'
 
 export class Move extends Modifier {
   #mask
 
-  name = Icons.Move.name
   title = 'Move'
+
+  attach (tile) {
+    super.attach(tile)
+    if (!this.disabled) {
+      this.update({ disabled: !tile.items.some((item) => item.movable) })
+    }
+  }
+
+  getSymbol () {
+    return Symbols.Move
+  }
+
+  moveFilter (tile) {
+    // Filter out tiles that contain no movable items
+    return super.moveFilter(tile) || !tile.items.some(Move.movable)
+  }
+
+  moveItems (tile) {
+    const items = this.tile.items.filter(Move.movable)
+    items.forEach((item) => item.move(tile))
+    return {
+      moved: [Move.data(this.tile, tile, items)],
+      selectedTile: tile,
+      tile: this.tile,
+      tiles: [this.tile, tile]
+    }
+  }
 
   onTap (event) {
     super.onTap(event)
@@ -29,29 +55,6 @@ export class Move extends Modifier {
     this.#mask = mask
 
     emitEvent(Puzzle.Events.Mask, { mask })
-  }
-
-  attach (tile) {
-    super.attach(tile)
-    if (!this.disabled) {
-      this.update({ disabled: !tile.items.some((item) => item.movable) })
-    }
-  }
-
-  moveFilter (tile) {
-    // Filter out tiles that contain no movable items
-    return super.moveFilter(tile) || !tile.items.some(Move.movable)
-  }
-
-  moveItems (tile) {
-    const items = this.tile.items.filter(Move.movable)
-    items.forEach((item) => item.move(tile))
-    return {
-      moved: [Move.data(this.tile, tile, items)],
-      selectedTile: tile,
-      tile: this.tile,
-      tiles: [this.tile, tile]
-    }
   }
 
   tileFilter (tile) {

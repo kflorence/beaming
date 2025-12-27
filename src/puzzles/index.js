@@ -1,20 +1,5 @@
-const puzzles = {
-  '001': require('./001.json'),
-  '002': require('./002.json'),
-  '003': require('./003.json'),
-  '004': require('./004.json'),
-  '005': require('./005.json'),
-  '006': require('./006.json'),
-  '007': require('./007.json'),
-  '008': require('./008.json'),
-  '009': require('./009.json'),
-  '010': require('./010.json'),
-  '011': require('./011.json'),
-  '012': require('./012.json'),
-  test_infinite_loop: require('./test/infiniteLoop.json'),
-  test_portal: require('./test/portal.json'),
-  test_reflector: require('./test/reflector.json')
-}
+// noinspection JSFileReferences
+import * as puzzles from './*.json'
 
 function traverse (ids, id, amount) {
   const index = ids.indexOf(id)
@@ -52,6 +37,4 @@ class PuzzleGroup {
 
 export const Puzzles = new PuzzleGroup(Object.keys(puzzles).sort())
 
-Puzzles.hidden = new PuzzleGroup(Puzzles.ids.filter((id) => id.startsWith('test_')))
 Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id) => [id, puzzles[id].title || id]))
-Puzzles.visible = new PuzzleGroup(Puzzles.ids.filter((id) => !Puzzles.hidden.has(id)))

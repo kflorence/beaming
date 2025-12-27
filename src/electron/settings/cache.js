@@ -1,8 +1,8 @@
+import { confirm } from '../../components/dialog.js'
 import { emitEvent } from '../../components/util.js'
 import Tippy from 'tippy.js'
 import { Keys } from './keys.js'
 
-const confirm = window.confirm
 const $dialog = document.getElementById('dialog-settings')
 const $reset = document.getElementById('settings-cache-reset')
 
@@ -21,7 +21,7 @@ document.addEventListener(Keys.cacheCleared, (event) => {
 })
 
 $reset.addEventListener('click', () => {
-  if (confirm('Are you sure you want to reset cache? This cannot be undone.')) {
+  confirm('Are you sure you want to reset cache? This cannot be undone.', () => {
     emitEvent(Keys.cacheClear)
-  }
+  })
 })

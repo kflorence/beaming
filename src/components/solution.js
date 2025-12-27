@@ -81,7 +81,7 @@ class Connections extends SolutionCondition {
       completed,
       getTextElement('/'),
       required,
-      getIconElement('link', 'Connections')
+      getIconElement('link-simple-horizontal', 'Connections')
     ]
 
     super(state, elements)
@@ -153,7 +153,7 @@ class Moves extends SolutionCondition {
       completed,
       getTextElement(state.operator),
       required,
-      getIconElement('stacks', 'Moves')
+      getIconElement('stack', 'Moves')
     ]
 
     super(state, elements)

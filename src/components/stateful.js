@@ -1,9 +1,9 @@
 import { emitEvent } from './util'
 
 export class Stateful {
-  #state = {}
+  #state
 
-  constructor (state) {
+  constructor (state = {}) {
     this.setState(state)
   }
 

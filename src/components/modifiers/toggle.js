@@ -1,5 +1,5 @@
 import { Modifier } from '../modifier'
-import { Icons } from '../icons'
+import { Symbols } from '../symbols.js'
 
 export class Toggle extends Modifier {
   title = 'Toggle'
@@ -8,19 +8,17 @@ export class Toggle extends Modifier {
   constructor (tile, state) {
     super(...arguments)
 
-    this.toggled = this.parent?.items.some(item => item.toggled) ?? false
-    this.name = this.getName()
+    // Need to do this on initialization so the modifier icon displayed in the tile will be accurate
+    this.updateToggled()
   }
 
   attach (tile) {
+    this.updateToggled()
     super.attach(tile)
-
-    this.toggled = tile?.items.some(item => item.toggled) ?? false
-    this.update({ name: this.getName() })
   }
 
-  getName () {
-    return Toggle.Names[this.toggled ? 'on' : 'off']
+  getSymbol () {
+    return this.toggled ? Symbols.ToggleOn : Symbols.ToggleOff
   }
 
   moveFilter (tile) {
@@ -40,12 +38,14 @@ export class Toggle extends Modifier {
 
     items.forEach((item) => item.toggle(this.toggled))
 
-    this.update({ name: this.getName() })
+    this.update()
 
     this.dispatchEvent(Modifier.Events.Invoked, { items })
   }
 
-  static Names = Object.freeze({ on: Icons.ToggleOn.name, off: Icons.ToggleOff.name })
+  updateToggled () {
+    this.toggled = this.parent?.items.some(item => item.toggled) ?? false
+  }
 
   static Schema = Object.freeze(Modifier.schema(Modifier.Types.toggle))
 }

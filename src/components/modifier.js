@@ -1,11 +1,11 @@
-import { capitalize, emitEvent, uniqueId } from './util'
+import { capitalize, emitEvent, merge, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
-import { Icons } from './icons'
 import { Tile } from './items/tile'
 import { Schema } from './schema'
+import { Filter } from './filter.js'
 
 const menu = document.getElementById('puzzle-footer-menu')
 
@@ -20,7 +20,6 @@ export class Modifier extends Stateful {
   disabled = false
   immutable = false
   index
-  name
   parent
   tile
   title
@@ -64,11 +63,8 @@ export class Modifier extends Stateful {
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
     li.dataset.id = this.id.toString()
 
-    const span = this.element = document.createElement('span')
-
-    span.classList.add('icon', 'fill')
-
-    li.append(span)
+    this.element = document.createElement('i')
+    li.append(this.element)
 
     this.update()
 
@@ -104,9 +100,7 @@ export class Modifier extends Stateful {
     return other instanceof Modifier && this.id === other.id
   }
 
-  getSymbol () {
-    return Icons.ByName[this.name]
-  }
+  getSymbol () {}
 
   move (tile) {
     this.parent?.removeModifier(this)
@@ -145,9 +139,6 @@ export class Modifier extends Stateful {
           break
         }
       }
-
-      // Keep the tile icon in sync
-      this.parent?.updateIcon(this)
     }
 
     this.#down = false
@@ -160,12 +151,12 @@ export class Modifier extends Stateful {
   }
 
   toString () {
-    return [this.name, this.id].join(':')
+    return [this.type, this.id].join(':')
   }
 
   update (options) {
     options = Object.assign(
-      { disabled: this.disabled, name: this.name, title: this.title },
+      { disabled: this.disabled, title: this.title },
       options || {}
     )
 
@@ -173,13 +164,16 @@ export class Modifier extends Stateful {
       this.disabled = options.disabled
     }
 
-    this.name = options.name
     this.title = options.title
 
     if (this.#container) {
+      const symbol = this.getSymbol()
       this.#container.classList.toggle('disabled', this.disabled)
-      this.element.textContent = this.name
+      this.element.className = `ph-${symbol.weight} ph-${symbol.name}`
       this.element.title = this.title
+
+      // Keep the tile icon in sync
+      this.parent?.updateIcon(this)
     }
   }
 
@@ -188,7 +182,19 @@ export class Modifier extends Stateful {
   }
 
   static schema (type) {
-    return Schema.typed('modifiers', type)
+    return merge(Schema.typed('modifiers', type), {
+      properties: {
+        filters: {
+          items: {
+            anyOf: [
+              ModifierFilterImportSeen.Schema
+            ],
+            headerTemplate: 'filter {{i1}}'
+          },
+          type: 'array'
+        }
+      }
+    })
   }
 
   static Events = Object.freeze({
@@ -205,4 +211,53 @@ export class Modifier extends Stateful {
     'swap',
     'toggle'
   ].map((type) => [type, capitalize(type)])))
+}
+
+export class ModifierFilter extends Filter {
+  static factory (state) {
+    switch (true) {
+      case state.type === ModifierFilter.Types.Import && state.name === ModifierFilter.Names.Seen: {
+        return new ModifierFilterImportSeen(state)
+      }
+      default:
+        throw new Error(`Unknown filter: ${state.type}, ${state.name}.`)
+    }
+  }
+
+  static schema (type, name) {
+    return super.schema('modifier', type, name)
+  }
+
+  static Names = Object.freeze({
+    Seen: 'seen'
+  })
+
+  static Types = Object.freeze({
+    Import: 'import'
+  })
+}
+
+export class ModifierFilterImportSeen extends ModifierFilter {
+  apply (state, layout) {
+    return this.state.seen === layout.getImports()[this.state.importId]?.seen ?? false
+  }
+
+  static Name = ModifierFilter.Names.Seen
+  static Type = ModifierFilter.Types.Import
+
+  static Schema = Object.freeze(merge(
+    ModifierFilter.schema(this.Type, this.Name),
+    {
+      properties: {
+        importId: {
+          type: 'string'
+        },
+        seen: {
+          default: true,
+          type: 'boolean'
+        }
+      },
+      required: ['importId', 'seen']
+    }
+  ))
 }

@@ -5,20 +5,19 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
+import { appendOption, classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import Tippy from 'tippy.js'
-
-const confirm = window.confirm
+import { Phosphor } from './iconlib.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
   canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
-  delete: document.getElementById('editor-delete'),
+  debug: document.getElementById('debug'),
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
@@ -58,7 +57,7 @@ export class Editor {
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
-  #layer = new Layer()
+  #layer = new Layer({ name: 'editor' })
   #puzzle
 
   constructor (puzzle) {
@@ -71,10 +70,6 @@ export class Editor {
     return tile ? tile.coordinates.offset.toString() : 'root'
   }
 
-  getPuzzleIds () {
-    return JSON.parse(Storage.get(Editor.key(Editor.CacheKeys.Ids)) ?? '[]')
-  }
-
   getState () {
     return JSON.parse(elements.configuration.value)
   }
@@ -83,6 +78,7 @@ export class Editor {
     const playUrl = new URL(url)
     playUrl.searchParams.delete(State.ParamKeys.Edit)
     playUrl.searchParams.append(State.ParamKeys.Play, 'true')
+    // Cloning will flatten current state into original state and get rid of history
     playUrl.hash = ['', State.getId(), this.#puzzle.state.clone().encode()].join('/')
     return playUrl.toString()
   }
@@ -94,14 +90,6 @@ export class Editor {
   select (id) {
     this.teardown()
     this.#puzzle.select(id)
-
-    // Add this ID to the puzzle IDs cache, if it's not already there
-    const ids = this.getPuzzleIds()
-    const updatedIds = Array.from(new Set([...ids, this.#puzzle.state.getId()]))
-    console.debug('Updated list of editor puzzle IDs:', updatedIds)
-
-    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(updatedIds))
-
     this.#updateDropdown()
     this.setup()
   }
@@ -111,19 +99,14 @@ export class Editor {
       return
     }
 
-    // Place this layer under all the other ones
-    paper.project.insertLayer(0, this.#layer)
-
     this.#gutter.setup()
 
-    this.#puzzle.resize(false)
-    this.#puzzle.reload(false)
+    this.#puzzle.resize()
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
       { type: 'click', element: elements.copy, handler: this.#onCopy },
-      { type: 'click', element: elements.delete, handler: this.#onDelete },
-      { type: 'click', element: elements.dock, handler: this.#onDockUpdate },
+      { type: 'click', element: elements.dock, handler: this.#toggleDock },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
       { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
@@ -142,9 +125,12 @@ export class Editor {
     const state = this.#puzzle.state
     elements.configuration.value = state.getCurrentJSON()
 
+    paper.project.addLayer(this.#layer)
+
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
 
+    this.#updateDock()
     this.#updateLock()
     this.#updateCenter()
 
@@ -182,11 +168,11 @@ export class Editor {
   }
 
   #onConfigurationUpdate () {
-    // Ensure the configuration is in sync with the editor value
-    this.#onEditorUpdate()
     const state = this.getState()
+    // Ensure the configuration is in sync with the editor value
+    this.#onEditorUpdate(state)
     const diff = this.#puzzle.state.getDiff(state)
-    console.debug('onConfigurationUpdate', diff)
+    console.debug(Editor.toString('onConfigurationUpdate'), diff)
 
     if (diff === undefined) {
       // No changes
@@ -218,48 +204,6 @@ export class Editor {
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
   }
 
-  #onDelete () {
-    if (!confirm('Are you sure you want to delete this puzzle? This cannot be undone.')) {
-      return
-    }
-
-    // Update editor puzzle IDs
-    const id = this.#puzzle.state.getId()
-    const ids = this.getPuzzleIds()
-    const index = ids.indexOf(id)
-    ids.splice(index, 1)
-
-    console.debug(Editor.toString('#onDelete'), id, ids)
-    Storage.set(Editor.key(Editor.CacheKeys.Ids), JSON.stringify(ids))
-
-    // Remove local storage cache for puzzle ID
-    Storage.delete(State.key(id))
-    Storage.delete(View.key(View.CacheKeys.Center))
-    Storage.delete(View.key(View.CacheKeys.Zoom))
-
-    // Unset the current puzzle ID
-    Storage.delete(State.key())
-
-    // Clear URL cache
-    url.hash = ''
-
-    // Select the last available puzzle ID by default
-    this.select(ids[ids.length - 1])
-  }
-
-  #onDockUpdate () {
-    const icon = elements.dock.firstChild
-    const isDockBottom = this.#gutter.toggleOrientation()
-
-    if (isDockBottom) {
-      icon.title = 'Dock to right'
-      icon.textContent = 'dock_to_right'
-    } else {
-      icon.title = 'Dock to bottom'
-      icon.textContent = 'dock_to_bottom'
-    }
-  }
-
   #onEditorUpdate (value = this.#editor?.getValue()) {
     if (this.#puzzle.error) {
       // No updates until error is fixed
@@ -281,7 +225,7 @@ export class Editor {
       state.layout.tiles = current.layout.tiles
     }
 
-    console.debug('current', current, 'new', value, 'updated', state)
+    console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
 
     this.#updateConfiguration(state)
   }
@@ -315,6 +259,8 @@ export class Editor {
   }
 
   #onPointerMove (event) {
+    elements.debug.textContent = ''
+
     if (event.pointerType !== 'mouse') {
       // Only display the hover indicator when using a mouse
       return
@@ -344,9 +290,12 @@ export class Editor {
     } else {
       this.#hover.position = center
     }
+
+    elements.debug.textContent = `[${offset.r},${offset.c}]`
   }
 
   #onPuzzleUpdate () {
+    this.#layer.bringToFront()
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
     this.#updatePlayUrl()
   }
@@ -382,9 +331,14 @@ export class Editor {
     const offset = layout.getOffset(event.detail.point)
     const tile = layout.getTile(offset)
 
-    console.debug('editor.#onTap', offset, tile)
+    console.debug(Editor.toString('#onTap'), offset, tile)
 
     if (tile) {
+      if (tile.ref) {
+        console.debug(Editor.toString('#onTap'), 'Ignoring removal of imported tile.')
+        return
+      }
+
       layout.removeTile(offset)
     } else {
       layout.addTile(offset)
@@ -426,16 +380,16 @@ export class Editor {
 
     if (this.#editor) {
       const activeId = this.#editor.element.dataset.tile ?? 'root'
-      console.debug(`De-activating editor: ${activeId}`)
+      console.debug(Editor.toString('#setup'), `De-activating editor: ${activeId}`)
       this.#editor.off('change')
       this.#editor.element.classList.add('hide')
     }
 
     if (this.#editors[id]) {
-      console.debug(`Activating editor: ${id}`)
+      console.debug(Editor.toString('#setup'), `Activating editor: ${id}`)
       this.#editor = this.#editors[id]
     } else {
-      console.debug(`Creating editor: ${id}`)
+      console.debug(Editor.toString('#setup'), `Creating editor: ${id}`)
       const options = {
         disable_array_delete_all_rows: true,
         disable_array_delete_last_row: true,
@@ -444,8 +398,7 @@ export class Editor {
         disable_properties: true,
         enforce_const: true,
         form_name_root: 'puzzle',
-        // There is no support for material icons, so we have to hack it into another icon lib
-        iconlib: 'fontawesome3',
+        iconlib: Phosphor.name,
         keep_oneof_values: false,
         // Enabling this causes items to not match in anyOf :(
         // no_additional_properties: true,
@@ -464,12 +417,17 @@ export class Editor {
 
       elements.editor.append(element)
 
-      console.debug('Editor options', JSON.stringify(options, null, 2))
+      console.debug(Editor.toString('#setup'), JSON.stringify(options, null, 2))
       this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
     this.#editor.element.classList.remove('hide')
+  }
+
+  #toggleDock () {
+    this.#gutter.toggleOrientation()
+    this.#updateDock()
   }
 
   #toggleLock () {
@@ -494,15 +452,22 @@ export class Editor {
     this.#updatePlayUrl()
   }
 
+  #updateDock () {
+    const icon = elements.dock.firstChild
+    if (this.#gutter.horizontal) {
+      icon.title = 'Dock to right'
+      icon.className = 'ph-bold ph-square-split-horizontal'
+    } else {
+      icon.title = 'Dock to bottom'
+      icon.className = 'ph-bold ph-square-split-vertical'
+    }
+  }
+
   #updateDropdown () {
     elements.select.replaceChildren()
 
-    this.getPuzzleIds().forEach((id) => {
-      const config = State.fromCache(id)
-      const $option = document.createElement('option')
-      $option.value = id
-      $option.innerText = config.getTitle() || id
-      elements.select.append($option)
+    State.getIds().forEach((id) => {
+      appendOption(elements.select, { value: id, text: State.fromCache(id)?.getTitle() || id })
     })
 
     // Select current ID
@@ -512,7 +477,7 @@ export class Editor {
   #updateLock () {
     const locked = this.isLocked()
     const icon = elements.lock.firstChild
-    icon.textContent = locked ? 'lock' : 'lock_open'
+    icon.className = 'ph-bold ph-' + (locked ? 'lock' : 'lock-open')
     icon.title = (locked ? 'Unlock' : 'Lock') + ' tiles'
     if (!locked) {
       // De-select any selected tile
@@ -545,7 +510,6 @@ export class Editor {
   static toString = classToString('Editor')
 
   static CacheKeys = Object.freeze({
-    Ids: 'ids',
     Locked: 'locked'
   })
 

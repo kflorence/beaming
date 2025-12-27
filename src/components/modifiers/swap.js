@@ -1,10 +1,13 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
-import { Icons } from '../icons'
+import { Symbols } from '../symbols.js'
 
 export class Swap extends Move {
-  name = Icons.Swap.name
   title = 'Swap'
+
+  getSymbol () {
+    return Symbols.Swap
+  }
 
   moveItems (tile) {
     const toItems = tile.items.filter(Move.movable)

@@ -1,3 +1,4 @@
+import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
@@ -10,6 +11,7 @@ import { Keys } from '../electron/settings/keys.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
+  delete: document.getElementById('delete'),
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
@@ -30,6 +32,7 @@ export class Game {
     this.#eventListeners.add([
       { type: 'change', element: elements.select, handler: this.#onSelect },
       { type: 'click', element: elements.back, handler: this.back },
+      { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit },
@@ -90,16 +93,27 @@ export class Game {
     elements.title.close()
   }
 
+  select (id) {
+    if (params.has(Game.States.Play)) {
+      this.puzzle.select(id)
+    } else if (params.has(Game.States.Edit)) {
+      this.editor.select(id)
+    }
+  }
+
   quit () {
     window.electron?.quit()
   }
 
+  #onDelete () {
+    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', () => {
+      const ids = State.delete(this.puzzle.state.getId())
+      this.select(ids[ids.length - 1])
+    })
+  }
+
   #onSelect (event) {
-    if (params.has(Game.States.Play)) {
-      this.puzzle.select(event.target.value)
-    } else if (params.has(Game.States.Edit)) {
-      this.editor.select(event.target.value)
-    }
+    this.select(event.target.value)
   }
 
   async #onSettingsCacheClear (event) {
