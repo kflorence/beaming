@@ -7,6 +7,7 @@ import { Modifier } from './modifier'
 import { Swap } from './modifiers/swap'
 import { Schema } from './schema'
 import { PuzzleModifier } from './modifiers/puzzle.js'
+import { StickyItems, StickyModifiers } from './modifiers/sticky.js'
 
 export class Modifiers {
   static Schema = Object.freeze({
@@ -16,7 +17,10 @@ export class Modifiers {
         Immutable.Schema,
         Lock.Schema,
         Move.Schema,
+        PuzzleModifier.Schema,
         Rotate.Schema,
+        StickyItems.Schema,
+        StickyModifiers.Schema,
         Swap.Schema,
         Toggle.Schema
       ],
@@ -43,6 +47,12 @@ export class Modifiers {
       }
       case Modifier.Types.Rotate: {
         return new Rotate(...arguments)
+      }
+      case Modifier.Types.StickyItems: {
+        return new StickyItems(...arguments)
+      }
+      case Modifier.Types.StickyModifiers: {
+        return new StickyModifiers(...arguments)
       }
       case Modifier.Types.Swap: {
         return new Swap(...arguments)

@@ -1,5 +1,5 @@
 import paper, { SymbolDefinition } from 'paper'
-import { className } from './util.js'
+import { capitalize, className } from './util.js'
 
 export class Symbol {
   definition
@@ -37,6 +37,10 @@ export class Symbol {
     }
 
     return this.definition.place(position)
+  }
+
+  static getSymbol (name) {
+    return Symbols[capitalize(name)]
   }
 
   static IdPrefix = 'symbol'

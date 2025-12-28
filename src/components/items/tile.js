@@ -6,8 +6,8 @@ import { Modifiers } from '../modifiers'
 
 export class Tile extends Item {
   coordinates
-  items
-  modifiers
+  items = []
+  modifiers = []
   parameters
   path
   ref

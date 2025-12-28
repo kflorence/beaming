@@ -21,6 +21,7 @@ export class Modifier extends Stateful {
   immutable = false
   index
   parent
+  requiresItem = true
   tile
   title
   type
@@ -47,7 +48,7 @@ export class Modifier extends Stateful {
       // The tile contains an immutable modifier
       this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
       // The tile has no interactable items
-      !this.tile?.items.some((item) => item.type !== Item.Types.Beam) ||
+      (this.requiresItem && !this.tile?.items.some((item) => item.type !== Item.Types.Beam)) ||
       (
         // The tile being attached to is not this modifier's parent
         !this.tile?.equals(this.parent) && (

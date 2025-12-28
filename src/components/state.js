@@ -92,7 +92,7 @@ export class State {
    * @returns {State} Creates a clone of state at current point without history
    */
   clone () {
-    return new State(this.#id, this.#current)
+    return new State(this.#id, this.getCurrent())
   }
 
   encode () {
@@ -316,7 +316,9 @@ export class State {
   }
 
   static fromConfig (id) {
-    return new State(id, Puzzles.get(id))
+    if (Puzzles.has(id)) {
+      return new State(id, Puzzles.get(id))
+    }
   }
 
   static fromEncoded (str) {
@@ -451,7 +453,8 @@ export class State {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
 
-    return state
+    // Return an empty state if all else fails
+    return state ?? new State(id)
   }
 
   static setParam = function (name, value) {

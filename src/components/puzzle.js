@@ -30,6 +30,7 @@ import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
+import { ModifierItem } from './items/modifier.js'
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas'),
@@ -101,6 +102,7 @@ export class Puzzle {
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
+      { type: ModifierItem.Events.AddModifier, handler: this.#onAddModifier },
       { type: 'pointermove', element: elements.canvas, handler: this.#onPointerMove },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
@@ -419,6 +421,28 @@ export class Puzzle {
       .sort((a, b) => a.id - b.id)
   }
 
+  #onAddModifier (event) {
+    const modifier = event.detail.modifier
+
+    if (modifier.parent) {
+      modifier.parent.addModifier(modifier)
+      this.updateSelectedTile(modifier.parent)
+    } else {
+      const index = this.layout.modifiers[this.layout.modifiers.length - 1]?.index ?? 0
+      modifier.index = index + 1
+      this.layout.modifiers.push(modifier)
+      this.#updateModifiers(this.selectedTile)
+    }
+
+    // Update state but don't add a move, since it was the previous move that caused the collision.
+    this.updateState()
+
+    const message = event.detail.message
+    if (message) {
+      elements.headerMessage.textContent = message
+    }
+  }
+
   #onBeamUpdate (event) {
     if (this.#isTearingDown) {
       return
@@ -472,14 +496,14 @@ export class Puzzle {
     if (
       // Modifier does not belong to a tile
       !modifier.parent &&
-      // Tile has a lock modifier
-      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock) &&
+      // Tile has sticky modifiers
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyModifiers) &&
       // Tile does not already have a modifier of this type
       !tile.modifiers.some((other) => other.type === modifier.type) &&
       // Tile has less than the maximum number of modifiers
       tile.modifiers.length < Tile.MaxModifiers
     ) {
-      console.debug('locking modifier to tile', modifier, tile)
+      console.debug('Sticking modifier to tile', modifier, tile)
       this.layout.removeModifier(modifier)
       modifier.move(tile)
       // Disable any other attached modifiers of this type to prevent duplicate locking
@@ -743,22 +767,28 @@ export class Puzzle {
   }
 
   #updateMessage (tile) {
-    elements.headerMessage.textContent = this.message
     elements.footerMessage.replaceChildren()
 
     if (tile) {
-      // Check to see if tile has any color elements that need to be displayed
-      // Note: these will only be displayed if the tile contains an item with more than one color
-      const colorElements = tile.items
-        .map((item) => item.getColorElements(tile))
-        .find((colorElements) => colorElements.length > 1) || []
-      if (colorElements.length) {
-        const container = document.createElement('div')
-        container.classList.add('colors')
-        container.replaceChildren(...colorElements)
-        elements.footerMessage.replaceChildren(container)
+      const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
+      if (puzzleModifier) {
+        elements.footerMessage.textContent = `Puzzle '${puzzleModifier.getState().puzzleId}'`
+      } else {
+        // Check to see if tile has any color elements that need to be displayed
+        // Note: these will only be displayed if the tile contains an item with more than one color
+        const colorElements = tile.items
+          .map((item) => item.getColorElements(tile))
+          .find((colorElements) => colorElements.length > 1) || []
+        if (colorElements.length) {
+          const container = document.createElement('div')
+          container.classList.add('colors')
+          container.replaceChildren(...colorElements)
+          elements.footerMessage.replaceChildren(container)
+        }
       }
     }
+
+    elements.headerMessage.textContent = this.message
   }
 
   #updateModifiers (tile, previouslySelectedTile) {

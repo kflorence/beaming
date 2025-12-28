@@ -64,6 +64,7 @@ input {
   cursor: pointer;
 }
 
+#back,
 #editor-new,
 #title-settings,
 #title-quit {
@@ -299,11 +300,12 @@ dialog ul {
   z-index: 1;
 }
 
+.edit #debug,
 .debug #debug {
   display: block;
 }
 
-.debug #debug:empty {
+#debug:empty {
   display: none;
 }
 
@@ -365,7 +367,7 @@ dialog ul {
   padding: 1em 0 1em 1em;
 }
 
-#editor .je-indented-panel > .je-switcher {
+#editor .je-indented-panel .je-switcher {
   margin-left: 1em;
 }
 
@@ -594,6 +596,10 @@ dialog ul {
   justify-content: center;
 }
 
+#puzzle-header-message {
+  background-color: white;
+}
+
 #select {
   appearance: none;
   border: none;
@@ -630,6 +636,7 @@ dialog ul {
 }
 
 #selector svg {
+  pointer-events: none;
   position: absolute;
   right: 0.75rem;
   top: calc(50% - 5px);

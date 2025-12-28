@@ -61,7 +61,7 @@ export class Layout extends Stateful {
     state.imports ??= []
     for (const imp of state.imports) {
       const { id, offset } = imp
-      console.debug(Layout.toString(), `importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, imp)
+      console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, imp)
 
       this.#imports[id] = structuredClone(imp)
 
@@ -76,6 +76,8 @@ export class Layout extends Stateful {
       if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
+
+      console.debug(Layout.toString(), `Resolved source for puzzle ID '${id}'`, source)
 
       // Need to convert offsets into cube/axial coordinates to generate the proper offsets for each tile below.
       // This is because the offsets cannot be applied statically across tiles, because they are different depending
@@ -97,11 +99,16 @@ export class Layout extends Stateful {
           .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
           .every((filter) => filter.apply(source))
       ) {
-        // If any filter fails, this puzzle will not be imported.
+        console.debug(Layout.toString(), `Not importing puzzle ID '${id}' due to failing import filters`)
         continue
       }
 
       const config = source.clone().getConfig()
+      if (!config.layout) {
+        // Generally indicates a problem
+        console.warn(Layout.toString(), `Resolved config has no layout for puzzle ID '${id}'`)
+      }
+
       config.layout ??= {}
       config.layout.tiles ??= []
       const itemFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Item)
@@ -126,6 +133,10 @@ export class Layout extends Stateful {
 
           if (!tileFilters.every((filter) => filter.apply(source, translatedOffset, tile))) {
             // If any filter fails, the tile will not be imported.
+            console.debug(
+              Layout.toString(),
+              `Not importing tile from puzzle '${id}' at '${translatedOffset}' due to failing filter`
+            )
             continue
           }
 

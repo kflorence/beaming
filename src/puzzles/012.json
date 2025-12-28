@@ -31,7 +31,7 @@
           "id": "84eab54c",
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "f1c5bbea"
             }
           ]
@@ -52,7 +52,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "827e9a99"
             }
           ],
@@ -69,7 +69,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "2cb4c742"
             }
           ],
@@ -91,7 +91,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "3990e750"
             }
           ],
@@ -131,7 +131,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "524e1e3e"
             }
           ],
@@ -196,7 +196,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "d467956f"
             }
           ],
@@ -242,7 +242,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "55583307"
             }
           ],
@@ -264,7 +264,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "505368dc"
             }
           ],
@@ -334,7 +334,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "99f4e45e"
             },
             {

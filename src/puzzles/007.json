@@ -15,7 +15,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "68de9848"
             },
             {

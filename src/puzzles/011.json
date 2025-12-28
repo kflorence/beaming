@@ -31,7 +31,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "9ba8bd9e"
             }
           ]
@@ -80,7 +80,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "0c3fe41a"
             }
           ],
@@ -98,7 +98,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "97b3cf21"
             }
           ]
@@ -116,7 +116,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "5871082a"
             }
           ],
@@ -133,7 +133,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "5b0d7431"
             }
           ]

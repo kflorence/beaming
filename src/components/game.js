@@ -12,11 +12,12 @@ import { Keys } from '../electron/settings/keys.js'
 const elements = Object.freeze({
   back: document.getElementById('back'),
   delete: document.getElementById('delete'),
+  dialog: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
   select: document.getElementById('select'),
-  title: document.getElementById('dialog-title')
+  title: document.getElementById('title')
 })
 
 export class Game {
@@ -36,6 +37,7 @@ export class Game {
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit },
+      { type: 'click', element: elements.title, handler: this.title },
       { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
@@ -46,21 +48,17 @@ export class Game {
     } else if (params.has(Game.States.Edit)) {
       this.edit()
     } else {
-      elements.title.showModal()
+      elements.dialog.showModal()
     }
   }
 
   back () {
-    if (elements.title.open) {
-      elements.title.close()
-    } else {
-      elements.title.showModal()
-    }
+    // TODO go back to previous puzzle
   }
 
   edit () {
     if (document.body.classList.contains(Game.States.Edit)) {
-      elements.title.close()
+      elements.dialog.close()
       return
     } else if (document.body.classList.contains(Game.States.Play)) {
       this.#reset()
@@ -72,12 +70,12 @@ export class Game {
 
     this.editor.select()
 
-    elements.title.close()
+    elements.dialog.close()
   }
 
   play () {
     if (document.body.classList.contains(Game.States.Play)) {
-      elements.title.close()
+      elements.dialog.close()
       return
     } else if (document.body.classList.contains(Game.States.Edit)) {
       this.#reset()
@@ -90,7 +88,11 @@ export class Game {
     this.puzzle.resize()
 
     document.body.classList.add(Game.States.Play)
-    elements.title.close()
+    elements.dialog.close()
+  }
+
+  quit () {
+    window.electron?.quit()
   }
 
   select (id) {
@@ -101,8 +103,12 @@ export class Game {
     }
   }
 
-  quit () {
-    window.electron?.quit()
+  title () {
+    if (elements.dialog.open) {
+      elements.dialog.close()
+    } else {
+      elements.dialog.showModal()
+    }
   }
 
   #onDelete () {

@@ -20,7 +20,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "110796b4"
             }
           ]
@@ -46,7 +46,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "3db9b817"
             }
           ]
@@ -83,7 +83,7 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
+              "type": "sticky-modifiers",
               "id": "1f98dd59"
             }
           ]
