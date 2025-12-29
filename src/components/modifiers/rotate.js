@@ -14,31 +14,22 @@ export class Rotate extends Modifier {
 
   attach (tile) {
     super.attach(tile)
-    if (!this.disabled) {
-      this.update({ disabled: !tile.items.some((item) => item.rotatable) })
-    }
+    this.update({ disabled: !tile.items.some(Rotate.rotatable) })
   }
 
   getIcon () {
     return this.clockwise ? Icons.RotateRight : Icons.RotateLeft
   }
 
-  moveFilter (tile) {
-    // Filter out tiles that contain no rotatable items
-    return super.moveFilter(tile) || !tile.items.some((item) => item.rotatable)
-  }
-
   onTap (event) {
-    super.onTap(event)
-
-    const items = this.tile.items.filter((item) => item.rotatable)
+    const items = this.tile.items.filter(Rotate.rotatable)
     if (!items.length) {
       return
     }
 
     items.forEach((item) => item.rotate(this.clockwise))
 
-    this.dispatchEvent(Modifier.Events.Invoked, { items })
+    super.onTap(event, { items })
   }
 
   onToggle () {
@@ -49,6 +40,10 @@ export class Rotate extends Modifier {
     this.update()
 
     this.dispatchEvent(Modifier.Events.Toggled, { clockwise: this.clockwise })
+  }
+
+  static rotatable (item) {
+    return item.rotatable
   }
 
   static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.Rotate), {

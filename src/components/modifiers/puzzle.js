@@ -1,6 +1,7 @@
 import { Modifier } from '../modifier.js'
 import { Icons } from '../icon.js'
 import { merge } from '../util.js'
+import { State } from '../state.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -14,13 +15,21 @@ export class PuzzleModifier extends Modifier {
     return "You've unlocked a new puzzle!"
   }
 
-  onTap (event) {
-    super.onTap(event)
+  onInvoked (puzzle) {
+    const state = this.getState()
 
-    // TODO handle tap
-    // - if the puzzle ID points to an imported puzzle, center on the anchor tile
-    // - load the puzzle
-    // - will need to put some indication that we came from another puzzle, probably in the URL, so we can go back
+    // Set the parent of the puzzle we are entering to the current puzzle
+    State.setParent(state.puzzleId, puzzle.state.getId())
+
+    const imports = puzzle.layout.getImports()
+    const ref = imports[state.puzzleId]
+
+    if (ref) {
+      // Entering an imported puzzle
+      puzzle.centerOnTile(ref.offset.r, ref.offset.c)
+    }
+
+    puzzle.select(state.puzzleId)
   }
 
   static Schema = Object.freeze(merge([

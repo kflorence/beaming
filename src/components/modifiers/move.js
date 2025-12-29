@@ -1,7 +1,6 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
-import { Item } from '../item'
 import { Icons } from '../icon.js'
 
 export class Move extends Modifier {
@@ -11,18 +10,11 @@ export class Move extends Modifier {
 
   attach (tile) {
     super.attach(tile)
-    if (!this.disabled) {
-      this.update({ disabled: !tile.items.some((item) => item.movable) })
-    }
+    this.update({ disabled: !tile.items.some(Move.movable) })
   }
 
   getIcon () {
     return Icons.Move
-  }
-
-  moveFilter (tile) {
-    // Filter out tiles that contain no movable items
-    return super.moveFilter(tile) || !tile.items.some(Move.movable)
   }
 
   moveItems (tile) {
@@ -37,8 +29,6 @@ export class Move extends Modifier {
   }
 
   onTap (event) {
-    super.onTap(event)
-
     const items = this.tile.items.filter(Move.movable)
     if (this.#mask || !items.length) {
       return
@@ -59,12 +49,7 @@ export class Move extends Modifier {
 
   tileFilter (tile) {
     // Never mask current tile
-    return !tile.equals(this.tile) && (
-      // Mask immutable tiles
-      tile.modifiers.some(Modifier.immutable) ||
-      // Mask tiles that contain any items we don't ignore
-      tile.items.some((item) => !Move.ignoreItemTypes.includes(item.type))
-    )
+    return !tile.equals(this.tile) && !tile.items.some(Move.movable)
   }
 
   #maskOnTap (puzzle, tile) {
@@ -83,10 +68,8 @@ export class Move extends Modifier {
   }
 
   static movable (item) {
-    return item.movable
+    return item.isMovable()
   }
-
-  static ignoreItemTypes = [Item.Types.Beam, Item.Types.Wall]
 
   static Schema = Object.freeze(Modifier.schema(Modifier.Types.Move))
 }
@@ -94,14 +77,18 @@ export class Move extends Modifier {
 /**
  * Move an item from one tile to another.
  * @param SuperClass
- * @returns {{new(*, *): MovableItem, movable: boolean, prototype: MovableItem}}
+ * @returns {{new(*, *): MovableItem, prototype: MovableItem}}
  */
 export const movable = (SuperClass) => class MovableItem extends SuperClass {
-  movable
+  #movable
 
-  constructor (parent, state) {
+  constructor (tile, state) {
     super(...arguments)
-    this.movable = !this.immutable && state.movable !== false
+    this.#movable = state.movable ?? true
+  }
+
+  isMovable () {
+    return this.#movable && !this.isStuck()
   }
 
   move (tile) {

@@ -3,9 +3,9 @@ import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
-import { Tile } from './items/tile'
 import { Schema } from './schema'
 import { Filter } from './filter.js'
+import { Tile } from './items/tile.js'
 
 const menu = document.getElementById('puzzle-footer-menu')
 
@@ -17,7 +17,6 @@ export class Modifier extends Stateful {
 
   configuration
   element
-  disabled = false
   immutable = false
   index
   parent
@@ -43,21 +42,8 @@ export class Modifier extends Stateful {
   attach (tile) {
     this.tile = tile
 
-    // Disable by default if: modifier is immutable
-    this.disabled = this.immutable ||
-      // The tile contains an immutable modifier
-      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
-      // The tile has no interactable items
-      (this.requiresItem && !this.tile?.items.some((item) => item.type !== Item.Types.Beam)) ||
-      (
-        // The tile being attached to is not this modifier's parent
-        !this.tile?.equals(this.parent) && (
-          // The tile contains another modifier of this type already
-          this.tile.modifiers.some((modifier) => modifier.type === this.type) ||
-          // The tile already contains the max number of modifiers
-          this.tile?.modifiers.length === Tile.MaxModifiers
-        )
-      )
+    // TODO update the UI so that duplicate modifiers are not attached
+    // Instead, display a number next to the modifier to indicate how many of that modifier there are
 
     const li = this.#container = document.createElement('li')
 
@@ -76,6 +62,29 @@ export class Modifier extends Stateful {
     ], { element: li })
 
     menu.append(li)
+  }
+
+  isDisabled () {
+    return this.immutable ||
+      // The tile contains an immutable modifier
+      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
+      // The modifier requires an interactable item but the tile doesn't have any
+      (this.requiresItem && !this.tile?.items.some((item) => item.type !== Item.Types.Beam)) ||
+      // This is a global modifier and the tile is locked
+      (!this.parent && this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock)) ||
+      // This is a global modifier and the tile already has the maximum number of modifiers stuck to it
+      (!this.parent && this.tile?.modifiers.length === Tile.MaxModifiers)
+  }
+
+  isStuck (tile) {
+    return (
+      // Modifier does not belong to a tile
+      !this.parent &&
+      // Tile has sticky modifiers
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyModifiers) &&
+      // Tile has less than the maximum number of modifiers
+      tile.modifiers.length < Tile.MaxModifiers
+    )
   }
 
   /**
@@ -109,13 +118,6 @@ export class Modifier extends Stateful {
     tile?.addModifier(this)
   }
 
-  moveFilter (tile) {
-    // Mask immutable tiles
-    return tile.modifiers.some(Modifier.immutable) ||
-      // Mask tiles that only contain immutable items
-      tile.items.every(Item.immutable)
-  }
-
   onPointerDown (event) {
     if (event.button !== 0) {
       // Support toggle on non-primary pointer button
@@ -145,7 +147,11 @@ export class Modifier extends Stateful {
     this.#down = false
   }
 
-  onTap () {}
+  onInvoked (puzzle, event) {}
+
+  onTap (event, detail) {
+    this.dispatchEvent(Modifier.Events.Invoked, detail)
+  }
 
   onToggle () {
     Interact.vibrate()
@@ -155,17 +161,9 @@ export class Modifier extends Stateful {
     return [this.type, this.id].join(':')
   }
 
-  update (options) {
-    options = Object.assign(
-      { disabled: this.disabled, title: this.title },
-      options || {}
-    )
-
-    if (!this.immutable) {
-      this.disabled = options.disabled
-    }
-
-    this.title = options.title
+  update (options = {}) {
+    this.disabled = (this.isDisabled() || options.disabled) ?? false
+    this.title = options.title ?? this.title
 
     if (this.#container) {
       this.#container.classList.toggle('disabled', this.disabled)

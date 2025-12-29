@@ -59,11 +59,11 @@ export class Layout extends Stateful {
     this.#imports = {}
     state.importsCache ??= {}
     state.imports ??= []
-    for (const imp of state.imports) {
-      const { id, offset } = imp
-      console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, imp)
+    for (const ref of state.imports) {
+      const { id, offset } = ref
+      console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, ref)
 
-      this.#imports[id] = structuredClone(imp)
+      this.#imports[id] = structuredClone(ref)
 
       // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
       // This will ensure the latest version will always get cached in the puzzle if cache is true.
@@ -84,7 +84,7 @@ export class Layout extends Stateful {
       // on where in the grid the tile is located (due to the even/odd offsetting of tiles).
       const anchorAxial = OffsetCoordinates.toAxialCoordinates(new OffsetCoordinates(offset.r, offset.c))
 
-      if (imp.cache === true) {
+      if (ref.cache === true) {
         // Include the imported puzzle's configuration in the current puzzle's configuration.
         // This is only necessary for custom puzzles, since official puzzles can be loaded from configuration.
         // Note: cloning here will cause any history to get squashed into the base config
@@ -93,7 +93,7 @@ export class Layout extends Stateful {
         delete state.importsCache[id]
       }
 
-      const importFilters = (imp.filters ?? []).map((filter) => ImportFilter.factory(filter))
+      const importFilters = (ref.filters ?? []).map((filter) => ImportFilter.factory(filter))
       if (
         !importFilters
           .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
@@ -150,7 +150,7 @@ export class Layout extends Stateful {
           console.debug(Layout.toString(), `Imported tile from puzzle '${id}' to '${translatedOffset}'.`)
 
           // Consider this import seen if at least one tile was added
-          this.#imports[id].seen = imp.seen ?? true
+          this.#imports[id].seen = ref.seen ?? true
         }
       }
     }

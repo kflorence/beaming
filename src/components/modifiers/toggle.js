@@ -21,14 +21,7 @@ export class Toggle extends Modifier {
     return this.toggled ? Icons.ToggleOn : Icons.ToggleOff
   }
 
-  moveFilter (tile) {
-    // Filter out tiles that contain no toggleable items
-    return super.moveFilter(tile) || !tile.items.some(item => item.toggleable)
-  }
-
   onTap (event) {
-    super.onTap(event)
-
     this.toggled = !this.toggled
 
     const items = this.tile.items.filter((item) => item.toggleable)
@@ -40,7 +33,7 @@ export class Toggle extends Modifier {
 
     this.update()
 
-    this.dispatchEvent(Modifier.Events.Invoked, { items })
+    super.onTap(event, { items })
   }
 
   updateToggled () {

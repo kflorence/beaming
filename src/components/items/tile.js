@@ -16,7 +16,7 @@ export class Tile extends Item {
   constructor (coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
 
-    super(null, state, { locked: false })
+    super(null, state, { clickable: true })
 
     const dashWidth = parameters.circumradius / 10
 

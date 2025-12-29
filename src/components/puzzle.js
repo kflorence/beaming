@@ -26,13 +26,13 @@ import { StepState } from './step'
 import { EventListeners } from './eventListeners'
 import { Solution } from './solution'
 import { Interact } from './interact'
-import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
 import { ModifierItem } from './items/modifier.js'
 
 const elements = Object.freeze({
+  back: document.getElementById('back'),
   canvas: document.getElementById('puzzle-canvas'),
   debug: document.getElementById('debug'),
   delete: document.getElementById('delete'),
@@ -62,6 +62,7 @@ export class Puzzle {
   element = elements.canvas
   error = false
   layers = {}
+  layout
   message
   selectedTile
   solved = false
@@ -95,6 +96,7 @@ export class Puzzle {
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
+      { type: 'click', element: elements.back, handler: this.#onBack },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
@@ -315,6 +317,9 @@ export class Puzzle {
 
     this.reload(State.resolve(id))
 
+    // Show 'back' button if the loaded puzzle has a parent puzzle
+    elements.back.classList.toggle('hide', State.getParent(id) === null)
+
     // Can't remove puzzles that exist in configuration
     elements.delete.classList.toggle('hide', Puzzles.has(this.state.getId()))
   }
@@ -417,7 +422,7 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return this.layout.modifiers.concat(tile?.modifiers || [])
+    return this.layout.modifiers.concat(tile?.modifiers ?? [])
       .sort((a, b) => a.id - b.id)
   }
 
@@ -441,6 +446,11 @@ export class Puzzle {
     if (message) {
       elements.headerMessage.textContent = message
     }
+  }
+
+  #onBack (event) {
+    // TODO
+    console.log(event)
   }
 
   #onBeamUpdate (event) {
@@ -493,29 +503,19 @@ export class Puzzle {
     const modifier = event.detail.modifier
     const tile = event.detail.tile
 
-    if (
-      // Modifier does not belong to a tile
-      !modifier.parent &&
-      // Tile has sticky modifiers
-      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyModifiers) &&
-      // Tile does not already have a modifier of this type
-      !tile.modifiers.some((other) => other.type === modifier.type) &&
-      // Tile has less than the maximum number of modifiers
-      tile.modifiers.length < Tile.MaxModifiers
-    ) {
-      console.debug('Sticking modifier to tile', modifier, tile)
+    if (modifier.isStuck()) {
       this.layout.removeModifier(modifier)
       modifier.move(tile)
-      // Disable any other attached modifiers of this type to prevent duplicate locking
-      this.#getModifiers(tile)
-        .filter((other) => other.type === modifier.type && other.id !== modifier.id)
-        .forEach((other) => other.update({ disabled: true }))
+      this.#getModifiers(tile).forEach((modifier) => modifier.update())
+      console.debug('Modifier is stuck to tile', modifier, tile)
     }
 
     const selectedTile = event.detail.selectedTile
     if (selectedTile) {
       this.updateSelectedTile(selectedTile)
     }
+
+    modifier.onInvoked(this, event)
 
     this.state.addMove(event.type, tile, modifier, selectedTile)
     this.updateState()
@@ -791,10 +791,10 @@ export class Puzzle {
     elements.headerMessage.textContent = this.message
   }
 
-  #updateModifiers (tile, previouslySelectedTile) {
-    this.#getModifiers(previouslySelectedTile).forEach((modifier) => modifier.detach())
-
+  #updateModifiers (tile, previousTile) {
     const modifiers = this.#getModifiers(tile)
+    const previousModifiers = (previousTile ? this.#getModifiers(previousTile) : modifiers)
+    previousModifiers.forEach((modifier) => modifier.detach())
     modifiers.forEach((modifier) => modifier.attach(tile))
 
     elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0)

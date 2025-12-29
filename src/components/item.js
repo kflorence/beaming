@@ -2,42 +2,43 @@ import { uniqueId } from './util'
 import { CompoundPath, Group, PathItem } from 'paper'
 import { Stateful } from './stateful'
 import { Schema } from './schema'
+import { Modifier } from './modifier.js'
 
 export class Item extends Stateful {
   center
+  clickable
   data
   group
   id
   immutable
-  // Whether the item can be clicked on
-  locked
   parent
   sortOrder = 100
   type
 
-  constructor (parent, state, configuration) {
+  constructor (parent, state, configuration = {}) {
     // Retain ID from state if it exists, otherwise generate a new one
     state.id ??= uniqueId()
 
     super(state)
 
     this.id = state.id
-    this.immutable ??= state?.immutable ?? false
-    this.type = state?.type ?? configuration?.type
+    this.clickable ??= state.clickable ?? configuration.clickable ?? false
+    this.immutable ??= state.immutable ?? configuration.immutable ?? false
+    this.type ??= state.type ?? configuration.type
+
     if (this.type === undefined) {
       console.debug(`[Item:${this.id}]`, state, configuration)
       throw new Error('Item must have type defined')
     }
 
-    this.data = Object.assign({ id: this.id, type: this.type }, configuration?.data || {})
-    this.locked = configuration?.locked !== false
+    this.data = Object.assign({ id: this.id, type: this.type }, configuration.data ?? {})
 
     if (parent) {
       this.center = parent.center
     }
 
     this.parent = parent
-    this.group = new Group({ data: this.data, locked: this.locked })
+    this.group = new Group({ data: this.data, locked: !this.clickable })
   }
 
   equals (otherItem) {
@@ -63,6 +64,11 @@ export class Item extends Stateful {
 
   getLayer () {
     return this.group.layer
+  }
+
+  isStuck () {
+    return this.immutable ||
+      this.parent.modifiers.some((modifier) => Item.StickyModifierTypes.includes(modifier.type))
   }
 
   onTap () {}
@@ -91,9 +97,15 @@ export class Item extends Stateful {
     return item.immutable
   }
 
+  static stuck (item) {
+    return item.isStuck()
+  }
+
   static schema (type) {
     return Schema.typed('item', type)
   }
+
+  static StickyModifierTypes = [Modifier.Types.Immutable, Modifier.Types.Lock, Modifier.Types.StickyItems]
 
   static Types = Object.freeze({
     Beam: 'beam',

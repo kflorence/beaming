@@ -387,6 +387,10 @@ export class State {
     return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
   }
 
+  static getParent (id) {
+    return Storage.get(State.key(id, State.CacheKeys.Parent))
+  }
+
   static resolve (id) {
     let values = []
 
@@ -462,16 +466,24 @@ export class State {
     history.pushState({}, '', url)
   }
 
+  // Tracks the location of nested puzzles
+  static setParent (id, parentId) {
+    // TODO add URL param support?
+    Storage.set(State.key(id, State.CacheKeys.Parent), parentId)
+  }
+
   static CacheKeys = Object.freeze({
     Edit: 'edit',
     Id: 'id',
     Ids: 'ids',
+    Parent: 'parent',
     Play: 'play'
   })
 
   static ParamKeys = Object.freeze({
     ClearCache: 'clearCache',
     Edit: 'edit',
+    Parents: 'parents',
     Play: 'play'
   })
 

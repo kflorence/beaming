@@ -75,6 +75,7 @@ export class Editor {
   }
 
   getShareUrl () {
+    // FIXME: this should be an absolute URL in production (the same one that parcel uses)
     const playUrl = new URL(url)
     playUrl.searchParams.delete(State.ParamKeys.Edit)
     playUrl.searchParams.append(State.ParamKeys.Play, '')

@@ -21,7 +21,7 @@ export class Symbol {
       // By default, symbols will be excluded from beam collisions
       this.item.data.collidable = false
       // By default, symbols cannot be clicked on
-      this.item.locked = true
+      this.item.clickable = false
     }
 
     return this.item
