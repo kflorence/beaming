@@ -10,7 +10,6 @@ import { EventListeners } from './eventListeners'
 import { Keys } from '../electron/settings/keys.js'
 
 const elements = Object.freeze({
-  back: document.getElementById('back'),
   delete: document.getElementById('delete'),
   dialog: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
@@ -32,7 +31,6 @@ export class Game {
 
     this.#eventListeners.add([
       { type: 'change', element: elements.select, handler: this.#onSelect },
-      { type: 'click', element: elements.back, handler: this.back },
       { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
@@ -50,10 +48,6 @@ export class Game {
     } else {
       elements.dialog.showModal()
     }
-  }
-
-  back () {
-    // TODO go back to previous puzzle
   }
 
   edit () {

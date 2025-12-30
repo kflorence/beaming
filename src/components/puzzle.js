@@ -5,13 +5,13 @@ import paper, { Layer, Path, Point, Size } from 'paper'
 import {
   addClass,
   appendOption,
-  base64encode,
+  base64encode, baseUrl,
   debounce,
   emitEvent,
   fuzzyEquals,
   noop,
   params,
-  removeClass
+  removeClass, url, writeToClipboard
 } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -31,6 +31,7 @@ import { Schema } from './schema'
 import { Game } from './game'
 import { ModifierItem } from './items/modifier.js'
 import { Icons } from './icon.js'
+import Tippy from 'tippy.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -50,8 +51,15 @@ const elements = Object.freeze({
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
   select: document.getElementById('select'),
+  share: document.getElementById('share'),
   title: document.querySelector('title'),
   wrapper: document.getElementById('puzzle-wrapper')
+})
+
+const tippy = Tippy(elements.share, {
+  content: 'Share URL copied to clipboard!',
+  theme: 'custom',
+  trigger: 'manual'
 })
 
 // There are various spots below that utilize setTimeout in order to process events in order and to prevent
@@ -101,6 +109,7 @@ export class Puzzle {
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
+      { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
@@ -163,6 +172,16 @@ export class Puzzle {
 
   getProjectPoint (point) {
     return this.#interact.getProjectPoint(point)
+  }
+
+  getShareUrl () {
+    // Electron runs on localhost but should use the production web URL
+    const playUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
+    playUrl.searchParams.delete(State.ParamKeys.Edit)
+    playUrl.searchParams.append(State.ParamKeys.Play, '')
+    // Cloning will flatten current state into original state and get rid of history
+    playUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
+    return playUrl.toString()
   }
 
   getSolution () {
@@ -577,7 +596,14 @@ export class Puzzle {
   }
 
   #onRecenter () {
+    View.setZoom(1)
     this.recenter(true)
+  }
+
+  async #onShare () {
+    await writeToClipboard(this.getShareUrl())
+    tippy.show()
+    setTimeout(() => tippy.hide(), 1000)
   }
 
   #onSolved () {

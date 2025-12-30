@@ -43,9 +43,6 @@ export class Modifier extends Stateful {
   attach (tile) {
     this.tile = tile
 
-    // TODO update the UI so that duplicate modifiers are not attached
-    // Instead, display a number next to the modifier to indicate how many of that modifier there are
-
     const li = this.#container = document.createElement('li')
 
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))

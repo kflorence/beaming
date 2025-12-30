@@ -6,6 +6,7 @@ import { Point, Size } from 'paper'
 
 const location = window.location
 
+export const baseUrl = 'https://kflorence.github.io/beaming'
 export const sqrt3 = Math.sqrt(3)
 export const url = new URL(location)
 export const params = url.searchParams
@@ -189,10 +190,8 @@ export function getOppositeDirection (direction) {
 }
 
 // Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
-// first point (direction zero) corresponding to direction 4 in the cube system. May want to revisit this at some
-// point when standardizing directions across everything.
+// first point (direction zero) corresponding to direction 4 in the cube system.
 // See: http://paperjs.org/tutorials/geometry/vector-geometry/
-// TODO: may want to consider updating directions across this project to something more uniform
 export function getConvertedDirection (direction, toPaperJs = true) {
   direction = direction + (toPaperJs ? -1 : 1) * 2
   if (direction < 0) return direction + 6

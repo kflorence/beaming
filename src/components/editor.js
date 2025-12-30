@@ -5,11 +5,10 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, getKeyFactory, uniqueId, url, writeToClipboard } from './util'
+import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
-import Tippy from 'tippy.js'
 import { Phosphor } from './iconlib.js'
 
 const elements = Object.freeze({
@@ -27,15 +26,8 @@ const elements = Object.freeze({
   puzzle: document.getElementById('puzzle'),
   reset: document.getElementById('editor-reset'),
   select: document.getElementById('select'),
-  share: document.getElementById('editor-share'),
   update: document.getElementById('editor-update'),
   wrapper: document.getElementById('editor-wrapper')
-})
-
-const tippy = Tippy(elements.share, {
-  content: 'Share URL copied to clipboard!',
-  theme: 'custom',
-  trigger: 'manual'
 })
 
 // TODO: consider adding AJV validations that ensure unique keys are unique
@@ -74,16 +66,6 @@ export class Editor {
     return JSON.parse(elements.configuration.value)
   }
 
-  getShareUrl () {
-    // FIXME: this should be an absolute URL in production (the same one that parcel uses)
-    const playUrl = new URL(url)
-    playUrl.searchParams.delete(State.ParamKeys.Edit)
-    playUrl.searchParams.append(State.ParamKeys.Play, '')
-    // Cloning will flatten current state into original state and get rid of history
-    playUrl.hash = ['', State.getId(), this.#puzzle.state.clone().encode()].join('/')
-    return playUrl.toString()
-  }
-
   isLocked () {
     return Storage.get(Editor.key(State.getId(), Editor.CacheKeys.Locked)) === 'true'
   }
@@ -112,7 +94,6 @@ export class Editor {
       { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
       { type: 'click', element: elements.reset, handler: this.#onReset },
-      { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', handler: this.#onPointerMove },
@@ -316,12 +297,6 @@ export class Editor {
     this.#onConfigurationUpdate()
   }
 
-  async #onShare () {
-    await writeToClipboard(this.getShareUrl())
-    tippy.show()
-    setTimeout(() => tippy.hide(), 1000)
-  }
-
   #onTap (event) {
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
@@ -487,7 +462,7 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    elements.play.firstElementChild.setAttribute('href', this.getShareUrl())
+    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl())
   }
 
   static mark (center, width) {

@@ -595,6 +595,11 @@ dialog ul {
   display: none;
 }
 
+#puzzle-header-action-menu li {
+  border-left: 1px solid #ddd;
+  border-right: none;
+}
+
 #puzzle-header-message {
   background-color: white;
 }

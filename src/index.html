@@ -19,7 +19,7 @@
         <div id="puzzle-header-wrapper">
           <div class="flex-left">
             <div class="group">
-              <ul class="menu">
+              <ul class="menu" id="puzzle-header-main-menu">
                 <li id="title"><i class="ph-bold ph-list" title="Main Menu"></i></li>
                 <li id="back"><i class="ph-bold ph-arrow-left" title="Exit Puzzle"></i></li>
               </ul>
@@ -27,7 +27,8 @@
                 <select id="select"></select>
                 <svg height="10px" width="10px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
               </label>
-              <ul class="menu">
+              <ul class="menu" id="puzzle-header-action-menu">
+                <li id="share"><i class="ph-bold ph-share-network" title="Share puzzle"></i></li>
                 <li id="delete"><i class="ph-bold ph-trash" title="Remove Puzzle"></i></li>
                 <li id="editor-new"><i class="ph-bold ph-file-plus" title="Create New Puzzle"></i></li>
               </ul>
@@ -74,7 +75,6 @@
           <li id="editor-paste" class="disabled"><i class="ph-bold ph-clipboard-text" title="Paste tile"></i></li>
           <li id="editor-reset" class="disabled"><i class="ph-bold ph-clock-counter-clockwise" title="Reset tile"></i></li>
           <li id="editor-play"><a href="" target="_blank"><i class="ph-bold ph-play" title="Play puzzle"></i></a></li>
-          <li id="editor-share"><i class="ph-bold ph-share-network" title="Share puzzle"></i></li>
           <li id="editor-dock"><i title="Dock editor to bottom"></i></li>
         </ul>
       </header>
