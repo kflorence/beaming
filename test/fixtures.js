@@ -34,7 +34,7 @@ export class PuzzleFixture {
       '--disable-extensions',
       '--disable-gpu',
       // Comment this out to watch the tests run in-browser
-      // '--headless',
+      '--headless',
       '--ignore-certificate-errors',
       '--no-sandbox',
       '--window-size=768,1024'
