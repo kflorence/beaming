@@ -121,14 +121,14 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
   }
 
   onMove () {}
+}
 
-  static schema () {
-    return {
-      properties: {
-        movable: {
-          default: true,
-          type: 'boolean'
-        }
+movable.schema = function schema () {
+  return {
+    properties: {
+      movable: {
+        default: true,
+        type: 'boolean'
       }
     }
   }

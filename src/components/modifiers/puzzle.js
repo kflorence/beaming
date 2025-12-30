@@ -30,15 +30,24 @@ export class PuzzleModifier extends Modifier {
     }, 250)
   }
 
-  static schema = () => Object.freeze(merge([
-    Modifier.schema(Modifier.Types.Puzzle),
-    {
-      properties: {
-        puzzleId: {
-          type: 'string'
-        }
-      },
-      required: ['puzzleId']
-    }
-  ]))
+  static schema () {
+    const currentId = State.getId()
+    const ids = State.getIds().filter((id) => id !== currentId)
+    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    return Object.freeze(merge([
+      Modifier.schema(Modifier.Types.Puzzle),
+      {
+        properties: {
+          puzzleId: {
+            enum: ids,
+            options: {
+              enum_titles: titles
+            },
+            type: 'string'
+          }
+        },
+        required: ['puzzleId']
+      }
+    ]))
+  }
 }
