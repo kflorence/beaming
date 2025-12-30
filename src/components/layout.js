@@ -91,6 +91,7 @@ export class Layout extends Stateful {
         // Note: cloning here will cause any history to get squashed into the base config
         const cache = state.importsCache[id] = source.clone().encode()
         Storage.set(State.key(id), cache)
+        State.add(id)
       } else {
         delete state.importsCache[id]
       }
