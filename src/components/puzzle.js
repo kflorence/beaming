@@ -114,11 +114,22 @@ export class Puzzle {
     ])
   }
 
+  centerOnImport (id) {
+    const imports = this.layout.getImports()
+    const ref = imports[id]
+
+    if (ref) {
+      this.centerOnTile(ref.offset.r, ref.offset.c)
+    }
+  }
+
   // Used by functional tests
   centerOnTile (r, c) {
     const tile = this.layout.getTile(new OffsetCoordinates(r, c))
-    View.setCenter(tile.center)
-    return tile.equals(this.selectedTile)
+    if (tile) {
+      View.setCenter(tile.center)
+      return tile.equals(this.selectedTile)
+    }
   }
 
   clearDebugPoints () {
@@ -451,9 +462,16 @@ export class Puzzle {
     }
   }
 
-  #onBack (event) {
-    // TODO
-    console.log(event)
+  #onBack () {
+    const id = this.state.getId()
+    const parentId = State.getParent(id)
+    this.centerOnTile(0, 0)
+
+    // Slight pause so the user can see the tile being centered on
+    setTimeout(() => {
+      this.select(parentId)
+      this.centerOnImport(id)
+    }, 250)
   }
 
   #onBeamUpdate (event) {

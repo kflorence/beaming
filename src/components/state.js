@@ -457,6 +457,10 @@ export class State {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
 
+    if (!state && !params.has(State.ParamKeys.Edit)) {
+      throw new Error(`Could not resolve state for puzzle ID ${id}.`)
+    }
+
     // Return an empty state if all else fails
     return state ?? new State(id)
   }

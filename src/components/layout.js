@@ -10,6 +10,7 @@ import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
 import { classToString } from './util.js'
 import { ModifierFilter } from './modifier.js'
+import { Storage } from './storage.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -88,7 +89,8 @@ export class Layout extends Stateful {
         // Include the imported puzzle's configuration in the current puzzle's configuration.
         // This is only necessary for custom puzzles, since official puzzles can be loaded from configuration.
         // Note: cloning here will cause any history to get squashed into the base config
-        state.importsCache[id] = source.clone().encode()
+        const cache = state.importsCache[id] = source.clone().encode()
+        Storage.set(State.key(id), cache)
       } else {
         delete state.importsCache[id]
       }

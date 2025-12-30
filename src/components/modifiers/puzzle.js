@@ -21,15 +21,13 @@ export class PuzzleModifier extends Modifier {
     // Set the parent of the puzzle we are entering to the current puzzle
     State.setParent(state.puzzleId, puzzle.state.getId())
 
-    const imports = puzzle.layout.getImports()
-    const ref = imports[state.puzzleId]
+    puzzle.centerOnImport(state.puzzleId)
 
-    if (ref) {
-      // Entering an imported puzzle
-      puzzle.centerOnTile(ref.offset.r, ref.offset.c)
-    }
-
-    puzzle.select(state.puzzleId)
+    // Slight pause so the user can see the tile being centered on
+    setTimeout(() => {
+      puzzle.select(state.puzzleId)
+      puzzle.centerOnTile(0, 0)
+    }, 250)
   }
 
   static Schema = Object.freeze(merge([
