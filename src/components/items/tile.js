@@ -169,7 +169,7 @@ export class Tile extends Item {
       )
       const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
       const icon = modifier.getIcon()
-      const item = icon.symbol.place(position, { style })
+      const item = icon.symbol.place(position, { locked: true, style })
       item.data = { id: modifier.id, name: icon.symbol.name, type: modifier.type }
       const childIndex = this.group.children.findIndex((item) => item.data.id === modifier.id)
       if (childIndex >= 0) {

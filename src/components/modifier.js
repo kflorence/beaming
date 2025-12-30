@@ -7,7 +7,8 @@ import { Schema } from './schema'
 import { Filter } from './filter.js'
 import { Tile } from './items/tile.js'
 
-const menu = document.getElementById('puzzle-footer-menu')
+const layoutModifiers = document.getElementById('modifiers-layout')
+const tileModifiers = document.getElementById('modifiers-tile')
 
 export class Modifier extends Stateful {
   #container
@@ -61,7 +62,11 @@ export class Modifier extends Stateful {
       { type: 'pointerup', handler: this.onPointerUp }
     ], { element: li })
 
-    menu.append(li)
+    if (this.parent) {
+      tileModifiers.append(li)
+    } else {
+      layoutModifiers.append(li)
+    }
   }
 
   isDisabled () {
@@ -70,10 +75,17 @@ export class Modifier extends Stateful {
       this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
       // The modifier requires an interactable item but the tile doesn't have any
       (this.requiresItem && !this.tile?.items.some((item) => item.type !== Item.Types.Beam)) ||
-      // This is a global modifier and the tile is locked
-      (!this.parent && this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock)) ||
-      // This is a global modifier and the tile already has the maximum number of modifiers stuck to it
-      (!this.parent && this.tile?.modifiers.length === Tile.MaxModifiers)
+      // This is a global modifier
+      (
+        !this.parent && (
+          // And the tile is locked
+          (!this.parent && this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock)) ||
+          // And the tile contains a modifier of this type already
+          this.tile?.modifiers.some((modifier) => modifier.type === this.type) ||
+          // And the tile already has the maximum number of modifiers stuck to it
+          (!this.parent && this.tile?.modifiers.length === Tile.MaxModifiers)
+        )
+      )
   }
 
   isStuck (tile) {

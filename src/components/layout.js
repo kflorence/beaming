@@ -240,6 +240,7 @@ export class Layout extends Stateful {
   }
 
   getState () {
+    // This should only be referenced for things that are static
     const config = super.getState()
 
     const tiles = {}
@@ -266,8 +267,8 @@ export class Layout extends Stateful {
       state.tiles = tiles
     }
 
-    if (config.modifiers.length) {
-      state.modifiers = config.modifiers
+    if (this.modifiers.length) {
+      state.modifiers = this.modifiers.map((modifier) => modifier.getState())
     }
 
     return state

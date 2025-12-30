@@ -2,6 +2,7 @@ import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
 import { Icons } from '../icon.js'
+import { Item } from '../item.js'
 
 export class Move extends Modifier {
   #mask
@@ -10,7 +11,9 @@ export class Move extends Modifier {
 
   attach (tile) {
     super.attach(tile)
-    this.update({ disabled: !tile.items.some(Move.movable) })
+    if (!this.disabled) {
+      this.update({ disabled: !tile?.items.some(Move.movable) })
+    }
   }
 
   getIcon () {
@@ -48,8 +51,13 @@ export class Move extends Modifier {
   }
 
   tileFilter (tile) {
-    // Never mask current tile
-    return !tile.equals(this.tile) && !tile.items.some(Move.movable)
+    // Don't mask the current tile
+    return !tile.equals(this.tile) && (
+      // Mask tiles that contain modifiers which make moving items to that tile invalid
+      tile.modifiers.some((modifier) => Move.InvalidModifierTypes.includes(modifier.type)) ||
+      // Tile is already occupied by an item
+      tile.items.some((item) => !Move.ExcludeItemTypes.includes(item.type))
+    )
   }
 
   #maskOnTap (puzzle, tile) {
@@ -70,6 +78,12 @@ export class Move extends Modifier {
   static movable (item) {
     return item.isMovable()
   }
+
+  // A tile with these items will not prevent moving items to that tile
+  static ExcludeItemTypes = [Item.Types.Beam, Item.Types.Wall]
+
+  // A tile with these modifiers will prevent moving items to that tile
+  static InvalidModifierTypes = [Modifier.Types.Immutable, Modifier.Types.Lock]
 
   static Schema = Object.freeze(Modifier.schema(Modifier.Types.Move))
 }

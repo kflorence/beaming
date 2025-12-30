@@ -14,7 +14,9 @@ export class Rotate extends Modifier {
 
   attach (tile) {
     super.attach(tile)
-    this.update({ disabled: !tile.items.some(Rotate.rotatable) })
+    if (!this.disabled) {
+      this.update({ disabled: !tile?.items.some(Rotate.rotatable) })
+    }
   }
 
   getIcon () {

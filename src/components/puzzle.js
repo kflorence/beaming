@@ -30,6 +30,7 @@ import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
 import { ModifierItem } from './items/modifier.js'
+import { Icons } from './icon.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -317,11 +318,13 @@ export class Puzzle {
 
     this.reload(State.resolve(id))
 
+    id = this.state.getId()
+
     // Show 'back' button if the loaded puzzle has a parent puzzle
     elements.back.classList.toggle('hide', State.getParent(id) === null)
 
     // Can't remove puzzles that exist in configuration
-    elements.delete.classList.toggle('hide', Puzzles.has(this.state.getId()))
+    elements.delete.classList.toggle('hide', Puzzles.has(id))
   }
 
   tap (event) {
@@ -422,8 +425,8 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return this.layout.modifiers.concat(tile?.modifiers ?? [])
-      .sort((a, b) => a.id - b.id)
+    return (tile?.modifiers ?? []).concat(this.layout.modifiers)
+    // .sort((a, b) => a.id - b.id)
   }
 
   #onAddModifier (event) {
@@ -503,14 +506,17 @@ export class Puzzle {
     const modifier = event.detail.modifier
     const tile = event.detail.tile
 
-    if (modifier.isStuck()) {
+    const selectedTile = event.detail.selectedTile
+
+    if (modifier.isStuck(tile)) {
       this.layout.removeModifier(modifier)
       modifier.move(tile)
-      this.#getModifiers(tile).forEach((modifier) => modifier.update())
       console.debug('Modifier is stuck to tile', modifier, tile)
+      if (!selectedTile) {
+        this.#updateModifiers(this.selectedTile)
+      }
     }
 
-    const selectedTile = event.detail.selectedTile
     if (selectedTile) {
       this.updateSelectedTile(selectedTile)
     }
@@ -573,12 +579,7 @@ export class Puzzle {
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
 
-    const span = document.createElement('span')
-    span.classList.add(Puzzle.ClassNames.Icon)
-    span.textContent = 'celebration'
-    span.title = 'Solved!'
-
-    elements.headerMessage.replaceChildren(p, span)
+    elements.headerMessage.replaceChildren(p, Icons.Solved.getElement())
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)

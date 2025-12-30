@@ -40,6 +40,7 @@ export const Icons = Object.freeze({
   Puzzle: new Icon('puzzle-piece', Icon.Weights.Fill, Symbols.Puzzle, 'Puzzle'),
   RotateLeft: new Icon('arrow-counter-clockwise', Icon.Weights.Bold, Symbols.RotateLeft, 'Rotate Left'),
   RotateRight: new Icon('arrow-clockwise', Icon.Weights.Bold, Symbols.RotateRight, 'Rotate Right'),
+  Solved: new Icon('confetti', Icon.Weights.Bold, null, 'Solved'),
   StickyItems: new Icon('sticker', Icon.Weights.Fill, Symbols.StickyItems, 'Sticky Items'),
   StickyModifiers: new Icon('push-pin', Icon.Weights.Fill, Symbols.StickyModifiers, 'Sticky Modifiers'),
   Swap: new Icon('swap', Icon.Weights.Bold, Symbols.Swap, 'Swap'),

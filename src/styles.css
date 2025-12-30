@@ -575,24 +575,24 @@ dialog ul {
   display: flex;
 }
 
-#puzzle-footer-menu {
-  display: flex;
-  flex-wrap: wrap;
-  user-select: none;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
-}
-
-#puzzle-footer-menu li {
-  border: 1px solid #ddd;
-  margin: 0 0 -1px -1px;
-}
-
 #puzzle-footer-wrapper,
 #puzzle-header-wrapper {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+#puzzle-footer-wrapper .menu {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0.5em;
+  user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
+}
+
+#puzzle-footer-wrapper .menu:empty {
+  display: none;
 }
 
 #puzzle-header-message {
@@ -602,7 +602,6 @@ dialog ul {
 #select {
   appearance: none;
   border: none;
-  border-left: 1px solid #ddd;
   cursor: pointer;
   display: block;
   font-size: 1em;

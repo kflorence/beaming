@@ -66,6 +66,10 @@ export class Item extends Stateful {
     return this.group.layer
   }
 
+  isMovable () {
+    return false
+  }
+
   isStuck () {
     return this.immutable ||
       this.parent.modifiers.some((modifier) => Item.StickyModifierTypes.includes(modifier.type))
