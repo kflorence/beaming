@@ -11,7 +11,7 @@ describe('Puzzle 001', function () {
   it('should be solved', async function () {
     await puzzle.solve([
       { type: 'tile-select', tile: '1,-1' },
-      { type: 'modifier-invoke', modifier: 'Toggle' }
+      { type: 'modifier-invoke', modifier: 'toggle' }
     ])
 
     assert(await puzzle.isSolved())

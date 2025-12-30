@@ -1,56 +1,19 @@
-import { capitalize, getIconElement, getTextElement, merge } from './util'
+import { classToString, getTextElement, merge } from './util'
 import { Terminus } from './items/terminus'
 import { EventListeners } from './eventListeners'
 import { Puzzle } from './puzzle'
 import { Schema } from './schema'
+import { Icons } from './icon.js'
 
-export class Solution {
-  #conditions = []
+const element = document.getElementById('puzzle-requirements')
 
-  constructor (state = []) {
-    state.forEach((condition) => this.#conditionFactory(condition))
-  }
-
-  teardown () {
-    this.#conditions.forEach((condition) => condition.teardown())
-    Solution.element.replaceChildren()
-  }
-
-  isSolved () {
-    return this.#conditions.length > 0 && this.#conditions.every((condition) => condition.isMet())
-  }
-
-  #conditionFactory (condition) {
-    switch (condition.type) {
-      case SolutionCondition.Types.connections: {
-        this.#conditions.push(new Connections(condition))
-        break
-      }
-      case SolutionCondition.Types.moves: {
-        this.#conditions.push(new Moves(condition))
-        break
-      }
-      default: {
-        console.warn('Ignoring condition with unknown type:', condition.type)
-        break
-      }
-    }
-  }
-
-  static schema (type) {
-    return Schema.typed('solutions', type)
-  }
-
-  static element = document.getElementById('puzzle-solution')
-}
-
-class SolutionCondition {
+class Requirement {
   constructor (state, elements) {
     this.state = state
 
     const li = document.createElement('li')
     li.append(...elements)
-    Solution.element.append(li)
+    element.append(li)
   }
 
   isMet () {}
@@ -59,13 +22,60 @@ class SolutionCondition {
 
   update () {}
 
-  static Types = Object.freeze(Object.fromEntries([
-    'connections',
-    'moves'
-  ].map((type) => [type, capitalize(type)])))
+  static Types = Object.freeze({
+    Connections: 'connections',
+    Moves: 'moves'
+  })
+
+  static schema (type) {
+    return Schema.typed('requirement', type)
+  }
 }
 
-class Connections extends SolutionCondition {
+export class Requirements {
+  #requirements = []
+
+  constructor (state = []) {
+    state.forEach((condition) => this.#factory(condition))
+  }
+
+  teardown () {
+    this.#requirements.forEach((requirement) => requirement.teardown())
+    element.replaceChildren()
+  }
+
+  areMet () {
+    return this.#requirements.length > 0 && this.#requirements.every((requirement) => requirement.isMet())
+  }
+
+  #factory (state) {
+    switch (state.type) {
+      case Requirement.Types.Connections: {
+        this.#requirements.push(new ConnectionsRequirement(state))
+        break
+      }
+      case Requirement.Types.Moves: {
+        this.#requirements.push(new MovesRequirement(state))
+        break
+      }
+      default: {
+        console.warn('Ignoring requirement with unknown type:', state.type)
+        break
+      }
+    }
+  }
+
+  static schema = () => Object.freeze({
+    $id: Schema.$id('requirements'),
+    items: {
+      anyOf: [ConnectionsRequirement.schema(), MovesRequirement.schema()],
+      headerTemplate: 'requirement {{i1}}'
+    },
+    type: 'array'
+  })
+}
+
+class ConnectionsRequirement extends Requirement {
   #completed
   #eventListeners = new EventListeners({ context: this })
   #connections = []
@@ -81,7 +91,7 @@ class Connections extends SolutionCondition {
       completed,
       getTextElement('/'),
       required,
-      getIconElement('link', 'Connections')
+      Icons.Connections.getElement()
     ]
 
     super(state, elements)
@@ -104,7 +114,7 @@ class Connections extends SolutionCondition {
   }
 
   update (event) {
-    console.debug('Connections.update', event)
+    console.debug(ConnectionsRequirement.toString('update'), event)
 
     const terminus = event.detail.terminus
     const opening = event.detail.opening
@@ -120,7 +130,7 @@ class Connections extends SolutionCondition {
     this.#completed.textContent = this.#connections.length.toString()
   }
 
-  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.connections), {
+  static schema = () => Object.freeze(merge(Requirement.schema(Requirement.Types.Connections), {
     properties: {
       amount: {
         minimum: 0,
@@ -129,18 +139,20 @@ class Connections extends SolutionCondition {
     },
     required: ['amount']
   }))
+
+  static toString = classToString('ConnectionsRequirement')
 }
 
-class Moves extends SolutionCondition {
+class MovesRequirement extends Requirement {
   #completed
   #eventListeners = new EventListeners({ context: this })
   #moves = 0
 
   constructor (state) {
-    state.operator ??= Moves.Operators.equalTo
+    state.operator ??= MovesRequirement.Operators.equalTo
 
-    if (!Object.values(Moves.Operators).includes(state.operator)) {
-      throw new Error(`Invalid moves operator: ${state.operator}`)
+    if (!Object.values(MovesRequirement.Operators).includes(state.operator)) {
+      throw new Error(`Invalid MovesRequirement operator: ${state.operator}`)
     }
 
     const completed = document.createElement('span')
@@ -153,7 +165,7 @@ class Moves extends SolutionCondition {
       completed,
       getTextElement(state.operator),
       required,
-      getIconElement('stacks', 'Moves')
+      Icons.Moves.getElement()
     ]
 
     super(state, elements)
@@ -165,11 +177,11 @@ class Moves extends SolutionCondition {
   isMet () {
     // TODO: support 'between' syntax like 2 < 3 < 4 ?
     switch (this.state.operator) {
-      case Moves.Operators.equalTo:
+      case MovesRequirement.Operators.equalTo:
         return this.#moves === this.state.amount
-      case Moves.Operators.greaterThan:
+      case MovesRequirement.Operators.greaterThan:
         return this.#moves > this.state.amount
-      case Moves.Operators.lessThan:
+      case MovesRequirement.Operators.lessThan:
         return this.#moves < this.state.amount
     }
   }
@@ -180,7 +192,7 @@ class Moves extends SolutionCondition {
   }
 
   update (event) {
-    console.debug('Moves.update', event)
+    console.debug(MovesRequirement.toString('update'), event)
     this.#moves = event.detail.state.moves().length
     this.#completed.textContent = this.#moves.toString()
   }
@@ -191,26 +203,19 @@ class Moves extends SolutionCondition {
     lessThan: '<'
   })
 
-  static Schema = Object.freeze(merge(Solution.schema(SolutionCondition.Types.moves), {
+  static schema = () => Object.freeze(merge(Requirement.schema(Requirement.Types.Moves), {
     properties: {
       amount: {
         minimum: 0,
         type: 'number'
       },
       operator: {
-        enum: Object.values(Moves.Operators),
+        enum: Object.values(MovesRequirement.Operators),
         type: 'string'
       }
     },
     required: ['amount']
   }))
-}
 
-Solution.Schema = Object.freeze({
-  $id: Schema.$id('solution'),
-  items: {
-    anyOf: [Connections.Schema, Moves.Schema],
-    headerTemplate: 'solution {{i1}}'
-  },
-  type: 'array'
-})
+  static toString = classToString('MovesRequirement')
+}

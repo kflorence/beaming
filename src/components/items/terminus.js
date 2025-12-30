@@ -241,7 +241,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       this.toggled = !this.toggled
     }
 
-    static Schema = Object.freeze({
+    static schema = () => Object.freeze({
       $id: Schema.$id('terminus', 'opening'),
       properties: {
         color: Schema.color,
@@ -267,15 +267,15 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     Disconnection: 'terminus-disconnection'
   })
 
-  static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.terminus),
-    movable.Schema,
-    rotatable.Schema,
-    toggleable.Schema,
+  static schema = () => Object.freeze(merge([
+    Item.schema(Item.Types.Terminus),
+    movable.schema(),
+    rotatable.schema(),
+    toggleable.schema(),
     {
       properties: {
         openings: {
-          items: Terminus.Opening.Schema,
+          items: Terminus.Opening.schema(),
           minItems: 0,
           maxItems: 6,
           type: 'array'

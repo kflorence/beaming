@@ -28,7 +28,7 @@ export class Beam extends Item {
   constructor (terminus, state) {
     // Exclude from modification
     state.immutable = true
-    state.type = Item.Types.beam
+    state.type = Item.Types.Beam
 
     super(...arguments)
 
@@ -582,7 +582,7 @@ export class Beam extends Item {
     }
   }
 
-  #getCollisions (items, currentStep, nextStep, puzzle) {
+  #getCollisions (items, currentStep, nextStep) {
     const segments = [currentStep.point, nextStep.point]
     const path = new Path({ segments })
     const firstPoint = segments[0]
@@ -599,7 +599,7 @@ export class Beam extends Item {
 
         // Handle the edge case of colliding with a beam with a single, isolated path item.
         // This will happen in the case of a portal exit collision, for example.
-        if (!points.length && item.type === Item.Types.beam && item !== this) {
+        if (!points.length && item.type === Item.Types.Beam && item !== this) {
           points.push(
             ...item.getSteps().map((step) => step.point)
               .filter((point) => segments.some((segment) => fuzzyEquals(point, segment)))

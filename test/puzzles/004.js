@@ -11,9 +11,9 @@ describe('Puzzle 004', function () {
   it('should be solved', async function () {
     await puzzle.solve([
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Rotate', options: { times: 3 } },
+      { type: 'modifier-invoke', modifier: 'rotate', options: { times: 3 } },
       { type: 'tile-select', tile: '1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '-1,-1' }
     ])
 

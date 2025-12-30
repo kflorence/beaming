@@ -25,8 +25,11 @@ body {
 }
 
 button {
-  cursor: pointer;
   font-family: 'Noto Sans Mono Variable', monospace;
+
+  &:not(:disabled,.disabled) {
+    cursor: pointer;
+  }
 }
 
 code {
@@ -47,10 +50,21 @@ details > summary {
   font-weight: bold;
 }
 
+i {
+  font-size: 24px;
+  letter-spacing: normal;
+  text-transform: none;
+  user-select: none;
+  vertical-align: middle;
+  white-space: nowrap;
+  word-wrap: normal;
+}
+
 input {
   cursor: pointer;
 }
 
+#editor-new,
 #title-settings,
 #title-quit {
   display: none;
@@ -72,17 +86,30 @@ dialog {
   box-sizing: border-box;
   display: none;
   flex-direction: column;
+  outline: none;
+  overflow: auto;
+  padding: 1em;
+  position: fixed;
+}
+
+dialog.fullscreen {
   height: 100vh;
   left: 0;
   margin: 0;
   max-height: 100vh;
   max-width: 100vw;
-  outline: none;
-  overflow: auto;
-  padding: 1em;
-  position: fixed;
   top: 0;
   width: 100vw;
+}
+
+dialog.confirm {
+  border: 1px solid #666;
+  border-radius: 0.25em;
+  filter: drop-shadow(0 0.25em 0.25rem #ccc);
+
+  button {
+    margin: 0 0.5em;
+  }
 }
 
 dialog[open] {
@@ -272,11 +299,12 @@ dialog ul {
   z-index: 1;
 }
 
+.edit #debug,
 .debug #debug {
   display: block;
 }
 
-.debug #debug:empty {
+#debug:empty {
   display: none;
 }
 
@@ -312,6 +340,14 @@ dialog ul {
   margin-top: 1em;
 }
 
+#editor .empty .je-indented-panel {
+  display: none;
+}
+
+#editor .je-checkbox {
+  margin: 0 10px 0 0;
+}
+
 #editor .je-header {
   display: flex;
   font-weight: bold;
@@ -330,7 +366,7 @@ dialog ul {
   padding: 1em 0 1em 1em;
 }
 
-#editor .je-indented-panel > .je-switcher {
+#editor .je-indented-panel .je-switcher {
   margin-left: 1em;
 }
 
@@ -348,11 +384,17 @@ dialog ul {
 }
 
 #editor .je-textarea {
+  padding: 0.25em;
   width: calc(100% - 1em);
 }
 
 #editor .row {
   line-height: 32px;
+}
+
+#editor .row p {
+  margin-left: 1em;
+  line-height: normal;
 }
 
 #editor-configuration {
@@ -533,19 +575,6 @@ dialog ul {
   display: flex;
 }
 
-#puzzle-footer-menu {
-  display: flex;
-  flex-wrap: wrap;
-  user-select: none;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
-}
-
-#puzzle-footer-menu li {
-  border: 1px solid #ddd;
-  margin: 0 0 -1px -1px;
-}
-
 #puzzle-footer-wrapper,
 #puzzle-header-wrapper {
   display: flex;
@@ -553,10 +582,31 @@ dialog ul {
   justify-content: center;
 }
 
+#puzzle-footer-wrapper .menu {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0.5em;
+  user-select: none;
+  /* For iOS/Safari. */
+  -webkit-user-select: none;
+}
+
+#puzzle-footer-wrapper .menu:empty {
+  display: none;
+}
+
+#puzzle-header-action-menu li {
+  border-left: 1px solid #ddd;
+  border-right: none;
+}
+
+#puzzle-header-message {
+  background-color: white;
+}
+
 #select {
   appearance: none;
   border: none;
-  border-left: 1px solid #ddd;
   cursor: pointer;
   display: block;
   font-size: 1em;
@@ -589,18 +639,19 @@ dialog ul {
 }
 
 #selector svg {
+  pointer-events: none;
   position: absolute;
   right: 0.75rem;
   top: calc(50% - 5px);
 }
 
-#puzzle-solution {
+#puzzle-requirements {
   align-items: center;
   cursor: default;
   line-height: 24px;
 }
 
-#puzzle-solution .icon {
+#puzzle-requirements i {
   margin-left: 0.5em;
 }
 
@@ -638,7 +689,10 @@ dialog ul {
 .button:hover {
   background-color: #ddd;
   border-color: #aaa;
-  cursor: pointer;
+
+  &:not(:disabled,.disabled) {
+    cursor: pointer;
+  }
 }
 
 .buttons {
@@ -668,6 +722,7 @@ dialog ul {
   color: #999;
 }
 
+.edit #editor-new,
 .edit #editor-wrapper,
 .edit #gutter,
 .edit #puzzle-title {
@@ -676,6 +731,10 @@ dialog ul {
 
 .edit #puzzle {
   visibility: visible;
+}
+
+.edit #puzzle-header-wrapper .menu:last-child {
+  border-left: #ddd 1px solid;
 }
 
 .electron {
@@ -728,66 +787,6 @@ dialog ul {
   display: none !important;
 }
 
-/* See: https://developers.google.com/fonts/docs/material_icons */
-i,
-.icon {
-  direction: ltr;
-  display: inline-block;
-  /*noinspection CssNoGenericFontName*/
-  font-family: 'Material Symbols Outlined Variable';
-  font-size: 24px;
-  font-style: normal;
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-  font-weight: normal;
-  letter-spacing: normal;
-  line-height: 1;
-  min-height: 24px;
-  overflow: hidden;
-  text-transform: none;
-  user-select: none;
-  vertical-align: middle;
-  white-space: nowrap;
-  width: 24px;
-  word-wrap: normal;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-  /* For iOS/Safari. */
-  -webkit-user-select: none;
-}
-
-i.fill,
-.icon.fill {
-  font-variation-settings:
-    'FILL' 1,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-}
-
-.icon-arrow-down:before {
-  content: 'arrow_downward'
-}
-
-.icon-arrow-up:before {
-  content: 'arrow_upward'
-}
-
-.icon-minus:before {
-  content: 'remove'
-}
-
-.icon-plus:before {
-  content: 'add'
-}
-
-.icon-trash:before {
-  content: 'delete'
-}
-
 .menu {
   align-items: stretch;
   display: flex;
@@ -830,6 +829,8 @@ i.fill,
 
 .menu li a {
   color: black;
+  display: flex;
+  text-decoration: none;
 }
 
 .message {
@@ -893,7 +894,7 @@ i.fill,
   cursor: default;
 }
 
-.puzzle-solved footer {
+.puzzle-solved #puzzle-footer {
   display: none;
 }
 

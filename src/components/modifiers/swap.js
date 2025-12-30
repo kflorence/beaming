@@ -1,10 +1,13 @@
 import { Move } from './move'
 import { Modifier } from '../modifier'
-import { Icons } from '../icons'
+import { Icons } from '../icon.js'
 
 export class Swap extends Move {
-  name = Icons.Swap.name
   title = 'Swap'
+
+  getIcon () {
+    return Icons.Swap
+  }
 
   moveItems (tile) {
     const toItems = tile.items.filter(Move.movable)
@@ -31,5 +34,5 @@ export class Swap extends Move {
     )
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.swap))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Swap))
 }

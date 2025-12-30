@@ -1,13 +1,14 @@
-import { capitalize, emitEvent, uniqueId } from './util'
+import { emitEvent, merge, uniqueId } from './util'
 import { Stateful } from './stateful'
 import { EventListeners } from './eventListeners'
 import { Interact } from './interact'
 import { Item } from './item'
-import { Icons } from './icons'
-import { Tile } from './items/tile'
 import { Schema } from './schema'
+import { Filter } from './filter.js'
+import { Tile } from './items/tile.js'
 
-const menu = document.getElementById('puzzle-footer-menu')
+const layoutModifiers = document.getElementById('modifiers-layout')
+const tileModifiers = document.getElementById('modifiers-tile')
 
 export class Modifier extends Stateful {
   #container
@@ -17,11 +18,10 @@ export class Modifier extends Stateful {
 
   configuration
   element
-  disabled = false
   immutable = false
   index
-  name
   parent
+  requiresItem = true
   tile
   title
   type
@@ -43,32 +43,13 @@ export class Modifier extends Stateful {
   attach (tile) {
     this.tile = tile
 
-    // Disable by default if: modifier is immutable
-    this.disabled = this.immutable ||
-      // The tile contains an immutable modifier
-      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.immutable) ||
-      // The tile has no interactable items
-      !this.tile?.items.some((item) => item.type !== Item.Types.beam) ||
-      (
-        // The tile being attached to is not this modifier's parent
-        !this.tile?.equals(this.parent) && (
-          // The tile contains another modifier of this type already
-          this.tile.modifiers.some((modifier) => modifier.type === this.type) ||
-          // The tile already contains the max number of modifiers
-          this.tile?.modifiers.length === Tile.MaxModifiers
-        )
-      )
-
     const li = this.#container = document.createElement('li')
 
     li.classList.add(['modifier', this.type.toLowerCase()].join('-'))
     li.dataset.id = this.id.toString()
 
-    const span = this.element = document.createElement('span')
-
-    span.classList.add('icon', 'fill')
-
-    li.append(span)
+    this.element = this.getIcon().getElement()
+    li.append(this.element)
 
     this.update()
 
@@ -78,7 +59,41 @@ export class Modifier extends Stateful {
       { type: 'pointerup', handler: this.onPointerUp }
     ], { element: li })
 
-    menu.append(li)
+    if (this.parent) {
+      tileModifiers.append(li)
+    } else {
+      layoutModifiers.append(li)
+    }
+  }
+
+  isDisabled () {
+    return this.immutable ||
+      // The tile contains an immutable modifier
+      this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Immutable) ||
+      // The modifier requires an interactable item but the tile doesn't have any
+      (this.requiresItem && !this.tile?.items.some((item) => item.type !== Item.Types.Beam)) ||
+      // This is a global modifier
+      (
+        !this.parent && (
+          // And the tile is locked
+          (!this.parent && this.tile?.modifiers.some((modifier) => modifier.type === Modifier.Types.Lock)) ||
+          // And the tile contains a modifier of this type already
+          this.tile?.modifiers.some((modifier) => modifier.type === this.type) ||
+          // And the tile already has the maximum number of modifiers stuck to it
+          (!this.parent && this.tile?.modifiers.length === Tile.MaxModifiers)
+        )
+      )
+  }
+
+  isStuck (tile) {
+    return (
+      // Modifier does not belong to a tile
+      !this.parent &&
+      // Tile has sticky modifiers
+      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyModifiers) &&
+      // Tile has less than the maximum number of modifiers
+      tile.modifiers.length < Tile.MaxModifiers
+    )
   }
 
   /**
@@ -104,21 +119,12 @@ export class Modifier extends Stateful {
     return other instanceof Modifier && this.id === other.id
   }
 
-  getSymbol () {
-    return Icons.ByName[this.name]
-  }
+  getIcon () {}
 
   move (tile) {
     this.parent?.removeModifier(this)
     this.parent = tile
     tile?.addModifier(this)
-  }
-
-  moveFilter (tile) {
-    // Mask immutable tiles
-    return tile.modifiers.some(Modifier.immutable) ||
-      // Mask tiles that only contain immutable items
-      tile.items.every(Item.immutable)
   }
 
   onPointerDown (event) {
@@ -145,50 +151,57 @@ export class Modifier extends Stateful {
           break
         }
       }
-
-      // Keep the tile icon in sync
-      this.parent?.updateIcon(this)
     }
 
     this.#down = false
   }
 
-  onTap () {}
+  onInvoked (puzzle, event) {}
+
+  onTap (event, detail) {
+    this.dispatchEvent(Modifier.Events.Invoked, detail)
+  }
 
   onToggle () {
     Interact.vibrate()
   }
 
   toString () {
-    return [this.name, this.id].join(':')
+    return [this.type, this.id].join(':')
   }
 
-  update (options) {
-    options = Object.assign(
-      { disabled: this.disabled, name: this.name, title: this.title },
-      options || {}
-    )
-
-    if (!this.immutable) {
-      this.disabled = options.disabled
-    }
-
-    this.name = options.name
-    this.title = options.title
+  update (options = {}) {
+    this.disabled = (this.isDisabled() || options.disabled) ?? false
+    this.title = options.title ?? this.title
 
     if (this.#container) {
       this.#container.classList.toggle('disabled', this.disabled)
-      this.element.textContent = this.name
+      this.element.className = this.getIcon().className
       this.element.title = this.title
+
+      // Keep the tile icon in sync
+      this.parent?.updateIcon(this)
     }
   }
 
   static immutable (modifier) {
-    return modifier.type === Modifier.Types.immutable
+    return modifier.type === Modifier.Types.Immutable
   }
 
   static schema (type) {
-    return Schema.typed('modifiers', type)
+    return merge(Schema.typed('modifiers', type), {
+      properties: {
+        filters: {
+          items: {
+            anyOf: [
+              ModifierFilterImportSeen.schema
+            ],
+            headerTemplate: 'filter {{i1}}'
+          },
+          type: 'array'
+        }
+      }
+    })
   }
 
   static Events = Object.freeze({
@@ -197,12 +210,64 @@ export class Modifier extends Stateful {
     Toggled: 'modifier-toggled'
   })
 
-  static Types = Object.freeze(Object.fromEntries([
-    'immutable',
-    'lock',
-    'move',
-    'rotate',
-    'swap',
-    'toggle'
-  ].map((type) => [type, capitalize(type)])))
+  static Types = Object.freeze({
+    Immutable: 'immutable',
+    Lock: 'lock',
+    Move: 'move',
+    Puzzle: 'puzzle',
+    Rotate: 'rotate',
+    StickyItems: 'sticky-items',
+    StickyModifiers: 'sticky-modifiers',
+    Swap: 'swap',
+    Toggle: 'toggle'
+  })
+}
+
+export class ModifierFilter extends Filter {
+  static factory (state) {
+    switch (true) {
+      case state.type === ModifierFilter.Types.Import && state.name === ModifierFilter.Names.Seen: {
+        return new ModifierFilterImportSeen(state)
+      }
+      default:
+        throw new Error(`Unknown filter: ${state.type}, ${state.name}.`)
+    }
+  }
+
+  static schema (type, name) {
+    return super.schema('modifier', type, name)
+  }
+
+  static Names = Object.freeze({
+    Seen: 'seen'
+  })
+
+  static Types = Object.freeze({
+    Import: 'import'
+  })
+}
+
+export class ModifierFilterImportSeen extends ModifierFilter {
+  apply (state, layout) {
+    return this.state.seen === layout.getImports()[this.state.importId]?.seen ?? false
+  }
+
+  static Name = ModifierFilter.Names.Seen
+  static Type = ModifierFilter.Types.Import
+
+  static schema = () => Object.freeze(merge(
+    ModifierFilter.schema(this.Type, this.Name),
+    {
+      properties: {
+        importId: {
+          type: 'string'
+        },
+        seen: {
+          default: true,
+          type: 'boolean'
+        }
+      },
+      required: ['importId', 'seen']
+    }
+  ))
 }

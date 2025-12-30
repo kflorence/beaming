@@ -1,3 +1,4 @@
+import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import paper from 'paper'
@@ -9,12 +10,13 @@ import { EventListeners } from './eventListeners'
 import { Keys } from '../electron/settings/keys.js'
 
 const elements = Object.freeze({
-  back: document.getElementById('back'),
+  delete: document.getElementById('delete'),
+  dialog: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
   select: document.getElementById('select'),
-  title: document.getElementById('dialog-title')
+  title: document.getElementById('title')
 })
 
 export class Game {
@@ -29,10 +31,11 @@ export class Game {
 
     this.#eventListeners.add([
       { type: 'change', element: elements.select, handler: this.#onSelect },
-      { type: 'click', element: elements.back, handler: this.back },
+      { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
       { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit },
+      { type: 'click', element: elements.title, handler: this.title },
       { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
@@ -43,21 +46,13 @@ export class Game {
     } else if (params.has(Game.States.Edit)) {
       this.edit()
     } else {
-      elements.title.showModal()
-    }
-  }
-
-  back () {
-    if (elements.title.open) {
-      elements.title.close()
-    } else {
-      elements.title.showModal()
+      elements.dialog.showModal()
     }
   }
 
   edit () {
     if (document.body.classList.contains(Game.States.Edit)) {
-      elements.title.close()
+      elements.dialog.close()
       return
     } else if (document.body.classList.contains(Game.States.Play)) {
       this.#reset()
@@ -69,12 +64,12 @@ export class Game {
 
     this.editor.select()
 
-    elements.title.close()
+    elements.dialog.close()
   }
 
   play () {
     if (document.body.classList.contains(Game.States.Play)) {
-      elements.title.close()
+      elements.dialog.close()
       return
     } else if (document.body.classList.contains(Game.States.Edit)) {
       this.#reset()
@@ -87,19 +82,38 @@ export class Game {
     this.puzzle.resize()
 
     document.body.classList.add(Game.States.Play)
-    elements.title.close()
+    elements.dialog.close()
   }
 
   quit () {
     window.electron?.quit()
   }
 
-  #onSelect (event) {
+  select (id) {
     if (params.has(Game.States.Play)) {
-      this.puzzle.select(event.target.value)
+      this.puzzle.select(id)
     } else if (params.has(Game.States.Edit)) {
-      this.editor.select(event.target.value)
+      this.editor.select(id)
     }
+  }
+
+  title () {
+    if (elements.dialog.open) {
+      elements.dialog.close()
+    } else {
+      elements.dialog.showModal()
+    }
+  }
+
+  #onDelete () {
+    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', () => {
+      const ids = State.delete(this.puzzle.state.getId())
+      this.select(ids[ids.length - 1])
+    })
+  }
+
+  #onSelect (event) {
+    this.select(event.target.value)
   }
 
   async #onSettingsCacheClear (event) {

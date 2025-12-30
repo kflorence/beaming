@@ -1,18 +1,37 @@
 import { Modifier } from '../modifier'
 import { Puzzle } from '../puzzle'
 import { emitEvent } from '../util'
-import { Item } from '../item'
-import { Icons } from '../icons'
+import { Icons } from '../icon.js'
+import { Item } from '../item.js'
 
 export class Move extends Modifier {
   #mask
 
-  name = Icons.Move.name
   title = 'Move'
 
-  onTap (event) {
-    super.onTap(event)
+  attach (tile) {
+    super.attach(tile)
+    if (!this.disabled) {
+      this.update({ disabled: !tile?.items.some(Move.movable) })
+    }
+  }
 
+  getIcon () {
+    return Icons.Move
+  }
+
+  moveItems (tile) {
+    const items = this.tile.items.filter(Move.movable)
+    items.forEach((item) => item.move(tile))
+    return {
+      moved: [Move.data(this.tile, tile, items)],
+      selectedTile: tile,
+      tile: this.tile,
+      tiles: [this.tile, tile]
+    }
+  }
+
+  onTap (event) {
     const items = this.tile.items.filter(Move.movable)
     if (this.#mask || !items.length) {
       return
@@ -31,36 +50,13 @@ export class Move extends Modifier {
     emitEvent(Puzzle.Events.Mask, { mask })
   }
 
-  attach (tile) {
-    super.attach(tile)
-    if (!this.disabled) {
-      this.update({ disabled: !tile.items.some((item) => item.movable) })
-    }
-  }
-
-  moveFilter (tile) {
-    // Filter out tiles that contain no movable items
-    return super.moveFilter(tile) || !tile.items.some(Move.movable)
-  }
-
-  moveItems (tile) {
-    const items = this.tile.items.filter(Move.movable)
-    items.forEach((item) => item.move(tile))
-    return {
-      moved: [Move.data(this.tile, tile, items)],
-      selectedTile: tile,
-      tile: this.tile,
-      tiles: [this.tile, tile]
-    }
-  }
-
   tileFilter (tile) {
-    // Never mask current tile
+    // Don't mask the current tile
     return !tile.equals(this.tile) && (
-      // Mask immutable tiles
-      tile.modifiers.some(Modifier.immutable) ||
-      // Mask tiles that contain any items we don't ignore
-      tile.items.some((item) => !Move.ignoreItemTypes.includes(item.type))
+      // Mask tiles that contain modifiers which make moving items to that tile invalid
+      tile.modifiers.some((modifier) => Move.InvalidModifierTypes.includes(modifier.type)) ||
+      // Tile is already occupied by an item
+      tile.items.some((item) => !Move.ExcludeItemTypes.includes(item.type))
     )
   }
 
@@ -80,25 +76,33 @@ export class Move extends Modifier {
   }
 
   static movable (item) {
-    return item.movable
+    return item.isMovable()
   }
 
-  static ignoreItemTypes = [Item.Types.beam, Item.Types.wall]
+  // A tile with these items will not prevent moving items to that tile
+  static ExcludeItemTypes = [Item.Types.Beam, Item.Types.Wall]
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.move))
+  // A tile with these modifiers will prevent moving items to that tile
+  static InvalidModifierTypes = [Modifier.Types.Immutable, Modifier.Types.Lock]
+
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Move))
 }
 
 /**
  * Move an item from one tile to another.
  * @param SuperClass
- * @returns {{new(*, *): MovableItem, movable: boolean, prototype: MovableItem}}
+ * @returns {{new(*, *): MovableItem, prototype: MovableItem}}
  */
 export const movable = (SuperClass) => class MovableItem extends SuperClass {
-  movable
+  #movable
 
-  constructor (parent, state) {
+  constructor (tile, state) {
     super(...arguments)
-    this.movable = !this.immutable && state.movable !== false
+    this.#movable = state.movable ?? true
+  }
+
+  isMovable () {
+    return this.#movable && !this.isStuck()
   }
 
   move (tile) {
@@ -117,13 +121,15 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
   }
 
   onMove () {}
-}
 
-movable.Schema = {
-  properties: {
-    movable: {
-      default: true,
-      type: 'boolean'
+  static schema () {
+    return {
+      properties: {
+        movable: {
+          default: true,
+          type: 'boolean'
+        }
+      }
     }
   }
 }

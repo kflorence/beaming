@@ -43,7 +43,7 @@ export class Filter extends movable(Item) {
     )
   }
 
-  static Schema = Object.freeze(merge(Item.schema(Item.Types.filter), {
+  static schema = () => Object.freeze(merge(Item.schema(Item.Types.Filter), {
     properties: {
       color: Schema.color
     },

@@ -6,53 +6,64 @@ import { Toggle } from './modifiers/toggle'
 import { Modifier } from './modifier'
 import { Swap } from './modifiers/swap'
 import { Schema } from './schema'
+import { PuzzleModifier } from './modifiers/puzzle.js'
+import { StickyItems, StickyModifiers } from './modifiers/sticky.js'
+import { Tile } from './items/tile.js'
 
 export class Modifiers {
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('modifiers'),
     items: {
       anyOf: [
-        Immutable.Schema,
-        Lock.Schema,
-        Move.Schema,
-        Rotate.Schema,
-        Swap.Schema,
-        Toggle.Schema
+        Immutable.schema(),
+        Lock.schema(),
+        Move.schema(),
+        PuzzleModifier.schema(),
+        Rotate.schema(),
+        StickyItems.schema(),
+        StickyModifiers.schema(),
+        Swap.schema(),
+        Toggle.schema()
       ],
       headerTemplate: 'modifier {{i1}}'
     },
     minItems: 0,
-    maxItems: 6,
+    maxItems: Tile.MaxModifiers,
     type: 'array'
   })
 
   static factory (parent, state, index) {
-    let modifier
-
     switch (state.type) {
-      case Modifier.Types.immutable:
-        modifier = new Immutable(...arguments)
-        break
-      case Modifier.Types.lock:
-        modifier = new Lock(...arguments)
-        break
-      case Modifier.Types.move:
-        modifier = new Move(...arguments)
-        break
-      case Modifier.Types.rotate:
-        modifier = new Rotate(...arguments)
-        break
-      case Modifier.Types.swap:
-        modifier = new Swap(...arguments)
-        break
-      case Modifier.Types.toggle:
-        modifier = new Toggle(...arguments)
-        break
-      default:
+      case Modifier.Types.Immutable: {
+        return new Immutable(...arguments)
+      }
+      case Modifier.Types.Lock: {
+        return new Lock(...arguments)
+      }
+      case Modifier.Types.Move: {
+        return new Move(...arguments)
+      }
+      case Modifier.Types.Puzzle: {
+        return new PuzzleModifier(...arguments)
+      }
+      case Modifier.Types.Rotate: {
+        return new Rotate(...arguments)
+      }
+      case Modifier.Types.StickyItems: {
+        return new StickyItems(...arguments)
+      }
+      case Modifier.Types.StickyModifiers: {
+        return new StickyModifiers(...arguments)
+      }
+      case Modifier.Types.Swap: {
+        return new Swap(...arguments)
+      }
+      case Modifier.Types.Toggle: {
+        return new Toggle(...arguments)
+      }
+      default: {
         console.error(`Ignoring modifier with unknown type: ${state.type}`, state)
-        break
+      }
     }
-
-    return modifier
   }
 }

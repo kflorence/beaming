@@ -196,6 +196,6 @@ export class Interact {
     Tap: 'tap'
   })
 
-  static maxZoom = 2
-  static minZoom = 0.5
+  static maxZoom = 2.5
+  static minZoom = 0.25
 }

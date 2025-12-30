@@ -179,7 +179,7 @@ export class Portal extends movable(rotatable(Item)) {
   #getExitPortals (puzzle, beam, nextStep) {
     const exitPortals = puzzle.layout.getItems().filter((item) =>
       // Is a portal
-      item.type === Item.Types.portal &&
+      item.type === Item.Types.Portal &&
       // But not the entry portal
       !item.equals(this) &&
       // There is no other beam occupying the portal at the exit direction
@@ -195,7 +195,7 @@ export class Portal extends movable(rotatable(Item)) {
 
     if (exitPortals.length > 1) {
       // Check for existing exitPortalId in beam state for this step
-      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[Item.Types.portal]?.exitPortalId
+      const exitPortalId = beam.getState().steps?.[nextStep.index]?.[Item.Types.Portal]?.exitPortalId
       if (exitPortalId !== undefined) {
         console.debug(this.toString(), `found exitPortalId ${exitPortalId} in beam step ${nextStep.index} state`)
         const existing = exitPortals.find((item) => item.id === exitPortalId)
@@ -220,7 +220,7 @@ export class Portal extends movable(rotatable(Item)) {
         beam.updateState((state) => {
           state.steps ??= {}
           state.steps[step.index] ??= {}
-          state.steps[step.index][Item.Types.portal] = {
+          state.steps[step.index][Item.Types.Portal] = {
             entryPortalId: this.id,
             exitPortalId: exitPortal.id
           }
@@ -229,7 +229,7 @@ export class Portal extends movable(rotatable(Item)) {
       },
       onRemove: (step) => {
         // Remove any associated beam state
-        beam.updateState((state) => { delete state.steps[step.index][Item.Types.portal] })
+        beam.updateState((state) => { delete state.steps[step.index][Item.Types.Portal] })
         exitPortal.update(direction)
       },
       point: exitPortal.parent.center,
@@ -246,10 +246,10 @@ export class Portal extends movable(rotatable(Item)) {
     return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction
   }
 
-  static Schema = Object.freeze(merge([
-    Item.schema(Item.Types.portal),
-    movable.Schema,
-    rotatable.Schema,
+  static schema = () => Object.freeze(merge([
+    Item.schema(Item.Types.Portal),
+    movable.schema(),
+    rotatable.schema(),
     {
       properties: {
         direction: Schema.direction

@@ -11,19 +11,19 @@ describe('Puzzle 006', function () {
   it('should be solved', async function () {
     await puzzle.solve([
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '0,-1' },
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '-1,0' },
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '0,1' },
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '1,-1' },
       { type: 'tile-select', tile: '-1,-1' },
-      { type: 'modifier-invoke', modifier: 'Swap' },
+      { type: 'modifier-invoke', modifier: 'swap' },
       { type: 'tile-click', tile: '0,-1' }
     ])
 

@@ -3,7 +3,7 @@ import { Path } from 'paper'
 
 export class Mask extends Item {
   constructor (tile, style) {
-    super(null, style, { locked: false, type: Item.Types.mask })
+    super(null, style, { clickable: true, type: Item.Types.Mask })
 
     const data = { type: this.type }
     const item = new Path.RegularPolygon({

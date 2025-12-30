@@ -6,32 +6,32 @@ import { Modifiers } from '../modifiers'
 
 export class Tile extends Item {
   coordinates
-  items
-  modifiers
+  items = []
+  modifiers = []
   parameters
   path
+  ref
   selected = false
 
   constructor (coordinates, center, parameters, state = {}) {
-    state = Object.assign({ type: Item.Types.tile }, state)
+    state = Object.assign({ type: Item.Types.Tile }, state)
 
-    super(null, state, { locked: false })
+    super(null, state, { clickable: true })
 
     const dashWidth = parameters.circumradius / 10
 
-    this.styles = Object.assign(
-      {},
-      Tile.Styles,
-      {
-        copy: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.copy),
-        edit: Object.assign({ dashArray: [dashWidth, dashWidth] }, Tile.Styles.edit)
-      },
-      state.style || {}
-    )
+    this.styles = {}
+    Object.entries(Tile.Styles).forEach(([name, style]) => {
+      this.styles[name] = Object.assign({}, style, state.style?.[name] || {})
+      if (this.styles[name].dashArray === true) {
+        this.styles[name].dashArray = [dashWidth, dashWidth]
+      }
+    })
 
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
+    this.ref = state.ref
 
     this.path = new Path.RegularPolygon({
       center,
@@ -83,8 +83,13 @@ export class Tile extends Item {
   getState () {
     const state = { id: this.id, type: this.type }
 
+    if (this.ref) {
+      // This property will be set if this tile was imported from one puzzle into another
+      state.ref = this.ref
+    }
+
     // Filter out beams, which are not stored in state
-    const items = this.items.filter((item) => item.type !== Item.Types.beam).map((item) => item.getState())
+    const items = this.items.filter((item) => item.type !== Item.Types.Beam).map((item) => item.getState())
     if (items.length) {
       state.items = items
     }
@@ -163,14 +168,15 @@ export class Tile extends Item {
         (length) => length / 3
       )
       const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
-      const icon = modifier.getSymbol().place(position, { style })
-      icon.data = { id: modifier.id, name: modifier.name, type: modifier.type }
-      const childIndex = this.group.children.findIndex((icon) => icon.data.id === modifier.id)
+      const icon = modifier.getIcon()
+      const item = icon.symbol.place(position, { locked: true, style })
+      item.data = { id: modifier.id, name: icon.symbol.name, type: modifier.type }
+      const childIndex = this.group.children.findIndex((item) => item.data.id === modifier.id)
       if (childIndex >= 0) {
         // Update existing
-        this.group.children[childIndex].replaceWith(icon)
+        this.group.children[childIndex].replaceWith(item)
       } else {
-        this.group.addChild(icon)
+        this.group.addChild(item)
       }
     }
   }
@@ -198,12 +204,18 @@ export class Tile extends Item {
     Selected: 'tile-selected'
   })
 
-  static MaxModifiers = Modifiers.Schema.maxItems
+  static MaxModifiers = 6
 
-  static Schema = Object.freeze(merge(Item.schema(Item.Types.tile), {
+  static schema = () => Object.freeze(merge(Item.schema(Item.Types.Tile), {
     properties: {
-      items: Items.Schema,
-      modifiers: Modifiers.Schema
+      ref: {
+        options: {
+          hidden: true
+        },
+        type: 'object'
+      },
+      items: Items.schema(),
+      modifiers: Modifiers.schema()
     }
   }))
 
@@ -217,10 +229,12 @@ export class Tile extends Item {
       strokeWidth: 1
     },
     copy: {
+      dashArray: true,
       strokeColor: new Color('#999'),
       strokeWidth: 2
     },
     edit: {
+      dashArray: true,
       strokeColor: new Color('black'),
       strokeWidth: 2
     },

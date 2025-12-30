@@ -3,7 +3,7 @@
     "modifiers": [
       {
         "id": "0f262170",
-        "type": "Toggle"
+        "type": "toggle"
       }
     ],
     "offset": "odd-row",
@@ -11,10 +11,10 @@
       "0": {
         "0": {
           "id": "04c7d967",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -49,13 +49,13 @@
         },
         "1": {
           "id": "e0e00401",
-          "type": "Tile"
+          "type": "tile"
         },
         "2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -70,13 +70,13 @@
         },
         "-1": {
           "id": "6c632460",
-          "type": "Tile"
+          "type": "tile"
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -92,14 +92,14 @@
       },
       "1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "id": "d0b13fc4"
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -113,20 +113,20 @@
           "id": "453b4d64",
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "b45a15d3"
             }
           ]
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "id": "59e60928"
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -142,10 +142,10 @@
       },
       "2": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -162,10 +162,10 @@
           "id": "1a2e1e12"
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -180,10 +180,10 @@
         },
         "-1": {
           "id": "ea370bb7",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -198,14 +198,14 @@
       },
       "-1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "id": "1848a6ad"
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -220,13 +220,13 @@
         },
         "-1": {
           "id": "a7ae7f64",
-          "type": "Tile"
+          "type": "tile"
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -240,7 +240,7 @@
           "id": "ee57363a",
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "37e58227"
             }
           ]
@@ -248,10 +248,10 @@
       },
       "-2": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#008000",
@@ -269,10 +269,10 @@
         },
         "1": {
           "id": "082207e9",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#ff0000",
@@ -285,10 +285,10 @@
           ]
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -304,9 +304,9 @@
       }
     }
   },
-  "solution": [
+  "requirements": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 6
     }
   ],

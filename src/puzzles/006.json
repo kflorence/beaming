@@ -5,10 +5,10 @@
       "0": {
         "1": {
           "id": "a1a47835",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -26,10 +26,10 @@
         },
         "-1": {
           "id": "d04577a8",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -49,10 +49,10 @@
       "1": {
         "0": {
           "id": "2b3fd31d",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "rotation": 2,
               "id": "d5820ff1"
             }
@@ -60,10 +60,10 @@
         },
         "-1": {
           "id": "15777e85",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "id": "1c80477c"
             }
           ]
@@ -72,27 +72,27 @@
       "-1": {
         "0": {
           "id": "f272960c",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "id": "8506728c"
             }
           ]
         },
         "-1": {
           "id": "671c53b3",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "id": "c8c7367b",
               "rotation": 2
             }
           ],
           "modifiers": [
             {
-              "type": "Swap",
+              "type": "swap",
               "id": "842a76e2"
             }
           ]
@@ -100,9 +100,9 @@
       }
     }
   },
-  "solution": [
+  "requirements": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 2
     }
   ]

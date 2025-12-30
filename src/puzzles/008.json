@@ -4,52 +4,52 @@
     "tiles": {
       "0": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "id": "7eaec543"
             }
           ],
           "modifiers": [
             {
-              "type": "Move",
+              "type": "move",
               "id": "aa1fa035"
             }
           ],
           "id": "f0d256ba"
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "id": "72c3c916",
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "d3451599"
             }
           ]
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "id": "0ed739c7",
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "6959428f"
             }
           ]
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Reflector",
+              "type": "reflector",
               "id": "f98bee1d"
             }
           ],
           "modifiers": [
             {
-              "type": "Move",
+              "type": "move",
               "id": "f832a423"
             }
           ],
@@ -58,10 +58,10 @@
       },
       "1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Filter",
+              "type": "filter",
               "color": "#ff0000",
               "id": "ce00988d"
             }
@@ -69,10 +69,10 @@
           "id": "fe092f90"
         },
         "1": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "direction": 3,
@@ -85,10 +85,10 @@
           "id": "65654f82"
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#b400b4",
@@ -100,17 +100,17 @@
           ],
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "e76d0e3e"
             }
           ],
           "id": "16730a74"
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "modifiers": [
             {
-              "type": "Rotate",
+              "type": "rotate",
               "id": "6f8ceb2c"
             }
           ],
@@ -119,10 +119,10 @@
       },
       "-1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#b400b4",
@@ -134,27 +134,27 @@
           ],
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "f4c9837f"
             }
           ],
           "id": "a7d5efb6"
         },
         "-1": {
-          "type": "Tile",
+          "type": "tile",
           "id": "3e72d7db",
           "modifiers": [
             {
-              "type": "Toggle",
+              "type": "toggle",
               "id": "11017ae0"
             }
           ]
         },
         "-2": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Filter",
+              "type": "filter",
               "color": "#0000ff",
               "id": "3b12ae82"
             }
@@ -162,10 +162,10 @@
           "id": "41281869"
         },
         "-3": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "direction": 0,
@@ -181,15 +181,15 @@
     },
     "modifiers": [
       {
-        "type": "Swap",
+        "type": "swap",
         "id": "2d33dc20"
       }
     ]
   },
   "version": 0,
-  "solution": [
+  "requirements": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 2
     }
   ]

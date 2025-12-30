@@ -4,10 +4,10 @@
     "tiles": {
       "0": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Portal",
+              "type": "portal",
               "direction": 0,
               "id": "916477d6"
             }
@@ -16,10 +16,10 @@
         },
         "1": {
           "id": "43142953",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -31,17 +31,17 @@
           ],
           "modifiers": [
             {
-              "type": "Lock",
+              "type": "sticky-modifiers",
               "id": "9ba8bd9e"
             }
           ]
         },
         "-1": {
           "id": "da8da7c6",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Terminus",
+              "type": "terminus",
               "openings": [
                 {
                   "color": "#0000ff",
@@ -49,9 +49,9 @@
                   "toggled": true,
                   "steps": {
                     "3": {
-                      "Portal": {
-                        "entryPortalId": "916477d6",
-                        "exitPortalId": "388f88d4"
+                      "portal": {
+                        "entryportalid": "916477d6",
+                        "exitportalid": "388f88d4"
                       }
                     }
                   }
@@ -62,7 +62,7 @@
           ],
           "modifiers": [
             {
-              "type": "Immutable",
+              "type": "immutable",
               "id": "9556062f"
             }
           ]
@@ -70,17 +70,17 @@
       },
       "1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Portal",
+              "type": "portal",
               "direction": 5,
               "id": "c2c04bc7"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock",
+              "type": "sticky-modifiers",
               "id": "0c3fe41a"
             }
           ],
@@ -88,17 +88,17 @@
         },
         "-1": {
           "id": "62c320fa",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Portal",
+              "type": "portal",
               "direction": 5,
               "id": "f75c4e92"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock",
+              "type": "sticky-modifiers",
               "id": "97b3cf21"
             }
           ]
@@ -106,17 +106,17 @@
       },
       "-1": {
         "0": {
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Portal",
+              "type": "portal",
               "direction": 5,
               "id": "88b59156"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock",
+              "type": "sticky-modifiers",
               "id": "5871082a"
             }
           ],
@@ -124,16 +124,16 @@
         },
         "-1": {
           "id": "720d0180",
-          "type": "Tile",
+          "type": "tile",
           "items": [
             {
-              "type": "Portal",
+              "type": "portal",
               "id": "388f88d4"
             }
           ],
           "modifiers": [
             {
-              "type": "Lock",
+              "type": "sticky-modifiers",
               "id": "5b0d7431"
             }
           ]
@@ -142,14 +142,14 @@
     },
     "modifiers": [
       {
-        "type": "Rotate",
+        "type": "rotate",
         "id": "b30a8952"
       }
     ]
   },
-  "solution": [
+  "requirements": [
     {
-      "type": "Connections",
+      "type": "connections",
       "amount": 1
     }
   ],

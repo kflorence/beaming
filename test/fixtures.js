@@ -51,17 +51,17 @@ export class PuzzleFixture {
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
-    this.elements.modifiers = await this.driver.findElement(By.id('puzzle-footer-menu'))
   }
 
   async invokeModifier (name, options = {}) {
     const times = options.times ?? 1
-    const origin = await this.#getModifier(name)
-    const actions = this.driver.actions({ async: true }).move({ origin })
     for (let i = 0; i < times; i++) {
+      // Need to re-get modifier each time as location might change
+      const origin = await this.#getModifier(name)
+      const actions = this.driver.actions({ async: true }).move({ origin })
       actions.press(options.button).release(options.button)
+      await actions.perform()
     }
-    return actions.perform()
   }
 
   async clickTile (r, c, onlyIfNotSelected = false) {

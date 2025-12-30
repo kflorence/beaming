@@ -1,9 +1,13 @@
 import { Modifier } from '../modifier'
+import { Icons } from '../icon.js'
 
 export class Immutable extends Modifier {
   immutable = true
-  name = 'block'
   title = 'Immutable'
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.immutable))
+  getIcon () {
+    return Icons.Immutable
+  }
+
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Immutable))
 }

@@ -1,16 +1,17 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
+import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Size } from 'paper'
 import {
   addClass,
   appendOption,
-  base64encode,
+  base64encode, baseUrl,
   debounce,
   emitEvent,
   fuzzyEquals,
   noop,
   params,
-  removeClass
+  removeClass, url, writeToClipboard
 } from './util'
 import { Item } from './item'
 import { Mask } from './items/mask'
@@ -23,18 +24,20 @@ import { State } from './state'
 import { Puzzles } from '../puzzles'
 import { StepState } from './step'
 import { EventListeners } from './eventListeners'
-import { Solution } from './solution'
+import { Requirements } from './requirements.js'
 import { Interact } from './interact'
-import { Tile } from './items/tile'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
-
-const confirm = window.confirm
+import { ModifierItem } from './items/modifier.js'
+import { Icons } from './icon.js'
+import Tippy from 'tippy.js'
 
 const elements = Object.freeze({
+  back: document.getElementById('back'),
   canvas: document.getElementById('puzzle-canvas'),
   debug: document.getElementById('debug'),
+  delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
   footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
@@ -48,8 +51,15 @@ const elements = Object.freeze({
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
   select: document.getElementById('select'),
+  share: document.getElementById('share'),
   title: document.querySelector('title'),
   wrapper: document.getElementById('puzzle-wrapper')
+})
+
+const tippy = Tippy(elements.share, {
+  content: 'Share URL copied to clipboard!',
+  theme: 'custom',
+  trigger: 'manual'
 })
 
 // There are various spots below that utilize setTimeout in order to process events in order and to prevent
@@ -61,6 +71,7 @@ export class Puzzle {
   element = elements.canvas
   error = false
   layers = {}
+  layout
   message
   selectedTile
   solved = false
@@ -74,7 +85,7 @@ export class Puzzle {
   #isTearingDown = false
   #mask
   #maskQueue = []
-  #solution
+  #requirements
 
   constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -94,28 +105,40 @@ export class Puzzle {
 
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
+      { type: 'click', element: elements.back, handler: this.#onBack },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
+      { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
+      { type: ModifierItem.Events.AddModifier, handler: this.#onAddModifier },
       { type: 'pointermove', element: elements.canvas, handler: this.#onPointerMove },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
+  }
 
-    this.#updateDropdown()
+  centerOnImport (id) {
+    const imports = this.layout.getImports()
+    const ref = imports[id]
+
+    if (ref) {
+      this.centerOnTile(ref.offset.r, ref.offset.c)
+    }
   }
 
   // Used by functional tests
   centerOnTile (r, c) {
     const tile = this.layout.getTile(new OffsetCoordinates(r, c))
-    View.setCenter(tile.center)
-    return tile.equals(this.selectedTile)
+    if (tile) {
+      View.setCenter(tile.center)
+      return tile.equals(this.selectedTile)
+    }
   }
 
   clearDebugPoints () {
@@ -135,7 +158,7 @@ export class Puzzle {
 
   getBeams () {
     return this.layout.getItems()
-      .filter((item) => item.type === Item.Types.terminus)
+      .filter((item) => item.type === Item.Types.Terminus)
       .flatMap((terminus) => terminus.beams)
   }
 
@@ -151,6 +174,16 @@ export class Puzzle {
     return this.#interact.getProjectPoint(point)
   }
 
+  getShareUrl () {
+    // Electron runs on localhost but should use the production web URL
+    const playUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
+    playUrl.searchParams.delete(State.ParamKeys.Edit)
+    playUrl.searchParams.append(State.ParamKeys.Play, '')
+    // Cloning will flatten current state into original state and get rid of history
+    playUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
+    return playUrl.toString()
+  }
+
   getSolution () {
     return base64encode(JSON.stringify(this.getMoves()))
   }
@@ -158,7 +191,7 @@ export class Puzzle {
   getTile (point) {
     const result = paper.project.hitTest(point.ceil(), {
       fill: true,
-      match: (result) => result.item.data.type === Item.Types.tile,
+      match: (result) => result.item.data.type === Item.Types.Tile,
       segments: true,
       stroke: true,
       tolerance: 0
@@ -314,6 +347,14 @@ export class Puzzle {
     }
 
     this.reload(State.resolve(id))
+
+    id = this.state.getId()
+
+    // Show 'back' button if the loaded puzzle has a parent puzzle
+    elements.back.classList.toggle('hide', State.getParent(id) === null)
+
+    // Can't remove puzzles that exist in configuration
+    elements.delete.classList.toggle('hide', Puzzles.has(id))
   }
 
   tap (event) {
@@ -326,9 +367,9 @@ export class Puzzle {
 
     let tile
     switch (result?.item.data.type) {
-      case Item.Types.mask:
+      case Item.Types.Mask:
         return
-      case Item.Types.tile:
+      case Item.Types.Tile:
         tile = this.layout.getTile(result.item.data.coordinates.offset)
         break
     }
@@ -414,8 +455,42 @@ export class Puzzle {
 
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return this.layout.modifiers.concat(tile?.modifiers || [])
-      .sort((a, b) => a.id - b.id)
+    return (tile?.modifiers ?? []).concat(this.layout.modifiers)
+    // .sort((a, b) => a.id - b.id)
+  }
+
+  #onAddModifier (event) {
+    const modifier = event.detail.modifier
+
+    if (modifier.parent) {
+      modifier.parent.addModifier(modifier)
+      this.updateSelectedTile(modifier.parent)
+    } else {
+      const index = this.layout.modifiers[this.layout.modifiers.length - 1]?.index ?? 0
+      modifier.index = index + 1
+      this.layout.modifiers.push(modifier)
+      this.#updateModifiers(this.selectedTile)
+    }
+
+    // Update state but don't add a move, since it was the previous move that caused the collision.
+    this.updateState()
+
+    const message = event.detail.message
+    if (message) {
+      elements.headerMessage.textContent = message
+    }
+  }
+
+  #onBack () {
+    const id = this.state.getId()
+    const parentId = State.getParent(id)
+    this.centerOnTile(0, 0)
+
+    // Slight pause so the user can see the tile being centered on
+    setTimeout(() => {
+      this.select(parentId)
+      this.centerOnImport(id)
+    }, 250)
   }
 
   #onBeamUpdate (event) {
@@ -468,29 +543,22 @@ export class Puzzle {
     const modifier = event.detail.modifier
     const tile = event.detail.tile
 
-    if (
-      // Modifier does not belong to a tile
-      !modifier.parent &&
-      // Tile has a lock modifier
-      tile.modifiers.some((modifier) => modifier.type === Modifier.Types.lock) &&
-      // Tile does not already have a modifier of this type
-      !tile.modifiers.some((other) => other.type === modifier.type) &&
-      // Tile has less than the maximum number of modifiers
-      tile.modifiers.length < Tile.MaxModifiers
-    ) {
-      console.debug('locking modifier to tile', modifier, tile)
+    const selectedTile = event.detail.selectedTile
+
+    if (modifier.isStuck(tile)) {
       this.layout.removeModifier(modifier)
       modifier.move(tile)
-      // Disable any other attached modifiers of this type to prevent duplicate locking
-      this.#getModifiers(tile)
-        .filter((other) => other.type === modifier.type && other.id !== modifier.id)
-        .forEach((other) => other.update({ disabled: true }))
+      console.debug('Modifier is stuck to tile', modifier, tile)
+      if (!selectedTile) {
+        this.#updateModifiers(this.selectedTile)
+      }
     }
 
-    const selectedTile = event.detail.selectedTile
     if (selectedTile) {
       this.updateSelectedTile(selectedTile)
     }
+
+    modifier.onInvoked(this, event)
 
     this.state.addMove(event.type, tile, modifier, selectedTile)
     this.updateState()
@@ -509,7 +577,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!this.debug) {
+    if (!this.debug || params.has(State.ParamKeys.Edit)) {
       return
     }
 
@@ -519,7 +587,7 @@ export class Puzzle {
     elements.debug.textContent = ''
 
     switch (result?.item.data.type) {
-      case Item.Types.tile: {
+      case Item.Types.Tile: {
         const tile = this.layout.getTile(result.item.data.coordinates.offset)
         elements.debug.textContent = tile.toString()
         break
@@ -528,7 +596,14 @@ export class Puzzle {
   }
 
   #onRecenter () {
+    View.setZoom(1)
     this.recenter(true)
+  }
+
+  async #onShare () {
+    await writeToClipboard(this.getShareUrl())
+    tippy.show()
+    setTimeout(() => tippy.hide(), 1000)
   }
 
   #onSolved () {
@@ -541,16 +616,14 @@ export class Puzzle {
     this.updateSelectedTile(undefined)
     this.mask(Puzzle.#solvedMask)
 
+    // Store the solution in cache
+    this.state.setSolution(this.layout.tiles.filter(this.#mask.tileFilter))
+
     const p = document.createElement('p')
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
 
-    const span = document.createElement('span')
-    span.classList.add(Puzzle.ClassNames.Icon)
-    span.textContent = 'celebration'
-    span.title = 'Solved!'
-
-    elements.headerMessage.replaceChildren(p, span)
+    elements.headerMessage.replaceChildren(p, Icons.Solved.getElement())
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -589,17 +662,21 @@ export class Puzzle {
       return
     }
 
-    if (confirm('Are you sure you want to reset this puzzle? This cannot be undone.') && this.state.reset()) {
+    confirm('Are you sure you want to reset this puzzle? This cannot be undone.', () => {
+      this.state.reset()
       setTimeout(() => this.reload())
-    }
+    })
   }
 
   #setup () {
-    const { layout, message, solution } = this.state.getCurrent()
+    const { layout, message, requirements } = this.state.getCurrent()
+
+    this.state.setSolution([])
+    State.add(this.state.getId())
 
     this.layout = new Layout(layout)
     this.message = message
-    this.#solution = new Solution(solution)
+    this.#requirements = new Requirements(requirements)
 
     Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
@@ -610,7 +687,8 @@ export class Puzzle {
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
-    this.#updateDetails()
+    // TODO https://github.com/kflorence/beaming/issues/71
+    // this.#updateDetails()
     this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
@@ -627,8 +705,8 @@ export class Puzzle {
     this.unmask()
     this.#removeLayers()
 
-    this.#solution?.teardown()
-    this.#solution = undefined
+    this.#requirements?.teardown()
+    this.#requirements = undefined
     this.solved = false
     this.layout?.teardown()
     this.layout = undefined
@@ -682,18 +760,31 @@ export class Puzzle {
       return
     }
 
-    const ids = Array.from(Puzzles.visible.ids)
-    if (elements.select.children.length === 0) {
-      appendOption(elements.select, { value: '', text: '——', disabled: true })
-      // TODO support pulling custom IDs from local cache
-      ids.map((id) => ({ value: id, text: Puzzles.titles[id] })).forEach((option) => {
-        appendOption(elements.select, option)
+    elements.select.replaceChildren()
+
+    // TODO: once levels are implemented, this should just use State.getIds()
+    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
+    const customIds = []
+    ids.forEach((id) => {
+      if (Puzzles.has(id)) {
+        appendOption(elements.select, { value: id, text: Puzzles.titles[id] })
+      } else {
+        customIds.push(id)
+      }
+    })
+
+    if (customIds.length) {
+      const customGroup = document.createElement('optgroup')
+      customGroup.label = '———'
+      customIds.forEach((id) => {
+        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
       })
+
+      elements.select.append(customGroup)
     }
 
     // Select current ID
-    const id = this.state?.getId()
-    elements.select.value = ids.includes(id) ? id : ''
+    elements.select.value = this.state?.getId()
   }
 
   #updateBeams () {
@@ -704,7 +795,7 @@ export class Puzzle {
 
       // Ensure we check for a solution after all other in-progress events have processed
       setTimeout(() => {
-        if (this.#solution.isSolved()) {
+        if (this.#requirements.areMet()) {
           this.#onSolved()
         }
       }, 0)
@@ -722,35 +813,41 @@ export class Puzzle {
   }
 
   #updateMessage (tile) {
-    elements.headerMessage.textContent = this.message
     elements.footerMessage.replaceChildren()
 
     if (tile) {
-      // Check to see if tile has any color elements that need to be displayed
-      // Note: these will only be displayed if the tile contains an item with more than one color
-      const colorElements = tile.items
-        .map((item) => item.getColorElements(tile))
-        .find((colorElements) => colorElements.length > 1) || []
-      if (colorElements.length) {
-        const container = document.createElement('div')
-        container.classList.add('colors')
-        container.replaceChildren(...colorElements)
-        elements.footerMessage.replaceChildren(container)
+      const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
+      if (puzzleModifier) {
+        elements.footerMessage.textContent = `Puzzle '${puzzleModifier.getState().puzzleId}'`
+      } else {
+        // Check to see if tile has any color elements that need to be displayed
+        // Note: these will only be displayed if the tile contains an item with more than one color
+        const colorElements = tile.items
+          .map((item) => item.getColorElements(tile))
+          .find((colorElements) => colorElements.length > 1) || []
+        if (colorElements.length) {
+          const container = document.createElement('div')
+          container.classList.add('colors')
+          container.replaceChildren(...colorElements)
+          elements.footerMessage.replaceChildren(container)
+        }
       }
     }
+
+    elements.headerMessage.textContent = this.message
   }
 
-  #updateModifiers (tile, previouslySelectedTile) {
-    this.#getModifiers(previouslySelectedTile).forEach((modifier) => modifier.detach())
-
+  #updateModifiers (tile, previousTile) {
     const modifiers = this.#getModifiers(tile)
+    const previousModifiers = (previousTile ? this.#getModifiers(previousTile) : modifiers)
+    previousModifiers.forEach((modifier) => modifier.detach())
     modifiers.forEach((modifier) => modifier.attach(tile))
 
     elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0)
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
-  static #connectedBeams = (item) => item.type === Item.Types.beam && item.isConnected()
+  static #connectedBeams = (item) => item.type === Item.Types.Beam && item.isConnected()
 
   static Collision = class {
     constructor (layer, beams, point, item = undefined) {
@@ -858,9 +955,13 @@ export class Puzzle {
     tileFilter: (tile) => tile.items.some(Puzzle.#connectedBeams)
   })
 
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('puzzle'),
     properties: {
+      id: {
+        readOnly: true,
+        type: 'string'
+      },
       author: {
         maxLength: 72,
         type: 'string'
@@ -869,14 +970,20 @@ export class Puzzle {
         maxLength: 72,
         type: 'string'
       },
-      layout: Layout.Schema,
-      solution: Solution.Schema,
+      description: {
+        format: 'textarea',
+        maxLength: 144,
+        type: 'string'
+      },
+      layout: Layout.schema(),
+      requirements: Requirements.schema(),
       version: {
         default: 0,
         type: 'number'
       }
     },
     required: [
+      'id',
       'layout',
       'version'
     ],

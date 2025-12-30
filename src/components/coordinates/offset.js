@@ -1,4 +1,5 @@
 import { CubeCoordinates } from './cube'
+import { Schema } from '../schema.js'
 
 export class OffsetCoordinates {
   constructor (r, c) {
@@ -28,4 +29,20 @@ export class OffsetCoordinates {
     const q = offset.c - (offset.r - (offset.r & 1)) / 2
     return new CubeCoordinates(q, offset.r)
   }
+
+  static schema = () => Object.freeze({
+    $id: Schema.$id('offset'),
+    properties: {
+      r: {
+        title: 'row',
+        type: 'number'
+      },
+      c: {
+        title: 'column',
+        type: 'number'
+      }
+    },
+    required: ['c', 'r'],
+    type: 'object'
+  })
 }

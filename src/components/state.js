@@ -1,6 +1,7 @@
 import { Puzzles } from '../puzzles'
 import { Storage } from './storage'
-import { base64decode, base64encode, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
+import { base64decode, base64encode, classToString, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
+import { View } from './view.js'
 
 const history = window.history
 
@@ -13,9 +14,10 @@ export class State {
   #moves
   #original
   #selectedTile
+  #solution
   #version
 
-  constructor (id, original, deltas, moveIndex, moves, selectedTile, version) {
+  constructor (id, original, deltas, moveIndex, moves, solution, selectedTile, version) {
     if (id === undefined) {
       if (params.has(State.ParamKeys.Edit)) {
         // This will happen when editing a new puzzle in the editor from scratch
@@ -30,11 +32,12 @@ export class State {
     }
 
     this.#id = id
-    this.#original = original || {}
+    this.#original = original || { id }
     this.#deltas = deltas || []
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
     this.#selectedTile = selectedTile
+    this.#solution = solution ?? []
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
@@ -89,7 +92,7 @@ export class State {
    * @returns {State} Creates a clone of state at current point without history
    */
   clone () {
-    return new State(this.#id, this.#current)
+    return new State(this.#id, this.getCurrent())
   }
 
   encode () {
@@ -100,6 +103,7 @@ export class State {
       deltas: this.#deltas,
       moveIndex: this.#moveIndex,
       moves: this.#moves,
+      solution: this.#solution,
       selectedTile: this.#selectedTile,
       version: this.#version
     }))
@@ -107,6 +111,10 @@ export class State {
 
   getAuthor () {
     return this.#current.author
+  }
+
+  getConfig () {
+    return structuredClone(this.#original)
   }
 
   getCurrent () {
@@ -134,12 +142,16 @@ export class State {
     return this.#id
   }
 
-  getTitle () {
-    return this.#current.title
-  }
-
   getSelectedTile () {
     return this.#selectedTile
+  }
+
+  getSolution () {
+    return this.#solution
+  }
+
+  getTitle () {
+    return this.#current.title
   }
 
   moves () {
@@ -153,7 +165,7 @@ export class State {
 
     this.#moveIndex++
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -167,12 +179,13 @@ export class State {
     this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
+    this.#solution = []
     this.#selectedTile = undefined
 
     State.clearCache(this.getId())
 
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -181,8 +194,13 @@ export class State {
     const id = tile?.coordinates.offset.toString()
     if (this.#selectedTile !== id) {
       this.#selectedTile = id
-      this.#updateCache()
+      this.updateCache()
     }
+  }
+
+  setSolution (tiles) {
+    this.#solution = tiles.map((tile) => tile.coordinates.offset.toString())
+    this.updateCache()
   }
 
   toString () {
@@ -197,8 +215,9 @@ export class State {
     console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
+    this.#solution = []
     this.#resetCurrent()
-    this.#updateCache()
+    this.updateCache()
 
     return true
   }
@@ -216,7 +235,24 @@ export class State {
       this.#apply(delta)
     }
 
-    this.#updateCache()
+    this.updateCache()
+  }
+
+  updateCache () {
+    const id = this.getId()
+    const data = { id }
+    const hashParams = ['', id]
+
+    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
+      // Include encoded state in URL if cache is not being cleared for this puzzle ID
+      data.state = this.encode()
+      hashParams.push(data.state)
+      Storage.set(State.key(id), data.state)
+    }
+
+    url.hash = hashParams.join('/')
+    history.pushState(data, '', url)
+    Storage.set(State.key(), id)
   }
 
   #apply (delta) {
@@ -238,25 +274,38 @@ export class State {
     this.#deltas.filter((delta, index) => index <= deltaIndex).forEach((delta) => this.#apply(delta))
   }
 
-  #updateCache () {
-    const id = this.getId()
-    const data = { id }
-    const hashParams = ['', id]
-
-    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
-      // Include encoded state in URL if cache is not being cleared for this puzzle ID
-      data.state = this.encode()
-      hashParams.push(data.state)
-      Storage.set(State.key(id), data.state)
-    }
-
-    url.hash = hashParams.join('/')
-    history.pushState(data, '', url)
-    Storage.set(State.key(), id)
-  }
-
   static clearCache (id) {
     Storage.delete(id === undefined ? id : State.key(id))
+  }
+
+  static decode (str) {
+    if (str) {
+      return JSON.parse(base64decode(str))
+    }
+  }
+
+  static delete (id) {
+    if (Puzzles.has(id)) {
+      // Can't delete puzzles that exist in configuration
+      return
+    }
+
+    const ids = State.remove(id)
+
+    // Remove associated puzzle from cache
+    Storage.delete(State.key(id))
+    Storage.delete(View.key(View.CacheKeys.Center))
+    Storage.delete(View.key(View.CacheKeys.Zoom))
+
+    // Currently selected puzzle
+    if (State.getId() === id) {
+      Storage.delete(State.key())
+
+      // Clear URL cache
+      url.hash = ''
+    }
+
+    return ids
   }
 
   static fromCache (id) {
@@ -266,10 +315,20 @@ export class State {
     }
   }
 
-  static fromEncoded (str) {
-    const state = JSON.parse(base64decode(str))
+  static fromConfig (id) {
+    if (Puzzles.has(id)) {
+      return new State(id, Puzzles.get(id))
+    }
+  }
 
-    if (state.id === undefined) {
+  static fromEncoded (str) {
+    if (!str) {
+      return
+    }
+
+    const state = State.decode(str)
+
+    if (!state || state.id === undefined) {
       console.warn('Invalid cache, ignoring.')
       return
     }
@@ -302,19 +361,14 @@ export class State {
       state.deltas,
       state.moveIndex,
       state.moves,
+      state.solution,
       state.selectedTile,
       state.version
     )
   }
 
-  static fromId (id) {
-    const config = Puzzles.get(id)
-    if (config) {
-      console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
-    } else {
-      console.debug(`No state found for puzzle ID '${id}' in source configuration.`)
-    }
-    return new State(id, config)
+  static getState (id) {
+    return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
   }
 
   static getContext () {
@@ -327,6 +381,14 @@ export class State {
 
   static getId () {
     return Storage.get(State.key())
+  }
+
+  static getIds () {
+    return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
+  }
+
+  static getParent (id) {
+    return Storage.get(State.key(id, State.CacheKeys.Parent))
   }
 
   static resolve (id) {
@@ -348,7 +410,7 @@ export class State {
 
       if (values.length === 0 && !params.has(State.ParamKeys.Edit)) {
         // If puzzle is not being edited, fall back to first puzzle ID
-        values.push(Puzzles.visible.firstId)
+        values.push(Puzzles.firstId)
       }
     }
 
@@ -390,7 +452,17 @@ export class State {
 
     console.debug(`No locally cached state found for puzzle ID '${id}'.`)
 
-    return State.fromId(id)
+    state = State.fromConfig(id)
+    if (state) {
+      console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
+    }
+
+    if (!state && !params.has(State.ParamKeys.Edit)) {
+      throw new Error(`Could not resolve state for puzzle ID ${id}.`)
+    }
+
+    // Return an empty state if all else fails
+    return state ?? new State(id)
   }
 
   static setParam = function (name, value) {
@@ -398,23 +470,48 @@ export class State {
     history.pushState({}, '', url)
   }
 
+  // Tracks the location of nested puzzles
+  static setParent (id, parentId) {
+    // TODO add URL param support?
+    Storage.set(State.key(id, State.CacheKeys.Parent), parentId)
+  }
+
   static CacheKeys = Object.freeze({
     Edit: 'edit',
     Id: 'id',
+    Ids: 'ids',
+    Parent: 'parent',
     Play: 'play'
   })
 
   static ParamKeys = Object.freeze({
     ClearCache: 'clearCache',
     Edit: 'edit',
+    Parents: 'parents',
     Play: 'play'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 6
+  static Version = 7
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
+
+  static toString = classToString('State')
+
+  static add (id) {
+    const ids = Array.from(new Set([...State.getIds(), id]))
+    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    return ids
+  }
+
+  static remove (id) {
+    const ids = State.getIds()
+    const index = ids.indexOf(id)
+    ids.splice(index, 1)
+    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    return ids
+  }
 
   static Move = class {
     deltaIndex
