@@ -100,7 +100,7 @@
       }
     }
   },
-  "solution": [
+  "requirements": [
     {
       "type": "connections",
       "amount": 2

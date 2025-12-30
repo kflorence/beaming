@@ -10,6 +10,7 @@ import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import { Phosphor } from './iconlib.js'
+import { Icon, Icons } from './icon.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
@@ -380,7 +381,7 @@ export class Editor {
         // no_additional_properties: true,
         prompt_before_delete: false,
         remove_button_labels: true,
-        schema: tile ? Tile.Schema : Puzzle.Schema,
+        schema: tile ? Tile.schema() : Puzzle.schema(),
         show_opt_in: true,
         startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
         theme: 'barebones'
@@ -431,11 +432,11 @@ export class Editor {
   #updateDock () {
     const icon = elements.dock.firstChild
     if (this.#gutter.horizontal) {
-      icon.title = 'Dock to right'
-      icon.className = 'ph-bold ph-square-split-horizontal'
+      icon.title = Icons.DockRight.title
+      icon.className = Icons.DockRight.className
     } else {
-      icon.title = 'Dock to bottom'
-      icon.className = 'ph-bold ph-square-split-vertical'
+      icon.title = Icons.DockBottom.title
+      icon.className = Icons.DockBottom.className
     }
   }
 
@@ -452,9 +453,10 @@ export class Editor {
 
   #updateLock () {
     const locked = this.isLocked()
-    const icon = elements.lock.firstChild
-    icon.className = 'ph-bold ph-' + (locked ? 'lock' : 'lock-open')
-    icon.title = (locked ? 'Unlock' : 'Lock') + ' tiles'
+    const element = elements.lock.firstChild
+    const icon = locked ? Icons.Lock.clone(Icon.Weights.Bold) : Icons.LockOpen
+    element.className = icon.className
+    element.title = (locked ? 'Unlock' : 'Lock') + ' Tiles'
     if (!locked) {
       // De-select any selected tile
       this.#puzzle.updateSelectedTile()

@@ -83,7 +83,7 @@
     },
     "offset": "odd-row"
   },
-  "solution": [
+  "requirements": [
     {
       "amount": 1,
       "type": "connections"

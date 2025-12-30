@@ -194,7 +194,7 @@ export class Modifier extends Stateful {
         filters: {
           items: {
             anyOf: [
-              ModifierFilterImportSeen.Schema
+              ModifierFilterImportSeen.schema
             ],
             headerTemplate: 'filter {{i1}}'
           },
@@ -255,7 +255,7 @@ export class ModifierFilterImportSeen extends ModifierFilter {
   static Name = ModifierFilter.Names.Seen
   static Type = ModifierFilter.Types.Import
 
-  static Schema = Object.freeze(merge(
+  static schema = () => Object.freeze(merge(
     ModifierFilter.schema(this.Type, this.Name),
     {
       properties: {

@@ -40,7 +40,7 @@ export class Toggle extends Modifier {
     this.toggled = this.parent?.items.some(item => item.toggled) ?? false
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Toggle))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Toggle))
 }
 
 /**
@@ -67,16 +67,18 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     this.toggled = toggled
     this.onToggle()
   }
-}
 
-toggleable.Schema = {
-  properties: {
-    toggleable: {
-      default: true,
-      type: 'boolean'
-    },
-    toggled: {
-      type: 'boolean'
+  static schema () {
+    return {
+      properties: {
+        toggleable: {
+          default: true,
+          type: 'boolean'
+        },
+        toggled: {
+          type: 'boolean'
+        }
+      }
     }
   }
 }

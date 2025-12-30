@@ -48,7 +48,7 @@ export class Rotate extends Modifier {
     return item.rotatable
   }
 
-  static Schema = Object.freeze(merge(Modifier.schema(Modifier.Types.Rotate), {
+  static schema = () => Object.freeze(merge(Modifier.schema(Modifier.Types.Rotate), {
     properties: {
       clockwise: {
         type: 'boolean'
@@ -115,23 +115,25 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     this.updateState((state) => { state.rotation = this.rotation })
     this.rotateGroup(rotation)
   }
-}
 
-rotatable.Schema = {
-  properties: {
-    direction: {
-      type: 'number'
-    },
-    rotatable: {
-      default: true,
-      type: 'boolean'
-    },
-    rotation: {
-      type: 'number'
-    },
-    rotationDegrees: {
-      enum: [30, 60, 90],
-      type: 'number'
+  static schema () {
+    return {
+      properties: {
+        direction: {
+          type: 'number'
+        },
+        rotatable: {
+          default: true,
+          type: 'boolean'
+        },
+        rotation: {
+          type: 'number'
+        },
+        rotationDegrees: {
+          enum: [30, 60, 90],
+          type: 'number'
+        }
+      }
     }
   }
 }

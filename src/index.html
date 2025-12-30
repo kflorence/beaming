@@ -46,7 +46,7 @@
           </div>
           <div class="flex-right">
             <div class="group">
-              <ul id="puzzle-solution" class="menu non-interactive"></ul>
+              <ul id="puzzle-requirements" class="menu non-interactive"></ul>
             </div>
           </div>
         </div>
@@ -114,21 +114,12 @@
       <main>
         <p>
           <em>Beaming</em> is an open source, browser-based puzzle game that involves directing beams through a
-          hexagonal grid. The rules and solutions for each puzzle can be inferred by interaction and visual cues. If
+          hexagonal grid. The rules and requirements for each puzzle can be inferred by interaction and visual cues. If
           you'd prefer a little more guidance before you get started, you can expand the sections below for more
           information.
         </p>
         <h3>Table of Contents</h3>
         <div class="wrapper">
-          <details id="puzzle-info">
-            <summary id="puzzle-info-id"></summary>
-            <main>
-              <ul>
-                <li id="puzzle-info-title"></li>
-                <li id="puzzle-info-author"></li>
-              </ul>
-            </main>
-          </details>
           <details>
             <summary>The Basics</summary>
             <main>
@@ -189,11 +180,24 @@
                 </p>
               </details>
               <details>
-                <summary><i class="ph-fill ph-lock" title="Locked">lock</i> - Locked</summary>
+                <summary><i class="ph-fill ph-lock" title="Locked"></i> - Locked</summary>
                 <p>
-                  Any available <em>actions</em> applied to the tile will become locked to the tile and will no longer be
-                  available for use on other tiles. A maximum of six actions can be locked to a single tile, at which point no
-                  further actions will be available for the tile.
+                  The items and modifiers on the tile cannot be added or removed. Any available <em>actions</em> on the
+                  tile may still be used.
+                </p>
+              </details>
+              <details>
+                <summary><i class="ph-fill ph-sticker" title="Locked"></i> - Sticky Items</summary>
+                <p>
+                  Any items placed on the tile are stuck to the tile, they cannot be removed. If the item is a
+                  <em>collectable</em>, it will be treated as a <em>Sticky Modifier</em> when collected.
+                </p>
+              </details>
+              <details>
+                <summary><i class="ph-fill ph-push-pin" title="Locked"></i> - Sticky Modifiers</summary>
+                <p>
+                  Any <em>actions</em> applied to the tile are stuck to the tile. A maximum of six actions can be added
+                  to a single tile, at which point no further actions will be available for that tile.
                 </p>
               </details>
             </main>
@@ -217,8 +221,8 @@
                 <summary><i class="ph-bold ph-arrow-counter-clockwise" title="Rotate"></i> - Rotate</summary>
                 <p>
                   Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
-                  (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which can be used to change
-                  the direction of the applied rotation.
+                  (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which
+                  can be used to change the direction of the applied rotation.
                 </p>
               </details>
               <details>
@@ -229,10 +233,38 @@
                 </p>
               </details>
               <details>
+                <summary><i class="ph-fill ph-puzzle-piece" title="Puzzle"></i> - Puzzle</summary>
+                <p>
+                  Using this action will navigate the user to the puzzle it is configured for, which will be listed in
+                  a message above the tile. Any puzzles which have been navigated to before will also be available in the
+                  dropdown menu in the top toolbar.
+                </p>
+              </details>
+              <details>
                 <summary><i class="ph-bold ph-swap" title="Swap"></i> - Swap</summary>
                 <p>
                   Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
                   items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                </p>
+              </details>
+            </main>
+          </details>
+          <details>
+            <summary>Items</summary>
+            <main>
+              <p>
+                Items are placed within tiles and generally will have some impact on the behavior of a beam in that tile.
+                Items can be manipulated through the use of <em>actions</em>, as described in the section above. Their
+                behaviors may also be modified by any <em>attributes</em> applied to the tile. Some items are <em>collectable</em>,
+                meaning that when a beam collides with them, they will be converted into an action. Click or tap on an icon
+                below to learn more about it.
+              </p>
+              <details>
+                <summary><i class="ph-fill ph-puzzle-piece" title="Puzzle"></i> - Puzzle</summary>
+                <p>
+                  The puzzle item is a <em>collectable</em> that will unlock access to a puzzle when a beam collides with it,
+                  converting the item into a puzzle action on collection. This item will always convert to a stuck modifier
+                  on collection, regardless of what modifiers are on the tile.
                 </p>
               </details>
             </main>

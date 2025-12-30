@@ -246,10 +246,10 @@ export class Portal extends movable(rotatable(Item)) {
     return exitPortal.getDirection() ?? entryPortal.getDirection() ?? step.direction
   }
 
-  static Schema = Object.freeze(merge([
+  static schema = () => Object.freeze(merge([
     Item.schema(Item.Types.Portal),
-    movable.Schema,
-    rotatable.Schema,
+    movable.schema(),
+    rotatable.schema(),
     {
       properties: {
         direction: Schema.direction

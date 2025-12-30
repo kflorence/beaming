@@ -9,7 +9,7 @@ export class StickyItems extends Modifier {
     return Icons.StickyItems
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.StickyItems))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.StickyItems))
 }
 
 export class StickyModifiers extends Modifier {
@@ -20,5 +20,5 @@ export class StickyModifiers extends Modifier {
     return Icons.StickyModifiers
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.StickyModifiers))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.StickyModifiers))
 }

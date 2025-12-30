@@ -15,7 +15,6 @@ export class Filter {
   apply () {}
 
   static Name
-  static Schema
   static Type
 
   static factory (state) {

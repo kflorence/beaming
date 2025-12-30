@@ -78,10 +78,10 @@ export class Reflector extends movable(rotatable(Item)) {
     })
   }
 
-  static Schema = Object.freeze(merge([
+  static schema = () => Object.freeze(merge([
     Item.schema(Item.Types.Reflector),
-    movable.Schema,
-    rotatable.Schema,
+    movable.schema(),
+    rotatable.schema(),
     {
       properties: {
         direction: Schema.direction

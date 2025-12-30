@@ -24,7 +24,7 @@ import { State } from './state'
 import { Puzzles } from '../puzzles'
 import { StepState } from './step'
 import { EventListeners } from './eventListeners'
-import { Solution } from './solution'
+import { Requirements } from './requirements.js'
 import { Interact } from './interact'
 import { View } from './view'
 import { Schema } from './schema'
@@ -85,7 +85,7 @@ export class Puzzle {
   #isTearingDown = false
   #mask
   #maskQueue = []
-  #solution
+  #requirements
 
   constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
@@ -669,14 +669,14 @@ export class Puzzle {
   }
 
   #setup () {
-    const { layout, message, solution } = this.state.getCurrent()
+    const { layout, message, requirements } = this.state.getCurrent()
 
     this.state.setSolution([])
     State.add(this.state.getId())
 
     this.layout = new Layout(layout)
     this.message = message
-    this.#solution = new Solution(solution)
+    this.#requirements = new Requirements(requirements)
 
     Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
@@ -687,7 +687,8 @@ export class Puzzle {
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
-    this.#updateDetails()
+    // TODO https://github.com/kflorence/beaming/issues/71
+    // this.#updateDetails()
     this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
@@ -704,8 +705,8 @@ export class Puzzle {
     this.unmask()
     this.#removeLayers()
 
-    this.#solution?.teardown()
-    this.#solution = undefined
+    this.#requirements?.teardown()
+    this.#requirements = undefined
     this.solved = false
     this.layout?.teardown()
     this.layout = undefined
@@ -794,7 +795,7 @@ export class Puzzle {
 
       // Ensure we check for a solution after all other in-progress events have processed
       setTimeout(() => {
-        if (this.#solution.isSolved()) {
+        if (this.#requirements.areMet()) {
           this.#onSolved()
         }
       }, 0)
@@ -954,7 +955,7 @@ export class Puzzle {
     tileFilter: (tile) => tile.items.some(Puzzle.#connectedBeams)
   })
 
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('puzzle'),
     properties: {
       id: {
@@ -974,8 +975,8 @@ export class Puzzle {
         maxLength: 144,
         type: 'string'
       },
-      layout: Layout.Schema,
-      solution: Solution.Schema,
+      layout: Layout.schema(),
+      requirements: Requirements.schema(),
       version: {
         default: 0,
         type: 'number'

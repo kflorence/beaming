@@ -8,26 +8,27 @@ import { Swap } from './modifiers/swap'
 import { Schema } from './schema'
 import { PuzzleModifier } from './modifiers/puzzle.js'
 import { StickyItems, StickyModifiers } from './modifiers/sticky.js'
+import { Tile } from './items/tile.js'
 
 export class Modifiers {
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('modifiers'),
     items: {
       anyOf: [
-        Immutable.Schema,
-        Lock.Schema,
-        Move.Schema,
-        PuzzleModifier.Schema,
-        Rotate.Schema,
-        StickyItems.Schema,
-        StickyModifiers.Schema,
-        Swap.Schema,
-        Toggle.Schema
+        Immutable.schema(),
+        Lock.schema(),
+        Move.schema(),
+        PuzzleModifier.schema(),
+        Rotate.schema(),
+        StickyItems.schema(),
+        StickyModifiers.schema(),
+        Swap.schema(),
+        Toggle.schema()
       ],
       headerTemplate: 'modifier {{i1}}'
     },
     minItems: 0,
-    maxItems: 6,
+    maxItems: Tile.MaxModifiers,
     type: 'array'
   })
 

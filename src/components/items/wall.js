@@ -45,7 +45,7 @@ export class Wall extends movable(rotatable(Item)) {
     })
   }
 
-  static Schema = Object.freeze(merge([
+  static schema = () => Object.freeze(merge([
     Item.schema(Item.Types.Wall),
     {
       properties: {
@@ -55,8 +55,8 @@ export class Wall extends movable(rotatable(Item)) {
         }
       }
     },
-    movable.Schema,
-    rotatable.Schema,
+    movable.schema(),
+    rotatable.schema(),
     {
       properties: {
         directions: {

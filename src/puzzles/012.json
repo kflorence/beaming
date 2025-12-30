@@ -394,7 +394,7 @@
     ]
   },
   "version": 0,
-  "solution": [
+  "requirements": [
     {
       "type": "connections",
       "amount": 6

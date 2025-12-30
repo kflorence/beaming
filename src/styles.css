@@ -645,13 +645,13 @@ dialog ul {
   top: calc(50% - 5px);
 }
 
-#puzzle-solution {
+#puzzle-requirements {
   align-items: center;
   cursor: default;
   line-height: 24px;
 }
 
-#puzzle-solution i {
+#puzzle-requirements i {
   margin-left: 0.5em;
 }
 

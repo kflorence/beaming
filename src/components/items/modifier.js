@@ -75,14 +75,14 @@ export class ModifierItem extends movable(Item) {
     AddModifier: 'modifier-item-add'
   })
 
-  static Schema = Object.freeze(merge([
+  static schema = () => Object.freeze(merge([
     Item.schema(Item.Types.Modifier),
-    movable.Schema,
+    movable.schema(),
     {
       properties: {
         modifier: {
           oneOf: [
-            PuzzleModifier.Schema
+            PuzzleModifier.schema()
           ],
           type: 'object'
         }

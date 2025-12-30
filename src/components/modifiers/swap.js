@@ -34,5 +34,5 @@ export class Swap extends Move {
     )
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Swap))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Swap))
 }

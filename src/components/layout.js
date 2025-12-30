@@ -314,7 +314,7 @@ export class Layout extends Stateful {
     OddRow: 'odd-row'
   })
 
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('layout'),
     properties: {
       offset: {
@@ -324,14 +324,14 @@ export class Layout extends Stateful {
         },
         type: 'string'
       },
-      modifiers: Modifiers.Schema,
+      modifiers: Modifiers.schema(),
       tiles: {
         options: {
           hidden: true
         },
         type: 'object'
       },
-      imports: Imports.Schema,
+      imports: Imports.schema(),
       importsCache: {
         options: {
           hidden: true

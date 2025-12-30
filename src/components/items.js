@@ -8,16 +8,16 @@ import { Schema } from './schema'
 import { ModifierItem } from './items/modifier.js'
 
 export class Items {
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('items'),
     items: {
       anyOf: [
-        Filter.Schema,
-        ModifierItem.Schema,
-        Portal.Schema,
-        Reflector.Schema,
-        Terminus.Schema,
-        Wall.Schema
+        Filter.schema(),
+        ModifierItem.schema(),
+        Portal.schema(),
+        Reflector.schema(),
+        Terminus.schema(),
+        Wall.schema()
       ],
       headerTemplate: 'item {{i1}}'
     },

@@ -204,9 +204,9 @@ export class Tile extends Item {
     Selected: 'tile-selected'
   })
 
-  static MaxModifiers = Modifiers.Schema.maxItems
+  static MaxModifiers = 6
 
-  static Schema = Object.freeze(merge(Item.schema(Item.Types.Tile), {
+  static schema = () => Object.freeze(merge(Item.schema(Item.Types.Tile), {
     properties: {
       ref: {
         options: {
@@ -214,8 +214,8 @@ export class Tile extends Item {
         },
         type: 'object'
       },
-      items: Items.Schema,
-      modifiers: Modifiers.Schema
+      items: Items.schema(),
+      modifiers: Modifiers.schema()
     }
   }))
 

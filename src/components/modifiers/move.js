@@ -85,7 +85,7 @@ export class Move extends Modifier {
   // A tile with these modifiers will prevent moving items to that tile
   static InvalidModifierTypes = [Modifier.Types.Immutable, Modifier.Types.Lock]
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Move))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Move))
 }
 
 /**
@@ -121,13 +121,15 @@ export const movable = (SuperClass) => class MovableItem extends SuperClass {
   }
 
   onMove () {}
-}
 
-movable.Schema = {
-  properties: {
-    movable: {
-      default: true,
-      type: 'boolean'
+  static schema () {
+    return {
+      properties: {
+        movable: {
+          default: true,
+          type: 'boolean'
+        }
+      }
     }
   }
 }

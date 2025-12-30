@@ -30,7 +30,7 @@ export class OffsetCoordinates {
     return new CubeCoordinates(q, offset.r)
   }
 
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('offset'),
     properties: {
       r: {

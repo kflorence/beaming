@@ -9,5 +9,5 @@ export class Lock extends Modifier {
     return Icons.Lock
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Lock))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Lock))
 }

@@ -197,7 +197,7 @@
     ]
   },
   "version": 1,
-  "solution": [
+  "requirements": [
     {
       "type": "connections",
       "amount": 5

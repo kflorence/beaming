@@ -30,7 +30,7 @@ export class PuzzleModifier extends Modifier {
     }, 250)
   }
 
-  static Schema = Object.freeze(merge([
+  static schema = () => Object.freeze(merge([
     Modifier.schema(Modifier.Types.Puzzle),
     {
       properties: {

@@ -24,6 +24,10 @@ export class Icon {
     return i
   }
 
+  clone (weight) {
+    return new Icon(this.name, weight ?? this.weight, this.symbol, this.title)
+  }
+
   static ClassNamePrefix = 'ph'
   static Weights = Object.freeze({
     Bold: 'bold',
@@ -33,8 +37,11 @@ export class Icon {
 
 export const Icons = Object.freeze({
   Connections: new Icon('link-simple-horizontal', Icon.Weights.Bold, null, 'Connections'),
+  DockBottom: new Icon('square-split-horizontal', Icon.Weights.Bold, null, 'Dock To Bottom'),
+  DockRight: new Icon('square-split-vertical', Icon.Weights.Bold, null, 'Dock To Right'),
   Immutable: new Icon('prohibit-inset', Icon.Weights.Fill, Symbols.Immutable, 'Immutable'),
-  Lock: new Icon('lock', Icon.Weights.Fill, Symbols.Lock, 'Lock'),
+  Lock: new Icon('lock', Icon.Weights.Fill, Symbols.Lock, 'Locked'),
+  LockOpen: new Icon('lock-open', Icon.Weights.Bold, null, 'Unlocked'),
   Move: new Icon('arrows-out-cardinal', Icon.Weights.Bold, Symbols.Move, 'Move'),
   Moves: new Icon('stack', Icon.Weights.Bold, null, 'Moves'),
   Puzzle: new Icon('puzzle-piece', Icon.Weights.Fill, Symbols.Puzzle, 'Puzzle'),

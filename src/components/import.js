@@ -46,7 +46,7 @@ export class ImportFilterItemExclusion extends ImportFilter {
   static Name = ImportFilter.Names.Exclusion
   static Type = ImportFilter.Types.Item
 
-  static Schema = Object.freeze(merge(
+  static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
       description: 'Don\'t import items from tiles.',
@@ -65,7 +65,7 @@ export class ImportFilterPuzzleSolved extends ImportFilter {
   static Name = ImportFilter.Names.Solved
   static Type = ImportFilter.Types.Puzzle
 
-  static Schema = Object.freeze(merge(
+  static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
       description: 'Conditionally import the puzzle depending on whether or not the user has solved it.',
@@ -87,7 +87,7 @@ export class ImportFilterTileInSolution extends ImportFilter {
   static Name = ImportFilter.Names.InSolution
   static Type = ImportFilter.Types.Tile
 
-  static Schema = Object.freeze(merge(
+  static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
       description: 'Conditionally include tiles based on whether they were included in the puzzle solution.',
@@ -102,7 +102,7 @@ export class ImportFilterTileInSolution extends ImportFilter {
 }
 
 export class Import {
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('import'),
     headerTemplate: 'import {{i1}}',
     properties: {
@@ -110,7 +110,7 @@ export class Import {
         minLength: 3,
         type: 'string'
       },
-      offset: OffsetCoordinates.Schema,
+      offset: OffsetCoordinates.schema(),
       cache: {
         default: true,
         description: 'Cache the imported puzzle in the current puzzle configuration. ' +
@@ -121,9 +121,9 @@ export class Import {
       filters: {
         items: {
           anyOf: [
-            ImportFilterItemExclusion.Schema,
-            ImportFilterPuzzleSolved.Schema,
-            ImportFilterTileInSolution.Schema
+            ImportFilterItemExclusion.schema(),
+            ImportFilterPuzzleSolved.schema(),
+            ImportFilterTileInSolution.schema()
           ],
           headerTemplate: 'filter {{i1}}'
         },
@@ -140,9 +140,9 @@ export class Import {
 }
 
 export class Imports {
-  static Schema = Object.freeze({
+  static schema = () => Object.freeze({
     $id: Schema.$id('imports'),
-    items: Import.Schema,
+    items: Import.schema(),
     type: 'array'
   })
 }

@@ -9,5 +9,5 @@ export class Immutable extends Modifier {
     return Icons.Immutable
   }
 
-  static Schema = Object.freeze(Modifier.schema(Modifier.Types.Immutable))
+  static schema = () => Object.freeze(Modifier.schema(Modifier.Types.Immutable))
 }
