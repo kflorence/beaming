@@ -194,12 +194,13 @@ export class Puzzle {
 
   getShareUrl () {
     // Electron runs on localhost but should use the production web URL
-    const playUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
-    playUrl.searchParams.delete(State.ParamKeys.Edit)
-    playUrl.searchParams.append(State.ParamKeys.Play, '')
+    const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
+    const context = State.getContext()
+    Game.states.forEach((state) => shareUrl.searchParams.delete(state))
+    shareUrl.searchParams.append(context, '')
     // Cloning will flatten current state into original state and get rid of history
-    playUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
-    return playUrl.toString()
+    shareUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
+    return shareUrl.toString()
   }
 
   getSolution () {

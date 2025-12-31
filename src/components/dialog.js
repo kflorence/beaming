@@ -1,3 +1,7 @@
+import { animate } from './util.js'
+
+const title = document.getElementById('dialog-title')
+
 document.querySelectorAll('[data-dialog]').forEach((element) => {
   const id = element.dataset.dialog
   const dialog = document.getElementById(id)
@@ -6,8 +10,17 @@ document.querySelectorAll('[data-dialog]').forEach((element) => {
     return
   }
 
+  const close = dialog.querySelector('header button')
+  close.addEventListener('click', () => {
+    animate(dialog, 'slide-right-out', () => { dialog.close() })
+    animate(title, 'slide-right-in')
+    title.showModal()
+  })
+
   element.addEventListener('click', () => {
     if (!dialog.open) {
+      animate(dialog, 'slide-left-in')
+      animate(title, 'slide-left-out', () => { title.close() })
       dialog.showModal()
       dialog.dispatchEvent(new CustomEvent('open'))
     }

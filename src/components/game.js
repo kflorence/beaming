@@ -1,9 +1,8 @@
 import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
-import paper from 'paper'
 import { debug } from './debug'
-import { classToString, emitEvent, params, url } from './util'
+import { animate, classToString, emitEvent, params, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
@@ -15,6 +14,7 @@ const elements = Object.freeze({
   edit: document.getElementById('title-editor'),
   play: document.getElementById('title-play'),
   quit: document.getElementById('title-quit'),
+  screen: document.getElementById('screen'),
   select: document.getElementById('select'),
   title: document.getElementById('title')
 })
@@ -51,38 +51,30 @@ export class Game {
   }
 
   edit () {
-    if (document.body.classList.contains(Game.States.Edit)) {
-      elements.dialog.close()
-      return
-    } else if (document.body.classList.contains(Game.States.Play)) {
+    if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset()
+      document.body.classList.add(Game.States.Edit)
+      State.setParam(Game.States.Edit, '')
+      setTimeout(() => { this.editor.select() })
     }
 
-    document.body.classList.add(Game.States.Edit)
-
-    State.setParam(Game.States.Edit, '')
-
-    this.editor.select()
-
-    elements.dialog.close()
+    Game.dialogClose()
   }
 
   play () {
-    if (document.body.classList.contains(Game.States.Play)) {
-      elements.dialog.close()
-      return
-    } else if (document.body.classList.contains(Game.States.Edit)) {
+    if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset()
+      document.body.classList.add(Game.States.Play)
+      State.setParam(Game.States.Play, '')
+
+      setTimeout(() => {
+        this.editor.teardown()
+        this.puzzle.select()
+        this.puzzle.resize()
+      })
     }
 
-    State.setParam(Game.States.Play, '')
-
-    this.editor.teardown()
-    this.puzzle.select()
-    this.puzzle.resize()
-
-    document.body.classList.add(Game.States.Play)
-    elements.dialog.close()
+    Game.dialogClose()
   }
 
   quit () {
@@ -99,9 +91,9 @@ export class Game {
 
   title () {
     if (elements.dialog.open) {
-      elements.dialog.close()
+      Game.dialogClose()
     } else {
-      elements.dialog.showModal()
+      Game.dialogOpen()
     }
   }
 
@@ -156,7 +148,22 @@ export class Game {
   }
 
   static debug = debug
-  static paper = paper
+
+  static dialogClose () {
+    if (elements.dialog.open) {
+      animate(elements.screen, 'slide-left-in')
+      animate(elements.dialog, 'slide-left-out', () => { elements.dialog.close() })
+    }
+  }
+
+  static dialogOpen () {
+    if (!elements.dialog.open) {
+      animate(elements.screen, 'slide-right-out')
+      animate(elements.dialog, 'slide-right-in')
+      elements.dialog.showModal()
+    }
+  }
+
   static toString = classToString('Game')
 
   static States = Object.freeze({

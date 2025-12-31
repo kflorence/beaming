@@ -70,6 +70,13 @@ input {
   display: none;
 }
 
+#screen {
+  display: flex;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}
+
 #version {
   color: #666;
   font-size: 0.75em;
@@ -81,7 +88,7 @@ input {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 dialog {
-  background-color: #ccc;
+  background-color: #bbb;
   border: none;
   box-sizing: border-box;
   display: none;
@@ -100,6 +107,10 @@ dialog.fullscreen {
   max-width: 100vw;
   top: 0;
   width: 100vw;
+}
+
+dialog.fullscreen::backdrop {
+  display: none;
 }
 
 dialog.confirm {
@@ -512,8 +523,8 @@ dialog ul {
 
 #logo {
   aspect-ratio: 1 / 1;
-  color: #333;
-  filter: drop-shadow(0 0.25em 0.25em #aaa);
+  color: #000;
+  filter: drop-shadow(0 0.25em 0.25em #666);
   min-width: 240px;
   margin-bottom: 2em;
   max-width: 480px;
@@ -729,10 +740,6 @@ dialog ul {
   visibility: visible;
 }
 
-.edit #puzzle-header-wrapper .menu:last-child {
-  border-left: #ddd 1px solid;
-}
-
 .electron {
   #title-settings,
   #title-quit {
@@ -910,6 +917,70 @@ dialog ul {
 
 .wrapper details:last-of-type {
   padding-bottom: 0;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Animations
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+.slide-left-in {
+  animation-duration: 0.5s;
+  animation-name: slide-left-in;
+}
+
+.slide-left-out {
+  animation-duration: 0.5s;
+  animation-name: slide-left-out;
+}
+
+.slide-right-in {
+  animation-duration: 0.5s;
+  animation-name: slide-right-in;
+}
+
+.slide-right-out {
+  animation-duration: 0.5s;
+  animation-name: slide-right-out;
+}
+
+@keyframes slide-left-in {
+  from {
+    translate: 100vw 0;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes slide-left-out {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: -100vw 0;
+  }
+}
+
+@keyframes slide-right-in {
+  from {
+    translate: -100vw 0;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes slide-right-out {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 100vw 0;
+  }
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

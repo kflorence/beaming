@@ -29,6 +29,18 @@ export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
 
+export function animate (element, className, func = () => {}) {
+  function complete () {
+    func(...arguments)
+    element.classList.remove(className)
+    element.removeEventListener('animationcancel', complete)
+    element.removeEventListener('animationend', complete)
+  }
+  element.addEventListener('animationcancel', complete)
+  element.addEventListener('animationend', complete)
+  element.classList.add(className)
+}
+
 export function appendOption (element, option) {
   const $option = document.createElement('option')
   $option.value = option.value
