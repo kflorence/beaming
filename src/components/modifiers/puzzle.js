@@ -24,21 +24,31 @@ export class PuzzleModifier extends Modifier {
     puzzle.centerOnImport(state.puzzleId)
 
     // Slight pause so the user can see the tile being centered on
+    // TODO https://github.com/kflorence/beaming/issues/85
     setTimeout(() => {
       puzzle.select(state.puzzleId)
       puzzle.centerOnTile(0, 0)
     }, 250)
   }
 
-  static schema = () => Object.freeze(merge([
-    Modifier.schema(Modifier.Types.Puzzle),
-    {
-      properties: {
-        puzzleId: {
-          type: 'string'
-        }
-      },
-      required: ['puzzleId']
-    }
-  ]))
+  static schema () {
+    const currentId = State.getId()
+    const ids = State.getIds().filter((id) => id !== currentId)
+    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    return Object.freeze(merge([
+      Modifier.schema(Modifier.Types.Puzzle),
+      {
+        properties: {
+          puzzleId: {
+            enum: ids,
+            options: {
+              enum_titles: titles
+            },
+            type: 'string'
+          }
+        },
+        required: ['puzzleId']
+      }
+    ]))
+  }
 }

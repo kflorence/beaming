@@ -29,7 +29,6 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
-import { ModifierItem } from './items/modifier.js'
 import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
 
@@ -73,6 +72,7 @@ export class Puzzle {
   layers = {}
   layout
   message
+  modifiers = []
   selectedTile
   solved = false
   state
@@ -114,13 +114,31 @@ export class Puzzle {
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
-      { type: ModifierItem.Events.AddModifier, handler: this.#onAddModifier },
       { type: 'pointermove', element: elements.canvas, handler: this.#onPointerMove },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
       { type: 'tap', element: elements.canvas, handler: this.#onTap }
     ])
+  }
+
+  addModifier (modifier) {
+    console.log('addModifier', modifier)
+    if (modifier.parent) {
+      modifier.parent.addModifier(modifier)
+      this.updateSelectedTile(modifier.parent)
+    } else {
+      this.layout.addModifier(modifier)
+      this.#updateModifiers()
+    }
+
+    // Update state but don't add a move, since it was the previous move that caused the collision.
+    this.updateState()
+  }
+
+  centerOn (r, c) {
+    const point = this.layout.getPoint(new OffsetCoordinates(r, c))
+    View.setCenter(point)
   }
 
   centerOnImport (id) {
@@ -311,6 +329,18 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
+  removeModifier (modifier) {
+    if (modifier.parent) {
+      modifier.parent.removeModifier(modifier)
+    } else {
+      this.layout.removeModifier(modifier)
+      this.#updateModifiers()
+    }
+
+    // Update state but don't add a move, since it was the previous move that caused the collision.
+    this.updateState()
+  }
+
   resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
     const newSize = new Size(width, height)
@@ -355,6 +385,10 @@ export class Puzzle {
 
     // Can't remove puzzles that exist in configuration
     elements.delete.classList.toggle('hide', Puzzles.has(id))
+  }
+
+  setMessage (message) {
+    elements.headerMessage.textContent = message
   }
 
   tap (event) {
@@ -426,7 +460,7 @@ export class Puzzle {
     this.selectedTile = tile
     this.state.setSelectedTile(tile)
     this.#updateMessage(tile)
-    this.#updateModifiers(tile, previouslySelectedTile)
+    this.#updateModifiers()
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -459,34 +493,13 @@ export class Puzzle {
     // .sort((a, b) => a.id - b.id)
   }
 
-  #onAddModifier (event) {
-    const modifier = event.detail.modifier
-
-    if (modifier.parent) {
-      modifier.parent.addModifier(modifier)
-      this.updateSelectedTile(modifier.parent)
-    } else {
-      const index = this.layout.modifiers[this.layout.modifiers.length - 1]?.index ?? 0
-      modifier.index = index + 1
-      this.layout.modifiers.push(modifier)
-      this.#updateModifiers(this.selectedTile)
-    }
-
-    // Update state but don't add a move, since it was the previous move that caused the collision.
-    this.updateState()
-
-    const message = event.detail.message
-    if (message) {
-      elements.headerMessage.textContent = message
-    }
-  }
-
   #onBack () {
     const id = this.state.getId()
     const parentId = State.getParent(id)
     this.centerOnTile(0, 0)
 
     // Slight pause so the user can see the tile being centered on
+    // TODO https://github.com/kflorence/beaming/issues/85
     setTimeout(() => {
       this.select(parentId)
       this.centerOnImport(id)
@@ -550,7 +563,7 @@ export class Puzzle {
       modifier.move(tile)
       console.debug('Modifier is stuck to tile', modifier, tile)
       if (!selectedTile) {
-        this.#updateModifiers(this.selectedTile)
+        this.#updateModifiers()
       }
     }
 
@@ -837,13 +850,12 @@ export class Puzzle {
     elements.headerMessage.textContent = this.message
   }
 
-  #updateModifiers (tile, previousTile) {
-    const modifiers = this.#getModifiers(tile)
-    const previousModifiers = (previousTile ? this.#getModifiers(previousTile) : modifiers)
-    previousModifiers.forEach((modifier) => modifier.detach())
-    modifiers.forEach((modifier) => modifier.attach(tile))
+  #updateModifiers () {
+    this.modifiers.forEach((modifier) => modifier.detach())
+    this.modifiers = this.#getModifiers(this.selectedTile)
+    this.modifiers.forEach((modifier) => modifier.attach(this.selectedTile))
 
-    elements.footer.classList.toggle(Puzzle.ClassNames.Active, modifiers.length > 0)
+    elements.footer.classList.toggle(Puzzle.ClassNames.Active, this.modifiers.length > 0)
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected

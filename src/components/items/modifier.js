@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier.js'
 import { movable } from '../modifiers/move.js'
-import { emitEvent, merge } from '../util.js'
+import { merge } from '../util.js'
 import { Item } from '../item.js'
 import { Modifiers } from '../modifiers.js'
 import { PuzzleModifier } from '../modifiers/puzzle.js'
@@ -35,45 +35,32 @@ export class ModifierItem extends movable(Item) {
     this.group.addChild(this.item)
   }
 
-  onCollision ({ collisionStep, nextStep }) {
+  onCollision ({ collisionStep, nextStep, puzzle }) {
     if (this.color === ModifierItem.DefaultColor || nextStep.color === this.color) {
       // Collided with an icon of matching color, or the default wildcard color
-      return nextStep.copy({
-        onAdd: () => {
-          nextStep.onAdd()
+      this.group.removeChildren()
+      this.parent.removeItem(this)
 
-          this.group.removeChildren()
-          this.parent.removeItem(this)
+      const state = this.getState()
 
-          const state = this.getState()
+      // The modifier will attach to the tile if the item is sticky or if the tile has the StickyItems modifier
+      const parent = (ModifierItem.Sticky.includes(state.modifier.type) ||
+        this.parent.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyItems))
+        ? this.parent
+        : null
 
-          // The modifier will attach to the tile if the item is sticky or if the tile has the StickyItems modifier
-          const parent = (ModifierItem.Sticky.includes(state.modifier.type) ||
-            this.parent.modifiers.some((modifier) => modifier.type === Modifier.Types.StickyItems))
-            ? this.parent
-            : null
+      const modifier = Modifiers.factory(parent, state.modifier)
 
-          const modifier = Modifiers.factory(parent, state.modifier)
-          const message = modifier.getMessage(this)
+      puzzle.addModifier(modifier)
+      puzzle.setMessage(modifier.getMessage(this))
 
-          emitEvent(ModifierItem.Events.AddModifier, { item: this, message, modifier })
-        },
-        onRemove: () => {
-          nextStep.onRemove()
-          this.parent.addItem(this)
-          this.group.addChild(this.item)
-        }
-      })
+      return nextStep
     }
 
     return collisionStep
   }
 
   static DefaultColor = '#333'
-
-  static Events = Object.freeze({
-    AddModifier: 'modifier-item-add'
-  })
 
   static schema = () => Object.freeze(merge([
     Item.schema(Item.Types.Modifier),

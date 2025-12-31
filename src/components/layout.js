@@ -181,6 +181,13 @@ export class Layout extends Stateful {
     View.update()
   }
 
+  addModifier (modifier) {
+    const index = this.modifiers[this.modifiers.length - 1]?.index ?? 0
+    modifier.index = index + 1
+    this.modifiers.push(modifier)
+    return this.modifiers
+  }
+
   addTile (offset, state = {}) {
     this.removeTile(offset)
 

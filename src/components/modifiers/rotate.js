@@ -115,24 +115,24 @@ export const rotatable = (SuperClass) => class RotatableItem extends SuperClass 
     this.updateState((state) => { state.rotation = this.rotation })
     this.rotateGroup(rotation)
   }
+}
 
-  static schema () {
-    return {
-      properties: {
-        direction: {
-          type: 'number'
-        },
-        rotatable: {
-          default: true,
-          type: 'boolean'
-        },
-        rotation: {
-          type: 'number'
-        },
-        rotationDegrees: {
-          enum: [30, 60, 90],
-          type: 'number'
-        }
+rotatable.schema = function schema () {
+  return {
+    properties: {
+      direction: {
+        type: 'number'
+      },
+      rotatable: {
+        default: true,
+        type: 'boolean'
+      },
+      rotation: {
+        type: 'number'
+      },
+      rotationDegrees: {
+        enum: [30, 60, 90],
+        type: 'number'
       }
     }
   }

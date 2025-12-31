@@ -67,17 +67,17 @@ export const toggleable = (SuperClass) => class ToggleableItem extends SuperClas
     this.toggled = toggled
     this.onToggle()
   }
+}
 
-  static schema () {
-    return {
-      properties: {
-        toggleable: {
-          default: true,
-          type: 'boolean'
-        },
-        toggled: {
-          type: 'boolean'
-        }
+toggleable.schema = function schema () {
+  return {
+    properties: {
+      toggleable: {
+        default: true,
+        type: 'boolean'
+      },
+      toggled: {
+        type: 'boolean'
       }
     }
   }
