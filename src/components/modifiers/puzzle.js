@@ -24,6 +24,7 @@ export class PuzzleModifier extends Modifier {
     puzzle.centerOnImport(state.puzzleId)
 
     // Slight pause so the user can see the tile being centered on
+    // TODO https://github.com/kflorence/beaming/issues/85
     setTimeout(() => {
       puzzle.select(state.puzzleId)
       puzzle.centerOnTile(0, 0)

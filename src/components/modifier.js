@@ -100,15 +100,8 @@ export class Modifier extends Stateful {
    * Remove listeners and the modifier from the DOM.
    */
   detach () {
-    if (!this.#container) {
-      return
-    }
-
+    this.#container?.remove()
     this.#eventListener.remove()
-    this.#container.remove()
-
-    this.element = undefined
-    this.#container = undefined
   }
 
   dispatchEvent (event, detail) {
