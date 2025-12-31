@@ -7,18 +7,34 @@ logging.installConsoleHandler()
 const logger = logging.getLogger('')
 logger.setLevel(logging.Level.DEBUG)
 
-export class PuzzleFixture {
-  driver
-  elements = {
-    body: undefined,
-    canvas: undefined,
-    modifiers: undefined
+export function removeKeys (obj, keys) {
+  if (!obj || typeof obj !== 'object') {
+    return obj
   }
 
-  constructor (id) {
+  if (!Array.isArray(keys)) {
+    keys = [keys]
+  }
+
+  Object.keys(obj).forEach((key) => {
+    if (keys.includes(key)) {
+      delete obj[key]
+    } else {
+      removeKeys(obj[key], keys)
+    }
+  })
+
+  return obj
+}
+
+export class PuzzleFixture {
+  driver
+  elements = {}
+
+  constructor (id, mode = 'play') {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?play#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${mode}#/${id}`
   }
 
   async after () {
@@ -53,15 +69,16 @@ export class PuzzleFixture {
     this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
   }
 
-  async invokeModifier (name, options = {}) {
-    const times = options.times ?? 1
-    for (let i = 0; i < times; i++) {
-      // Need to re-get modifier each time as location might change
-      const origin = await this.#getModifier(name)
-      const actions = this.driver.actions({ async: true }).move({ origin })
-      actions.press(options.button).release(options.button)
-      await actions.perform()
-    }
+  async clickAtOffset (r, c) {
+    // Center on the point first to ensure it is visible
+    await this.driver.executeScript(`return game.puzzle.centerOn(${r}, ${c})`)
+    return this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+  }
+
+  async clickElement (selector) {
+    console.log(`Clicking on element: ${selector}`)
+    const origin = await this.getElement(selector)
+    return this.driver.actions({ async: true }).move({ origin }).click().perform()
   }
 
   async clickTile (r, c, onlyIfNotSelected = false) {
@@ -75,12 +92,37 @@ export class PuzzleFixture {
     return Promise.resolve()
   }
 
+  async getEditorState () {
+    const state = await this.driver.executeScript('return game.editor.getState()')
+    console.log('Got editor state:', JSON.stringify(state, null, 2))
+    return state
+  }
+
+  async getElement (selector) {
+    return this.driver.wait(until.elementLocated(By.css(selector)))
+  }
+
+  async getModifier (name) {
+    return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
+  }
+
   async isMasked () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
   }
 
   async isNotMasked () {
     return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
+  }
+
+  async invokeModifier (name, options = {}) {
+    const times = options.times ?? 1
+    for (let i = 0; i < times; i++) {
+      // Need to re-get modifier each time as location might change
+      const origin = await this.getModifier(name)
+      const actions = this.driver.actions({ async: true }).move({ origin })
+      actions.press(options.button).release(options.button)
+      await actions.perform()
+    }
   }
 
   async isSolved () {
@@ -121,6 +163,11 @@ export class PuzzleFixture {
     }
   }
 
+  async selectOption (selector, value) {
+    const element = await this.getElement(selector)
+    return await element.sendKeys(value)
+  }
+
   async selectTile (r, c) {
     await this.clickTile(r, c, true)
     return this.driver.wait(untilElementHasClass(this.elements.body, `tile-selected_${r}_${c}`))
@@ -130,10 +177,6 @@ export class PuzzleFixture {
     for (const action of actions) {
       await this.process(action)
     }
-  }
-
-  async #getModifier (name) {
-    return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
   }
 
   static baseUrl = 'http://localhost:1234'

@@ -123,6 +123,11 @@ export class Puzzle {
     ])
   }
 
+  centerOn (r, c) {
+    const point = this.layout.getPoint(new OffsetCoordinates(r, c))
+    View.setCenter(point)
+  }
+
   centerOnImport (id) {
     const imports = this.layout.getImports()
     const ref = imports[id]
