@@ -71,9 +71,10 @@ input {
 }
 
 #screen {
-  display: flex;
   box-sizing: border-box;
+  display: flex;
   height: 100%;
+  pointer-events: none;
   width: 100%;
 }
 
@@ -537,6 +538,7 @@ dialog ul {
 #puzzle {
   container-name: puzzle;
   container-type: inline-size;
+  pointer-events: auto;
   position: relative;
   visibility: hidden;
 }
