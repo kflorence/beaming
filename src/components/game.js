@@ -52,9 +52,7 @@ export class Game {
 
   edit () {
     if (!document.body.classList.contains(Game.States.Edit)) {
-      this.#reset()
-      document.body.classList.add(Game.States.Edit)
-      State.setParam(Game.States.Edit, '')
+      this.#reset(Game.States.Edit)
       setTimeout(() => { this.editor.select() })
     }
 
@@ -63,10 +61,7 @@ export class Game {
 
   play () {
     if (!document.body.classList.contains(Game.States.Play)) {
-      this.#reset()
-      document.body.classList.add(Game.States.Play)
-      State.setParam(Game.States.Play, '')
-
+      this.#reset(Game.States.Play)
       setTimeout(() => {
         this.editor.teardown()
         this.puzzle.select()
@@ -139,12 +134,22 @@ export class Game {
     window.electron?.store.set(event.detail.key, event.detail.value)
   }
 
-  #reset () {
-    elements.select.replaceChildren()
-    // Don't carry state via URL from one context to another
-    url.hash = ''
-    Game.states.forEach((state) => params.delete(state))
+  #reset (state) {
+    if (!state) {
+      throw new Error('Cannot reset to unknown state.')
+    }
+
     document.body.classList.remove(...Game.states)
+    document.body.classList.add(state)
+    elements.select.replaceChildren()
+
+    if (!params.has(state)) {
+      Game.states.forEach((state) => params.delete(state))
+      State.setParam(state, '')
+
+      // Don't carry state via URL from one context to another
+      url.hash = ''
+    }
   }
 
   static debug = debug
