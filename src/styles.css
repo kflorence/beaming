@@ -538,7 +538,6 @@ dialog ul {
 #puzzle {
   container-name: puzzle;
   container-type: inline-size;
-  pointer-events: auto;
   position: relative;
   visibility: hidden;
 }
@@ -879,6 +878,7 @@ dialog ul {
   flex: 1;
   flex-direction: column;
   overflow: hidden;
+  pointer-events: all;
 }
 
 .play #puzzle {
@@ -1038,6 +1038,7 @@ dialog ul {
 
   #gutter {
     height: 1px;
+    pointer-events: all;
     width: 100%;
   }
 
