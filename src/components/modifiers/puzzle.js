@@ -17,18 +17,16 @@ export class PuzzleModifier extends Modifier {
 
   onInvoked (puzzle) {
     const state = this.getState()
+    const ref = puzzle.getImport(state.puzzleId)
 
     // Set the parent of the puzzle we are entering to the current puzzle
     State.setParent(state.puzzleId, puzzle.state.getId())
 
-    puzzle.centerOnImport(state.puzzleId)
+    // Center the screen on the anchor point of the import
+    puzzle.centerOn(ref.offset.r, ref.offset.c)
 
-    // Slight pause so the user can see the tile being centered on
-    // TODO https://github.com/kflorence/beaming/issues/85
-    setTimeout(() => {
-      puzzle.select(state.puzzleId)
-      puzzle.centerOnTile(0, 0)
-    }, 250)
+    // Load the import behind the current puzzle and then swap them
+    puzzle.select(state.puzzleId, { animation: 'fade-out' })
   }
 
   static schema () {
