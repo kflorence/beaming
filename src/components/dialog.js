@@ -12,15 +12,15 @@ document.querySelectorAll('[data-dialog]').forEach((element) => {
 
   const close = dialog.querySelector('header button')
   close.addEventListener('click', () => {
-    animate(dialog, 'slide-right-out', () => { dialog.close() })
-    animate(title, 'slide-right-in')
+    animate(dialog, 'slide-down-out', () => { dialog.close() })
+    animate(title, 'slide-down-in')
     title.showModal()
   })
 
   element.addEventListener('click', () => {
     if (!dialog.open) {
-      animate(dialog, 'slide-left-in')
-      animate(title, 'slide-left-out', () => { title.close() })
+      animate(dialog, 'slide-up-in')
+      animate(title, 'slide-up-out', () => { title.close() })
       dialog.showModal()
       dialog.dispatchEvent(new CustomEvent('open'))
     }

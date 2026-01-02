@@ -89,7 +89,7 @@ input {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 dialog {
-  background-color: #bbb;
+  background-color: #ccc;
   border: none;
   box-sizing: border-box;
   display: none;
@@ -940,6 +940,16 @@ dialog ul {
   animation-name: fade-out;
 }
 
+.slide-down-in {
+  animation-duration: 0.5s;
+  animation-name: slide-down-in;
+}
+
+.slide-down-out {
+  animation-duration: 0.5s;
+  animation-name: slide-down-out;
+}
+
 .slide-left-in {
   animation-duration: 0.5s;
   animation-name: slide-left-in;
@@ -960,6 +970,16 @@ dialog ul {
   animation-name: slide-right-out;
 }
 
+.slide-up-in {
+  animation-duration: 0.5s;
+  animation-name: slide-up-in;
+}
+
+.slide-up-out {
+  animation-duration: 0.5s;
+  animation-name: slide-up-out;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -977,6 +997,26 @@ dialog ul {
 
   to {
     opacity: 0;
+  }
+}
+
+@keyframes slide-down-in {
+  from {
+    translate: 0 -100vh;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes slide-down-out {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 0 100vh;
   }
 }
 
@@ -1017,6 +1057,26 @@ dialog ul {
 
   to {
     translate: 100vw 0;
+  }
+}
+
+@keyframes slide-up-in {
+  from {
+    translate: 0 100vh;
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes slide-up-out {
+  from {
+    translate: 0 0;
+  }
+
+  to {
+    translate: 0 -100vh;
   }
 }
 

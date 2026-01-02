@@ -53,10 +53,13 @@ export class Game {
   edit () {
     if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset(Game.States.Edit)
-      setTimeout(() => { this.editor.select() })
+      setTimeout(() => {
+        this.editor.select()
+        Game.dialogClose()
+      })
+    } else {
+      Game.dialogClose()
     }
-
-    Game.dialogClose()
   }
 
   play () {
@@ -66,10 +69,11 @@ export class Game {
         this.editor.teardown()
         this.puzzle.select()
         this.puzzle.resize()
+        Game.dialogClose()
       })
+    } else {
+      Game.dialogClose()
     }
-
-    Game.dialogClose()
   }
 
   quit () {
@@ -156,15 +160,15 @@ export class Game {
 
   static dialogClose () {
     if (elements.dialog.open) {
-      animate(elements.screen, 'slide-left-in')
-      animate(elements.dialog, 'slide-left-out', () => { elements.dialog.close() })
+      animate(elements.screen, 'slide-up-in')
+      animate(elements.dialog, 'slide-up-out', () => { elements.dialog.close() })
     }
   }
 
   static dialogOpen () {
     if (!elements.dialog.open) {
-      animate(elements.screen, 'slide-right-out')
-      animate(elements.dialog, 'slide-right-in')
+      animate(elements.screen, 'slide-down-out')
+      animate(elements.dialog, 'slide-down-in')
       elements.dialog.showModal()
     }
   }
