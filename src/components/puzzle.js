@@ -297,13 +297,13 @@ export class Puzzle {
     }
   }
 
-  reload (state = undefined, options = { onError: undefined, swap: undefined }) {
+  reload (state = undefined, options = { animation: 'fade-in-out', onError: undefined }) {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
 
     if (this.state) {
-      if (options.swap) {
-        // Don't tear down the layout if swapping
+      if (options.animation) {
+        // Don't tear down the layout if animating
         this.layout = undefined
       }
       this.#teardown()
@@ -377,7 +377,7 @@ export class Puzzle {
     }
   }
 
-  select (id, options) {
+  select (id, options = { animation: 'fade-in-out', onError: undefined }) {
     if (id !== undefined && id === this.state?.getId()) {
       // This ID is already selected
       return
@@ -505,7 +505,7 @@ export class Puzzle {
     })
   }
 
-  #createProject (options = { swap: undefined }) {
+  #createProject (options = { animation: undefined }) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
 
     this.element = document.createElement('canvas')
@@ -515,7 +515,7 @@ export class Puzzle {
     this.element.style.height = height + 'px'
     this.element.style.width = width + 'px'
 
-    if (options.swap === 'fade-in') {
+    if (options.animation?.startsWith('fade-in')) {
       this.element.classList.add('see-through')
     }
 
@@ -536,7 +536,7 @@ export class Puzzle {
     const parentId = State.getParent(id)
 
     this.centerOnTile(0, 0)
-    this.select(parentId, { swap: 'fade-in' })
+    this.select(parentId, { animation: 'fade-in' })
   }
 
   #onBeamUpdate (event) {
@@ -719,7 +719,7 @@ export class Puzzle {
     const element = this.element
 
     let project
-    if (options.swap) {
+    if (options.animation) {
       // Create a new project and canvas for the new layers
       project = this.project
       this.#createProject(options)
@@ -743,21 +743,44 @@ export class Puzzle {
       : undefined
 
     function cleanup () {
-      this.element.classList.remove('see-through')
       project.clear()
       project.remove()
       element.remove()
     }
 
-    switch (options.swap) {
+    const fadeIn = () => {
+      animate(this.element, 'fade-in', () => {
+        this.element.classList.remove('see-through')
+        if (element) {
+          cleanup()
+        }
+      })
+    }
+
+    const fadeOut = (func) => {
+      animate(element, 'fade-out', () => {
+        cleanup()
+        func()
+      })
+    }
+
+    switch (options.animation) {
       case 'fade-in': {
         // Fade the new canvas in, then remove the old canvas
-        animate(this.element, 'fade-in', cleanup.bind(this))
+        fadeIn()
+        break
+      }
+      case 'fade-in-out': {
+        if (element) {
+          fadeOut(() => fadeIn())
+        } else {
+          fadeIn()
+        }
         break
       }
       case 'fade-out': {
         // Fade the old canvas out, then remove it
-        animate(element, 'fade-out', cleanup.bind(this))
+        fadeOut()
         break
       }
     }

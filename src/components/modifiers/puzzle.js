@@ -26,7 +26,7 @@ export class PuzzleModifier extends Modifier {
     puzzle.centerOn(ref.offset.r, ref.offset.c)
 
     // Load the import behind the current puzzle and then swap them
-    puzzle.select(state.puzzleId, { swap: 'fade-out' })
+    puzzle.select(state.puzzleId, { animation: 'fade-out' })
   }
 
   static schema () {
