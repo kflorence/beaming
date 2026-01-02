@@ -8,12 +8,10 @@ const navigator = window.navigator
 
 export class Interact {
   #cache = new Cache(Object.values(Interact.CacheKeys))
-  #element
   #eventListener = new EventListeners({ context: this })
   #offset
 
-  constructor (element) {
-    this.#element = element
+  constructor () {
     this.#eventListener.add([
       { type: 'pointercancel', handler: this.onPointerUp },
       { type: 'pointerdown', handler: this.onPointerDown },
@@ -21,9 +19,9 @@ export class Interact {
       { type: 'pointermove', handler: this.onPointerMove },
       { type: 'pointerout', handler: this.onPointerUp },
       { type: 'pointerup', handler: this.onPointerUp },
-      { type: Puzzle.Events.Resized, handler: this.onResize, element: document },
+      { type: Puzzle.Events.Resized, handler: this.onResize },
       { type: 'wheel', handler: this.onMouseWheel, options: { passive: false } }
-    ], { element })
+    ])
 
     this.onResize()
   }
@@ -83,6 +81,10 @@ export class Interact {
   }
 
   onPointerDown (event) {
+    if (!event.target.matches('canvas')) {
+      return
+    }
+
     this.#cache.get(Interact.CacheKeys.Down).set(event.pointerId, event)
   }
 
@@ -132,13 +134,13 @@ export class Interact {
   }
 
   onResize () {
-    const bounds = this.#element.getBoundingClientRect()
+    const bounds = document.querySelector('#puzzle canvas').getBoundingClientRect()
     this.#offset = new Point(bounds.left, bounds.top)
   }
 
   onTap (event) {
     const point = this.getProjectPoint(Interact.point(event))
-    this.#element.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, { detail: { event, point } }))
+    document.dispatchEvent(new CustomEvent(Interact.GestureKeys.Tap, { detail: { event, point } }))
   }
 
   #getGesture (key) {

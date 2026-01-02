@@ -542,10 +542,11 @@ dialog ul {
   visibility: hidden;
 }
 
-#puzzle-canvas {
+#puzzle canvas {
   cursor: pointer;
-  display: block;
-  position: relative;
+  left: 0;
+  position: absolute;
+  top: 0;
   touch-action: none;
   z-index: 0;
 }
@@ -768,7 +769,7 @@ dialog ul {
   justify-content: flex-end;
 }
 
-.grab #puzzle-canvas {
+.grab #puzzle canvas {
   cursor: grabbing;
 }
 
@@ -886,7 +887,7 @@ dialog ul {
   visibility: visible;
 }
 
-.puzzle-error:not(.puzzle-loaded) #puzzle-canvas,
+.puzzle-error:not(.puzzle-loaded) #puzzle canvas,
 .puzzle-error #modifiers {
   display: none;
 }
@@ -895,12 +896,16 @@ dialog ul {
   display: flex;
 }
 
-.puzzle-solved #puzzle-canvas {
+.puzzle-solved #puzzle canvas {
   cursor: default;
 }
 
 .puzzle-solved #puzzle-footer {
   display: none;
+}
+
+.see-through {
+  opacity: 0;
 }
 
 .settings {
@@ -925,6 +930,16 @@ dialog ul {
 /* Animations
 /* ------------------------------------------------------------------------------------------------------------------ */
 
+.fade-in {
+  animation-duration: 0.5s;
+  animation-name: fade-in;
+}
+
+.fade-out {
+  animation-duration: 0.5s;
+  animation-name: fade-out;
+}
+
 .slide-left-in {
   animation-duration: 0.5s;
   animation-name: slide-left-in;
@@ -943,6 +958,26 @@ dialog ul {
 .slide-right-out {
   animation-duration: 0.5s;
   animation-name: slide-right-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slide-left-in {

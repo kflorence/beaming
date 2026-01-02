@@ -1,11 +1,11 @@
 import { Layout } from './layout'
 import chroma from 'chroma-js'
 import { confirm } from './dialog.js'
-import paper, { Layer, Path, Point, Size } from 'paper'
+import paper, { Layer, Path, Point, Project, Size } from 'paper'
 import {
-  addClass,
+  addClass, animate,
   appendOption,
-  base64encode, baseUrl,
+  base64encode, baseUrl, classToString,
   debounce,
   emitEvent,
   fuzzyEquals,
@@ -34,7 +34,7 @@ import Tippy from 'tippy.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
-  canvas: document.getElementById('puzzle-canvas'),
+  canvas: document.getElementById('puzzle-canvas-wrapper'),
   debug: document.getElementById('debug'),
   delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
@@ -67,12 +67,12 @@ const tippy = Tippy(elements.share, {
 export class Puzzle {
   connections = []
   debug = params.has('debug')
-  element = elements.canvas
   error = false
   layers = {}
   layout
   message
   modifiers = []
+  project
   selectedTile
   solved = false
   state
@@ -90,19 +90,13 @@ export class Puzzle {
   constructor () {
     // Don't automatically insert items into the scene graph, they must be explicitly inserted
     paper.settings.insertItems = false
-    // noinspection JSCheckFunctionSignatures
-    paper.setup(elements.canvas)
+
+    this.#createProject()
 
     this.resize(false)
+    this.#addLayers()
 
-    // These layers will be added in the order they are defined
-    const layers = ['mask', 'collisions', 'debug']
-    layers.forEach((name) => {
-      this.layers[name] = new Layer({ name })
-    })
-
-    this.#interact = new Interact(elements.canvas)
-
+    this.#interact = new Interact()
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
       { type: 'click', element: elements.back, handler: this.#onBack },
@@ -114,16 +108,15 @@ export class Puzzle {
       { type: 'keyup', handler: this.#onKeyup },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
-      { type: 'pointermove', element: elements.canvas, handler: this.#onPointerMove },
+      { type: 'pointermove', handler: this.#onPointerMove },
       { type: Puzzle.Events.Mask, handler: this.#onMask },
       { type: 'resize', element: window, handler: debounce(this.resize.bind(this)) },
       { type: Stateful.Events.Update, handler: this.#onStateUpdate },
-      { type: 'tap', element: elements.canvas, handler: this.#onTap }
+      { type: 'tap', handler: this.#onTap }
     ])
   }
 
   addModifier (modifier) {
-    console.log('addModifier', modifier)
     if (modifier.parent) {
       modifier.parent.addModifier(modifier)
       this.updateSelectedTile(modifier.parent)
@@ -137,7 +130,8 @@ export class Puzzle {
   }
 
   centerOn (r, c) {
-    const point = this.layout.getPoint(new OffsetCoordinates(r, c))
+    const offset = r instanceof OffsetCoordinates ? r : new OffsetCoordinates(r, c)
+    const point = this.layout.getPoint(offset)
     View.setCenter(point)
   }
 
@@ -146,13 +140,15 @@ export class Puzzle {
     const ref = imports[id]
 
     if (ref) {
-      this.centerOnTile(ref.offset.r, ref.offset.c)
+      const offset = new OffsetCoordinates(ref.offset.r, ref.offset.c)
+      this.centerOnTile(offset.r, offset.c)
+      return offset
     }
   }
 
-  // Used by functional tests
   centerOnTile (r, c) {
-    const tile = this.layout.getTile(new OffsetCoordinates(r, c))
+    const offset = r instanceof OffsetCoordinates ? r : new OffsetCoordinates(r, c)
+    const tile = this.layout.getTile(offset)
     if (tile) {
       View.setCenter(tile.center)
       return tile.equals(this.selectedTile)
@@ -182,6 +178,10 @@ export class Puzzle {
 
   getBeamsUpdateDelay () {
     return this.#beamsUpdateDelay
+  }
+
+  getImport (id) {
+    return this.layout.getImports()?.[id]
   }
 
   getMoves () {
@@ -297,11 +297,15 @@ export class Puzzle {
     }
   }
 
-  reload (state, onError) {
+  reload (state = undefined, options = { onError: undefined, swap: undefined }) {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
 
     if (this.state) {
+      if (options.swap) {
+        // Don't tear down the layout if swapping
+        this.layout = undefined
+      }
       this.#teardown()
     }
 
@@ -317,10 +321,10 @@ export class Puzzle {
     }
 
     try {
-      this.#setup()
+      this.#setup(options)
     } catch (e) {
-      if (typeof onError === 'function') {
-        onError(e)
+      if (typeof options.onError === 'function') {
+        options.onError(e)
       } else {
         this.onError(e, 'Puzzle configuration is invalid.')
       }
@@ -350,6 +354,8 @@ export class Puzzle {
       return
     }
 
+    console.debug(Puzzle.toString('resize'), newSize)
+
     elements.canvas.height = height
     elements.canvas.width = width
     elements.canvas.style.height = height + 'px'
@@ -371,13 +377,13 @@ export class Puzzle {
     }
   }
 
-  select (id) {
+  select (id, options) {
     if (id !== undefined && id === this.state?.getId()) {
       // This ID is already selected
       return
     }
 
-    this.reload(State.resolve(id))
+    this.reload(State.resolve(id), options)
 
     id = this.state.getId()
 
@@ -422,10 +428,11 @@ export class Puzzle {
   }
 
   unmask () {
-    console.debug('unmask', this.#mask)
     if (!this.#mask) {
       return
     }
+
+    console.debug('unmask', this.#mask)
 
     this.layers.mask.removeChildren()
     this.#updateMessage(this.selectedTile)
@@ -488,6 +495,36 @@ export class Puzzle {
     emitEvent(Puzzle.Events.Updated, { state: this.state })
   }
 
+  #addLayers () {
+    this.layers = {}
+
+    // These layers will be added in the order they are defined
+    const layers = ['mask', 'collisions', 'debug']
+    layers.forEach((name) => {
+      this.layers[name] = new Layer({ name })
+    })
+  }
+
+  #createProject (options = { swap: undefined }) {
+    const { width, height } = elements.wrapper.getBoundingClientRect()
+
+    this.element = document.createElement('canvas')
+
+    this.element.height = height
+    this.element.width = width
+    this.element.style.height = height + 'px'
+    this.element.style.width = width + 'px'
+
+    if (options.swap === 'fade-in') {
+      this.element.classList.add('see-through')
+    }
+
+    elements.canvas.append(this.element)
+
+    this.project = new Project(this.element)
+    this.project.activate()
+  }
+
   #getModifiers (tile) {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return (tile?.modifiers ?? []).concat(this.layout.modifiers)
@@ -497,14 +534,9 @@ export class Puzzle {
   #onBack () {
     const id = this.state.getId()
     const parentId = State.getParent(id)
-    this.centerOnTile(0, 0)
 
-    // Slight pause so the user can see the tile being centered on
-    // TODO https://github.com/kflorence/beaming/issues/85
-    setTimeout(() => {
-      this.select(parentId)
-      this.centerOnImport(id)
-    }, 250)
+    this.centerOnTile(0, 0)
+    this.select(parentId, { swap: 'fade-in' })
   }
 
   #onBeamUpdate (event) {
@@ -591,7 +623,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!this.debug || params.has(State.ParamKeys.Edit)) {
+    if (!event.target.matches('canvas') || !this.debug || params.has(State.ParamKeys.Edit)) {
       return
     }
 
@@ -682,8 +714,16 @@ export class Puzzle {
     })
   }
 
-  #setup () {
+  #setup (options) {
     const { layout, message, requirements } = this.state.getCurrent()
+    const element = this.element
+
+    let project
+    if (options.swap) {
+      // Create a new project and canvas for the new layers
+      project = this.project
+      this.#createProject(options)
+    }
 
     this.state.setSolution([])
     State.add(this.state.getId())
@@ -692,6 +732,7 @@ export class Puzzle {
     this.message = message
     this.#requirements = new Requirements(requirements)
 
+    this.#addLayers()
     Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
     document.body.classList.add(Puzzle.Events.Loaded)
@@ -700,6 +741,26 @@ export class Puzzle {
     const selectedTile = selectedTileId
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
+
+    function cleanup () {
+      this.element.classList.remove('see-through')
+      project.clear()
+      project.remove()
+      element.remove()
+    }
+
+    switch (options.swap) {
+      case 'fade-in': {
+        // Fade the new canvas in, then remove the old canvas
+        animate(this.element, 'fade-in', cleanup.bind(this))
+        break
+      }
+      case 'fade-out': {
+        // Fade the old canvas out, then remove it
+        animate(element, 'fade-out', cleanup.bind(this))
+        break
+      }
+    }
 
     // TODO https://github.com/kflorence/beaming/issues/71
     // this.#updateDetails()
@@ -710,20 +771,21 @@ export class Puzzle {
   }
 
   #teardown () {
+    this.#isTearingDown = true
+
     document.body.classList.remove(...Object.values(Puzzle.Events))
 
     this.#collisions = {}
-    this.#isTearingDown = true
     this.#maskQueue = []
 
     this.unmask()
     this.#removeLayers()
 
+    this.layout?.teardown()
+    this.layout = undefined
     this.#requirements?.teardown()
     this.#requirements = undefined
     this.solved = false
-    this.layout?.teardown()
-    this.layout = undefined
     this.selectedTile = undefined
     this.#isUpdatingBeams = false
     this.#isTearingDown = false
@@ -1003,4 +1065,6 @@ export class Puzzle {
     title: 'Puzzle',
     type: 'object'
   })
+
+  static toString = classToString('Puzzle')
 }

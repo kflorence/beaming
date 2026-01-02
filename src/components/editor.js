@@ -99,7 +99,7 @@ export class Editor {
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', handler: this.#onPointerMove },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
-      { type: 'tap', element: this.#puzzle.element, handler: this.#onTap },
+      { type: 'tap', handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
       { type: Tile.Events.Selected, handler: this.#setup },
       { type: View.Events.Center, handler: this.#onCenter }
@@ -165,7 +165,7 @@ export class Editor {
     this.#puzzle.state.addMove()
 
     // Need to force a reload to make sure the UI is in sync with the state
-    this.#puzzle.reload(state, this.#onError.bind(this))
+    this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
 
     if (diff.title) {
       // Title was changed
