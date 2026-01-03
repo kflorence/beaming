@@ -29,16 +29,22 @@ export function addDirection (direction, amount) {
   return ((direction + amount) + 6) % 6
 }
 
-export function animate (element, className, func = () => {}) {
-  function complete () {
-    func(...arguments)
-    element.classList.remove(className)
-    element.removeEventListener('animationcancel', complete)
-    element.removeEventListener('animationend', complete)
-  }
-  element.addEventListener('animationcancel', complete)
-  element.addEventListener('animationend', complete)
-  element.classList.add(className)
+export function animate (element, className, onComplete = () => {}) {
+  return new Promise((resolve) => {
+    function complete (event) {
+      element.removeEventListener('animationcancel', complete)
+      element.removeEventListener('animationend', complete)
+      onComplete(event)
+      element.classList.remove(className)
+      resolve()
+    }
+    // Ensure the animations run at the next available tick
+    setTimeout(() => {
+      element.addEventListener('animationcancel', complete)
+      element.addEventListener('animationend', complete)
+      element.classList.add(className)
+    })
+  })
 }
 
 export function appendOption (element, option) {
@@ -128,18 +134,13 @@ export function emitEvent (type, detail = null) {
 }
 
 export async function fadeIn (element) {
-  return new Promise((resolve) => {
-    animate(element, 'fade-in', () => {
-      element.classList.remove('see-through')
-      resolve()
-    })
+  return animate(element, 'fade-in').then(() => {
+    element.classList.remove('see-through')
   })
 }
 
 export async function fadeOut (element) {
-  return new Promise((resolve) => {
-    animate(element, 'fade-out', () => resolve())
-  })
+  return animate(element, 'fade-out')
 }
 
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {

@@ -14,7 +14,6 @@ import { Icon, Icons } from './icon.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
-  canvas: document.getElementById('puzzle-canvas'),
   configuration: document.getElementById('editor-configuration'),
   copy: document.getElementById('editor-copy'),
   debug: document.getElementById('debug'),
@@ -77,7 +76,7 @@ export class Editor {
       id = undefined
     }
 
-    this.teardown()
+    this.#gutter.setup()
 
     await this.#puzzle.select(id, options)
     await this.setup()
@@ -99,8 +98,6 @@ export class Editor {
     }
 
     this.#gutter.setup()
-
-    await this.#puzzle.resize()
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
@@ -232,6 +229,7 @@ export class Editor {
 
   async #onGutterMoved () {
     await this.#puzzle.resize()
+    await this.setup()
     this.#updateCenter()
   }
 
@@ -259,10 +257,6 @@ export class Editor {
 
     if (event.pointerType !== 'mouse') {
       // Only display the hover indicator when using a mouse
-      return
-    } else if (event.target !== elements.canvas) {
-      this.#hover?.remove()
-      this.#hover = undefined
       return
     }
 

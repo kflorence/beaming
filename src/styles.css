@@ -57,6 +57,7 @@ i {
   user-select: none;
   vertical-align: middle;
   white-space: nowrap;
+  width: 24px;
   word-wrap: normal;
 }
 
@@ -124,6 +125,10 @@ dialog.confirm {
   }
 }
 
+dialog.slide-down-in,
+dialog.slide-left-in,
+dialog.slide-right-in,
+dialog.slide-up-in,
 dialog[open] {
   display: flex;
   z-index: 9999;
@@ -489,6 +494,7 @@ dialog ul {
   display: none;
   flex: none;
   height: 100%;
+  pointer-events: all;
   position: relative;
   touch-action: none;
   width: 1px;
