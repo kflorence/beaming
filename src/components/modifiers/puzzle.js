@@ -2,6 +2,7 @@ import { Modifier } from '../modifier.js'
 import { Icons } from '../icon.js'
 import { merge } from '../util.js'
 import { State } from '../state.js'
+import { Puzzle } from '../puzzle.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -15,7 +16,7 @@ export class PuzzleModifier extends Modifier {
     return "You've unlocked a new puzzle!"
   }
 
-  onInvoked (puzzle) {
+  async onInvoked (puzzle) {
     const state = this.getState()
     const ref = puzzle.getImport(state.puzzleId)
 
@@ -26,7 +27,7 @@ export class PuzzleModifier extends Modifier {
     puzzle.centerOn(ref.offset.r, ref.offset.c)
 
     // Load the import behind the current puzzle and then swap them
-    puzzle.select(state.puzzleId, { animation: 'fade-out' })
+    await puzzle.select(state.puzzleId, { animations: [Puzzle.Animations.FadeOutAfter] })
   }
 
   static schema () {

@@ -42,37 +42,51 @@ export class Game {
     ])
 
     if (params.has(Game.States.Play)) {
+      // noinspection JSIgnoredPromiseFromCall
       this.play()
     } else if (params.has(Game.States.Edit)) {
+      // noinspection JSIgnoredPromiseFromCall
       this.edit()
     } else {
       elements.dialog.showModal()
     }
   }
 
-  edit () {
+  async edit () {
     if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset(Game.States.Edit)
-      setTimeout(() => {
-        this.editor.select()
-        Game.dialogClose()
-      })
+
+      const options = {
+        animations: [Puzzle.Animations.FadeIn],
+        beforeFadeIn: async () => { await Game.dialogClose() }
+      }
+
+      this.puzzle.teardown()
+
+      await this.editor.select(options)
     } else {
-      Game.dialogClose()
+      await Game.dialogClose()
     }
   }
 
-  play () {
+  async play () {
     if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset(Game.States.Play)
-      setTimeout(() => {
-        this.editor.teardown()
-        this.puzzle.select()
-        this.puzzle.resize()
-        Game.dialogClose()
-      })
+
+      const options = {
+        animations: [Puzzle.Animations.FadeIn],
+        beforeFadeIn: async () => {
+          await Game.dialogClose()
+          await this.puzzle.resize(false)
+        }
+      }
+
+      this.editor.teardown()
+      this.puzzle.teardown()
+
+      await this.puzzle.select(options)
     } else {
-      Game.dialogClose()
+      await Game.dialogClose()
     }
   }
 
@@ -80,31 +94,33 @@ export class Game {
     window.electron?.quit()
   }
 
-  select (id) {
+  async select (id, options) {
     if (params.has(Game.States.Play)) {
-      this.puzzle.select(id)
+      await this.puzzle.select(id, options)
     } else if (params.has(Game.States.Edit)) {
-      this.editor.select(id)
+      await this.editor.select(id, options)
     }
   }
 
-  title () {
+  async title () {
     if (elements.dialog.open) {
-      Game.dialogClose()
+      await Game.dialogClose()
     } else {
-      Game.dialogOpen()
+      await Game.dialogOpen()
     }
   }
 
   #onDelete () {
-    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', () => {
+    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', async () => {
       const ids = State.delete(this.puzzle.state.getId())
-      this.select(ids[ids.length - 1])
+      await this.select(ids[ids.length - 1])
     })
   }
 
-  #onSelect (event) {
-    this.select(event.target.value)
+  async #onSelect (event) {
+    await this.select(event.target.value, {
+      animations: [Puzzle.Animations.FadeIn, Puzzle.Animations.FadeOutBefore]
+    })
   }
 
   async #onSettingsCacheClear (event) {
@@ -112,7 +128,7 @@ export class Game {
     url.hash = ''
     window.localStorage.clear()
     await window.electron?.store.delete()
-    this.puzzle.select()
+    await this.puzzle.select()
     emitEvent(Keys.cacheCleared)
   }
 
@@ -158,19 +174,30 @@ export class Game {
 
   static debug = debug
 
-  static dialogClose () {
-    if (elements.dialog.open) {
-      animate(elements.screen, 'slide-up-in')
-      animate(elements.dialog, 'slide-up-out', () => { elements.dialog.close() })
-    }
+  static async dialogClose () {
+    return new Promise((resolve) => {
+      if (elements.dialog.open) {
+        animate(elements.screen, 'slide-up-in')
+        animate(elements.dialog, 'slide-up-out', () => {
+          elements.dialog.close()
+          resolve()
+        })
+      } else {
+        resolve()
+      }
+    })
   }
 
-  static dialogOpen () {
-    if (!elements.dialog.open) {
-      animate(elements.screen, 'slide-down-out')
-      animate(elements.dialog, 'slide-down-in')
-      elements.dialog.showModal()
-    }
+  static async dialogOpen () {
+    return new Promise((resolve) => {
+      if (!elements.dialog.open) {
+        animate(elements.screen, 'slide-down-out')
+        animate(elements.dialog, 'slide-down-in', () => resolve())
+        elements.dialog.showModal()
+      } else {
+        resolve()
+      }
+    })
   }
 
   static toString = classToString('Game')

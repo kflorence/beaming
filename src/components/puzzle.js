@@ -7,7 +7,7 @@ import {
   appendOption,
   base64encode, baseUrl, classToString,
   debounce,
-  emitEvent,
+  emitEvent, fadeIn, fadeOut,
   fuzzyEquals,
   noop,
   params,
@@ -88,14 +88,6 @@ export class Puzzle {
   #requirements
 
   constructor () {
-    // Don't automatically insert items into the scene graph, they must be explicitly inserted
-    paper.settings.insertItems = false
-
-    this.#createProject()
-
-    this.resize(false)
-    this.#addLayers()
-
     this.#interact = new Interact()
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
@@ -168,6 +160,27 @@ export class Puzzle {
       center: new Point(x, y)
     }, style))
     this.layers.debug.addChild(circle)
+  }
+
+  async fadeIn (onAnimationEnd = () => {}) {
+    console.log('fade-in', this.element.id)
+    return new Promise((resolve) => {
+      animate(this.element, 'fade-in', () => {
+        this.element.classList.remove('see-through')
+        onAnimationEnd()
+        resolve()
+      })
+    })
+  }
+
+  async fadeOut (onAnimationEnd = () => {}) {
+    return new Promise((resolve) => {
+      console.log('fade-out', this.element.id)
+      animate(this.element, 'fade-out', () => {
+        onAnimationEnd()
+        resolve()
+      })
+    })
   }
 
   getBeams () {
@@ -297,16 +310,17 @@ export class Puzzle {
     }
   }
 
-  reload (state = undefined, options = { animation: 'fade-in-out', onError: undefined }) {
+  async reload (state = undefined, options = {}) {
     this.error = false
     document.body.classList.remove(Puzzle.Events.Error)
 
     if (this.state) {
-      if (options.animation) {
-        // Don't tear down the layout if animating
+      if (options.animations?.length) {
+        this.layout?.modifiers.forEach((modifier) => modifier.detach())
+        // This will prevent any further tearing down of the layout
         this.layout = undefined
       }
-      this.#teardown()
+      this.teardown()
     }
 
     if (state instanceof State) {
@@ -320,18 +334,46 @@ export class Puzzle {
       this.state = State.resolve()
     }
 
+    this.#updateActions()
+
     try {
-      this.#setup(options)
+      if (options.animations?.includes(Puzzle.Animations.FadeOutBefore)) {
+        await fadeOut(this.element)
+        this.resetProject(options).cleanup()
+        await this.#setup(options)
+      } else {
+        await this.#setup(options, this.resetProject(options))
+      }
     } catch (e) {
       if (typeof options.onError === 'function') {
         options.onError(e)
       } else {
         this.onError(e, 'Puzzle configuration is invalid.')
       }
-      this.#updateActions()
     }
 
     emitEvent(Puzzle.Events.Updated, { state: this.state })
+  }
+
+  resetProject (options) {
+    const element = this.element
+    const project = this.project
+
+    if (element) {
+      element.classList.remove('active')
+    }
+
+    this.#createProject(options)
+
+    function cleanup () {
+      if (project) {
+        project.clear()
+        project.remove()
+        element.remove()
+      }
+    }
+
+    return { cleanup, element, project }
   }
 
   removeModifier (modifier) {
@@ -346,7 +388,7 @@ export class Puzzle {
     this.updateState()
   }
 
-  resize (reload = true, event = true) {
+  async resize (reload = true, event = true) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
@@ -369,7 +411,7 @@ export class Puzzle {
       // For some reason, without reload, setting viewSize alone breaks the project coordinate space
       // See: https://github.com/paperjs/paper.js/issues/1757
       // Forcing a reload fixes it.
-      this.reload()
+      await this.reload()
     }
 
     if (event) {
@@ -377,13 +419,18 @@ export class Puzzle {
     }
   }
 
-  select (id, options = { animation: 'fade-in-out', onError: undefined }) {
+  async select (id, options) {
+    if (typeof id === 'object') {
+      options = id
+      id = undefined
+    }
+
     if (id !== undefined && id === this.state?.getId()) {
       // This ID is already selected
       return
     }
 
-    this.reload(State.resolve(id), options)
+    await this.reload(State.resolve(id), options)
 
     id = this.state.getId()
 
@@ -425,6 +472,27 @@ export class Puzzle {
         tile.onTap(event)
       }
     }
+  }
+
+  teardown () {
+    this.#isTearingDown = true
+
+    document.body.classList.remove(...Object.values(Puzzle.Events))
+
+    this.#collisions = {}
+    this.#maskQueue = []
+
+    this.unmask()
+    this.#removeLayers()
+
+    this.layout?.teardown()
+    this.layout = undefined
+    this.#requirements?.teardown()
+    this.#requirements = undefined
+    this.solved = false
+    this.selectedTile = undefined
+    this.#isUpdatingBeams = false
+    this.#isTearingDown = false
   }
 
   unmask () {
@@ -505,17 +573,18 @@ export class Puzzle {
     })
   }
 
-  #createProject (options = { animation: undefined }) {
+  #createProject (options = {}) {
     const { width, height } = elements.wrapper.getBoundingClientRect()
 
     this.element = document.createElement('canvas')
 
+    this.element.className = 'active'
     this.element.height = height
     this.element.width = width
     this.element.style.height = height + 'px'
     this.element.style.width = width + 'px'
 
-    if (options.animation?.startsWith('fade-in')) {
+    if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
       this.element.classList.add('see-through')
     }
 
@@ -523,6 +592,7 @@ export class Puzzle {
 
     this.project = new Project(this.element)
     this.project.activate()
+    console.trace('created project', this.element.id)
   }
 
   #getModifiers (tile) {
@@ -531,12 +601,12 @@ export class Puzzle {
     // .sort((a, b) => a.id - b.id)
   }
 
-  #onBack () {
+  async #onBack () {
     const id = this.state.getId()
     const parentId = State.getParent(id)
 
     this.centerOnTile(0, 0)
-    this.select(parentId, { animation: 'fade-in' })
+    await this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
   }
 
   #onBeamUpdate (event) {
@@ -585,7 +655,7 @@ export class Puzzle {
     this.mask(event.detail.mask)
   }
 
-  #onModifierInvoked (event) {
+  async #onModifierInvoked (event) {
     const modifier = event.detail.modifier
     const tile = event.detail.tile
 
@@ -604,7 +674,7 @@ export class Puzzle {
       this.updateSelectedTile(selectedTile)
     }
 
-    modifier.onInvoked(this, event)
+    await modifier.onInvoked(this, event)
 
     this.state.addMove(event.type, tile, modifier, selectedTile)
     this.updateState()
@@ -689,9 +759,9 @@ export class Puzzle {
     return this.tap(event)
   }
 
-  #redo () {
+  async #redo () {
     if (this.state.redo()) {
-      this.reload()
+      await this.reload()
     }
   }
 
@@ -710,20 +780,14 @@ export class Puzzle {
 
     confirm('Are you sure you want to reset this puzzle? This cannot be undone.', () => {
       this.state.reset()
-      setTimeout(() => this.reload())
+      setTimeout(async () => await this.reload())
     })
   }
 
-  #setup (options) {
+  async #setup (options, project = { cleanup: () => {} }) {
     const { layout, message, requirements } = this.state.getCurrent()
-    const element = this.element
 
-    let project
-    if (options.animation) {
-      // Create a new project and canvas for the new layers
-      project = this.project
-      this.#createProject(options)
-    }
+    await this.resize(false)
 
     this.state.setSolution([])
     State.add(this.state.getId())
@@ -735,55 +799,26 @@ export class Puzzle {
     this.#addLayers()
     Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
-    document.body.classList.add(Puzzle.Events.Loaded)
-
     const selectedTileId = this.state.getSelectedTile()
     const selectedTile = selectedTileId
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
-    function cleanup () {
-      project.clear()
-      project.remove()
-      element.remove()
+    if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
+      if (typeof options.beforeFadeIn === 'function') {
+        await options.beforeFadeIn()
+      }
+      await fadeIn(this.element)
+      project.cleanup()
     }
 
-    const fadeIn = () => {
-      animate(this.element, 'fade-in', () => {
-        this.element.classList.remove('see-through')
-        if (element) {
-          cleanup()
-        }
-      })
+    if (options.animations?.includes(Puzzle.Animations.FadeOutAfter)) {
+      await fadeOut(project.element)
+      project.cleanup()
     }
 
-    const fadeOut = (func) => {
-      animate(element, 'fade-out', () => {
-        cleanup()
-        func()
-      })
-    }
-
-    switch (options.animation) {
-      case 'fade-in': {
-        // Fade the new canvas in, then remove the old canvas
-        fadeIn()
-        break
-      }
-      case 'fade-in-out': {
-        if (element) {
-          fadeOut(() => fadeIn())
-        } else {
-          fadeIn()
-        }
-        break
-      }
-      case 'fade-out': {
-        // Fade the old canvas out, then remove it
-        fadeOut()
-        break
-      }
-    }
+    // If the old canvas hasn't been cleaned up yet, do it now
+    project.cleanup()
 
     // TODO https://github.com/kflorence/beaming/issues/71
     // this.#updateDetails()
@@ -791,32 +826,13 @@ export class Puzzle {
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
+
+    document.body.classList.add(Puzzle.Events.Loaded)
   }
 
-  #teardown () {
-    this.#isTearingDown = true
-
-    document.body.classList.remove(...Object.values(Puzzle.Events))
-
-    this.#collisions = {}
-    this.#maskQueue = []
-
-    this.unmask()
-    this.#removeLayers()
-
-    this.layout?.teardown()
-    this.layout = undefined
-    this.#requirements?.teardown()
-    this.#requirements = undefined
-    this.solved = false
-    this.selectedTile = undefined
-    this.#isUpdatingBeams = false
-    this.#isTearingDown = false
-  }
-
-  #undo () {
+  async #undo () {
     if (this.state.undo()) {
-      this.reload()
+      await this.reload()
     }
   }
 
@@ -1008,6 +1024,12 @@ export class Puzzle {
       return [rounded.x, rounded.y].join(',')
     }
   }
+
+  static Animations = Object.freeze({
+    FadeIn: 'fade-in',
+    FadeOutAfter: 'fade-out-after',
+    FadeOutBefore: 'fade-out-before'
+  })
 
   static ClassNames = Object.freeze({
     Active: 'active',

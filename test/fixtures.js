@@ -50,7 +50,7 @@ export class PuzzleFixture {
       '--disable-extensions',
       '--disable-gpu',
       // Comment this out to watch the tests run in-browser
-      '--headless',
+      // '--headless',
       '--ignore-certificate-errors',
       '--no-sandbox',
       '--window-size=768,1024'
@@ -66,13 +66,18 @@ export class PuzzleFixture {
     await this.driver.get(this.url)
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
-    this.elements.canvas = await this.driver.findElement(By.id('puzzle'))
+
+    // Wait for the puzzle to be ready
+    await this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-loaded'))
   }
 
   async clickAtOffset (r, c) {
+    console.log(`Clicking at offset: ${r}, ${c}`)
     // Center on the point first to ensure it is visible
     await this.driver.executeScript(`return game.puzzle.centerOn(${r}, ${c})`)
-    return this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+    const origin = await this.getElement('canvas.active')
+    console.log(await origin.getAttribute('id'))
+    return this.driver.actions({ async: true }).move({ origin }).click().perform()
   }
 
   async clickElement (selector) {
@@ -86,7 +91,8 @@ export class PuzzleFixture {
     const isSelected = await this.driver.executeScript(`return game.puzzle.centerOnTile(${r}, ${c})`)
     if (!isSelected || !onlyIfNotSelected) {
       // Only click on an already selected tile if onlyIfNotSelected is false
-      return this.driver.actions({ async: true }).move({ origin: this.elements.canvas }).click().perform()
+      const origin = await this.getElement('canvas.active')
+      return this.driver.actions({ async: true }).move({ origin }).click().perform()
     }
 
     return Promise.resolve()
