@@ -196,7 +196,7 @@
       }
     ]
   },
-  "version": 1,
+  "version": 2,
   "requirements": [
     {
       "type": "connections",
@@ -204,7 +204,7 @@
     },
     {
       "type": "moves",
-      "amount": 4
+      "amount": 3
     }
   ]
 }
