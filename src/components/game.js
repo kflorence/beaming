@@ -55,39 +55,22 @@ export class Game {
   async edit () {
     if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset(Game.States.Edit)
-
-      const options = {
-        animations: [Puzzle.Animations.FadeIn],
-        beforeFadeIn: async () => { await Game.dialogClose() }
-      }
-
       this.puzzle.teardown()
-
-      await this.editor.select(options)
-    } else {
-      await Game.dialogClose()
+      await this.editor.select({ animations: [Puzzle.Animations.FadeIn] })
     }
+
+    await Game.dialogClose()
   }
 
   async play () {
     if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset(Game.States.Play)
-
-      const options = {
-        animations: [Puzzle.Animations.FadeIn],
-        beforeFadeIn: async () => {
-          await Game.dialogClose()
-          await this.puzzle.resize(false)
-        }
-      }
-
       this.editor.teardown()
       this.puzzle.teardown()
-
-      await this.puzzle.select(options)
-    } else {
-      await Game.dialogClose()
+      await this.puzzle.select({ animations: [Puzzle.Animations.FadeIn] })
     }
+
+    await Game.dialogClose()
   }
 
   quit () {
@@ -175,29 +158,21 @@ export class Game {
   static debug = debug
 
   static async dialogClose () {
-    return new Promise((resolve) => {
-      if (elements.dialog.open) {
-        animate(elements.screen, 'slide-up-in')
-        animate(elements.dialog, 'slide-up-out', () => {
-          elements.dialog.close()
-          resolve()
-        })
-      } else {
-        resolve()
-      }
-    })
+    if (elements.dialog.open) {
+      await Promise.all([
+        animate(elements.screen, 'slide-up-in'),
+        animate(elements.dialog, 'slide-up-out', () => { elements.dialog.close() })
+      ])
+    }
   }
 
   static async dialogOpen () {
-    return new Promise((resolve) => {
-      if (!elements.dialog.open) {
-        animate(elements.screen, 'slide-down-out')
-        animate(elements.dialog, 'slide-down-in', () => resolve())
-        elements.dialog.showModal()
-      } else {
-        resolve()
-      }
-    })
+    if (!elements.dialog.open) {
+      await Promise.all([
+        animate(elements.screen, 'slide-down-out'),
+        animate(elements.dialog, 'slide-down-in', () => { elements.dialog.showModal() })
+      ])
+    }
   }
 
   static toString = classToString('Game')

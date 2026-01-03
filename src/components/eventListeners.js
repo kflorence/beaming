@@ -20,6 +20,10 @@ export class EventListeners {
     }))
   }
 
+  length () {
+    return this.#events.length
+  }
+
   remove () {
     this.#events.forEach((event) => event.element.removeEventListener(event.type, event.handler))
     this.#events = []

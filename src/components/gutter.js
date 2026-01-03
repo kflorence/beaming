@@ -17,6 +17,10 @@ export class Gutter {
   }
 
   setup () {
+    if (this.#eventListener.length()) {
+      return
+    }
+
     this.#eventListener.add([
       { type: 'pointercancel', handler: this.#onPointerUp },
       { type: 'pointerdown', element: this.element, handler: this.#onPointerDown },

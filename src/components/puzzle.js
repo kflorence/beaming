@@ -3,7 +3,7 @@ import chroma from 'chroma-js'
 import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Project, Size } from 'paper'
 import {
-  addClass, animate,
+  addClass,
   appendOption,
   base64encode, baseUrl, classToString,
   debounce,
@@ -160,27 +160,6 @@ export class Puzzle {
       center: new Point(x, y)
     }, style))
     this.layers.debug.addChild(circle)
-  }
-
-  async fadeIn (onAnimationEnd = () => {}) {
-    console.log('fade-in', this.element.id)
-    return new Promise((resolve) => {
-      animate(this.element, 'fade-in', () => {
-        this.element.classList.remove('see-through')
-        onAnimationEnd()
-        resolve()
-      })
-    })
-  }
-
-  async fadeOut (onAnimationEnd = () => {}) {
-    return new Promise((resolve) => {
-      console.log('fade-out', this.element.id)
-      animate(this.element, 'fade-out', () => {
-        onAnimationEnd()
-        resolve()
-      })
-    })
   }
 
   getBeams () {
@@ -592,7 +571,6 @@ export class Puzzle {
 
     this.project = new Project(this.element)
     this.project.activate()
-    console.trace('created project', this.element.id)
   }
 
   #getModifiers (tile) {
@@ -804,28 +782,23 @@ export class Puzzle {
       ? this.layout.getTile(new OffsetCoordinates(...selectedTileId.split(',')))
       : undefined
 
-    if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
-      if (typeof options.beforeFadeIn === 'function') {
-        await options.beforeFadeIn()
-      }
-      await fadeIn(this.element)
-      project.cleanup()
-    }
-
-    if (options.animations?.includes(Puzzle.Animations.FadeOutAfter)) {
-      await fadeOut(project.element)
-      project.cleanup()
-    }
-
-    // If the old canvas hasn't been cleaned up yet, do it now
-    project.cleanup()
-
     // TODO https://github.com/kflorence/beaming/issues/71
     // this.#updateDetails()
     this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
     this.update()
+
+    if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
+      await fadeIn(this.element)
+    }
+
+    if (options.animations?.includes(Puzzle.Animations.FadeOutAfter)) {
+      await fadeOut(project.element)
+    }
+
+    // If the old canvas hasn't been cleaned up yet, do it now
+    project.cleanup()
 
     document.body.classList.add(Puzzle.Events.Loaded)
   }

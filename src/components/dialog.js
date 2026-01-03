@@ -11,18 +11,22 @@ document.querySelectorAll('[data-dialog]').forEach((element) => {
   }
 
   const close = dialog.querySelector('header button')
-  close.addEventListener('click', () => {
-    animate(dialog, 'slide-down-out', () => { dialog.close() })
-    animate(title, 'slide-down-in')
-    title.showModal()
+  close.addEventListener('click', async () => {
+    await Promise.all([
+      animate(dialog, 'slide-down-out', () => { dialog.close() }),
+      animate(title, 'slide-down-in', () => { title.showModal() })
+    ])
   })
 
-  element.addEventListener('click', () => {
+  element.addEventListener('click', async () => {
     if (!dialog.open) {
-      animate(dialog, 'slide-up-in')
-      animate(title, 'slide-up-out', () => { title.close() })
-      dialog.showModal()
-      dialog.dispatchEvent(new CustomEvent('open'))
+      await Promise.all([
+        animate(dialog, 'slide-up-in', () => {
+          dialog.showModal()
+          dialog.dispatchEvent(new CustomEvent('open'))
+        }),
+        animate(title, 'slide-up-out', () => { title.close() })
+      ])
     }
   })
 })
