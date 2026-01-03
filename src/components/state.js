@@ -155,7 +155,7 @@ export class State {
   }
 
   moves () {
-    return this.#moves
+    return this.#moves.slice(0, this.#moveIndex + 1)
   }
 
   redo () {
