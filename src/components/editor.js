@@ -41,16 +41,16 @@ const elements = Object.freeze({
 // https://github.com/kflorence/beaming/issues/71
 
 export class Editor {
-  group = new Group({ locked: true })
+  group
 
-  #center = new Group({ locked: true })
+  #center
   #copy
   #editor
   #editors = {}
   #eventListener = new EventListeners({ context: this })
   #gutter
   #hover
-  #layer = new Layer({ name: 'editor' })
+  #layer
   #puzzle
 
   constructor (puzzle) {
@@ -71,21 +71,36 @@ export class Editor {
     return Storage.get(Editor.key(State.getId(), Editor.CacheKeys.Locked)) === 'true'
   }
 
-  select (id) {
+  async select (id, options) {
+    if (typeof id === 'object') {
+      options = id
+      id = undefined
+    }
+
     this.teardown()
-    this.#puzzle.select(id)
+
+    await this.#puzzle.select(id, options)
+    await this.setup()
+
     this.#updateDropdown()
-    this.setup()
   }
 
-  setup () {
+  async setup () {
+    if (!this.#layer) {
+      this.group = new Group({ locked: true })
+      this.#center = new Group({ locked: true })
+      this.#layer = new Layer({ name: 'editor' })
+    }
+
+    paper.project.addLayer(this.#layer)
+
     if (this.#editor) {
       return
     }
 
     this.#gutter.setup()
 
-    this.#puzzle.resize()
+    await this.#puzzle.resize()
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
@@ -107,8 +122,6 @@ export class Editor {
 
     const state = this.#puzzle.state
     elements.configuration.value = state.getCurrentJSON()
-
-    paper.project.addLayer(this.#layer)
 
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
@@ -150,7 +163,7 @@ export class Editor {
     this.#editor.setValue(tile ? tile.getState() : this.#puzzle.state.getCurrent())
   }
 
-  #onConfigurationUpdate () {
+  async #onConfigurationUpdate () {
     const state = this.getState()
     // Ensure the configuration is in sync with the editor value
     this.#onEditorUpdate(state)
@@ -165,7 +178,7 @@ export class Editor {
     this.#puzzle.state.addMove()
 
     // Need to force a reload to make sure the UI is in sync with the state
-    this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
+    await this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
 
     if (diff.title) {
       // Title was changed
@@ -217,16 +230,16 @@ export class Editor {
     this.#puzzle.onError(e, `Error: "${e.message}". Undo and try again.`)
   }
 
-  #onGutterMoved () {
-    this.#puzzle.resize()
+  async #onGutterMoved () {
+    await this.#puzzle.resize()
     this.#updateCenter()
   }
 
-  #onNew () {
-    this.select(uniqueId())
+  async #onNew () {
+    await this.select(uniqueId())
   }
 
-  #onPaste () {
+  async #onPaste () {
     if (elements.paste.classList.contains('disabled')) {
       return
     }
@@ -238,7 +251,7 @@ export class Editor {
     )
 
     this.#onEditorUpdate(value)
-    this.#onConfigurationUpdate()
+    await this.#onConfigurationUpdate()
   }
 
   #onPointerMove (event) {
@@ -283,7 +296,7 @@ export class Editor {
     this.#updatePlayUrl()
   }
 
-  #onReset () {
+  async #onReset () {
     if (elements.reset.classList.contains('disabled')) {
       return
     }
@@ -295,10 +308,10 @@ export class Editor {
     )
 
     this.#onEditorUpdate(value)
-    this.#onConfigurationUpdate()
+    await this.#onConfigurationUpdate()
   }
 
-  #onTap (event) {
+  async #onTap (event) {
     if (this.isLocked()) {
       // If tiles are locked, let puzzle handle it
       return this.#puzzle.tap(event)
@@ -326,7 +339,8 @@ export class Editor {
 
     // TODO: adding/removing tiles would ideally not require a reload. but getting rid of it would require fixing
     //  some bugs related to the beam
-    this.#puzzle.reload()
+    await this.#puzzle.reload()
+    await this.setup()
   }
 
   #setup (event) {

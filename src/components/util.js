@@ -127,6 +127,21 @@ export function emitEvent (type, detail = null) {
   document.dispatchEvent(new CustomEvent(type, { detail }))
 }
 
+export async function fadeIn (element) {
+  return new Promise((resolve) => {
+    animate(element, 'fade-in', () => {
+      element.classList.remove('see-through')
+      resolve()
+    })
+  })
+}
+
+export async function fadeOut (element) {
+  return new Promise((resolve) => {
+    animate(element, 'fade-out', () => resolve())
+  })
+}
+
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
   return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
 }

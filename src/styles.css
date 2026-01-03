@@ -622,7 +622,7 @@ dialog ul {
   font-weight: bold;
   padding: 1em 2em 1em 1em;
   text-overflow: ellipsis;
-  width: 100%;
+  width: 10em;
 }
 
 #select:hover {

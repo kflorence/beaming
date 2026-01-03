@@ -149,7 +149,7 @@ export class Modifier extends Stateful {
     this.#down = false
   }
 
-  onInvoked (puzzle, event) {}
+  async onInvoked (puzzle, event) {}
 
   onTap (event, detail) {
     this.dispatchEvent(Modifier.Events.Invoked, detail)

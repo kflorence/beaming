@@ -22,8 +22,6 @@ export class Interact {
       { type: Puzzle.Events.Resized, handler: this.onResize },
       { type: 'wheel', handler: this.onMouseWheel, options: { passive: false } }
     ])
-
-    this.onResize()
   }
 
   getProjectPoint (point) {
@@ -31,6 +29,10 @@ export class Interact {
   }
 
   onMouseWheel (event) {
+    if (!event.target.matches('canvas')) {
+      return
+    }
+
     event.preventDefault()
     this.#zoom(new Point(event.offsetX, event.offsetY), event.deltaY, 1.05)
   }
