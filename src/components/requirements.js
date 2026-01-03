@@ -195,7 +195,7 @@ class MovesRequirement extends Requirement {
     const moves = event.detail.state.moves()
     console.debug(MovesRequirement.toString('update'), event, moves)
     this.#moves = moves.length
-    this.#completed.textContent = moves.toString()
+    this.#completed.textContent = this.#moves.toString()
   }
 
   static Operators = Object.freeze({
