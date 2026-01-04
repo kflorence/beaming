@@ -7,6 +7,8 @@ import { Schema } from '../schema'
 
 export class Filter extends movable(Item) {
   constructor (tile, state) {
+    state.type ??= Item.Types.Filter
+
     super(...arguments)
 
     this.color = state.color
@@ -18,7 +20,7 @@ export class Filter extends movable(Item) {
     const item = new Path.RegularPolygon({
       center: tile.center,
       closed: true,
-      radius: tile.parameters.circumradius / 3,
+      radius: (state.height ?? tile.parameters.circumradius) / 3,
       sides: 3,
       style: {
         fillColor,

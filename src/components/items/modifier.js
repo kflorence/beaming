@@ -8,13 +8,13 @@ import { PuzzleModifier } from '../modifiers/puzzle.js'
 export class ModifierItem extends movable(Item) {
   color
   item
-  name
 
   constructor (tile, state) {
+    state.type ??= Item.Types.Modifier
+
     super(...arguments)
 
     this.color = state.color ?? ModifierItem.DefaultColor
-    this.name = state.name
 
     const data = { collidable: true }
     const style = { fillColor: this.color }

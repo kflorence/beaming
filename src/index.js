@@ -3,11 +3,11 @@ import '@phosphor-icons/web/src/bold/style.css'
 import '@phosphor-icons/web/src/fill/style.css'
 import 'tippy.js/dist/tippy.css'
 
+import './components/paper.js'
 import './components/dialog.js'
 
 import { Game } from './components/game'
 import pkg from '../package.json'
-import paper from 'paper'
 
 if (process.env.TARGET === 'electron') {
   import('./electron/settings.js')
@@ -17,11 +17,6 @@ if (process.env.TARGET === 'electron') {
 
 // Set build version from package.json
 document.getElementById('version').textContent = `v${pkg.version}`
-
-// Don't automatically insert items into the scene graph, they must be explicitly inserted
-paper.settings.insertItems = false
-
-window.paper = paper
 
 async function init () {
   if (window.electron) {

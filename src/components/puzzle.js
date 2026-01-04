@@ -894,7 +894,13 @@ export class Puzzle {
       this.layers.debug.clear()
     }
 
-    beams.forEach((beam) => beam.step(this))
+    beams.forEach((beam) => {
+      const step = beam.step(this)
+      if (step.tile.equals(this.selectedTile)) {
+        // Make sure messages are displayed for the selected tile when a beam travels through it
+        this.#updateMessage(step.tile)
+      }
+    })
 
     // Ensure the UI has a chance to update between loops
     setTimeout(() => this.#updateBeams(), this.#beamsUpdateDelay)

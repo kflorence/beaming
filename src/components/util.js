@@ -250,6 +250,22 @@ export function getTextElement (text) {
   return span
 }
 
+export function hexagon (height) {
+  // AKA "size"
+  const circumradius = height / 2
+  const width = sqrt3 * circumradius
+  const inradius = width / 2
+  const offsetY = height * (3 / 4)
+
+  return {
+    circumradius,
+    height,
+    inradius,
+    offsetY,
+    width
+  }
+}
+
 export function merge (a, b, options) {
   let args
 

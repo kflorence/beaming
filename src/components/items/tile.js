@@ -1,7 +1,7 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { Items } from '../items'
-import { emitEvent, getPointBetween, merge, sqrt3 } from '../util'
+import { emitEvent, getPointBetween, merge } from '../util'
 import { Modifiers } from '../modifiers'
 
 export class Tile extends Item {
@@ -178,22 +178,6 @@ export class Tile extends Item {
       } else {
         this.group.addChild(item)
       }
-    }
-  }
-
-  static parameters (height = Tile.DefaultHeight) {
-    // AKA "size"
-    const circumradius = height / 2
-    const width = sqrt3 * circumradius
-    const inradius = width / 2
-    const offsetY = height * (3 / 4)
-
-    return {
-      circumradius,
-      height,
-      inradius,
-      offsetY,
-      width
     }
   }
 
