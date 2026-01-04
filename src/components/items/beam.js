@@ -128,8 +128,10 @@ export class Beam extends Item {
 
   getColorElements (tile) {
     return getColorElements(
-      // Display color elements for any step in this tile that contains multiple colors
-      this.getSteps(tile).map((step) => step.colors).find((colors) => colors.length > 1) ?? [])
+      this.getSteps(tile)
+        // Show color elements for merges and filters
+        .filter((step) => step.state.has(StepState.Filter) || step.state.has(StepState.MergeWith))
+        .map((step) => step.colors).find((colors) => colors.length > 1) ?? [])
   }
 
   getCompoundPath () {

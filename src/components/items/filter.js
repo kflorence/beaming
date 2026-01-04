@@ -40,7 +40,7 @@ export class Filter extends movable(Item) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return nextStep.copy(
       currentStep.state.has(StepState.Filter)
-        ? { colors: nextStep.colors.concat([this.color]) }
+        ? { colors: nextStep.colors.concat([this.color]), state: nextStep.state.copy(new StepState.Filter()) }
         : { state: new StepState({ insertAbove: this }, new StepState.Filter()) }
     )
   }
