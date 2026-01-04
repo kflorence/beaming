@@ -11,13 +11,15 @@ export class Portal extends movable(rotatable(Item)) {
   #directions = {}
 
   constructor (tile, state) {
+    state.type ??= Item.Types.Portal
+
     // Only allow rotation if direction is defined
     super(tile, state, { rotatable: state.direction !== undefined })
 
     this.direction = state.direction
 
-    const height = tile.parameters.circumradius / 3
-    const width = tile.parameters.circumradius / 5
+    const height = state.height ? (state.height / 2) : (tile.parameters.circumradius / 3)
+    const width = height * Portal.Ratio
 
     const style = {
       fillColor: 'black',
@@ -256,4 +258,6 @@ export class Portal extends movable(rotatable(Item)) {
       }
     }
   ]))
+
+  static Ratio = 3 / 5
 }

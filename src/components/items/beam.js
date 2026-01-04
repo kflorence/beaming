@@ -127,9 +127,11 @@ export class Beam extends Item {
   }
 
   getColorElements (tile) {
-    // Show color elements for merged beams
-    const step = this.getSteps(tile).find((step) => step.state.has(StepState.MergeWith))
-    return step ? getColorElements(step.colors) : []
+    return getColorElements(
+      this.getSteps(tile)
+        // Show color elements for merges and filters
+        .filter((step) => step.state.has(StepState.Filter) || step.state.has(StepState.MergeWith))
+        .map((step) => step.colors).find((colors) => colors.length > 1) ?? [])
   }
 
   getCompoundPath () {

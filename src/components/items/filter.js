@@ -7,6 +7,8 @@ import { Schema } from '../schema'
 
 export class Filter extends movable(Item) {
   constructor (tile, state) {
+    state.type ??= Item.Types.Filter
+
     super(...arguments)
 
     this.color = state.color
@@ -18,7 +20,7 @@ export class Filter extends movable(Item) {
     const item = new Path.RegularPolygon({
       center: tile.center,
       closed: true,
-      radius: tile.parameters.circumradius / 3,
+      radius: (state.height ?? tile.parameters.circumradius) / 3,
       sides: 3,
       style: {
         fillColor,
@@ -38,7 +40,7 @@ export class Filter extends movable(Item) {
     // The beam will collide with the filter twice, on entry and exit, so ignore the first one, but track in state
     return nextStep.copy(
       currentStep.state.has(StepState.Filter)
-        ? { colors: nextStep.colors.concat([this.color]) }
+        ? { colors: nextStep.colors.concat([this.color]), state: nextStep.state.copy(new StepState.Filter()) }
         : { state: new StepState({ insertAbove: this }, new StepState.Filter()) }
     )
   }

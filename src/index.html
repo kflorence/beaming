@@ -249,7 +249,7 @@
               </details>
             </main>
           </details>
-          <details>
+          <details id="items">
             <summary>Items</summary>
             <main>
               <p>
@@ -260,12 +260,67 @@
                 below to learn more about it.
               </p>
               <details>
-                <summary><i class="ph-fill ph-puzzle-piece" title="Puzzle"></i> - Puzzle</summary>
+                <summary><span class="item" id="svg-filter"></span> - Filter</summary>
+                <p>
+                  The filter item changes the color of a beam which passes through it by
+                  <a href="https://gka.github.io/chroma.js/#chroma-average" target="_blank>">averaging</a> the RBG
+                  channels of the beam with the color of the filter. For example, if the beam is blue
+                  (<span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span>) and the filter
+                  is red (<span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span>), the
+                  result is: <span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span> +
+                  <span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span> =
+                  <span class="color" title="#b400b4" style="background-color: rgb(180, 0, 180);"></span>.
+                </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-portal"></span> - Portal</summary>
+                <p>
+                  The portal item transports a beam that collides with it from one tile to another, retaining the
+                  direction of travel the beam had when it entered the portal. In order for a beam to travel through a
+                  pair of portals, it must enter and exit from a direction that is not occupied by another beam.
+                  <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
+                  is more than one valid exit portal location.
+                </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-portal-directional"></span> - Portal (directional)</summary>
+                <p>
+                  As with the portal item, a <em>directional</em> portal transports a beam that collides with it from one
+                  tile to another. However, unlike a standard portal, the directional portal will change the direction of
+                  the beam when it exits to the direction indicated by the arrow attached to the portal.
+                  <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
+                  is more than one valid exit portal location.
+                </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-modifier-puzzle"></span> - Puzzle Piece (collectable)</summary>
                 <p>
                   The puzzle item is a <em>collectable</em> that will unlock access to a puzzle when a beam collides with it,
                   converting the item into a puzzle action on collection. This item will always convert to a stuck modifier
                   on collection, regardless of what modifiers are on the tile.
                 </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-reflector"></span> - Reflector</summary>
+                <p>
+                  The reflector item changes the direction a beam is traveling when it is collided with, producing a
+                  <a href="https://en.wikipedia.org/wiki/Specular_reflection" target="_blank">specular reflection</a>,
+                  or a mirrored reflection angle.
+                </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-terminus"></span> - Terminus</summary>
+                <p>
+                  The terminus item is both the origin of and destination for beams. Each terminus may have up to six
+                  openings, one for each direction. Each opening is capable of sending, if toggled on, or receiving, if
+                  toggled off, beams in the color indicated by the opening. When a beam enters an available opening of
+                  matching color, a <em>connection</em> is formed between the origin and destination terminus. However,
+                  if the color of the beam does not match the opening color, a collision will occur.
+                </p>
+              </details>
+              <details>
+                <summary><span class="item" id="svg-wall"></span> - Wall</summary>
+                <p>Wall items are attached to the edges of tiles and will stop any beams that collide with them.</p>
               </details>
             </main>
           </details>

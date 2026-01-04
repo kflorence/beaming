@@ -23,6 +23,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   #ui
 
   constructor (tile, state) {
+    state.type ??= Item.Types.Terminus
+
     super(...arguments)
 
     state.openings ??= []
@@ -48,13 +50,14 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
         opening.toggled ?? state.toggled
       ))
 
-    this.#ui = Terminus.ui(tile, color, openings)
+    const height = (state.height ?? tile.parameters.circumradius) / 2
+    this.#ui = Terminus.ui(tile, height, color, openings)
 
     this.group.addChildren([...this.#ui.openings, this.#ui.terminus])
 
     this.color = color
     this.openings = openings
-    this.radius = this.#ui.radius
+    this.radius = height
     this.toggled = openings.some((opening) => opening.toggled)
 
     // Needs to be last since it references 'this'
@@ -174,15 +177,13 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
 
   static #openingOffOpacity = 0.3
 
-  static ui (tile, color, configuration) {
-    const radius = tile.parameters.circumradius / 2
-
+  static ui (tile, height, color, configuration) {
     const terminus = new Path.RegularPolygon({
       center: tile.center,
       fillColor: color,
       opacity: 1,
       sides: 6,
-      radius: radius / 2
+      radius: height / 2
     })
 
     const openings = configuration.map((opening) => {
@@ -209,7 +210,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
       })
     })
 
-    return { openings, radius, terminus }
+    return { openings, terminus }
   }
 
   static Opening = class {

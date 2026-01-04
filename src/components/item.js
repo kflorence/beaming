@@ -101,10 +101,6 @@ export class Item extends Stateful {
     return item.immutable
   }
 
-  static stuck (item) {
-    return item.isStuck()
-  }
-
   static schema (type) {
     return Schema.typed('item', type)
   }

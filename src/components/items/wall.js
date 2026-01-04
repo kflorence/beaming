@@ -11,6 +11,7 @@ export class Wall extends movable(rotatable(Item)) {
   constructor (tile, state) {
     // Exclude from modification by default
     state.immutable ??= true
+    state.type ??= Item.Types.Wall
 
     super(tile, state, { rotationDegrees: 60 })
 

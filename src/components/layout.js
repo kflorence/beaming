@@ -8,7 +8,7 @@ import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
-import { classToString } from './util.js'
+import { classToString, hexagon } from './util.js'
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 
@@ -35,7 +35,7 @@ export class Layout extends Stateful {
 
     Object.values(this.layers).forEach((layer) => paper.project.addLayer(layer))
 
-    this.parameters = Tile.parameters(state.tile?.height)
+    this.parameters = hexagon(state.tile?.height ?? Tile.DefaultHeight)
     this.offset = state.offset ?? Layout.Offsets.OddRow
     this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 

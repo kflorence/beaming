@@ -10,11 +10,25 @@ export class Reflector extends movable(rotatable(Item)) {
   #item
 
   constructor (tile, state) {
+    state.type ??= Item.Types.Reflector
+
     super(tile, state, { rotationDegrees: 30 })
 
     // NOTE: color is not currently used for anything
     this.color = state.color || 'black'
-    this.#item = Reflector.item(tile, this.color)
+
+    const height = state.height ?? tile.parameters.circumradius
+    const width = height / 12
+    const length = height - (width * 2)
+    const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
+    const size = new Size(width, length)
+
+    this.#item = new Path.Rectangle({
+      data: { size },
+      fillColor: this.color,
+      point: topLeft,
+      size
+    })
 
     this.group.addChild(this.#item)
   }
@@ -62,20 +76,6 @@ export class Reflector extends movable(rotatable(Item)) {
 
     const point = getPointFrom(currentStep.point, nextStep.tile.parameters.inradius, directionTo)
     return nextStep.copy({ direction: directionTo, point })
-  }
-
-  static item (tile, color) {
-    const width = tile.parameters.circumradius / 12
-    const length = tile.parameters.circumradius - (width * 2)
-    const topLeft = tile.center.subtract(new Point(width / 2, length / 2))
-    const size = new Size(width, length)
-
-    return new Path.Rectangle({
-      data: { size },
-      fillColor: color,
-      point: topLeft,
-      size
-    })
   }
 
   static schema = () => Object.freeze(merge([
