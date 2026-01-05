@@ -1,7 +1,15 @@
 import { Puzzles } from '../puzzles'
 import { Storage } from './storage'
-import { base64decode, base64encode, classToString, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
-import { View } from './view.js'
+import {
+  base64decode,
+  base64encode,
+  classToString, getKey,
+  getKeyFactory,
+  jsonDiffPatch,
+  params,
+  uniqueId,
+  url
+} from './util'
 
 const history = window.history
 
@@ -292,10 +300,13 @@ export class State {
 
     const ids = State.remove(id)
 
-    // Remove associated puzzle from cache
-    Storage.delete(State.key(id))
-    Storage.delete(View.key(View.CacheKeys.Center))
-    Storage.delete(View.key(View.CacheKeys.Zoom))
+    // Remove associated puzzle keys from cache
+    const baseKeys = State.getBaseKeys()
+    Object.keys(Storage.get()).forEach((key) => {
+      if (baseKeys.some((base) => key.startsWith(base))) {
+        Storage.delete(key)
+      }
+    })
 
     // Currently selected puzzle
     if (State.getId() === id) {
@@ -371,11 +382,15 @@ export class State {
     return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
   }
 
+  static getBaseKeys () {
+    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(State.getContext, scope, State.getId)))
+  }
+
   static getContext () {
     if (params.has(State.ParamKeys.Edit)) {
-      return State.CacheKeys.Edit
+      return State.ContextKeys.Edit
     } else if (params.has(State.ParamKeys.Play)) {
-      return State.CacheKeys.Play
+      return State.ContextKeys.Play
     }
   }
 
@@ -477,10 +492,14 @@ export class State {
   }
 
   static CacheKeys = Object.freeze({
-    Edit: 'edit',
     Id: 'id',
     Ids: 'ids',
-    Parent: 'parent',
+    Locked: 'locked',
+    Parent: 'parent'
+  })
+
+  static ContextKeys = Object.freeze({
+    Edit: 'edit',
     Play: 'play'
   })
 
@@ -489,6 +508,11 @@ export class State {
     Edit: 'edit',
     Parents: 'parents',
     Play: 'play'
+  })
+
+  static ScopeKeys = Object.freeze({
+    Editor: 'editor',
+    Puzzle: 'puzzle'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated

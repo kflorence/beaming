@@ -3,6 +3,7 @@ import { Icons } from '../icon.js'
 import { merge } from '../util.js'
 import { State } from '../state.js'
 import { Puzzle } from '../puzzle.js'
+import { Puzzles } from '../../puzzles/index.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -12,13 +13,16 @@ export class PuzzleModifier extends Modifier {
     return Icons.Puzzle
   }
 
-  getMessage () {
-    return "You've unlocked a new puzzle!"
+  onCollect ({ puzzle }) {
+    const state = this.getState()
+
+    puzzle.setMessage(`You've unlocked a puzzle '${state.puzzleId}'!`)
+    puzzle.layout.unlock(state.puzzleId)
   }
 
   async onInvoked (puzzle) {
     const state = this.getState()
-    const ref = puzzle.getImport(state.puzzleId)
+    const ref = puzzle.layout.getImport(state.puzzleId)
 
     // Set the parent of the puzzle we are entering to the current puzzle
     State.setParent(state.puzzleId, puzzle.state.getId())
@@ -27,21 +31,19 @@ export class PuzzleModifier extends Modifier {
     puzzle.centerOn(ref.offset.r, ref.offset.c)
 
     // Load the import behind the current puzzle and then swap them
-    await puzzle.select(state.puzzleId, { animations: [Puzzle.Animations.FadeOutAfter] })
+    await puzzle.select(state.puzzleId, { animations: [Puzzle.Animations.FadeIn, Puzzle.Animations.FadeOutAfter] })
   }
 
   static schema () {
-    const currentId = State.getId()
-    const ids = State.getIds().filter((id) => id !== currentId)
-    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    const imports = Puzzles.imports()
     return Object.freeze(merge([
       Modifier.schema(Modifier.Types.Puzzle),
       {
         properties: {
           puzzleId: {
-            enum: ids,
+            enum: imports.ids,
             options: {
-              enum_titles: titles
+              enum_titles: imports.titles
             },
             type: 'string'
           }
