@@ -425,11 +425,12 @@ export class Beam extends Item {
 
     // Use the midpoint between the previous and next step points to calculate which tile we are in.
     // This will ensure we consistently pick the same tile when the next step point is on the edge of two tiles.
-    const tile = puzzle.getTile(getPointBetween(currentStep.point, nextStepPoint))
+    const offset = puzzle.layout.getOffset(getPointBetween(currentStep.point, nextStepPoint))
+    const tile = puzzle.layout.getTile(offset)
 
     // The next step would be off the grid
-    if (!tile) {
-      console.debug(this.toString(), 'stopping due to out of bounds')
+    if (!tile || tile.placeholder) {
+      console.debug(this.toString(), 'stopping due to out of bounds', offset)
 
       const collision = new Collision(0, [currentStep.point], this)
       return this.updateStep(currentStepIndex, {
@@ -437,6 +438,8 @@ export class Beam extends Item {
         state: new StepState(new StepState.Collision(collision))
       })
     }
+
+    console.debug(this.toString(), `stepping to offset: ${offset}`)
 
     const nextStepIndex = currentStepIndex + 1
     const existingNextStep = this.#steps[nextStepIndex]

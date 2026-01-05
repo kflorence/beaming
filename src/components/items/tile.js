@@ -10,8 +10,10 @@ export class Tile extends Item {
   modifiers = []
   parameters
   path
+  placeholder
   ref
   selected = false
+  style
 
   constructor (coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
@@ -28,6 +30,9 @@ export class Tile extends Item {
       }
     })
 
+    this.placeholder = state.placeholder ?? false
+    const style = this.style = this.getDefaultStyle()
+
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
@@ -36,10 +41,11 @@ export class Tile extends Item {
     this.path = new Path.RegularPolygon({
       center,
       closed: true,
+      // Data should only contain properties that don't change
       data: { coordinates, type: this.type },
       radius: parameters.circumradius,
       sides: 6,
-      style: this.styles.default
+      style: this.styles[style]
     })
 
     this.group.addChildren([this.path])
@@ -70,7 +76,7 @@ export class Tile extends Item {
   }
 
   afterModify () {
-    this.setStyle(this.selected ? 'selected' : 'default')
+    this.setStyle(this.selected ? 'selected' : this.style)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: false }))
   }
 
@@ -78,6 +84,10 @@ export class Tile extends Item {
     this.group.bringToFront()
     this.setStyle('edit')
     this.modifiers.forEach((modifier) => modifier.update({ disabled: true }))
+  }
+
+  getDefaultStyle () {
+    return this.placeholder ? 'placeholder' : 'default'
   }
 
   getState () {
@@ -108,7 +118,7 @@ export class Tile extends Item {
 
   onDeselected (selectedTile) {
     this.selected = false
-    this.path.style = this.styles.default
+    this.path.style = this.styles[this.style]
     this.items.forEach((item) => item.onDeselected())
 
     document.body.classList.remove(`tile-selected_${this.coordinates.offset.toString('_')}`)
@@ -144,7 +154,7 @@ export class Tile extends Item {
     }
   }
 
-  setStyle (style) {
+  setStyle (style = this.style) {
     this.path.set(this.styles[style])
   }
 
@@ -156,6 +166,14 @@ export class Tile extends Item {
 
   toString () {
     return `[${this.type}:${this.coordinates.offset.toString()}]`
+  }
+
+  update (options = {}) {
+    // TODO tile should have a set of flags that can be toggled on/off, from which styles are derived.
+    // E.g. the tile can be a placeholder, selected, and edited. Default would be used as the base styles.
+    this.placeholder = options.placeholder ?? this.placeholder
+    this.style = this.getDefaultStyle()
+    this.setStyle()
   }
 
   updateIcon (modifier) {
@@ -221,6 +239,12 @@ export class Tile extends Item {
       dashArray: true,
       strokeColor: new Color('black'),
       strokeWidth: 2
+    },
+    placeholder: {
+      dashArray: [],
+      fillColor: new Color('#bbb'),
+      strokeColor: new Color('#999'),
+      strokeWidth: 1
     },
     selected: {
       dashArray: [],

@@ -4,7 +4,7 @@ import { State } from '../components/state.js'
 
 export class Puzzles {
   static ids = Object.keys(puzzles).sort()
-  static titles = Object.entries(Puzzles.ids.map((id) => [id, puzzles[id].title]))
+  static titles = Object.fromEntries(Puzzles.ids.map((id) => [id, puzzles[id].title ?? id]))
 
   static get (id) {
     if (Puzzles.has(id)) {

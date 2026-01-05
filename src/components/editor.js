@@ -5,7 +5,7 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, uniqueId } from './util'
+import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
@@ -67,7 +67,7 @@ export class Editor {
   }
 
   isLocked () {
-    return Storage.get(State.keyEditor(State.getId(), State.CacheKeys.Locked)) === 'true'
+    return Storage.get(Editor.key(State.getId(), State.CacheKeys.Locked)) === 'true'
   }
 
   async select (id, options) {
@@ -189,7 +189,7 @@ export class Editor {
       return
     }
 
-    this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
+    this.#puzzle.layout.getTile(this.#copy)?.setStyle()
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
     this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
   }
@@ -357,7 +357,7 @@ export class Editor {
 
     if (this.#copy && !tile) {
       // Remove the copied tile if no tile is selected
-      this.#puzzle.layout.getTile(this.#copy).setStyle('default')
+      this.#puzzle.layout.getTile(this.#copy).setStyle()
       this.#copy = undefined
     }
 
@@ -419,7 +419,7 @@ export class Editor {
   }
 
   #toggleLock () {
-    Storage.set(State.keyEditor(State.getId(), State.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(Editor.key(State.getId(), State.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
@@ -475,7 +475,7 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl(State.CacheKeys.Play))
+    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl(State.ContextKeys.Play))
   }
 
   static mark (center, width) {
@@ -495,6 +495,8 @@ export class Editor {
       new Path(Object.assign({ segments: [square.segments[1], square.segments[3]] }, settings))
     ]
   }
+
+  static key = getKeyFactory(State.ContextKeys.Edit, State.ScopeKeys.Editor)
 
   static toString = classToString('Editor')
 }

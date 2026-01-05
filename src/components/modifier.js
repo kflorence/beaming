@@ -6,6 +6,7 @@ import { Item } from './item'
 import { Schema } from './schema'
 import { Filter } from './filter.js'
 import { Tile } from './items/tile.js'
+import { Puzzles } from '../puzzles/index.js'
 
 const layoutModifiers = document.getElementById('modifiers-layout')
 const tileModifiers = document.getElementById('modifiers-tile')
@@ -25,6 +26,7 @@ export class Modifier extends Stateful {
   tile
   title
   type
+  unlocked = true
 
   constructor (tile, state, index) {
     // Retain ID from state if it exists, otherwise generate a new one
@@ -41,6 +43,10 @@ export class Modifier extends Stateful {
    * Attach the modifier to the DOM and add listeners.
    */
   attach (tile) {
+    if (!this.unlocked) {
+      return
+    }
+
     this.tile = tile
 
     const li = this.#container = document.createElement('li')
@@ -120,6 +126,10 @@ export class Modifier extends Stateful {
     tile?.addModifier(this)
   }
 
+  onCollect (collision) {}
+
+  async onInvoked (puzzle, event) {}
+
   onPointerDown (event) {
     if (event.button !== 0) {
       // Support toggle on non-primary pointer button
@@ -148,8 +158,6 @@ export class Modifier extends Stateful {
 
     this.#down = false
   }
-
-  async onInvoked (puzzle, event) {}
 
   onTap (event, detail) {
     this.dispatchEvent(Modifier.Events.Invoked, detail)
@@ -187,7 +195,7 @@ export class Modifier extends Stateful {
         filters: {
           items: {
             anyOf: [
-              ModifierFilterImportSeen.schema
+              ModifierFilterImportUnlocked.schema()
             ],
             headerTemplate: 'filter {{i1}}'
           },
@@ -219,8 +227,8 @@ export class Modifier extends Stateful {
 export class ModifierFilter extends Filter {
   static factory (state) {
     switch (true) {
-      case state.type === ModifierFilter.Types.Import && state.name === ModifierFilter.Names.Seen: {
-        return new ModifierFilterImportSeen(state)
+      case state.type === ModifierFilter.Types.Import && state.name === ModifierFilter.Names.Unlocked: {
+        return new ModifierFilterImportUnlocked(state)
       }
       default:
         throw new Error(`Unknown filter: ${state.type}, ${state.name}.`)
@@ -232,7 +240,7 @@ export class ModifierFilter extends Filter {
   }
 
   static Names = Object.freeze({
-    Seen: 'seen'
+    Unlocked: 'unlocked'
   })
 
   static Types = Object.freeze({
@@ -240,27 +248,34 @@ export class ModifierFilter extends Filter {
   })
 }
 
-export class ModifierFilterImportSeen extends ModifierFilter {
-  apply (state, layout) {
-    return this.state.seen === layout.getImports()[this.state.importId]?.seen ?? false
+export class ModifierFilterImportUnlocked extends ModifierFilter {
+  apply (layout) {
+    return this.state.unlocked === layout.getImports()[this.state.importId]?.unlocked ?? false
   }
 
-  static Name = ModifierFilter.Names.Seen
+  static Name = ModifierFilter.Names.Unlocked
   static Type = ModifierFilter.Types.Import
 
-  static schema = () => Object.freeze(merge(
-    ModifierFilter.schema(this.Type, this.Name),
-    {
-      properties: {
-        importId: {
-          type: 'string'
+  static schema () {
+    const imports = Puzzles.imports()
+    return Object.freeze(merge(
+      ModifierFilter.schema(this.Type, this.Name),
+      {
+        properties: {
+          importId: {
+            enum: imports.ids,
+            options: {
+              enum_titles: imports.titles
+            },
+            type: 'string'
+          },
+          unlocked: {
+            default: true,
+            type: 'boolean'
+          }
         },
-        seen: {
-          default: true,
-          type: 'boolean'
-        }
-      },
-      required: ['importId', 'seen']
-    }
-  ))
+        required: ['importId', 'unlocked']
+      }
+    ))
+  }
 }

@@ -111,7 +111,6 @@ export class Import {
       properties: {
         id: {
           enum: imports.ids,
-          minLength: 3,
           options: {
             enum_titles: imports.titles
           },
@@ -136,8 +135,9 @@ export class Import {
           },
           type: 'array'
         },
-        seen: {
-          description: 'Mark the import as seen by the user. This should only be used for testing purposes.',
+        unlocked: {
+          description: 'Mark the import as unlocked by the user. This should only be used for testing purposes.',
+          default: true,
           type: 'boolean'
         }
       },

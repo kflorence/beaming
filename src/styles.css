@@ -612,6 +612,10 @@ dialog ul {
   justify-content: center;
 }
 
+#puzzle-header-wrapper .flex-left .menu li:last-child {
+  border-right: 1px solid #ddd;
+}
+
 #puzzle-footer-wrapper .menu {
   display: flex;
   flex-wrap: wrap;

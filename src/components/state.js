@@ -3,14 +3,13 @@ import { Storage } from './storage'
 import {
   base64decode,
   base64encode,
-  classToString,
+  classToString, getKey,
   getKeyFactory,
   jsonDiffPatch,
   params,
   uniqueId,
   url
 } from './util'
-import { View } from './view.js'
 
 const history = window.history
 
@@ -301,11 +300,13 @@ export class State {
 
     const ids = State.remove(id)
 
-    // Remove associated puzzle from cache
-    Storage.delete(State.key(id))
-    Storage.delete(View.key(View.CacheKeys.Center))
-    Storage.delete(View.key(View.CacheKeys.Zoom))
-    Storage.delete(State.keyEditor(id, State.CacheKeys.Locked))
+    // Remove associated puzzle keys from cache
+    const baseKeys = State.getBaseKeys()
+    Object.keys(Storage.get()).forEach((key) => {
+      if (baseKeys.some((base) => key.startsWith(base))) {
+        Storage.delete(key)
+      }
+    })
 
     // Currently selected puzzle
     if (State.getId() === id) {
@@ -381,11 +382,15 @@ export class State {
     return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
   }
 
+  static getBaseKeys () {
+    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(State.getContext, scope, State.getId)))
+  }
+
   static getContext () {
     if (params.has(State.ParamKeys.Edit)) {
-      return State.CacheKeys.Edit
+      return State.ContextKeys.Edit
     } else if (params.has(State.ParamKeys.Play)) {
-      return State.CacheKeys.Play
+      return State.ContextKeys.Play
     }
   }
 
@@ -487,11 +492,14 @@ export class State {
   }
 
   static CacheKeys = Object.freeze({
-    Edit: 'edit',
     Id: 'id',
     Ids: 'ids',
     Locked: 'locked',
-    Parent: 'parent',
+    Parent: 'parent'
+  })
+
+  static ContextKeys = Object.freeze({
+    Edit: 'edit',
     Play: 'play'
   })
 
@@ -502,12 +510,16 @@ export class State {
     Play: 'play'
   })
 
+  static ScopeKeys = Object.freeze({
+    Editor: 'editor',
+    Puzzle: 'puzzle'
+  })
+
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
   static Version = 7
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
-  static keyEditor = getKeyFactory(State.CacheKeys.Edit, 'editor')
 
   static toString = classToString('State')
 
