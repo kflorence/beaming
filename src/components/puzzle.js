@@ -184,10 +184,9 @@ export class Puzzle {
     return this.#interact.getProjectPoint(point)
   }
 
-  getShareUrl () {
+  getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
-    const context = State.getContext()
     Game.states.forEach((state) => shareUrl.searchParams.delete(state))
     shareUrl.searchParams.append(context, '')
     // Cloning will flatten current state into original state and get rid of history
@@ -331,7 +330,7 @@ export class Puzzle {
       }
     }
 
-    emitEvent(Puzzle.Events.Updated, { state: this.state })
+    emitEvent(Puzzle.Events.Reloaded, { puzzle: this })
   }
 
   resetProject (options) {
@@ -421,7 +420,7 @@ export class Puzzle {
   }
 
   setMessage (message) {
-    elements.headerMessage.textContent = message
+    elements.headerMessage.textContent = this.message = message
   }
 
   tap (event) {
@@ -850,8 +849,7 @@ export class Puzzle {
 
     elements.select.replaceChildren()
 
-    // TODO: once levels are implemented, this should just use State.getIds()
-    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
+    const ids = State.getIds()
     const customIds = []
     ids.forEach((id) => {
       if (Puzzles.has(id)) {
@@ -865,7 +863,7 @@ export class Puzzle {
       const customGroup = document.createElement('optgroup')
       customGroup.label = '———'
       customIds.forEach((id) => {
-        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
+        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() ?? id })
       })
 
       elements.select.append(customGroup)
@@ -928,7 +926,7 @@ export class Puzzle {
       }
     }
 
-    elements.headerMessage.textContent = this.message
+    this.setMessage(this.message)
   }
 
   #updateModifiers () {
@@ -1021,6 +1019,7 @@ export class Puzzle {
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Reloaded: 'puzzle-reloaded',
     Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'

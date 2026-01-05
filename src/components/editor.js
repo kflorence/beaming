@@ -5,7 +5,7 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
+import { appendOption, classToString, uniqueId } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
@@ -67,7 +67,7 @@ export class Editor {
   }
 
   isLocked () {
-    return Storage.get(Editor.key(State.getId(), Editor.CacheKeys.Locked)) === 'true'
+    return Storage.get(State.keyEditor(State.getId(), State.CacheKeys.Locked)) === 'true'
   }
 
   async select (id, options) {
@@ -85,19 +85,13 @@ export class Editor {
   }
 
   async setup () {
-    if (!this.#layer) {
-      this.group = new Group({ locked: true })
-      this.#center = new Group({ locked: true })
-      this.#layer = new Layer({ name: 'editor' })
-    }
-
-    paper.project.addLayer(this.#layer)
-
     if (this.#editor) {
       return
     }
 
-    this.#gutter.setup()
+    this.group = new Group({ locked: true })
+    this.#center = new Group({ locked: true })
+    this.#layer = new Layer({ name: 'editor' })
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
@@ -110,6 +104,7 @@ export class Editor {
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', handler: this.#onPointerMove },
+      { type: Puzzle.Events.Reloaded, handler: this.#onPuzzleReload },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
       { type: 'tap', handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
@@ -122,6 +117,8 @@ export class Editor {
 
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
+
+    paper.project.addLayer(this.#layer)
 
     this.#updateDock()
     this.#updateLock()
@@ -214,8 +211,6 @@ export class Editor {
     } else {
       // Update the entire state
       state = value
-      // Tiles are not editable globally
-      state.layout.tiles = current.layout.tiles
     }
 
     console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
@@ -229,8 +224,6 @@ export class Editor {
 
   async #onGutterMoved () {
     await this.#puzzle.resize()
-    await this.setup()
-    this.#updateCenter()
   }
 
   async #onNew () {
@@ -253,6 +246,12 @@ export class Editor {
   }
 
   #onPointerMove (event) {
+    const layout = this.#puzzle.layout
+    if (!layout) {
+      // Puzzle isn't ready yet
+      return
+    }
+
     elements.debug.textContent = ''
 
     if (event.pointerType !== 'mouse') {
@@ -260,7 +259,6 @@ export class Editor {
       return
     }
 
-    const layout = this.#puzzle.layout
     const offset = layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
     const center = layout.getPoint(offset)
     if (!this.#hover) {
@@ -284,8 +282,14 @@ export class Editor {
     elements.debug.textContent = `[${offset.r},${offset.c}]`
   }
 
-  #onPuzzleUpdate () {
+  #onPuzzleReload () {
+    // The project changes on reload, so we need to re-attach the layer
+    paper.project.addLayer(this.#layer)
     this.#layer.bringToFront()
+    this.#updateCenter()
+  }
+
+  #onPuzzleUpdate () {
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
     this.#updatePlayUrl()
   }
@@ -334,7 +338,6 @@ export class Editor {
     // TODO: adding/removing tiles would ideally not require a reload. but getting rid of it would require fixing
     //  some bugs related to the beam
     await this.#puzzle.reload()
-    await this.setup()
   }
 
   #setup (event) {
@@ -416,7 +419,7 @@ export class Editor {
   }
 
   #toggleLock () {
-    Storage.set(Editor.key(State.getId(), Editor.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(State.keyEditor(State.getId(), State.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
@@ -472,7 +475,7 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl())
+    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl(State.CacheKeys.Play))
   }
 
   static mark (center, width) {
@@ -494,10 +497,4 @@ export class Editor {
   }
 
   static toString = classToString('Editor')
-
-  static CacheKeys = Object.freeze({
-    Locked: 'locked'
-  })
-
-  static key = getKeyFactory(State.CacheKeys.Edit, 'editor')
 }

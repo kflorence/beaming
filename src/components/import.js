@@ -2,7 +2,7 @@ import { Schema } from './schema.js'
 import { OffsetCoordinates } from './coordinates/offset.js'
 import { merge } from './util.js'
 import { Filter } from './filter.js'
-import { State } from './state.js'
+import { Puzzles } from '../puzzles/index.js'
 
 export class ImportFilter extends Filter {
   static factory (state) {
@@ -60,7 +60,7 @@ export class ImportFilterItemExclusion extends ImportFilter {
 
 export class ImportFilterPuzzleSolved extends ImportFilter {
   apply (state) {
-    return this.state.solved === (state.getSolution() !== undefined)
+    return this.state.solved === (state.getSolution().length > 0)
   }
 
   static Name = ImportFilter.Names.Solved
@@ -104,18 +104,16 @@ export class ImportFilterTileInSolution extends ImportFilter {
 
 export class Import {
   static schema () {
-    const currentId = State.getId()
-    const ids = State.getIds().filter((id) => id !== currentId)
-    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    const imports = Puzzles.imports()
     return Object.freeze({
       $id: Schema.$id('import'),
       headerTemplate: 'import {{i1}}',
       properties: {
         id: {
-          enum: ids,
+          enum: imports.ids,
           minLength: 3,
           options: {
-            enum_titles: titles
+            enum_titles: imports.titles
           },
           type: 'string'
         },

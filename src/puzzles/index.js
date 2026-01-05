@@ -1,40 +1,26 @@
 // noinspection JSFileReferences
 import * as puzzles from './*.json'
+import { State } from '../components/state.js'
 
-function traverse (ids, id, amount) {
-  const index = ids.indexOf(id)
-  return ids[index < 0 ? index : index + amount]
-}
+export class Puzzles {
+  static ids = Object.keys(puzzles).sort()
+  static titles = Object.entries(Puzzles.ids.map((id) => [id, puzzles[id].title]))
 
-class PuzzleGroup {
-  ids = []
-
-  constructor (ids) {
-    this.firstId = ids[0]
-    this.ids = ids
-    this.lastId = ids[ids.length - 1]
-  }
-
-  get (id) {
-    if (this.has(id)) {
+  static get (id) {
+    if (Puzzles.has(id)) {
       // Note: deep cloning puzzles to prevent mutation
       return structuredClone(puzzles[id])
     }
   }
 
-  has (id) {
-    return this.ids.includes(id)
+  static has (id) {
+    return Puzzles.ids.includes(id)
   }
 
-  nextId (id) {
-    return traverse(this.ids, id, 1)
-  }
-
-  previousId (id) {
-    return traverse(this.ids, id, -1)
+  static imports () {
+    const currentId = State.getId()
+    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds().filter((id) => id !== currentId))))
+    const titles = ids.map((id) => Puzzles.titles[id] ?? State.fromCache(id)?.getTitle() ?? id)
+    return { ids, titles }
   }
 }
-
-export const Puzzles = new PuzzleGroup(Object.keys(puzzles).sort())
-
-Puzzles.titles = Object.fromEntries(Puzzles.ids.map((id) => [id, puzzles[id].title || id]))

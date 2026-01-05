@@ -134,7 +134,7 @@ export class Layout extends Stateful {
           // Keep a reference to the puzzle and location the tile was imported from in state
           tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
 
-          if (!tileFilters.every((filter) => filter.apply(source, translatedOffset, tile))) {
+          if (!tileFilters.every((filter) => filter.apply(source, tileOffset, tile))) {
             // If any filter fails, the tile will not be imported.
             console.debug(
               Layout.toString(),

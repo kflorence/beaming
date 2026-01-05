@@ -3,6 +3,7 @@ import { Icons } from '../icon.js'
 import { merge } from '../util.js'
 import { State } from '../state.js'
 import { Puzzle } from '../puzzle.js'
+import { Puzzles } from '../../puzzles/index.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -31,17 +32,15 @@ export class PuzzleModifier extends Modifier {
   }
 
   static schema () {
-    const currentId = State.getId()
-    const ids = State.getIds().filter((id) => id !== currentId)
-    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    const imports = Puzzles.imports()
     return Object.freeze(merge([
       Modifier.schema(Modifier.Types.Puzzle),
       {
         properties: {
           puzzleId: {
-            enum: ids,
+            enum: imports.ids,
             options: {
-              enum_titles: titles
+              enum_titles: imports.titles
             },
             type: 'string'
           }

@@ -1,6 +1,15 @@
 import { Puzzles } from '../puzzles'
 import { Storage } from './storage'
-import { base64decode, base64encode, classToString, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
+import {
+  base64decode,
+  base64encode,
+  classToString,
+  getKeyFactory,
+  jsonDiffPatch,
+  params,
+  uniqueId,
+  url
+} from './util'
 import { View } from './view.js'
 
 const history = window.history
@@ -296,6 +305,7 @@ export class State {
     Storage.delete(State.key(id))
     Storage.delete(View.key(View.CacheKeys.Center))
     Storage.delete(View.key(View.CacheKeys.Zoom))
+    Storage.delete(State.keyEditor(id, State.CacheKeys.Locked))
 
     // Currently selected puzzle
     if (State.getId() === id) {
@@ -480,6 +490,7 @@ export class State {
     Edit: 'edit',
     Id: 'id',
     Ids: 'ids',
+    Locked: 'locked',
     Parent: 'parent',
     Play: 'play'
   })
@@ -496,6 +507,7 @@ export class State {
   static Version = 7
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
+  static keyEditor = getKeyFactory(State.CacheKeys.Edit, 'editor')
 
   static toString = classToString('State')
 
