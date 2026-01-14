@@ -39,8 +39,6 @@ export class Layout extends Stateful {
     this.offset = state.offset ?? Layout.Offsets.OddRow
     this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
-    // Remove any previously imported tiles from state.
-    const imports = {}
     const puzzlesUnlocked = {}
     for (const r in tiles) {
       const row = tiles[r]
@@ -51,14 +49,6 @@ export class Layout extends Stateful {
         if (modifier) {
           console.debug(Layout.toString(), `Marking import as unlocked: ${modifier.puzzleId}`)
           puzzlesUnlocked[modifier.puzzleId] = true
-        }
-        if (tile.ref) {
-          // Keep a reference to the previous state of the tile, at its location in the puzzle that owns it, so it can
-          // be carried over if the tile is still being imported
-          imports[tile.ref.id] ??= {}
-          imports[tile.ref.id][tile.ref.offset.r] ??= {}
-          imports[tile.ref.id][tile.ref.offset.r][tile.ref.offset.c] = tile
-          delete tiles[r][c]
         }
       }
     }
@@ -112,24 +102,41 @@ export class Layout extends Stateful {
       config.layout ??= {}
       config.layout.tiles ??= []
       const itemFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Item)
+      const modifierFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Modifier)
       const tileFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Tile)
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
-          const tile = row[c]
+          let tile = row[c]
           const tileOffset = new OffsetCoordinates(Number(r), Number(c))
           const tileAxial = OffsetCoordinates.toAxialCoordinates(tileOffset)
           const translatedOffset = CubeCoordinates.toOffsetCoordinates(anchorAxial.add(tileAxial))
 
-          if (tile.items) {
-            tile.items = tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+          if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
+            // There is already a tile at this location
+            throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
           }
 
-          // Carry over any previous state changes for the tile
-          Object.assign(tile, imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
+          const tileRef = ref.tiles?.[translatedOffset.r]?.[translatedOffset.c]
+          if (tileRef) {
+            // The user has made changes to this tile already
+            tile = tileRef
+          } else {
+            if (tile.items) {
+              // Only include items which pass every item filter
+              tile.items = tile.items
+                .filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+            }
 
-          // Keep a reference to the puzzle and location the tile was imported from in state
-          tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
+            if (tile.modifiers) {
+              // Only include modifiers which pass every modifier filter
+              tile.modifiers = tile.modifiers
+                .filter((item) => modifierFilters.every((filter) => filter.apply(source, item)))
+            }
+
+            // Keep a reference to the puzzle and location the tile was imported from in state
+            tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
+          }
 
           if (placeholder || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile))) {
             console.debug(
@@ -137,11 +144,6 @@ export class Layout extends Stateful {
               `Marking imported tile for import '${id}' at '${translatedOffset}' as placeholder due to failing filter`
             )
             tile.placeholder = true
-          }
-
-          if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
-            // There is already a tile at this location
-            throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
           }
 
           tiles[translatedOffset.r] ??= {}
@@ -256,15 +258,19 @@ export class Layout extends Stateful {
     for (const r in this.#tiles) {
       const row = this.#tiles[r]
       for (const c in row) {
-        tiles[r] ??= {}
-        tiles[r][c] = row[c].getState()
+        const tile = row[c]
+        if (!tile.ref) {
+          // Only store non-imported tiles in state
+          tiles[r] ??= {}
+          tiles[r][c] = row[c].getState()
+        }
       }
     }
 
     const state = { offset: this.offset }
 
-    if (config.imports.length) {
-      state.imports = config.imports
+    if (Object.keys(this.#imports).length) {
+      state.imports = Object.values(this.#imports)
     }
 
     if (Object.keys(config.importsCache).length) {

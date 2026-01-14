@@ -352,6 +352,11 @@ export class Puzzle {
   }
 
   async resize (reload = true, event = true) {
+    if (!paper.view) {
+      // Paper isn't ready yet
+      return
+    }
+
     const { width, height } = elements.wrapper.getBoundingClientRect()
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
@@ -423,7 +428,7 @@ export class Puzzle {
         return
       case Item.Types.Tile:
         tile = this.layout.getTile(result.item.data.coordinates.offset)
-        if (tile.placeholder) {
+        if (tile.placeholder && !params.has(Game.States.Edit)) {
           // Ignore taps on placeholder tiles
           tile = undefined
         }

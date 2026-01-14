@@ -312,6 +312,7 @@ dialog ul {
   display: none;
   left: 1em;
   padding: 1em;
+  pointer-events: none;
   position: absolute;
   z-index: 1;
 }

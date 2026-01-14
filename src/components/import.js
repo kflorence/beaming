@@ -13,6 +13,9 @@ export class ImportFilter extends Filter {
       case (state.type === ImportFilter.Types.Item && state.name === ImportFilter.Names.Exclusion): {
         return new ImportFilterItemExclusion(state)
       }
+      case (state.type === ImportFilter.Types.Modifier && state.name === ImportFilter.Names.Exclusion): {
+        return new ImportFilterModifierExclusion(state)
+      }
       case (state.type === ImportFilter.Types.Tile && state.name === ImportFilter.Names.InSolution): {
         return new ImportFilterTileInSolution(state)
       }
@@ -35,10 +38,12 @@ export class ImportFilter extends Filter {
   static Types = Object.freeze({
     Puzzle: 'puzzle',
     Item: 'item',
+    Modifier: 'modifier',
     Tile: 'tile'
   })
 }
 
+// TODO: exclude by default and make this an inclusion filter
 export class ImportFilterItemExclusion extends ImportFilter {
   apply () {
     return false
@@ -51,6 +56,26 @@ export class ImportFilterItemExclusion extends ImportFilter {
     ImportFilter.schema(this.Type, this.Name),
     {
       description: 'Don\'t import items from tiles.',
+      options: {
+        containerAttributes: { class: 'empty' }
+      }
+    }
+  ))
+}
+
+// TODO: exclude by default and make this an inclusion filter
+export class ImportFilterModifierExclusion extends ImportFilter {
+  apply () {
+    return false
+  }
+
+  static Name = ImportFilter.Names.Exclusion
+  static Type = ImportFilter.Types.Modifier
+
+  static schema = () => Object.freeze(merge(
+    ImportFilter.schema(this.Type, this.Name),
+    {
+      description: 'Don\'t import modifiers from tiles.',
       options: {
         containerAttributes: { class: 'empty' }
       }
@@ -123,17 +148,23 @@ export class Import {
             'This should be set to true when importing non-official puzzles.',
           type: 'boolean'
         },
-        color: Schema.color,
         filters: {
           items: {
             anyOf: [
               ImportFilterItemExclusion.schema(),
+              ImportFilterModifierExclusion.schema(),
               ImportFilterPuzzleSolved.schema(),
               ImportFilterTileInSolution.schema()
             ],
             headerTemplate: 'filter {{i1}}'
           },
           type: 'array'
+        },
+        tiles: {
+          options: {
+            hidden: true
+          },
+          type: 'object'
         },
         unlocked: {
           description: 'Mark the import as unlocked by the user. This should only be used for testing purposes.',

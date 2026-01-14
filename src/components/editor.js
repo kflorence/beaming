@@ -76,6 +76,7 @@ export class Editor {
       id = undefined
     }
 
+    this.teardown()
     this.#gutter.setup()
 
     await this.#puzzle.select(id, options)
@@ -157,10 +158,10 @@ export class Editor {
     this.#editor.setValue(tile ? tile.getState() : this.#puzzle.state.getCurrent())
   }
 
+  // FIXME need to make sure the editor UI stays in sync with the value
+  // for example if the value was changed outside of the UI (like directly editing the JSON configuration)
   async #onConfigurationUpdate () {
     const state = this.getState()
-    // Ensure the configuration is in sync with the editor value
-    this.#onEditorUpdate(state)
     const diff = this.#puzzle.state.getDiff(state)
     console.debug(Editor.toString('onConfigurationUpdate'), diff)
 
@@ -207,7 +208,19 @@ export class Editor {
     if (offset) {
       // Update a specific tile
       state = current
-      state.layout.tiles[offset.r][offset.c] = value
+
+      const tile = this.#puzzle.layout.getTile(offset)
+      if (tile.ref) {
+        // This is an imported tile, store the change in the import configuration
+        const index = state.layout.imports.findIndex((ref) => ref.id === tile.ref.id)
+        state.layout.imports[index].tiles ??= {}
+        state.layout.imports[index].tiles[offset.r] ??= {}
+        state.layout.imports[index].tiles[offset.r][offset.c] = value
+      } else {
+        // Not an imported tile, the tile state can be updated directly
+        state.layout.tiles[offset.r] ??= {}
+        state.layout.tiles[offset.r][offset.c] = value
+      }
     } else {
       // Update the entire state
       state = value
@@ -246,6 +259,10 @@ export class Editor {
   }
 
   #onPointerMove (event) {
+    if (!event.target.matches('canvas')) {
+      return
+    }
+
     const layout = this.#puzzle.layout
     if (!layout) {
       // Puzzle isn't ready yet
@@ -337,7 +354,7 @@ export class Editor {
 
     // TODO: adding/removing tiles would ideally not require a reload. but getting rid of it would require fixing
     //  some bugs related to the beam
-    await this.#puzzle.reload()
+    this.#puzzle.reload()
   }
 
   #setup (event) {
