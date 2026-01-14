@@ -3,17 +3,19 @@ import { Item } from '../item'
 import { Items } from '../items'
 import { emitEvent, getPointBetween, merge } from '../util'
 import { Modifiers } from '../modifiers'
+import { Flag as BaseFlag, Flags } from '../flag.js'
+
+// Incrementing value for Tile flags
+let flagValue = 0
 
 export class Tile extends Item {
   coordinates
+  flags
   items = []
   modifiers = []
   parameters
   path
-  placeholder
   ref
-  selected = false
-  style
 
   constructor (coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
@@ -30,8 +32,7 @@ export class Tile extends Item {
       }
     })
 
-    this.placeholder = state.placeholder ?? false
-    const style = this.style = this.getDefaultStyle()
+    this.flags = new Flags(state.flags)
 
     this.center = center
     this.coordinates = coordinates
@@ -44,9 +45,10 @@ export class Tile extends Item {
       // Data should only contain properties that don't change
       data: { coordinates, type: this.type },
       radius: parameters.circumradius,
-      sides: 6,
-      style: this.styles[style]
+      sides: 6
     })
+
+    this.setStyle()
 
     this.group.addChildren([this.path])
 
@@ -76,18 +78,16 @@ export class Tile extends Item {
   }
 
   afterModify () {
-    this.setStyle(this.selected ? 'selected' : this.style)
+    this.flags.remove(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: false }))
+    this.update()
   }
 
   beforeModify () {
     this.group.bringToFront()
-    this.setStyle('edit')
+    this.flags.add(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: true }))
-  }
-
-  getDefaultStyle () {
-    return this.placeholder ? 'placeholder' : 'default'
+    this.update()
   }
 
   getState () {
@@ -117,9 +117,9 @@ export class Tile extends Item {
   }
 
   onDeselected (selectedTile) {
-    this.selected = false
-    this.path.style = this.styles[this.style]
+    this.flags.remove(Tile.Flags.Selected)
     this.items.forEach((item) => item.onDeselected())
+    this.update()
 
     document.body.classList.remove(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
@@ -128,10 +128,10 @@ export class Tile extends Item {
 
   onSelected (deselectedTile) {
     console.debug(this.toString(), 'selected')
-    this.selected = true
     this.group.bringToFront()
-    this.path.style = this.styles.selected
+    this.flags.add(Tile.Flags.Selected)
     this.items.forEach((item) => item.onSelected())
+    this.update()
 
     document.body.classList.add(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
@@ -154,8 +154,12 @@ export class Tile extends Item {
     }
   }
 
-  setStyle (style = this.style) {
-    this.path.set(this.styles[style])
+  setStyle () {
+    const style = Object.assign({}, Tile.Styles.default)
+    Object.values(Tile.Flags)
+      .filter((flag) => this.flags.has(flag))
+      .forEach((flag) => Object.assign(style, this.styles[flag.name]))
+    this.path.set({ style })
   }
 
   teardown () {
@@ -168,11 +172,7 @@ export class Tile extends Item {
     return `[${this.type}:${this.coordinates.offset.toString()}]`
   }
 
-  update (options = {}) {
-    // TODO tile should have a set of flags that can be toggled on/off, from which styles are derived.
-    // E.g. the tile can be a placeholder, selected, and edited. Default would be used as the base styles.
-    this.placeholder = options.placeholder ?? this.placeholder
-    this.style = this.getDefaultStyle()
+  update () {
     this.setStyle()
   }
 
@@ -220,6 +220,21 @@ export class Tile extends Item {
       modifiers: Modifiers.schema()
     }
   }))
+
+  static Flag = class extends BaseFlag {
+    constructor (name) {
+      super()
+      this.name = name
+      this.value = 1 << flagValue++
+    }
+  }
+
+  static Flags = Object.freeze({
+    Copy: new Tile.Flag('copy'),
+    Edit: new Tile.Flag('edit'),
+    Placeholder: new Tile.Flag('placeholder'),
+    Selected: new Tile.Flag('selected')
+  })
 
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:

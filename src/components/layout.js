@@ -11,6 +11,7 @@ import { ImportFilter, Imports } from './import.js'
 import { classToString, hexagon } from './util.js'
 import { Modifier, ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
+import { Flags } from './flag.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -64,7 +65,7 @@ export class Layout extends Stateful {
       ref.unlocked ??= puzzlesUnlocked[id]
       this.#imports[id] = structuredClone(ref)
 
-      const source = this.getCache(id, state)
+      const source = this.getCached(id, state)
       if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
@@ -141,11 +142,7 @@ export class Layout extends Stateful {
           }
 
           if (placeholder || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile))) {
-            console.debug(
-              Layout.toString(),
-              `Marking imported tile for import '${id}' at '${translatedOffset}' as placeholder due to failing filter`
-            )
-            tile.placeholder = true
+            tile.flags = new Flags(Tile.Flags.Placeholder)
           }
 
           tiles[translatedOffset.r] ??= {}
@@ -214,7 +211,7 @@ export class Layout extends Stateful {
     return tile
   }
 
-  getCache (id, state) {
+  getCached (id, state) {
     // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
     // This will ensure the latest version is always used.
     return State.fromCache(id) || State.fromConfig(id) || State.fromEncoded((state ?? this.getState()).importsCache[id])
@@ -261,10 +258,15 @@ export class Layout extends Stateful {
       const row = this.#tiles[r]
       for (const c in row) {
         const tile = row[c]
-        if (!tile.ref) {
-          // Only store non-imported tiles in state
+        const state = tile.getState()
+        if (tile.ref) {
+          // This is an imported tile
+          this.#imports[tile.ref.id].tiles ??= {}
+          this.#imports[tile.ref.id].tiles[r] ??= {}
+          this.#imports[tile.ref.id].tiles[r][c] = state
+        } else {
           tiles[r] ??= {}
-          tiles[r][c] = row[c].getState()
+          tiles[r][c] = state
         }
       }
     }
@@ -331,12 +333,12 @@ export class Layout extends Stateful {
 
     ref.unlocked = true
 
-    const cache = this.getCache(id)
+    const cache = this.getCached(id)
     const key = State.key(id)
 
     if (cache && !Storage.get(key)) {
       // Ensure a cache entry exists for this puzzle. This is necessary for custom import puzzles
-      Storage.set(key, cache)
+      Storage.set(key, cache.encode())
       State.add(id)
     }
 
@@ -347,8 +349,8 @@ export class Layout extends Stateful {
     this.tiles.forEach((tile) => {
       if (tile.ref?.id === id) {
         const offset = new OffsetCoordinates(tile.ref.offset.r, tile.ref.offset.c)
-        const placeholder = !tileFilters.every((filter) => filter.apply(cache, offset, tile))
-        tile.update({ placeholder })
+        tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile)))
+        tile.update()
       }
     })
 

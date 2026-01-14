@@ -41,10 +41,10 @@ export class Game {
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    if (params.has(Game.States.Play)) {
+    if (Game.is(Game.States.Play)) {
       // noinspection JSIgnoredPromiseFromCall
       this.play()
-    } else if (params.has(Game.States.Edit)) {
+    } else if (Game.is(Game.States.Edit)) {
       // noinspection JSIgnoredPromiseFromCall
       this.edit()
     } else {
@@ -78,9 +78,9 @@ export class Game {
   }
 
   async select (id, options) {
-    if (params.has(Game.States.Play)) {
+    if (Game.is(Game.States.Play)) {
       await this.puzzle.select(id, options)
-    } else if (params.has(Game.States.Edit)) {
+    } else if (Game.is(Game.States.Edit)) {
       await this.editor.select(id, options)
     }
   }
@@ -173,6 +173,10 @@ export class Game {
         animate(elements.dialog, 'slide-down-in', () => { elements.dialog.showModal() })
       ])
     }
+  }
+
+  static is (state) {
+    return Object.values(Game.States).includes(state) && params.has(state)
   }
 
   static toString = classToString('Game')

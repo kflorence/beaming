@@ -13,6 +13,7 @@ import {
 import { Step, StepState } from '../step'
 import { Collision, CollisionMergeWith } from '../collision'
 import { Cache } from '../cache'
+import { Tile } from './tile.js'
 
 export class Beam extends Item {
   done = false
@@ -114,8 +115,8 @@ export class Beam extends Item {
     return step
   }
 
-  getCollision () {
-    return this.getStep()?.state.get(StepState.Collision)
+  getCollisions () {
+    return this.getStep()?.state.get(StepState.Collisions) ?? []
   }
 
   getColor () {
@@ -210,8 +211,14 @@ export class Beam extends Item {
       const lastStep = this.getStep()
 
       // Check for invalid collisions
-      const collision = lastStep.state.get(StepState.Collision)
-      if (collision?.has(beam) && !collision.equals(beamLastStep?.state.get(StepState.Collision))) {
+      const ourCollisions = lastStep.state.get(StepState.Collisions) ?? []
+      const theirCollisions = beamLastStep?.state.get(StepState.Collisions) ?? []
+      if (
+        // Collided with this beam
+        ourCollisions.some((collision) => collision.has(beam)) &&
+        // None of the collision points on the beam match ours
+        !ourCollisions.some((ours) => theirCollisions.some((theirs) => ours.equals(theirs)))
+      ) {
         console.debug(this.toString(), 're-evaluating collision with', beam.toString())
         this.done = false
         this.#stepIndex = Math.max(lastStep.index - 1, 0)
@@ -303,13 +310,14 @@ export class Beam extends Item {
       // Beams are traveling in different directions (collision), or a beam is trying to merge into itself
       console.debug(beam.toString(), 'has collided with', (isSelf ? 'self' : this.toString()), collision)
 
-      if (!step.state.get(StepState.Collision)?.point.equals(collision.point)) {
-        // No need to update if there is already an existing collision at this same point
+      const collisions = step.state.get(StepState.Collisions) ?? []
+      if (!collisions.some((col) => col.equals(collision))) {
+        // There is no matching collision in state yet
         if (!isSelf) {
           // Update beam at point of impact
           this.update(stepIndex, {
             done: true,
-            state: step.state.copy(new StepState.Collision(collision.mirror()))
+            state: step.state.copy(new StepState.Collisions(...collisions, collision.mirror()))
           })
         } else if (!isSameDirection) {
           // For a collision with self, the update at point of impact will occur on the next update loop. This results in
@@ -429,13 +437,13 @@ export class Beam extends Item {
     const tile = puzzle.layout.getTile(offset)
 
     // The next step would be off the grid
-    if (!tile || tile.placeholder) {
+    if (!tile || tile.flags.has(Tile.Flags.Placeholder)) {
       console.debug(this.toString(), 'stopping due to out of bounds', offset)
 
       const collision = new Collision(0, [currentStep.point], this)
       return this.updateStep(currentStepIndex, {
         done: true,
-        state: new StepState(new StepState.Collision(collision))
+        state: new StepState(new StepState.Collisions(collision))
       })
     }
 
@@ -482,7 +490,7 @@ export class Beam extends Item {
       collisionStep = nextStep.copy({
         done: true,
         point: collision.point,
-        state: nextStep.state.copy(new StepState.Collision(collision))
+        state: nextStep.state.copy(new StepState.Collisions(collision))
       })
 
       // Allow the item to change the resulting step

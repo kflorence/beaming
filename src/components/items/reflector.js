@@ -65,7 +65,7 @@ export class Reflector extends movable(rotatable(Item)) {
       // same side of the reflector will collide with this beam.
       return nextStep.copy({
         done: true,
-        state: nextStep.state.copy(new StepState.Collision(collision.copy({ points: [nextStep.point] })))
+        state: nextStep.state.copy(new StepState.Collisions(collision.copy({ points: [nextStep.point] })))
       })
     }
 

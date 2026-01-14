@@ -876,6 +876,7 @@ dialog ul {
   min-height: 24px;
   padding: 1em;
   pointer-events: all;
+  width: fit-content;
 }
 
 .message:empty {

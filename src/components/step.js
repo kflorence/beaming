@@ -103,12 +103,11 @@ export class StepState {
     return (this.#cache[Class.name] ??= Object.keys(Reflect.construct(Class, [])))
   }
 
-  static Collision = class StepCollision {
-    collision
+  static Collisions = class StepCollisions {
+    collisions
 
-    // Item is optional, in the case of an out-of-bounds collision for example
-    constructor (collision) {
-      this.collision = collision
+    constructor (...collisions) {
+      this.collisions = collisions
     }
   }
 

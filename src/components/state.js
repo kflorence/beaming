@@ -75,11 +75,10 @@ export class State {
       console.debug(this.toString(), `addMove: ignoring duplicate move for deltaIndex ${deltaIndex}.`)
     } else {
       this.#moves.push(new State.Move(deltaIndex, eventType, tile, modifier, selectedTile))
+      this.#moveIndex = this.#moves.length - 1
+
+      console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
     }
-
-    this.#moveIndex = this.#moves.length - 1
-
-    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
 
     return this.#moveIndex
   }

@@ -5,6 +5,7 @@ export class Collision {
     const items = [beam]
 
     if (item !== undefined) {
+      // Item is optional, in the case of an out-of-bounds collision for example
       items.push(item)
     }
 

@@ -1,4 +1,5 @@
 {
+  "id": "56bd2470",
   "layout": {
     "offset": "odd-row",
     "tiles": {
@@ -18,16 +19,16 @@
       },
       "1": {
         "0": {
-          "type": "tile",
           "id": "5c2510d3",
+          "type": "tile",
           "items": [
             {
+              "id": "8ab32224",
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
                 "puzzleId": "002"
-              },
-              "id": "8ab32224"
+              }
             }
           ]
         },
@@ -80,331 +81,6 @@
           ],
           "type": "tile",
           "id": "349a7a4a"
-        },
-        "-2": {
-          "id": "8f2cda31",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": 1,
-              "c": 0
-            }
-          },
-          "items": [
-            {
-              "type": "reflector",
-              "id": "1fbe1073",
-              "rotation": 3
-            }
-          ]
-        },
-        "-3": {
-          "id": "57bb0429",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": 1,
-              "c": -1
-            }
-          }
-        }
-      },
-      "-2": {
-        "0": {
-          "id": "ea370bb7",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 2,
-              "c": -1
-            }
-          }
-        },
-        "1": {
-          "id": "1a2e1e12",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 2,
-              "c": 0
-            }
-          }
-        },
-        "2": {
-          "id": "522b600d",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 2,
-              "c": 1
-            }
-          }
-        },
-        "-2": {
-          "id": "98c1b870",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": 0,
-              "c": 0
-            }
-          }
-        },
-        "-1": {
-          "id": "f7b48b08",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": 0,
-              "c": 1
-            }
-          },
-          "items": [
-            {
-              "type": "modifier",
-              "modifier": {
-                "type": "puzzle",
-                "puzzleId": "003"
-              },
-              "id": "2ac621e3"
-            }
-          ]
-        },
-        "-3": {
-          "id": "a7f644b8",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": 0,
-              "c": -1
-            }
-          }
-        }
-      },
-      "-3": {
-        "0": {
-          "id": "59e60928",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 1,
-              "c": -1
-            }
-          }
-        },
-        "1": {
-          "id": "d0b13fc4",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 1,
-              "c": 0
-            }
-          }
-        },
-        "2": {
-          "id": "453b4d64",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 1,
-              "c": 1
-            }
-          },
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "b45a15d3"
-            }
-          ]
-        },
-        "-2": {
-          "id": "2eb11c84",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": -1,
-              "c": 0
-            }
-          }
-        },
-        "-3": {
-          "id": "e2e2cc4d",
-          "type": "tile",
-          "ref": {
-            "id": "002",
-            "offset": {
-              "r": -1,
-              "c": -1
-            }
-          }
-        },
-        "-1": {
-          "id": "e04bf3e8",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 1,
-              "c": -2
-            }
-          }
-        }
-      },
-      "-4": {
-        "0": {
-          "id": "6c632460",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 0,
-              "c": -1
-            }
-          }
-        },
-        "1": {
-          "id": "04c7d967",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 0,
-              "c": 0
-            }
-          }
-        },
-        "2": {
-          "id": "e0e00401",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 0,
-              "c": 1
-            }
-          }
-        },
-        "3": {
-          "id": "5acc1407",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 0,
-              "c": 2
-            }
-          }
-        },
-        "-1": {
-          "id": "1652ec72",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": 0,
-              "c": -2
-            }
-          }
-        }
-      },
-      "-5": {
-        "0": {
-          "id": "a7ae7f64",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -1,
-              "c": -1
-            }
-          }
-        },
-        "1": {
-          "id": "1848a6ad",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -1,
-              "c": 0
-            }
-          }
-        },
-        "2": {
-          "id": "6a9d44bf",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -1,
-              "c": 1
-            }
-          }
-        },
-        "-1": {
-          "id": "ee57363a",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -1,
-              "c": -2
-            }
-          },
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "37e58227"
-            }
-          ]
-        }
-      },
-      "-6": {
-        "0": {
-          "id": "234b7936",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -2,
-              "c": -1
-            }
-          }
-        },
-        "1": {
-          "id": "75667c33",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -2,
-              "c": 0
-            }
-          }
-        },
-        "2": {
-          "id": "082207e9",
-          "type": "tile",
-          "ref": {
-            "id": "003",
-            "offset": {
-              "r": -2,
-              "c": 1
-            }
-          }
         }
       }
     },
@@ -422,15 +98,52 @@
             "solved": true
           },
           {
-            "type": "item",
-            "name": "exclusion"
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-2": {
+            "-2": {
+              "id": "98c1b870",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "rotation": 3
+                }
+              ]
+            },
+            "-1": {
+              "id": "f7b48b08",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "003"
+                  }
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "003",
@@ -439,10 +152,6 @@
           "c": 1
         },
         "filters": [
-          {
-            "type": "item",
-            "name": "exclusion"
-          },
           {
             "type": "puzzle",
             "name": "solved",
@@ -472,6 +181,5 @@
     ]
   },
   "version": 0,
-  "id": "56bd2470",
   "title": "pack 001"
 }

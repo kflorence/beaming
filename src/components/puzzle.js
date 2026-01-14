@@ -31,6 +31,7 @@ import { Schema } from './schema'
 import { Game } from './game'
 import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
+import { Tile } from './items/tile.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -428,7 +429,7 @@ export class Puzzle {
         return
       case Item.Types.Tile:
         tile = this.layout.getTile(result.item.data.coordinates.offset)
-        if (tile.placeholder && !params.has(Game.States.Edit)) {
+        if (tile.flags.has(Tile.Flags.Placeholder) && !Game.is(Game.States.Edit)) {
           // Ignore taps on placeholder tiles
           tile = undefined
         }
@@ -587,6 +588,7 @@ export class Puzzle {
     const id = this.state.getId()
     const parentId = State.getParent(id)
 
+    View.setZoom(1)
     this.centerOnTile(0, 0)
     await this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
   }
@@ -599,8 +601,7 @@ export class Puzzle {
     const beam = event.detail.beam
     const state = event.detail.state
 
-    if (state?.has(StepState.Collision)) {
-      const collision = state.get(StepState.Collision)
+    state?.get(StepState.Collisions)?.forEach((collision) => {
       const collisionId = Puzzle.Collision.id(collision.point)
       const existing = this.#collisions[collisionId]
 
@@ -615,7 +616,7 @@ export class Puzzle {
       if (mask?.beam?.equals(beam)) {
         this.unmask()
       }
-    }
+    })
 
     Object.values(this.#collisions).forEach((collision) => collision.update())
 
@@ -656,7 +657,7 @@ export class Puzzle {
       this.updateSelectedTile(selectedTile)
     }
 
-    this.state.addMove(event.type, tile, modifier, selectedTile)
+    this.state.addMove(event.type, tile, modifier, this.selectedTile)
     this.updateState()
 
     this.getBeams()
@@ -676,7 +677,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches('canvas') || !this.debug || params.has(State.ParamKeys.Edit)) {
+    if (!event.target.matches('canvas') || !this.debug || Game.is(Game.States.Edit)) {
       return
     }
 
@@ -848,7 +849,7 @@ export class Puzzle {
   }
 
   #updateDropdown () {
-    if (params.has(Game.States.Edit)) {
+    if (Game.is(Game.States.Edit)) {
       // The editor will handle the dropdown
       return
     }
@@ -901,7 +902,7 @@ export class Puzzle {
 
     beams.forEach((beam) => {
       const step = beam.step(this)
-      if (step.tile.equals(this.selectedTile)) {
+      if (step?.tile.equals(this.selectedTile)) {
         // Make sure messages are displayed for the selected tile when a beam travels through it
         this.#updateMessage(step.tile)
       }
@@ -980,7 +981,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) => this.equals(beam.getCollision()))
+      this.beams = this.beams.filter((beam) => beam.getCollisions().some((collision) => this.equals(collision)))
 
       const color = this.getColor()
 

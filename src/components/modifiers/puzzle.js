@@ -4,6 +4,7 @@ import { merge } from '../util.js'
 import { State } from '../state.js'
 import { Puzzle } from '../puzzle.js'
 import { Puzzles } from '../../puzzles/index.js'
+import { View } from '../view.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -28,6 +29,7 @@ export class PuzzleModifier extends Modifier {
     State.setParent(state.puzzleId, puzzle.state.getId())
 
     // Center the screen on the anchor point of the import
+    View.setZoom(1)
     puzzle.centerOn(ref.offset.r, ref.offset.c)
 
     // Load the import behind the current puzzle and then swap them
