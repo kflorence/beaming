@@ -4,6 +4,7 @@ import pako from 'pako'
 import chroma from 'chroma-js'
 import { Point, Size } from 'paper'
 
+const empty = Symbol('empty')
 const location = window.location
 
 export const baseUrl = 'https://kflorence.github.io/beaming'
@@ -143,6 +144,17 @@ export async function fadeOut (element) {
   return animate(element, 'fade-out')
 }
 
+export function filter (t, f) {
+  switch (t?.constructor) {
+    case Array:
+      return t.filter(f)
+    case Object:
+      return Object.fromEntries(Object.entries(t).filter(([k, v]) => f(v, k)))
+    default:
+      return t
+  }
+}
+
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
   return pointA && pointB && pointA.round().subtract(pointB.round()).length <= maxDiff
 }
@@ -266,6 +278,17 @@ export function hexagon (height) {
   }
 }
 
+export function map (t, f) {
+  switch (t?.constructor) {
+    case Array:
+      return t.map(f)
+    case Object:
+      return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, f(v, k)]))
+    default:
+      return t
+  }
+}
+
 export function merge (a, b, options) {
   let args
 
@@ -277,6 +300,17 @@ export function merge (a, b, options) {
   }
 
   return deepmerge.all(args, options)
+}
+
+export function nonEmpty (t) {
+  switch (t?.constructor) {
+    case Array:
+      return t.length > 0
+    case Object:
+      return Object.keys(t).length > 0
+    default:
+      return t !== empty // <- all other t are OK, except for sentinel
+  }
 }
 
 export function noop (value) {
@@ -291,6 +325,16 @@ export function pointToString (point) {
 
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
+}
+
+export function removeEmpties (t) {
+  switch (t?.constructor) {
+    case Array:
+    case Object:
+      return filter(map(t, removeEmpties), nonEmpty)
+    default:
+      return nonEmpty(t) ? t : empty
+  }
 }
 
 export function sizeToString (size) {

@@ -1,0 +1,185 @@
+{
+  "id": "56bd2470",
+  "layout": {
+    "offset": "odd-row",
+    "tiles": {
+      "0": {
+        "0": {
+          "type": "tile",
+          "id": "0cbb0588"
+        },
+        "1": {
+          "type": "tile",
+          "id": "9c7f7b9a"
+        },
+        "-1": {
+          "type": "tile",
+          "id": "da960fda"
+        }
+      },
+      "1": {
+        "0": {
+          "id": "5c2510d3",
+          "type": "tile",
+          "items": [
+            {
+              "id": "8ab32224",
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "002"
+              }
+            }
+          ]
+        },
+        "-1": {
+          "id": "e3bec484",
+          "type": "tile",
+          "items": [
+            {
+              "id": "ddca0ca8",
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#ff0000",
+                  "direction": 1,
+                  "toggled": true
+                }
+              ]
+            }
+          ],
+          "modifiers": [
+            {
+              "id": "3c658dae",
+              "type": "toggle"
+            },
+            {
+              "type": "sticky-modifiers",
+              "id": "efec3b6a"
+            }
+          ]
+        }
+      },
+      "-1": {
+        "0": {
+          "type": "tile",
+          "id": "c9bedf13"
+        },
+        "-1": {
+          "items": [
+            {
+              "openings": [
+                {
+                  "color": "#0000ff",
+                  "direction": 3,
+                  "toggled": true
+                }
+              ],
+              "type": "terminus",
+              "id": "9f234017"
+            }
+          ],
+          "type": "tile",
+          "id": "349a7a4a"
+        }
+      }
+    },
+    "imports": [
+      {
+        "id": "002",
+        "offset": {
+          "r": -2,
+          "c": -2
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ],
+        "tiles": {
+          "-2": {
+            "-2": {
+              "id": "98c1b870",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "rotation": 3
+                }
+              ]
+            },
+            "-1": {
+              "id": "f7b48b08",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "003"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "003",
+        "offset": {
+          "r": -4,
+          "c": 1
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
+      }
+    ],
+    "modifiers": [
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "id": "201bce1a"
+      }
+    ]
+  },
+  "version": 0,
+  "title": "pack 001"
+}

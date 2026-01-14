@@ -3,15 +3,19 @@ import { Item } from '../item'
 import { Items } from '../items'
 import { emitEvent, getPointBetween, merge } from '../util'
 import { Modifiers } from '../modifiers'
+import { Flag as BaseFlag, Flags } from '../flag.js'
+
+// Incrementing value for Tile flags
+let flagValue = 0
 
 export class Tile extends Item {
   coordinates
+  flags
   items = []
   modifiers = []
   parameters
   path
   ref
-  selected = false
 
   constructor (coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
@@ -28,6 +32,8 @@ export class Tile extends Item {
       }
     })
 
+    this.flags = new Flags(state.flags)
+
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
@@ -36,11 +42,13 @@ export class Tile extends Item {
     this.path = new Path.RegularPolygon({
       center,
       closed: true,
+      // Data should only contain properties that don't change
       data: { coordinates, type: this.type },
       radius: parameters.circumradius,
-      sides: 6,
-      style: this.styles.default
+      sides: 6
     })
+
+    this.setStyle()
 
     this.group.addChildren([this.path])
 
@@ -70,14 +78,16 @@ export class Tile extends Item {
   }
 
   afterModify () {
-    this.setStyle(this.selected ? 'selected' : 'default')
+    this.flags.remove(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: false }))
+    this.update()
   }
 
   beforeModify () {
     this.group.bringToFront()
-    this.setStyle('edit')
+    this.flags.add(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: true }))
+    this.update()
   }
 
   getState () {
@@ -107,9 +117,9 @@ export class Tile extends Item {
   }
 
   onDeselected (selectedTile) {
-    this.selected = false
-    this.path.style = this.styles.default
+    this.flags.remove(Tile.Flags.Selected)
     this.items.forEach((item) => item.onDeselected())
+    this.update()
 
     document.body.classList.remove(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
@@ -118,10 +128,10 @@ export class Tile extends Item {
 
   onSelected (deselectedTile) {
     console.debug(this.toString(), 'selected')
-    this.selected = true
     this.group.bringToFront()
-    this.path.style = this.styles.selected
+    this.flags.add(Tile.Flags.Selected)
     this.items.forEach((item) => item.onSelected())
+    this.update()
 
     document.body.classList.add(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
@@ -144,8 +154,12 @@ export class Tile extends Item {
     }
   }
 
-  setStyle (style) {
-    this.path.set(this.styles[style])
+  setStyle () {
+    const style = Object.assign({}, Tile.Styles.default)
+    Object.values(Tile.Flags)
+      .filter((flag) => this.flags.has(flag))
+      .forEach((flag) => Object.assign(style, this.styles[flag.name]))
+    this.path.set({ style })
   }
 
   teardown () {
@@ -156,6 +170,10 @@ export class Tile extends Item {
 
   toString () {
     return `[${this.type}:${this.coordinates.offset.toString()}]`
+  }
+
+  update () {
+    this.setStyle()
   }
 
   updateIcon (modifier) {
@@ -203,6 +221,21 @@ export class Tile extends Item {
     }
   }))
 
+  static Flag = class extends BaseFlag {
+    constructor (name) {
+      super()
+      this.name = name
+      this.value = 1 << flagValue++
+    }
+  }
+
+  static Flags = Object.freeze({
+    Copy: new Tile.Flag('copy'),
+    Edit: new Tile.Flag('edit'),
+    Placeholder: new Tile.Flag('placeholder'),
+    Selected: new Tile.Flag('selected')
+  })
+
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:
     // https://github.com/paperjs/paper.js/issues/2049
@@ -221,6 +254,12 @@ export class Tile extends Item {
       dashArray: true,
       strokeColor: new Color('black'),
       strokeWidth: 2
+    },
+    placeholder: {
+      dashArray: [],
+      fillColor: new Color('#bbb'),
+      strokeColor: new Color('#999'),
+      strokeWidth: 1
     },
     selected: {
       dashArray: [],

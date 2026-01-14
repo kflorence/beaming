@@ -31,6 +31,7 @@ import { Schema } from './schema'
 import { Game } from './game'
 import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
+import { Tile } from './items/tile.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -114,7 +115,7 @@ export class Puzzle {
       this.updateSelectedTile(modifier.parent)
     } else {
       this.layout.addModifier(modifier)
-      this.#updateModifiers()
+      this.updateModifiers()
     }
 
     // Update state but don't add a move, since it was the previous move that caused the collision.
@@ -172,10 +173,6 @@ export class Puzzle {
     return this.#beamsUpdateDelay
   }
 
-  getImport (id) {
-    return this.layout.getImports()?.[id]
-  }
-
   getMoves () {
     return this.state.moves()
   }
@@ -184,10 +181,9 @@ export class Puzzle {
     return this.#interact.getProjectPoint(point)
   }
 
-  getShareUrl () {
+  getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
-    const context = State.getContext()
     Game.states.forEach((state) => shareUrl.searchParams.delete(state))
     shareUrl.searchParams.append(context, '')
     // Cloning will flatten current state into original state and get rid of history
@@ -197,17 +193,6 @@ export class Puzzle {
 
   getSolution () {
     return base64encode(JSON.stringify(this.getMoves()))
-  }
-
-  getTile (point) {
-    const result = paper.project.hitTest(point.ceil(), {
-      fill: true,
-      match: (result) => result.item.data.type === Item.Types.Tile,
-      segments: true,
-      stroke: true,
-      tolerance: 0
-    })
-    return result ? this.layout.getTile(result.item.data.coordinates.offset) : result
   }
 
   getTitle () {
@@ -331,7 +316,7 @@ export class Puzzle {
       }
     }
 
-    emitEvent(Puzzle.Events.Updated, { state: this.state })
+    emitEvent(Puzzle.Events.Reloaded, { puzzle: this })
   }
 
   resetProject (options) {
@@ -360,7 +345,7 @@ export class Puzzle {
       modifier.parent.removeModifier(modifier)
     } else {
       this.layout.removeModifier(modifier)
-      this.#updateModifiers()
+      this.updateModifiers()
     }
 
     // Update state but don't add a move, since it was the previous move that caused the collision.
@@ -368,6 +353,11 @@ export class Puzzle {
   }
 
   async resize (reload = true, event = true) {
+    if (!paper.view) {
+      // Paper isn't ready yet
+      return
+    }
+
     const { width, height } = elements.wrapper.getBoundingClientRect()
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
@@ -400,7 +390,8 @@ export class Puzzle {
 
   async select (id, options) {
     if (typeof id === 'object') {
-      options = id
+      // id could be null
+      options = id ?? {}
       id = undefined
     }
 
@@ -421,7 +412,7 @@ export class Puzzle {
   }
 
   setMessage (message) {
-    elements.headerMessage.textContent = message
+    elements.headerMessage.textContent = this.message = message
   }
 
   tap (event) {
@@ -438,6 +429,10 @@ export class Puzzle {
         return
       case Item.Types.Tile:
         tile = this.layout.getTile(result.item.data.coordinates.offset)
+        if (tile.flags.has(Tile.Flags.Placeholder) && !Game.is(Game.States.Edit)) {
+          // Ignore taps on placeholder tiles
+          tile = undefined
+        }
         break
     }
 
@@ -502,11 +497,21 @@ export class Puzzle {
     }
   }
 
-  update () {
+  async update () {
     if (!this.#mask && !this.#isUpdatingBeams) {
       this.#isUpdatingBeams = true
-      this.#updateBeams()
+      return new Promise((resolve) => this.#updateBeams(resolve))
     }
+
+    return Promise.resolve()
+  }
+
+  updateModifiers () {
+    this.modifiers.forEach((modifier) => modifier.detach())
+    this.modifiers = this.#getModifiers(this.selectedTile)
+    this.modifiers.filter((modifier) => modifier.unlocked).forEach((modifier) => modifier.attach(this.selectedTile))
+
+    elements.footer.classList.toggle(Puzzle.ClassNames.Active, this.modifiers.length > 0)
   }
 
   updateSelectedTile (tile) {
@@ -515,7 +520,7 @@ export class Puzzle {
     this.selectedTile = tile
     this.state.setSelectedTile(tile)
     this.#updateMessage(tile)
-    this.#updateModifiers()
+    this.updateModifiers()
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -583,6 +588,7 @@ export class Puzzle {
     const id = this.state.getId()
     const parentId = State.getParent(id)
 
+    View.setZoom(1)
     this.centerOnTile(0, 0)
     await this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
   }
@@ -595,8 +601,7 @@ export class Puzzle {
     const beam = event.detail.beam
     const state = event.detail.state
 
-    if (state?.has(StepState.Collision)) {
-      const collision = state.get(StepState.Collision)
+    state?.get(StepState.Collisions)?.forEach((collision) => {
       const collisionId = Puzzle.Collision.id(collision.point)
       const existing = this.#collisions[collisionId]
 
@@ -611,7 +616,7 @@ export class Puzzle {
       if (mask?.beam?.equals(beam)) {
         this.unmask()
       }
-    }
+    })
 
     Object.values(this.#collisions).forEach((collision) => collision.update())
 
@@ -619,12 +624,12 @@ export class Puzzle {
       .filter((otherBeam) => otherBeam !== beam)
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
-    setTimeout(() => this.update(), 0)
+    setTimeout(() => this.update())
   }
 
-  #onKeyup (event) {
+  async #onKeyup (event) {
     if (this.debug && event.key === 's') {
-      this.update()
+      await this.update()
     }
   }
 
@@ -644,7 +649,7 @@ export class Puzzle {
       modifier.move(tile)
       console.debug('Modifier is stuck to tile', modifier, tile)
       if (!selectedTile) {
-        this.#updateModifiers()
+        this.updateModifiers()
       }
     }
 
@@ -652,9 +657,7 @@ export class Puzzle {
       this.updateSelectedTile(selectedTile)
     }
 
-    await modifier.onInvoked(this, event)
-
-    this.state.addMove(event.type, tile, modifier, selectedTile)
+    this.state.addMove(event.type, tile, modifier, this.selectedTile)
     this.updateState()
 
     this.getBeams()
@@ -662,7 +665,10 @@ export class Puzzle {
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
-    setTimeout(() => this.update(), 0)
+    setTimeout(async () => {
+      await this.update()
+      await modifier.onInvoked(this, event)
+    })
   }
 
   #onModifierToggled (event) {
@@ -671,7 +677,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches('canvas') || !this.debug || params.has(State.ParamKeys.Edit)) {
+    if (!event.target.matches('canvas') || !this.debug || Game.is(Game.States.Edit)) {
       return
     }
 
@@ -787,7 +793,7 @@ export class Puzzle {
     this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
-    this.update()
+    await this.update()
 
     if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
       await fadeIn(this.element)
@@ -843,15 +849,14 @@ export class Puzzle {
   }
 
   #updateDropdown () {
-    if (params.has(Game.States.Edit)) {
+    if (Game.is(Game.States.Edit)) {
       // The editor will handle the dropdown
       return
     }
 
     elements.select.replaceChildren()
 
-    // TODO: once levels are implemented, this should just use State.getIds()
-    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
+    const ids = State.getIds()
     const customIds = []
     ids.forEach((id) => {
       if (Puzzles.has(id)) {
@@ -865,7 +870,7 @@ export class Puzzle {
       const customGroup = document.createElement('optgroup')
       customGroup.label = '———'
       customIds.forEach((id) => {
-        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
+        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() ?? id })
       })
 
       elements.select.append(customGroup)
@@ -875,7 +880,7 @@ export class Puzzle {
     elements.select.value = this.state?.getId()
   }
 
-  #updateBeams () {
+  #updateBeams (resolve) {
     const beams = this.getBeams().filter((beam) => beam.isPending())
 
     if (!beams.length) {
@@ -886,7 +891,8 @@ export class Puzzle {
         if (this.#requirements.areMet()) {
           this.#onSolved()
         }
-      }, 0)
+        resolve()
+      })
       return
     }
 
@@ -896,14 +902,14 @@ export class Puzzle {
 
     beams.forEach((beam) => {
       const step = beam.step(this)
-      if (step.tile.equals(this.selectedTile)) {
+      if (step?.tile.equals(this.selectedTile)) {
         // Make sure messages are displayed for the selected tile when a beam travels through it
         this.#updateMessage(step.tile)
       }
     })
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(), this.#beamsUpdateDelay)
+    setTimeout(() => this.#updateBeams(resolve), this.#beamsUpdateDelay)
   }
 
   #updateMessage (tile) {
@@ -928,15 +934,7 @@ export class Puzzle {
       }
     }
 
-    elements.headerMessage.textContent = this.message
-  }
-
-  #updateModifiers () {
-    this.modifiers.forEach((modifier) => modifier.detach())
-    this.modifiers = this.#getModifiers(this.selectedTile)
-    this.modifiers.forEach((modifier) => modifier.attach(this.selectedTile))
-
-    elements.footer.classList.toggle(Puzzle.ClassNames.Active, this.modifiers.length > 0)
+    this.setMessage(this.message)
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
@@ -983,7 +981,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) => this.equals(beam.getCollision()))
+      this.beams = this.beams.filter((beam) => beam.getCollisions().some((collision) => this.equals(collision)))
 
       const color = this.getColor()
 
@@ -1021,6 +1019,7 @@ export class Puzzle {
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Reloaded: 'puzzle-reloaded',
     Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'
