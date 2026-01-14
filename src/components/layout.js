@@ -123,15 +123,17 @@ export class Layout extends Stateful {
             tile = tileRef
           } else {
             if (tile.items) {
-              // Only include items which pass every item filter
-              tile.items = tile.items
-                .filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+              // Items are excluded by default. Filters can be used to include them
+              tile.items = itemFilters.length === 0
+                ? []
+                : tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
             }
 
             if (tile.modifiers) {
-              // Only include modifiers which pass every modifier filter
-              tile.modifiers = tile.modifiers
-                .filter((item) => modifierFilters.every((filter) => filter.apply(source, item)))
+              // Modifiers are excluded by default. Filters can be used to include them
+              tile.modifiers = modifierFilters.length === 0
+                ? []
+                : tile.modifiers.filter((item) => modifierFilters.every((filter) => filter.apply(source, item)))
             }
 
             // Keep a reference to the puzzle and location the tile was imported from in state

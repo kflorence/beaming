@@ -5,7 +5,7 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
+import { appendOption, classToString, getKeyFactory, jsonDiffPatch, removeEmpties, uniqueId } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
@@ -158,8 +158,6 @@ export class Editor {
     this.#editor.setValue(tile ? tile.getState() : this.#puzzle.state.getCurrent())
   }
 
-  // FIXME need to make sure the editor UI stays in sync with the value
-  // for example if the value was changed outside of the UI (like directly editing the JSON configuration)
   async #onConfigurationUpdate () {
     const state = this.getState()
     const diff = this.#puzzle.state.getDiff(state)
@@ -174,6 +172,10 @@ export class Editor {
 
     // Need to force a reload to make sure the UI is in sync with the state
     await this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
+
+    // Reset the editor to make sure the UI matches the configuration
+    this.teardown()
+    await this.setup()
 
     if (diff.title) {
       // Title was changed
@@ -213,9 +215,17 @@ export class Editor {
       if (tile.ref) {
         // This is an imported tile, store the change in the import configuration
         const index = state.layout.imports.findIndex((ref) => ref.id === tile.ref.id)
-        state.layout.imports[index].tiles ??= {}
-        state.layout.imports[index].tiles[offset.r] ??= {}
-        state.layout.imports[index].tiles[offset.r][offset.c] = value
+        const delta = jsonDiffPatch.diff(tile.getState(), value)
+        if (delta !== undefined) {
+          console.debug(Editor.toString('onEditorUpdate'), `updating imported tile at ${offset}`, delta)
+          const tiles = state.layout.imports[index].tiles ??= {}
+          tiles[offset.r] ??= {}
+          tiles[offset.r][offset.c] = value
+        } else {
+          // There is no change from the original state
+          const tiles = state.layout.imports[index]?.tiles ?? {}
+          delete tiles[offset.r]?.[offset.c]
+        }
       } else {
         // Not an imported tile, the tile state can be updated directly
         state.layout.tiles[offset.r] ??= {}
@@ -225,6 +235,9 @@ export class Editor {
       // Update the entire state
       state = value
     }
+
+    // Remove any empty arrays/objects
+    state = removeEmpties(state)
 
     console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
 

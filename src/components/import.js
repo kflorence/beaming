@@ -10,11 +10,11 @@ export class ImportFilter extends Filter {
       case (state.type === ImportFilter.Types.Puzzle && state.name === ImportFilter.Names.Solved): {
         return new ImportFilterPuzzleSolved(state)
       }
-      case (state.type === ImportFilter.Types.Item && state.name === ImportFilter.Names.Exclusion): {
-        return new ImportFilterItemExclusion(state)
+      case (state.type === ImportFilter.Types.Item && state.name === ImportFilter.Names.Inclusion): {
+        return new ImportFilterItemInclusion(state)
       }
-      case (state.type === ImportFilter.Types.Modifier && state.name === ImportFilter.Names.Exclusion): {
-        return new ImportFilterModifierExclusion(state)
+      case (state.type === ImportFilter.Types.Modifier && state.name === ImportFilter.Names.Inclusion): {
+        return new ImportFilterModifierInclusion(state)
       }
       case (state.type === ImportFilter.Types.Tile && state.name === ImportFilter.Names.InSolution): {
         return new ImportFilterTileInSolution(state)
@@ -30,7 +30,7 @@ export class ImportFilter extends Filter {
   }
 
   static Names = Object.freeze({
-    Exclusion: 'exclusion',
+    Inclusion: 'inclusion',
     InSolution: 'in-solution',
     Solved: 'solved'
   })
@@ -43,19 +43,19 @@ export class ImportFilter extends Filter {
   })
 }
 
-// TODO: exclude by default and make this an inclusion filter
-export class ImportFilterItemExclusion extends ImportFilter {
+export class ImportFilterItemInclusion extends ImportFilter {
   apply () {
-    return false
+    // Include by default (can be overridden by other filters)
+    return true
   }
 
-  static Name = ImportFilter.Names.Exclusion
+  static Name = ImportFilter.Names.Inclusion
   static Type = ImportFilter.Types.Item
 
   static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
-      description: 'Don\'t import items from tiles.',
+      description: 'Import items from tiles.',
       options: {
         containerAttributes: { class: 'empty' }
       }
@@ -63,19 +63,19 @@ export class ImportFilterItemExclusion extends ImportFilter {
   ))
 }
 
-// TODO: exclude by default and make this an inclusion filter
-export class ImportFilterModifierExclusion extends ImportFilter {
+export class ImportFilterModifierInclusion extends ImportFilter {
   apply () {
-    return false
+    // Include by default (can be overridden by other filters)
+    return true
   }
 
-  static Name = ImportFilter.Names.Exclusion
+  static Name = ImportFilter.Names.Inclusion
   static Type = ImportFilter.Types.Modifier
 
   static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
-      description: 'Don\'t import modifiers from tiles.',
+      description: 'Import modifiers from tiles.',
       options: {
         containerAttributes: { class: 'empty' }
       }
@@ -94,9 +94,10 @@ export class ImportFilterPuzzleSolved extends ImportFilter {
   static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
-      description: 'Conditionally import the puzzle depending on whether or not the user has solved it.',
+      description: 'Conditionally include tiles based on whether the user has solved the puzzle.',
       properties: {
         solved: {
+          default: true,
           type: 'boolean'
         }
       },
@@ -116,7 +117,7 @@ export class ImportFilterTileInSolution extends ImportFilter {
   static schema = () => Object.freeze(merge(
     ImportFilter.schema(this.Type, this.Name),
     {
-      description: 'Conditionally include tiles based on whether they were included in the puzzle solution.',
+      description: 'Conditionally include tiles based on whether they were in the puzzle solution.',
       properties: {
         inSolution: {
           type: 'boolean'
@@ -144,15 +145,19 @@ export class Import {
         offset: OffsetCoordinates.schema(),
         cache: {
           default: true,
-          description: 'Cache the imported puzzle in the current puzzle configuration. ' +
-            'This should be set to true when importing non-official puzzles.',
+          description: 'Cache the imported puzzle in puzzle configuration.',
+          type: 'boolean'
+        },
+        unlocked: {
+          description: 'Mark the import as unlocked by the user.',
+          default: true,
           type: 'boolean'
         },
         filters: {
           items: {
             anyOf: [
-              ImportFilterItemExclusion.schema(),
-              ImportFilterModifierExclusion.schema(),
+              ImportFilterItemInclusion.schema(),
+              ImportFilterModifierInclusion.schema(),
               ImportFilterPuzzleSolved.schema(),
               ImportFilterTileInSolution.schema()
             ],
@@ -165,11 +170,6 @@ export class Import {
             hidden: true
           },
           type: 'object'
-        },
-        unlocked: {
-          description: 'Mark the import as unlocked by the user. This should only be used for testing purposes.',
-          default: true,
-          type: 'boolean'
         }
       },
       required: ['id', 'offset'],
