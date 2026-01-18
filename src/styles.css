@@ -358,6 +358,14 @@ dialog ul {
   margin-top: 1em;
 }
 
+#editor input,
+#editor select {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 0.5em;
+}
+
 #editor .empty .je-indented-panel {
   display: none;
 }

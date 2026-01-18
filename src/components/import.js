@@ -120,6 +120,7 @@ export class ImportFilterTileInSolution extends ImportFilter {
       description: 'Conditionally include tiles based on whether they were in the puzzle solution.',
       properties: {
         inSolution: {
+          default: true,
           type: 'boolean'
         }
       },

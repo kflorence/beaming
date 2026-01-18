@@ -137,6 +137,105 @@
             "inSolution": true
           }
         ]
+      },
+      {
+        "id": "004",
+        "offset": {
+          "r": -1,
+          "c": 2
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
+      },
+      {
+        "id": "005",
+        "offset": {
+          "r": -6,
+          "c": 3
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
+      },
+      {
+        "id": "006",
+        "offset": {
+          "r": -6,
+          "c": -3
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
+      },
+      {
+        "id": "007",
+        "offset": {
+          "r": -8,
+          "c": 0
+        }
+      },
+      {
+        "id": "008",
+        "offset": {
+          "r": -11,
+          "c": 0
+        }
+      },
+      {
+        "id": "009",
+        "offset": {
+          "r": 2,
+          "c": 4
+        }
+      },
+      {
+        "id": "010",
+        "offset": {
+          "r": 2,
+          "c": -4
+        }
+      },
+      {
+        "id": "011",
+        "offset": {
+          "r": 8,
+          "c": 0
+        }
+      },
+      {
+        "id": "012",
+        "offset": {
+          "r": 5,
+          "c": 0
+        }
       }
     ]
   },
