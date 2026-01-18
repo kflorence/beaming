@@ -1,7 +1,22 @@
 {
   "id": "56bd2470",
+  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
+    "modifiers": [
+      {
+        "id": "201bce1a",
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ]
+      }
+    ],
     "tiles": {
       "0": {
         "0": {
@@ -19,16 +34,16 @@
       },
       "1": {
         "0": {
-          "id": "5c2510d3",
           "type": "tile",
+          "id": "5c2510d3",
           "items": [
             {
-              "id": "8ab32224",
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
                 "puzzleId": "002"
-              }
+              },
+              "id": "8ab32224"
             }
           ]
         },
@@ -88,8 +103,8 @@
       {
         "id": "002",
         "offset": {
-          "r": -2,
-          "c": -2
+          "r": -1,
+          "c": -3
         },
         "filters": [
           {
@@ -102,54 +117,13 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ],
-        "tiles": {
-          "-2": {
-            "-2": {
-              "id": "98c1b870",
-              "type": "tile",
-              "ref": {
-                "id": "002",
-                "offset": {
-                  "r": 0,
-                  "c": 0
-                }
-              },
-              "items": [
-                {
-                  "type": "reflector",
-                  "rotation": 3
-                }
-              ]
-            },
-            "-1": {
-              "id": "f7b48b08",
-              "type": "tile",
-              "ref": {
-                "id": "002",
-                "offset": {
-                  "r": 0,
-                  "c": 1
-                }
-              },
-              "items": [
-                {
-                  "type": "modifier",
-                  "modifier": {
-                    "type": "puzzle",
-                    "puzzleId": "003"
-                  }
-                }
-              ]
-            }
-          }
-        }
+        ]
       },
       {
         "id": "003",
         "offset": {
           "r": -4,
-          "c": 1
+          "c": 0
         },
         "filters": [
           {
@@ -164,22 +138,7 @@
           }
         ]
       }
-    ],
-    "modifiers": [
-      {
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ],
-        "id": "201bce1a"
-      }
     ]
   },
-  "version": 0,
-  "title": "pack 001"
+  "version": 0
 }

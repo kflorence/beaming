@@ -15,6 +15,7 @@ import { Flags } from './flag.js'
 
 export class Layout extends Stateful {
   #imports = {}
+  #importsCache = {}
   #offset
   #tiles = {}
 
@@ -212,9 +213,15 @@ export class Layout extends Stateful {
   }
 
   getCached (id, state) {
-    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
-    // This will ensure the latest version is always used.
-    return State.fromCache(id) || State.fromConfig(id) || State.fromEncoded((state ?? this.getState()).importsCache[id])
+    if (!this.#importsCache[id]) {
+      // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+      // This will ensure the latest version is always used.
+      this.#importsCache[id] = State.fromCache(id) ||
+        State.fromConfig(id) ||
+        State.fromEncoded((state ?? this.getState()).importsCache[id])
+    }
+
+    return this.#importsCache[id]
   }
 
   getCenter () {
@@ -261,9 +268,10 @@ export class Layout extends Stateful {
         const state = tile.getState()
         if (tile.ref) {
           // This is an imported tile
-          this.#imports[tile.ref.id].tiles ??= {}
-          this.#imports[tile.ref.id].tiles[r] ??= {}
-          this.#imports[tile.ref.id].tiles[r][c] = state
+          if (this.#imports[tile.ref.id].tiles?.[r]?.[c]) {
+            // Only include in state if it has been modified
+            this.#imports[tile.ref.id].tiles[r][c] = state
+          }
         } else {
           tiles[r] ??= {}
           tiles[r][c] = state
