@@ -6,6 +6,7 @@ import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
 import { coalesce, getOppositeDirection, merge } from '../util'
 import { Schema } from '../schema'
+import { Tile } from './tile.js'
 
 export class Portal extends movable(rotatable(Item)) {
   #directions = {}
@@ -180,6 +181,8 @@ export class Portal extends movable(rotatable(Item)) {
 
   #getExitPortals (puzzle, beam, nextStep) {
     const exitPortals = puzzle.layout.getItems().filter((item) =>
+      // Is not on a placeholder tile
+      !item.parent.flags.has(Tile.Flags.Placeholder) &&
       // Is a portal
       item.type === Item.Types.Portal &&
       // But not the entry portal

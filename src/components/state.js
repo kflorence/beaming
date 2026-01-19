@@ -319,7 +319,7 @@ export class State {
   }
 
   static fromCache (id) {
-    const str = Storage.get(State.key(id))
+    const str = Storage.get(State.key(id)) || Storage.get(getKey(State.ContextKeys.Play, 'puzzle', id))
     if (str) {
       return State.fromEncoded(str)
     }

@@ -1,27 +1,18 @@
 {
   "id": "56bd2470",
-  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
-    "modifiers": [
-      {
-        "id": "201bce1a",
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ]
-      }
-    ],
     "tiles": {
       "0": {
         "0": {
           "type": "tile",
-          "id": "0cbb0588"
+          "id": "0cbb0588",
+          "modifiers": [
+            {
+              "type": "sticky-modifiers",
+              "id": "ac7fc549"
+            }
+          ]
         },
         "1": {
           "type": "tile",
@@ -69,8 +60,8 @@
               "type": "toggle"
             },
             {
-              "type": "sticky-modifiers",
-              "id": "efec3b6a"
+              "type": "sticky-items",
+              "id": "a05d39a2"
             }
           ]
         }
@@ -95,7 +86,13 @@
             }
           ],
           "type": "tile",
-          "id": "349a7a4a"
+          "id": "349a7a4a",
+          "modifiers": [
+            {
+              "type": "sticky-items",
+              "id": "76e26662"
+            }
+          ]
         }
       }
     },
@@ -117,7 +114,51 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-1": {
+            "-2": {
+              "id": "f7b48b08",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "id": "6f757ee9"
+                }
+              ]
+            }
+          },
+          "-2": {
+            "-2": {
+              "id": "2eb11c84",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": -1,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "003"
+                  },
+                  "id": "48db2545"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "003",
@@ -136,7 +177,57 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-6": {
+            "1": {
+              "id": "082207e9",
+              "type": "tile",
+              "ref": {
+                "id": "003",
+                "offset": {
+                  "r": -2,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "004"
+                  },
+                  "id": "a1ee5c6e"
+                }
+              ]
+            }
+          },
+          "-4": {
+            "0": {
+              "id": "04c7d967",
+              "type": "tile",
+              "ref": {
+                "id": "003",
+                "offset": {
+                  "r": 0,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "id": "5c650ad1"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "sticky-items",
+                  "id": "80f39469"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "004",
@@ -155,7 +246,38 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-2": {
+            "3": {
+              "id": "1340ed3e",
+              "type": "tile",
+              "ref": {
+                "id": "004",
+                "offset": {
+                  "r": -1,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "005"
+                  },
+                  "id": "5bd6690d"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "lock",
+                  "id": "06c4f49d"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "005",
@@ -174,7 +296,38 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-6": {
+            "2": {
+              "id": "da5ab990",
+              "type": "tile",
+              "ref": {
+                "id": "005",
+                "offset": {
+                  "r": 0,
+                  "c": -1
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "006"
+                  },
+                  "id": "798c7da1"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "lock",
+                  "id": "7c0c3734"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "006",
@@ -193,51 +346,218 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-7": {
+            "-3": {
+              "id": "f272960c",
+              "type": "tile",
+              "ref": {
+                "id": "006",
+                "offset": {
+                  "r": -1,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "007"
+                  },
+                  "id": "262e9db1"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "lock",
+                  "id": "eac3a36c"
+                }
+              ]
+            },
+            "-4": {
+              "id": "671c53b3",
+              "type": "tile",
+              "ref": {
+                "id": "006",
+                "offset": {
+                  "r": -1,
+                  "c": -1
+                }
+              },
+              "items": [
+                {
+                  "type": "terminus",
+                  "openings": [
+                    {
+                      "color": "#0000ff",
+                      "direction": 5
+                    }
+                  ],
+                  "id": "c658e4ac"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "move",
+                  "id": "1d4dc382"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "007",
         "offset": {
           "r": -8,
           "c": 0
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          }
+        ]
       },
       {
         "id": "008",
         "offset": {
           "r": -11,
           "c": 0
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
       },
       {
         "id": "009",
         "offset": {
           "r": 2,
           "c": 4
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
       },
       {
         "id": "010",
         "offset": {
           "r": 2,
           "c": -4
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
       },
       {
         "id": "011",
         "offset": {
           "r": 8,
           "c": 0
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
       },
       {
         "id": "012",
         "offset": {
           "r": 5,
           "c": 0
-        }
+        },
+        "filters": [
+          {
+            "type": "puzzle",
+            "name": "solved",
+            "solved": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
+          }
+        ]
+      }
+    ],
+    "modifiers": [
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "id": "201bce1a",
+        "clockwise": false
+      },
+      {
+        "type": "swap",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "003",
+            "unlocked": true
+          }
+        ],
+        "id": "aa925e09"
+      },
+      {
+        "type": "move",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "004",
+            "unlocked": true
+          }
+        ],
+        "id": "ccaf2c87"
       }
     ]
   },
-  "version": 0
+  "version": 0,
+  "title": "pack 001"
 }

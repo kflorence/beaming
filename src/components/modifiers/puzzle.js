@@ -17,7 +17,7 @@ export class PuzzleModifier extends Modifier {
   onCollect ({ puzzle }) {
     const state = this.getState()
 
-    puzzle.setMessage(`You've unlocked a puzzle '${state.puzzleId}'!`)
+    puzzle.setMessage(`You've unlocked puzzle '${state.puzzleId}'!`)
     puzzle.layout.unlock(state.puzzleId)
   }
 

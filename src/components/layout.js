@@ -213,15 +213,11 @@ export class Layout extends Stateful {
   }
 
   getCached (id, state) {
-    if (!this.#importsCache[id]) {
-      // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
-      // This will ensure the latest version is always used.
-      this.#importsCache[id] = State.fromCache(id) ||
-        State.fromConfig(id) ||
-        State.fromEncoded((state ?? this.getState()).importsCache[id])
-    }
-
-    return this.#importsCache[id]
+    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+    // This will ensure the latest version is always used.
+    return State.fromCache(id) ||
+      State.fromConfig(id) ||
+      State.fromEncoded((state ?? this.getState()).importsCache[id])
   }
 
   getCenter () {
@@ -304,6 +300,16 @@ export class Layout extends Stateful {
     return this.#tiles[offset.r]?.[offset.c]
   }
 
+  modifyTile (tile) {
+    if (tile.ref) {
+      // Mark a tile has having been modified by adding it to the imported tiles configuration
+      const offset = tile.coordinates.offset
+      this.#imports[tile.ref.id].tiles ??= {}
+      this.#imports[tile.ref.id].tiles[offset.r] ??= {}
+      this.#imports[tile.ref.id].tiles[offset.r][offset.c] = tile.getState()
+    }
+  }
+
   removeModifier (modifier) {
     const index = this.modifiers.indexOf(modifier)
     if (index >= 0) {
@@ -361,6 +367,8 @@ export class Layout extends Stateful {
         tile.update()
       }
     })
+
+    // FIXME need to re-evaluate beams as well, as new tiles are now available
 
     // Re-evaluate modifiers
     this.#updateModifiers()

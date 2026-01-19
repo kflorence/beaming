@@ -653,7 +653,10 @@ export class Puzzle {
       }
     }
 
+    this.layout.modifyTile(tile)
+
     if (selectedTile) {
+      this.layout.modifyTile(selectedTile)
       this.updateSelectedTile(selectedTile)
     }
 
