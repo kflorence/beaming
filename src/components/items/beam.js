@@ -377,8 +377,8 @@ export class Beam extends Item {
       if (stepIndex >= 0) {
         console.debug(this.toString(), 're-evaluating due to modifier being invoked in matching tile', stepIndex)
         // Re-evaluate beginning at the step before the matched one
-        this.done = false
         this.#stepIndex = Math.max(stepIndex - 1, 0)
+        this.done = false
         return
       }
     }
@@ -390,6 +390,19 @@ export class Beam extends Item {
         // Check for valid exit portal
         this.done = false
       }
+    }
+  }
+
+  onTilesUnlocked () {
+    if (this.isPending()) {
+      return
+    }
+
+    const lastStep = this.getStep()
+    if (lastStep?.state.get(StepState.Collisions)) {
+      // See if the beam can continue now
+      this.#stepIndex = Math.max(lastStep.index - 1, 0)
+      this.done = false
     }
   }
 

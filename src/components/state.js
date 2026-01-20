@@ -45,7 +45,7 @@ export class State {
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
     this.#selectedTile = selectedTile
-    this.#solution = solution ?? []
+    this.#solution = solution
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
@@ -186,7 +186,7 @@ export class State {
     this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
-    this.#solution = []
+    this.#solution = undefined
     this.#selectedTile = undefined
 
     State.clearCache(this.getId())
@@ -222,7 +222,7 @@ export class State {
     console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
-    this.#solution = []
+    this.#solution = undefined
     this.#resetCurrent()
     this.updateCache()
 

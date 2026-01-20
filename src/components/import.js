@@ -85,7 +85,7 @@ export class ImportFilterModifierInclusion extends ImportFilter {
 
 export class ImportFilterPuzzleSolved extends ImportFilter {
   apply (state) {
-    return this.state.solved === (state.getSolution().length > 0)
+    return this.state.solved === (state.getSolution() !== undefined)
   }
 
   static Name = ImportFilter.Names.Solved
@@ -108,7 +108,7 @@ export class ImportFilterPuzzleSolved extends ImportFilter {
 
 export class ImportFilterTileInSolution extends ImportFilter {
   apply (state, offset, tile) {
-    return this.state.inSolution === state.getSolution().includes(offset.toString())
+    return this.state.inSolution === state.getSolution()?.includes(offset.toString())
   }
 
   static Name = ImportFilter.Names.InSolution

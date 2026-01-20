@@ -8,7 +8,7 @@ import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
-import { classToString, hexagon } from './util.js'
+import { classToString, emitEvent, hexagon } from './util.js'
 import { Modifier, ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 import { Flags } from './flag.js'
@@ -359,19 +359,18 @@ export class Layout extends Stateful {
     const filters = ref?.filters?.map((filter) => ImportFilter.factory(filter)) ?? []
     const tileFilters = filters.filter((filter) => filter.type === ImportFilter.Types.Tile)
 
-    // Re-evaluate unlocked tiles
-    this.tiles.forEach((tile) => {
-      if (tile.ref?.id === id) {
-        const offset = new OffsetCoordinates(tile.ref.offset.r, tile.ref.offset.c)
-        tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile)))
-        tile.update()
-      }
+    const tiles = this.tiles.filter((tile) => tile.ref?.id === id)
+    tiles.forEach((tile) => {
+      // Re-evaluate unlocked tiles
+      const offset = new OffsetCoordinates(tile.ref.offset.r, tile.ref.offset.c)
+      tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile)))
+      tile.update()
     })
-
-    // FIXME need to re-evaluate beams as well, as new tiles are now available
 
     // Re-evaluate modifiers
     this.#updateModifiers()
+
+    emitEvent(Layout.Events.TilesUnlocked, { tiles })
   }
 
   #updateModifiers () {
@@ -382,6 +381,10 @@ export class Layout extends Stateful {
         .every((filter) => filter.apply(this))
     })
   }
+
+  static Events = Object.freeze({
+    TilesUnlocked: 'tiles-unlocked'
+  })
 
   static Offsets = Object.freeze({
     EvenRow: 'even-row',

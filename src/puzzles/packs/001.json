@@ -6,13 +6,7 @@
       "0": {
         "0": {
           "type": "tile",
-          "id": "0cbb0588",
-          "modifiers": [
-            {
-              "type": "sticky-modifiers",
-              "id": "ac7fc549"
-            }
-          ]
+          "id": "0cbb0588"
         },
         "1": {
           "type": "tile",
@@ -34,7 +28,7 @@
                 "type": "puzzle",
                 "puzzleId": "002"
               },
-              "id": "8ab32224"
+              "id": "108d9afd"
             }
           ]
         },
@@ -47,7 +41,7 @@
               "type": "terminus",
               "openings": [
                 {
-                  "color": "#ff0000",
+                  "color": "#b300b3",
                   "direction": 1,
                   "toggled": true
                 }
@@ -56,12 +50,12 @@
           ],
           "modifiers": [
             {
-              "id": "3c658dae",
-              "type": "toggle"
+              "id": "a05d39a2",
+              "type": "sticky-items"
             },
             {
-              "type": "sticky-items",
-              "id": "a05d39a2"
+              "type": "toggle",
+              "id": "3c658dae"
             }
           ]
         }
@@ -89,8 +83,8 @@
           "id": "349a7a4a",
           "modifiers": [
             {
-              "type": "sticky-items",
-              "id": "76e26662"
+              "type": "immutable",
+              "id": "8a23fd5a"
             }
           ]
         }
@@ -131,6 +125,42 @@
                 {
                   "type": "reflector",
                   "id": "6f757ee9"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "sticky-modifiers",
+                  "id": "7e9c8d1a"
+                }
+              ]
+            },
+            "-4": {
+              "id": "a7f644b8",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 0,
+                  "c": -1
+                }
+              },
+              "items": [
+                {
+                  "type": "terminus",
+                  "openings": [
+                    {
+                      "color": "#0000ff",
+                      "direction": 2,
+                      "toggled": true
+                    }
+                  ],
+                  "id": "faca4a56"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "b943ecc9"
                 }
               ]
             }
@@ -218,11 +248,49 @@
                   "type": "reflector",
                   "id": "5c650ad1"
                 }
-              ],
-              "modifiers": [
+              ]
+            }
+          },
+          "-5": {
+            "0": {
+              "id": "1848a6ad",
+              "type": "tile",
+              "ref": {
+                "id": "003",
+                "offset": {
+                  "r": -1,
+                  "c": 0
+                }
+              },
+              "items": [
                 {
-                  "type": "sticky-items",
-                  "id": "80f39469"
+                  "type": "wall",
+                  "directions": [
+                    1
+                  ],
+                  "immutable": true,
+                  "id": "0a46d23c"
+                }
+              ]
+            },
+            "-1": {
+              "id": "a7ae7f64",
+              "type": "tile",
+              "ref": {
+                "id": "003",
+                "offset": {
+                  "r": -1,
+                  "c": -1
+                }
+              },
+              "items": [
+                {
+                  "type": "wall",
+                  "directions": [
+                    0
+                  ],
+                  "immutable": true,
+                  "id": "6eda93c0"
                 }
               ]
             }
@@ -276,6 +344,25 @@
                 }
               ]
             }
+          },
+          "-1": {
+            "2": {
+              "id": "dbf74c17",
+              "type": "tile",
+              "ref": {
+                "id": "004",
+                "offset": {
+                  "r": 0,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "id": "04d9dad9"
+                }
+              ]
+            }
           }
         }
       },
@@ -311,18 +398,66 @@
               },
               "items": [
                 {
+                  "type": "reflector",
+                  "id": "f785a3e4"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "sticky-modifiers",
+                  "id": "a83679e3"
+                }
+              ]
+            },
+            "4": {
+              "id": "a6a13b50",
+              "type": "tile",
+              "ref": {
+                "id": "005",
+                "offset": {
+                  "r": 0,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
                     "puzzleId": "006"
                   },
-                  "id": "798c7da1"
+                  "id": "eae8806d"
                 }
               ],
               "modifiers": [
                 {
                   "type": "lock",
-                  "id": "7c0c3734"
+                  "id": "6882a586"
+                }
+              ]
+            }
+          },
+          "-5": {
+            "2": {
+              "id": "e1f07200",
+              "type": "tile",
+              "ref": {
+                "id": "005",
+                "offset": {
+                  "r": 1,
+                  "c": -1
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "id": "d775f518"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "sticky-modifiers",
+                  "id": "acdd4a88"
                 }
               ]
             }
@@ -375,33 +510,54 @@
                   "id": "eac3a36c"
                 }
               ]
-            },
-            "-4": {
-              "id": "671c53b3",
+            }
+          },
+          "-5": {
+            "-3": {
+              "id": "2b3fd31d",
               "type": "tile",
               "ref": {
                 "id": "006",
                 "offset": {
-                  "r": -1,
-                  "c": -1
+                  "r": 1,
+                  "c": 0
                 }
               },
               "items": [
                 {
-                  "type": "terminus",
-                  "openings": [
-                    {
-                      "color": "#0000ff",
-                      "direction": 5
-                    }
-                  ],
-                  "id": "c658e4ac"
+                  "type": "reflector",
+                  "id": "5da5ffbd"
                 }
               ],
               "modifiers": [
                 {
-                  "type": "move",
-                  "id": "1d4dc382"
+                  "type": "immutable",
+                  "id": "e75a01fc"
+                }
+              ]
+            }
+          },
+          "-6": {
+            "-2": {
+              "id": "a1a47835",
+              "type": "tile",
+              "ref": {
+                "id": "006",
+                "offset": {
+                  "r": 0,
+                  "c": 1
+                }
+              },
+              "items": [
+                {
+                  "type": "reflector",
+                  "id": "3e26feb9"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "e1bd8ecf"
                 }
               ]
             }
@@ -420,7 +576,135 @@
             "name": "solved",
             "solved": true
           }
-        ]
+        ],
+        "tiles": {
+          "-9": {
+            "2": {
+              "id": "ff1eab33",
+              "type": "tile",
+              "ref": {
+                "id": "007",
+                "offset": {
+                  "r": -1,
+                  "c": 2
+                }
+              },
+              "items": [
+                {
+                  "type": "terminus",
+                  "openings": [
+                    {
+                      "color": "#ff0000",
+                      "direction": 4,
+                      "toggled": true
+                    }
+                  ],
+                  "id": "890c331f"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "8e97ee8b"
+                }
+              ]
+            },
+            "-3": {
+              "id": "d8d75757",
+              "type": "tile",
+              "ref": {
+                "id": "007",
+                "offset": {
+                  "r": -1,
+                  "c": -3
+                }
+              },
+              "items": [
+                {
+                  "id": "e6515992",
+                  "type": "filter",
+                  "color": "#0000ff"
+                }
+              ]
+            }
+          },
+          "-8": {
+            "0": {
+              "id": "31fddfab",
+              "type": "tile",
+              "ref": {
+                "id": "007",
+                "offset": {
+                  "r": 0,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "008"
+                  },
+                  "id": "27b47a5c"
+                },
+                {
+                  "type": "wall",
+                  "directions": [
+                    2,
+                    3,
+                    4,
+                    5
+                  ],
+                  "immutable": true,
+                  "id": "12ae7657"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "lock",
+                  "id": "1494b213"
+                }
+              ]
+            },
+            "2": {
+              "id": "4d3d4d5c",
+              "type": "tile",
+              "ref": {
+                "id": "007",
+                "offset": {
+                  "r": 0,
+                  "c": 2
+                }
+              },
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "c51bca2b"
+                }
+              ]
+            }
+          },
+          "-7": {
+            "1": {
+              "id": "8472fea8",
+              "type": "tile",
+              "ref": {
+                "id": "007",
+                "offset": {
+                  "r": 1,
+                  "c": 1
+                }
+              },
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "eb957abe"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "008",
@@ -530,7 +814,7 @@
           }
         ],
         "id": "201bce1a",
-        "clockwise": false
+        "clockwise": true
       },
       {
         "type": "swap",
@@ -555,6 +839,18 @@
           }
         ],
         "id": "ccaf2c87"
+      },
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "007",
+            "unlocked": true
+          }
+        ],
+        "id": "2ecff051"
       }
     ]
   },

@@ -99,6 +99,7 @@ export class Puzzle {
       { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
+      { type: Layout.Events.TilesUnlocked, handler: this.#onTilesUnlocked },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
       { type: 'pointermove', handler: this.#onPointerMove },
@@ -750,6 +751,11 @@ export class Puzzle {
     if (this.state.redo()) {
       await this.reload()
     }
+  }
+
+  #onTilesUnlocked (event) {
+    this.getBeams().forEach((beam) => beam.onTilesUnlocked(event, this))
+    setTimeout(() => this.update())
   }
 
   #removeLayers () {

@@ -181,12 +181,12 @@ export class Portal extends movable(rotatable(Item)) {
 
   #getExitPortals (puzzle, beam, nextStep) {
     const exitPortals = puzzle.layout.getItems().filter((item) =>
-      // Is not on a placeholder tile
-      !item.parent.flags.has(Tile.Flags.Placeholder) &&
       // Is a portal
       item.type === Item.Types.Portal &&
       // But not the entry portal
       !item.equals(this) &&
+      // Not on a placeholder tile
+      !item.parent.flags.has(Tile.Flags.Placeholder) &&
       // There is no other beam occupying the portal at the exit direction
       !item.get(Portal.getExitDirection(nextStep, this, item)) && (
         // Entry portals without defined direction can exit from any other portal.
