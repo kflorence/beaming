@@ -199,6 +199,13 @@ export function getColorElements (colors) {
   return elements
 }
 
+// Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
+// first point (direction zero) corresponding to direction 4 in the cube system.
+// See: http://paperjs.org/tutorials/geometry/vector-geometry/
+export function getConvertedDirection (direction, toPaperJs = true) {
+  return getNormalizedDirection(direction + (toPaperJs ? -1 : 1) * 2)
+}
+
 export function getDistance (point) {
   return (a, b) => a.subtract(point).length - b.subtract(point).length
 }
@@ -225,18 +232,14 @@ export function getPointFrom (point, length, direction) {
   return point.add(vector)
 }
 
-export function getOppositeDirection (direction) {
-  return direction + (direction >= 3 ? -3 : 3)
-}
-
-// Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
-// first point (direction zero) corresponding to direction 4 in the cube system.
-// See: http://paperjs.org/tutorials/geometry/vector-geometry/
-export function getConvertedDirection (direction, toPaperJs = true) {
-  direction = direction + (toPaperJs ? -1 : 1) * 2
+export function getNormalizedDirection (direction) {
   if (direction < 0) return direction + 6
   else if (direction > 5) return direction - 6
   return direction
+}
+
+export function getOppositeDirection (direction) {
+  return getNormalizedDirection(direction + (direction >= 3 ? -3 : 3))
 }
 
 // Gets the position of the point relative to the line.
@@ -248,7 +251,7 @@ export function getPosition (line, point) {
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {
   // Have to convert to PaperJS directions on the way in
-  const beamAngle = getConvertedDirection(beamDirection, true) * 60
+  const beamAngle = getConvertedDirection(beamDirection) * 60
   const reflectorAngle = reflectorDirection * 30
   const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
   // And convert back to our normal directions on the way out

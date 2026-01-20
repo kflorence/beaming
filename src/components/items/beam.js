@@ -8,7 +8,7 @@ import {
   getPointBetween,
   getDistance,
   getOppositeDirection,
-  uniqueBy, getPointFrom
+  uniqueBy, getPointFrom, getNormalizedDirection
 } from '../util'
 import { Step, StepState } from '../step'
 import { Collision, CollisionMergeWith } from '../collision'
@@ -416,7 +416,7 @@ export class Beam extends Item {
 
   startDirection () {
     // Take rotation of the parent (terminus) into account
-    return (this.getOpening().direction + this.parent.rotation) % 6
+    return getNormalizedDirection((this.getOpening().direction + this.parent.rotation) % 6)
   }
 
   /**
