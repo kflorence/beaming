@@ -41,7 +41,7 @@
               "type": "terminus",
               "openings": [
                 {
-                  "color": "#b300b3",
+                  "color": "#b400b4",
                   "direction": 1,
                   "toggled": true
                 }
@@ -249,30 +249,26 @@
                   "id": "5c650ad1"
                 }
               ]
-            }
-          },
-          "-5": {
-            "0": {
-              "id": "1848a6ad",
+            },
+            "2": {
+              "id": "5acc1407",
               "type": "tile",
               "ref": {
                 "id": "003",
                 "offset": {
-                  "r": -1,
-                  "c": 0
+                  "r": 0,
+                  "c": 2
                 }
               },
-              "items": [
+              "modifiers": [
                 {
-                  "type": "wall",
-                  "directions": [
-                    1
-                  ],
-                  "immutable": true,
-                  "id": "0a46d23c"
+                  "type": "sticky-items",
+                  "id": "1b9de779"
                 }
               ]
-            },
+            }
+          },
+          "-5": {
             "-1": {
               "id": "a7ae7f64",
               "type": "tile",
@@ -460,6 +456,23 @@
                   "id": "acdd4a88"
                 }
               ]
+            },
+            "3": {
+              "id": "926dd5c2",
+              "type": "tile",
+              "ref": {
+                "id": "005",
+                "offset": {
+                  "r": 1,
+                  "c": 0
+                }
+              },
+              "modifiers": [
+                {
+                  "type": "move",
+                  "id": "72127432"
+                }
+              ]
             }
           }
         }
@@ -621,9 +634,15 @@
               },
               "items": [
                 {
-                  "id": "e6515992",
                   "type": "filter",
-                  "color": "#0000ff"
+                  "color": "#0000ff",
+                  "id": "e6515992"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "move",
+                  "id": "b9fd4bd2"
                 }
               ]
             }
@@ -839,18 +858,6 @@
           }
         ],
         "id": "ccaf2c87"
-      },
-      {
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "007",
-            "unlocked": true
-          }
-        ],
-        "id": "2ecff051"
       }
     ]
   },

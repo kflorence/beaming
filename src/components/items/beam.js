@@ -449,18 +449,7 @@ export class Beam extends Item {
     const offset = puzzle.layout.getOffset(getPointBetween(currentStep.point, nextStepPoint))
     const tile = puzzle.layout.getTile(offset)
 
-    // The next step would be off the grid
-    if (!tile || tile.flags.has(Tile.Flags.Placeholder)) {
-      console.debug(this.toString(), 'stopping due to out of bounds', offset)
-
-      const collision = new Collision(0, [currentStep.point], this)
-      return this.updateStep(currentStepIndex, {
-        done: true,
-        state: new StepState(new StepState.Collisions(collision))
-      })
-    }
-
-    console.debug(this.toString(), `stepping to offset: ${offset}`)
+    console.debug(this.toString(), `attempting to step to offset: ${offset}`)
 
     const nextStepIndex = currentStepIndex + 1
     const existingNextStep = this.#steps[nextStepIndex]
@@ -479,7 +468,7 @@ export class Beam extends Item {
 
     const items = uniqueBy(
       'id',
-      tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : currentStep.tile.items)
+      currentStep.tile.items.concat(currentStep.tile.equals(nextStep.tile) ? [] : nextStep.tile?.items ?? [])
     )
 
     console.debug(this.toString(), 'collision items:', items)
@@ -565,6 +554,17 @@ export class Beam extends Item {
       // Note: ensuring history has not been modified when evaluating next step vs current
       console.debug(this.toString(), 'next step point is same as current step point, stopping.', nextStep)
       return this.updateStep(currentStepIndex, nextStep.copy({ done: true }))
+    }
+
+    // The next step would be off the grid
+    if (!nextStep.tile || nextStep.tile.flags.has(Tile.Flags.Placeholder)) {
+      console.debug(this.toString(), 'stopping due to out of bounds', offset)
+
+      const collision = new Collision(0, [currentStep.point], this)
+      return this.updateStep(currentStepIndex, {
+        done: true,
+        state: new StepState(new StepState.Collisions(collision))
+      })
     }
 
     return this.addStep(nextStep)
