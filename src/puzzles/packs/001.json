@@ -1,7 +1,47 @@
 {
   "id": "56bd2470",
+  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
+    "modifiers": [
+      {
+        "id": "201bce1a",
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "clockwise": true
+      },
+      {
+        "id": "aa925e09",
+        "type": "swap",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "003",
+            "unlocked": true
+          }
+        ]
+      },
+      {
+        "id": "ccaf2c87",
+        "type": "move",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "004",
+            "unlocked": true
+          }
+        ]
+      }
+    ],
     "tiles": {
       "0": {
         "0": {
@@ -110,6 +150,31 @@
           }
         ],
         "tiles": {
+          "0": {
+            "-2": {
+              "id": "8f2cda31",
+              "type": "tile",
+              "ref": {
+                "id": "002",
+                "offset": {
+                  "r": 1,
+                  "c": 0
+                }
+              },
+              "items": [
+                {
+                  "type": "portal",
+                  "id": "6d2a43ab"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "immutable",
+                  "id": "a62bcdef"
+                }
+              ]
+            }
+          },
           "-1": {
             "-2": {
               "id": "f7b48b08",
@@ -742,7 +807,63 @@
             "name": "in-solution",
             "inSolution": true
           }
-        ]
+        ],
+        "tiles": {
+          "-10": {
+            "-1": {
+              "type": "tile",
+              "ref": {
+                "offset": {
+                  "r": 1,
+                  "c": -1
+                },
+                "id": "008"
+              },
+              "items": [
+                {
+                  "type": "modifier",
+                  "modifier": {
+                    "type": "puzzle",
+                    "puzzleId": "009"
+                  },
+                  "id": "e97e699f"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "lock",
+                  "id": "de4552b7"
+                }
+              ],
+              "id": "0b173a22"
+            }
+          },
+          "-12": {
+            "-2": {
+              "id": "6ce87703",
+              "type": "tile",
+              "ref": {
+                "id": "008",
+                "offset": {
+                  "r": -1,
+                  "c": -3
+                }
+              },
+              "items": [
+                {
+                  "type": "portal",
+                  "id": "b1241c5e"
+                }
+              ],
+              "modifiers": [
+                {
+                  "type": "move",
+                  "id": "1cce6b88"
+                }
+              ]
+            }
+          }
+        }
       },
       {
         "id": "009",
@@ -820,47 +941,7 @@
           }
         ]
       }
-    ],
-    "modifiers": [
-      {
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ],
-        "id": "201bce1a",
-        "clockwise": true
-      },
-      {
-        "type": "swap",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "003",
-            "unlocked": true
-          }
-        ],
-        "id": "aa925e09"
-      },
-      {
-        "type": "move",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "004",
-            "unlocked": true
-          }
-        ],
-        "id": "ccaf2c87"
-      }
     ]
   },
-  "version": 0,
-  "title": "pack 001"
+  "version": 0
 }

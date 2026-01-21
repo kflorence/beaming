@@ -193,9 +193,15 @@ export class Editor {
       return
     }
 
-    this.#puzzle.layout.getTile(this.#copy)?.setStyle()
+    const previous = this.#puzzle.layout.getTile(this.#copy)
+    if (previous) {
+      previous.flags.remove(Tile.Flags.Copy)
+      previous.update()
+    }
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
-    this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+    const tile = this.#puzzle.layout.getTile(this.#copy)
+    tile.flags.add(Tile.Flags.Copy)
+    tile.update()
   }
 
   #onEditorUpdate (value = this.#editor?.getValue()) {
@@ -262,11 +268,15 @@ export class Editor {
       return
     }
 
-    const value = JSON.parse(JSON.stringify(
-      this.#puzzle.layout.getTile(this.#copy).getState(),
-      // Remove 'id' keys
-      (k, v) => k === 'id' ? undefined : v)
-    )
+    const state = this.#puzzle.layout.getTile(this.#copy).getState()
+
+    // Remove all 'id' keys
+    const value = JSON.parse(JSON.stringify(state, (k, v) => k === 'id' ? undefined : v))
+
+    // Restore the ref id if it exists
+    if (state.ref) {
+      value.ref.id = state.ref.id
+    }
 
     this.#onEditorUpdate(value)
     await this.#onConfigurationUpdate()
@@ -388,13 +398,17 @@ export class Editor {
 
     if (this.#copy && !tile) {
       // Remove the copied tile if no tile is selected
-      this.#puzzle.layout.getTile(this.#copy).setStyle()
+      const tile = this.#puzzle.layout.getTile(this.#copy)
+      tile.flags.remove(Tile.Flags.Copy)
+      tile.update()
       this.#copy = undefined
     }
 
     if (this.#copy && !this.#copy.equals(tile?.coordinates.offset)) {
       // If the copied tile is not selected, show it as copied
-      this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+      const tile = this.#puzzle.layout.getTile(this.#copy)
+      tile.flags.add(Tile.Flags.Copy)
+      tile.update()
     }
 
     if (this.#editor) {

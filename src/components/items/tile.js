@@ -112,10 +112,6 @@ export class Tile extends Item {
     return state
   }
 
-  onTap (event) {
-    this.items.forEach((item) => item.onTap(event))
-  }
-
   onDeselected (selectedTile) {
     this.flags.remove(Tile.Flags.Selected)
     this.items.forEach((item) => item.onDeselected())
@@ -136,6 +132,10 @@ export class Tile extends Item {
     document.body.classList.add(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
     emitEvent(Tile.Events.Selected, { selectedTile: this, deselectedTile })
+  }
+
+  onTap (event) {
+    this.items.forEach((item) => item.onTap(event))
   }
 
   removeItem (item) {

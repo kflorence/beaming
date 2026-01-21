@@ -262,13 +262,7 @@ export class Layout extends Stateful {
       for (const c in row) {
         const tile = row[c]
         const state = tile.getState()
-        if (tile.ref) {
-          // This is an imported tile
-          if (this.#imports[tile.ref.id].tiles?.[r]?.[c]) {
-            // Only include in state if it has been modified
-            this.#imports[tile.ref.id].tiles[r][c] = state
-          }
-        } else {
+        if (!tile.ref) {
           tiles[r] ??= {}
           tiles[r][c] = state
         }
@@ -300,6 +294,8 @@ export class Layout extends Stateful {
     return this.#tiles[offset.r]?.[offset.c]
   }
 
+  // FIXME this does not catch things like the toggling of a connected terminus
+  // it would be better to do this any time a tile is updated, instead of relying on calling this on modifier invocation
   modifyTile (tile) {
     if (tile.ref) {
       // Mark a tile has having been modified by adding it to the imported tiles configuration
@@ -307,6 +303,7 @@ export class Layout extends Stateful {
       this.#imports[tile.ref.id].tiles ??= {}
       this.#imports[tile.ref.id].tiles[offset.r] ??= {}
       this.#imports[tile.ref.id].tiles[offset.r][offset.c] = tile.getState()
+      console.log('modifyTile', offset, tile.getState())
     }
   }
 
