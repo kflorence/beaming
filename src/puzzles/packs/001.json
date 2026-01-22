@@ -1,47 +1,7 @@
 {
   "id": "56bd2470",
-  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
-    "modifiers": [
-      {
-        "id": "201bce1a",
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ],
-        "clockwise": true
-      },
-      {
-        "id": "aa925e09",
-        "type": "swap",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "003",
-            "unlocked": true
-          }
-        ]
-      },
-      {
-        "id": "ccaf2c87",
-        "type": "move",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "004",
-            "unlocked": true
-          }
-        ]
-      }
-    ],
     "tiles": {
       "0": {
         "0": {
@@ -52,9 +12,65 @@
           "type": "tile",
           "id": "9c7f7b9a"
         },
+        "2": {
+          "id": "1b291584",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
+        },
+        "3": {
+          "id": "c33f42c2",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
         "-1": {
           "type": "tile",
           "id": "da960fda"
+        },
+        "-2": {
+          "id": "8f2cda31",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "f57a1f2c"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "27bd25dc"
+            }
+          ]
+        },
+        "-3": {
+          "id": "57bb0429",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
         }
       },
       "1": {
@@ -71,6 +87,50 @@
               "id": "108d9afd"
             }
           ]
+        },
+        "1": {
+          "id": "e21f9280",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": -1,
+              "c": -3
+            }
+          }
+        },
+        "2": {
+          "id": "55a0cecf",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        },
+        "5": {
+          "id": "51c0929a",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": -1,
+              "c": 1
+            }
+          }
+        },
+        "6": {
+          "id": "46963c5c",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": -1,
+              "c": 2
+            }
+          }
         },
         "-1": {
           "id": "e3bec484",
@@ -98,12 +158,639 @@
               "id": "3c658dae"
             }
           ]
+        },
+        "-3": {
+          "id": "51c0929a",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": -1,
+              "c": 1
+            }
+          }
+        },
+        "-2": {
+          "id": "46963c5c",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": -1,
+              "c": 2
+            }
+          }
+        },
+        "-7": {
+          "id": "690c22b2",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": -1,
+              "c": -3
+            }
+          }
+        },
+        "-6": {
+          "id": "55a0cecf",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        }
+      },
+      "2": {
+        "1": {
+          "id": "63af4b07",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": -3
+            }
+          }
+        },
+        "2": {
+          "id": "8a2041c5",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        },
+        "3": {
+          "id": "611a4233",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        },
+        "5": {
+          "id": "744fba7a",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "6": {
+          "id": "70dbb697",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": 2
+            }
+          }
+        },
+        "7": {
+          "id": "02825cfd",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 0,
+              "c": 3
+            }
+          }
+        },
+        "-3": {
+          "id": "744fba7a",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "-2": {
+          "id": "70dbb697",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": 2
+            }
+          }
+        },
+        "-1": {
+          "id": "02825cfd",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": 3
+            }
+          }
+        },
+        "-5": {
+          "id": "611a4233",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        },
+        "-6": {
+          "id": "8a2041c5",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        },
+        "-7": {
+          "id": "63af4b07",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 0,
+              "c": -3
+            }
+          }
+        }
+      },
+      "3": {
+        "0": {
+          "id": "eadb402e",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": -2,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "26bc177a",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 1,
+              "c": -3
+            }
+          }
+        },
+        "2": {
+          "id": "19a43886",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          }
+        },
+        "5": {
+          "id": "42aa42df",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          }
+        },
+        "6": {
+          "id": "dbaeb3de",
+          "type": "tile",
+          "ref": {
+            "id": "009",
+            "offset": {
+              "r": 1,
+              "c": 2
+            }
+          }
+        },
+        "-3": {
+          "id": "42aa42df",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          }
+        },
+        "-2": {
+          "id": "dbaeb3de",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 1,
+              "c": 2
+            }
+          }
+        },
+        "-6": {
+          "id": "19a43886",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          }
+        },
+        "-7": {
+          "id": "26bc177a",
+          "type": "tile",
+          "ref": {
+            "id": "010",
+            "offset": {
+              "r": 1,
+              "c": -3
+            }
+          }
+        },
+        "-1": {
+          "id": "92e29b3a",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": -2,
+              "c": -1
+            }
+          }
+        }
+      },
+      "4": {
+        "0": {
+          "id": "5a1ac900",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "1": {
+          "id": "1b76a8a0",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "-1": {
+          "id": "bc09e30f",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        }
+      },
+      "5": {
+        "0": {
+          "id": "190532c5",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "84eab54c",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "97a17408",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": 2
+            }
+          }
+        },
+        "-2": {
+          "id": "c37a03f6",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        },
+        "-3": {
+          "id": "c548f15d",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": -3
+            }
+          }
+        },
+        "-1": {
+          "id": "6ba442c5",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        }
+      },
+      "6": {
+        "1": {
+          "id": "706f6c74",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
+        "2": {
+          "id": "961e9705",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          }
+        },
+        "3": {
+          "id": "b44b0f4c",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": 2
+            }
+          }
+        },
+        "-2": {
+          "id": "255e99c6",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": -3
+            }
+          }
+        },
+        "-1": {
+          "id": "665ba31e",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          }
+        },
+        "-3": {
+          "id": "b87f2624",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 1,
+              "c": -4
+            }
+          }
+        }
+      },
+      "7": {
+        "0": {
+          "id": "210e5463",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "c5d2f81f",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 2,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "fb70627d",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 2,
+              "c": 2
+            }
+          }
+        },
+        "-1": {
+          "id": "720d0180",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "-3": {
+          "id": "314490e3",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 2,
+              "c": -3
+            }
+          }
+        },
+        "-2": {
+          "id": "e7e92e61",
+          "type": "tile",
+          "ref": {
+            "id": "012",
+            "offset": {
+              "r": 2,
+              "c": -2
+            }
+          }
+        }
+      },
+      "8": {
+        "0": {
+          "id": "75df857a",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "43142953",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "-1": {
+          "id": "da8da7c6",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        }
+      },
+      "9": {
+        "0": {
+          "id": "c92e21e3",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
+        "-1": {
+          "id": "62c320fa",
+          "type": "tile",
+          "ref": {
+            "id": "011",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
         }
       },
       "-1": {
         "0": {
           "type": "tile",
           "id": "c9bedf13"
+        },
+        "1": {
+          "id": "fb798c61",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        },
+        "2": {
+          "id": "dbf74c17",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "de87f6ca"
+            }
+          ]
+        },
+        "3": {
+          "id": "a4f181e1",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
         },
         "-1": {
           "items": [
@@ -125,6 +812,1028 @@
             {
               "type": "immutable",
               "id": "8a23fd5a"
+            }
+          ]
+        },
+        "-3": {
+          "id": "98c1b870",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          }
+        },
+        "-2": {
+          "id": "f7b48b08",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "9f03415b"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-modifiers",
+              "id": "3dfbeecf"
+            }
+          ]
+        },
+        "-4": {
+          "id": "a7f644b8",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#0000ff",
+                  "direction": 2,
+                  "toggled": true
+                }
+              ],
+              "id": "ca1add80"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "5eb6ae84"
+            }
+          ]
+        }
+      },
+      "-2": {
+        "0": {
+          "id": "1a2e1e12",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 2,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "522b600d",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 2,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "3622ae8a",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "3": {
+          "id": "1340ed3e",
+          "type": "tile",
+          "ref": {
+            "id": "004",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "005"
+              },
+              "id": "aaf67885"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "3e1388e9"
+            }
+          ]
+        },
+        "-2": {
+          "id": "2eb11c84",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "003"
+              },
+              "id": "314f06b9"
+            }
+          ]
+        },
+        "-3": {
+          "id": "e2e2cc4d",
+          "type": "tile",
+          "ref": {
+            "id": "002",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "-1": {
+          "id": "ea370bb7",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 2,
+              "c": -1
+            }
+          }
+        }
+      },
+      "-4": {
+        "0": {
+          "id": "04c7d967",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "7d9158ff"
+            }
+          ]
+        },
+        "1": {
+          "id": "e0e00401",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "5acc1407",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 0,
+              "c": 2
+            }
+          },
+          "modifiers": [
+            {
+              "type": "sticky-items",
+              "id": "750a6fcd"
+            }
+          ]
+        },
+        "-1": {
+          "id": "6c632460",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "id": "1652ec72",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        }
+      },
+      "-3": {
+        "0": {
+          "id": "d0b13fc4",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "453b4d64",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          }
+        },
+        "-1": {
+          "id": "59e60928",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "id": "e04bf3e8",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          }
+        }
+      },
+      "-5": {
+        "0": {
+          "id": "1848a6ad",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "6a9d44bf",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -1,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "e1f07200",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "52deb9ee"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-modifiers",
+              "id": "cc49f40d"
+            }
+          ]
+        },
+        "3": {
+          "id": "926dd5c2",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          },
+          "modifiers": [
+            {
+              "type": "move",
+              "id": "2d56363e"
+            }
+          ]
+        },
+        "-1": {
+          "id": "a7ae7f64",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          },
+          "items": [
+            {
+              "type": "wall",
+              "directions": [
+                0
+              ],
+              "immutable": true,
+              "id": "a79519b2"
+            }
+          ]
+        },
+        "-2": {
+          "id": "ee57363a",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        },
+        "-3": {
+          "id": "2b3fd31d",
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "acf97ed3"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "547ed001"
+            }
+          ]
+        },
+        "-4": {
+          "id": "15777e85",
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
+        }
+      },
+      "-6": {
+        "0": {
+          "id": "75667c33",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -2,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "082207e9",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -2,
+              "c": 1
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "004"
+              },
+              "id": "7ccf9930"
+            }
+          ]
+        },
+        "2": {
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "e93d9c58"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-modifiers",
+              "id": "8297efa7"
+            }
+          ],
+          "id": "da5ab990"
+        },
+        "3": {
+          "id": "f7e82775",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          }
+        },
+        "4": {
+          "id": "a6a13b50",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "006"
+              },
+              "id": "b9513437"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "4cc3d75b"
+            }
+          ]
+        },
+        "-1": {
+          "id": "234b7936",
+          "type": "tile",
+          "ref": {
+            "id": "003",
+            "offset": {
+              "r": -2,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "049ef19a"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "c32c9a6f"
+            }
+          ],
+          "id": "a1a47835"
+        },
+        "-4": {
+          "id": "d04577a8",
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        }
+      },
+      "-7": {
+        "0": {
+          "id": "07559685",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "8472fea8",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          },
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "cfb84dfd"
+            }
+          ]
+        },
+        "2": {
+          "id": "4c7af20d",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "3": {
+          "id": "ee3c0f2f",
+          "type": "tile",
+          "ref": {
+            "id": "005",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "-3": {
+          "id": "f272960c",
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "007"
+              },
+              "id": "851f02cc"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "90add8b0"
+            }
+          ]
+        },
+        "-4": {
+          "id": "671c53b3",
+          "type": "tile",
+          "ref": {
+            "id": "006",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "-1": {
+          "id": "ae9deac9",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "id": "f62e3a1a",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          }
+        }
+      },
+      "-8": {
+        "0": {
+          "id": "31fddfab",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          },
+          "items": [
+            {
+              "type": "wall",
+              "directions": [
+                2,
+                3,
+                4,
+                5
+              ],
+              "immutable": true,
+              "id": "9457a323"
+            },
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "008"
+              },
+              "id": "9791a1d0"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "1a24d383"
+            }
+          ]
+        },
+        "1": {
+          "id": "7debc40d",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "4d3d4d5c",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 0,
+              "c": 2
+            }
+          },
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "14903dfa"
+            }
+          ]
+        },
+        "-1": {
+          "id": "9a141161",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "id": "4278d79d",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        }
+      },
+      "-9": {
+        "0": {
+          "id": "9742e8a6",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "78e0360f",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": 1
+            }
+          }
+        },
+        "2": {
+          "id": "ff1eab33",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": 2
+            }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#ff0000",
+                  "direction": 4,
+                  "toggled": true
+                }
+              ],
+              "id": "8cd594c8"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "031f4edb"
+            }
+          ]
+        },
+        "-1": {
+          "id": "55998903",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "-2": {
+          "id": "3f752831",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        },
+        "-3": {
+          "id": "d8d75757",
+          "type": "tile",
+          "ref": {
+            "id": "007",
+            "offset": {
+              "r": -1,
+              "c": -3
+            }
+          },
+          "items": [
+            {
+              "type": "filter",
+              "color": "#0000ff",
+              "id": "1e6d54a5"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "move",
+              "id": "7c15c912"
+            }
+          ]
+        }
+      },
+      "-11": {
+        "0": {
+          "id": "f0d256ba",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 0,
+              "c": 0
+            }
+          }
+        },
+        "1": {
+          "id": "72c3c916",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 0,
+              "c": 1
+            }
+          }
+        },
+        "-2": {
+          "id": "0ed739c7",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 0,
+              "c": -2
+            }
+          }
+        },
+        "-1": {
+          "id": "fb4b5a5c",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 0,
+              "c": -1
+            }
+          }
+        }
+      },
+      "-10": {
+        "0": {
+          "id": "4f76111a",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 1,
+              "c": -1
+            }
+          }
+        },
+        "1": {
+          "id": "fe092f90",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 1,
+              "c": 0
+            }
+          }
+        },
+        "2": {
+          "id": "65654f82",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 1,
+              "c": 1
+            }
+          }
+        },
+        "-1": {
+          "id": "16730a74",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": 1,
+              "c": -2
+            }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "009"
+              },
+              "id": "ea1ec2b5"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "9236ecae"
+            }
+          ]
+        }
+      },
+      "-12": {
+        "0": {
+          "id": "3e72d7db",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": -1,
+              "c": -1
+            }
+          }
+        },
+        "1": {
+          "id": "a7d5efb6",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": -1,
+              "c": 0
+            }
+          }
+        },
+        "-1": {
+          "id": "41281869",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": -1,
+              "c": -2
+            }
+          }
+        },
+        "-2": {
+          "id": "6ce87703",
+          "type": "tile",
+          "ref": {
+            "id": "008",
+            "offset": {
+              "r": -1,
+              "c": -3
+            }
+          },
+          "items": [
+            {
+              "id": "3f5c4881",
+              "type": "portal"
+            }
+          ],
+          "modifiers": [
+            {
+              "id": "06d1ba7e",
+              "type": "move"
             }
           ]
         }
@@ -941,7 +2650,47 @@
           }
         ]
       }
+    ],
+    "modifiers": [
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "id": "201bce1a",
+        "clockwise": true
+      },
+      {
+        "type": "swap",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "003",
+            "unlocked": true
+          }
+        ],
+        "id": "aa925e09"
+      },
+      {
+        "type": "move",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "004",
+            "unlocked": true
+          }
+        ],
+        "id": "ccaf2c87"
+      }
     ]
   },
-  "version": 0
+  "version": 0,
+  "title": "pack 001"
 }
