@@ -11,7 +11,6 @@ import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import { Phosphor } from './iconlib.js'
 import { Icon, Icons } from './icon.js'
-import { Flags } from './flag.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
