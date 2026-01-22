@@ -5,12 +5,13 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, getKeyFactory, removeEmpties, uniqueId } from './util'
+import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import { Phosphor } from './iconlib.js'
 import { Icon, Icons } from './icon.js'
+import { Flags } from './flag.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
@@ -210,43 +211,19 @@ export class Editor {
       return
     }
 
-    const current = this.#puzzle.state.getCurrent()
-    const offset = this.#puzzle.selectedTile?.coordinates.offset
+    console.debug(Editor.toString('#onEditorUpdate'), value)
 
-    let state
-    if (offset) {
-      // Update a specific tile
-      state = current
-
-      const tile = this.#puzzle.layout.getTile(offset)
-      if (tile.ref) {
-        // This is an imported tile, store the change in the import configuration
-        const index = state.layout.imports.findIndex((ref) => ref.id === tile.ref.id)
-        if (value.items?.length || value.modifiers?.length) {
-          // Only need to update state if there's an item or modifier change
-          console.debug(Editor.toString('onEditorUpdate'), `updating imported tile at ${offset}`)
-          const tiles = state.layout.imports[index].tiles ??= {}
-          tiles[offset.r] ??= {}
-          tiles[offset.r][offset.c] = value
-        } else {
-          // There is no change from the original state
-          const tiles = state.layout.imports[index]?.tiles ?? {}
-          delete tiles[offset.r]?.[offset.c]
-        }
-      } else {
-        // Not an imported tile, the tile state can be updated directly
-        state.layout.tiles[offset.r] ??= {}
-        state.layout.tiles[offset.r][offset.c] = value
-      }
+    let state = this.#puzzle.state.getCurrent()
+    const tile = this.#puzzle.selectedTile
+    if (tile) {
+      // Update the selected tile
+      const offset = tile.coordinates.offset
+      state.layout.tiles[offset.r] ??= {}
+      state.layout.tiles[offset.r][offset.c] = value
     } else {
-      // Update the entire state
+      // Update the entire puzzle
       state = value
     }
-
-    // Remove any empty arrays/objects
-    state = removeEmpties(state)
-
-    console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
 
     this.#updateConfiguration(state)
   }

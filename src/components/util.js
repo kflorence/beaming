@@ -58,6 +58,10 @@ export function appendOption (element, option) {
   element.append($option)
 }
 
+export function arrayMergeUniqueById (target, source) {
+  return uniqueBy('id', target.concat(source))
+}
+
 export function base64decode (string) {
   const binString = window.atob(base64unescape(string))
   // noinspection JSCheckFunctionSignatures

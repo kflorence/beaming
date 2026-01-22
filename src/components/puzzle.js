@@ -654,22 +654,19 @@ export class Puzzle {
       }
     }
 
-    this.layout.modifyTile(tile)
-
     if (selectedTile) {
-      this.layout.modifyTile(selectedTile)
       this.updateSelectedTile(selectedTile)
     }
-
-    this.state.addMove(event.type, tile, modifier, this.selectedTile)
-    this.updateState()
 
     this.getBeams()
       // Update beams in the tile being modified first
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
+    this.state.addMove(event.type, tile, modifier, this.selectedTile)
+
     setTimeout(async () => {
+      this.updateState()
       await this.update()
       await modifier.onInvoked(this, event)
     })

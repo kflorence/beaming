@@ -1,7 +1,7 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { Items } from '../items'
-import { emitEvent, getPointBetween, merge } from '../util'
+import { emitEvent, getPointBetween, merge, removeEmpties } from '../util'
 import { Modifiers } from '../modifiers'
 import { Flag as BaseFlag, Flags } from '../flag.js'
 
@@ -17,10 +17,10 @@ export class Tile extends Item {
   path
   ref
 
-  constructor (coordinates, center, parameters, state = {}) {
+  constructor (layout, coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
 
-    super(null, state, { clickable: true })
+    super(layout, state, { clickable: true })
 
     const dashWidth = parameters.circumradius / 10
 
@@ -91,25 +91,17 @@ export class Tile extends Item {
   }
 
   getState () {
-    const state = { id: this.id, type: this.type }
-
-    if (this.ref) {
-      // This property will be set if this tile was imported from one puzzle into another
-      state.ref = this.ref
-    }
-
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.Beam).map((item) => item.getState())
-    if (items.length) {
-      state.items = items
-    }
-
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
-    if (modifiers.length) {
-      state.modifiers = modifiers
-    }
 
-    return state
+    return removeEmpties({
+      id: this.id,
+      type: this.type,
+      ref: this.ref,
+      items,
+      modifiers
+    })
   }
 
   onDeselected (selectedTile) {
@@ -210,6 +202,12 @@ export class Tile extends Item {
 
   static schema = () => Object.freeze(merge(Item.schema(Item.Types.Tile), {
     properties: {
+      flags: {
+        options: {
+          hidden: true
+        },
+        type: 'number'
+      },
       ref: {
         options: {
           hidden: true
@@ -232,6 +230,8 @@ export class Tile extends Item {
   static Flags = Object.freeze({
     Copy: new Tile.Flag('copy'),
     Edit: new Tile.Flag('edit'),
+    // TODO implement hidden
+    Hidden: new Tile.Flag('hidden'),
     Placeholder: new Tile.Flag('placeholder'),
     Selected: new Tile.Flag('selected')
   })

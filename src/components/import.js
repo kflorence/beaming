@@ -7,14 +7,17 @@ import { Puzzles } from '../puzzles/index.js'
 export class ImportFilter extends Filter {
   static factory (state) {
     switch (true) {
-      case (state.type === ImportFilter.Types.Puzzle && state.name === ImportFilter.Names.Solved): {
-        return new ImportFilterPuzzleSolved(state)
-      }
       case (state.type === ImportFilter.Types.Item && state.name === ImportFilter.Names.Inclusion): {
         return new ImportFilterItemInclusion(state)
       }
       case (state.type === ImportFilter.Types.Modifier && state.name === ImportFilter.Names.Inclusion): {
         return new ImportFilterModifierInclusion(state)
+      }
+      case (state.type === ImportFilter.Types.Puzzle && state.name === ImportFilter.Names.Solved): {
+        return new ImportFilterPuzzleSolved(state)
+      }
+      case (state.type === ImportFilter.Types.Puzzle && state.name === ImportFilter.Names.Unlocked): {
+        return new ImportFilterPuzzleUnlocked(state)
       }
       case (state.type === ImportFilter.Types.Tile && state.name === ImportFilter.Names.InSolution): {
         return new ImportFilterTileInSolution(state)
@@ -32,7 +35,8 @@ export class ImportFilter extends Filter {
   static Names = Object.freeze({
     Inclusion: 'inclusion',
     InSolution: 'in-solution',
-    Solved: 'solved'
+    Solved: 'solved',
+    Unlocked: 'unlocked'
   })
 
   static Types = Object.freeze({
@@ -106,6 +110,29 @@ export class ImportFilterPuzzleSolved extends ImportFilter {
   ))
 }
 
+export class ImportFilterPuzzleUnlocked extends ImportFilter {
+  apply (state, ref) {
+    return this.state.unlocked === !!ref.unlocked
+  }
+
+  static Name = ImportFilter.Names.Unlocked
+  static Type = ImportFilter.Types.Puzzle
+
+  static schema = () => Object.freeze(merge(
+    ImportFilter.schema(this.Type, this.Name),
+    {
+      description: 'Conditionally include tiles based on whether the user has unlocked the puzzle.',
+      properties: {
+        unlocked: {
+          default: true,
+          type: 'boolean'
+        }
+      },
+      required: ['unlocked']
+    }
+  ))
+}
+
 export class ImportFilterTileInSolution extends ImportFilter {
   apply (state, offset, tile) {
     return this.state.inSolution === state.getSolution()?.includes(offset.toString())
@@ -160,6 +187,7 @@ export class Import {
               ImportFilterItemInclusion.schema(),
               ImportFilterModifierInclusion.schema(),
               ImportFilterPuzzleSolved.schema(),
+              ImportFilterPuzzleUnlocked.schema(),
               ImportFilterTileInSolution.schema()
             ],
             headerTemplate: 'filter {{i1}}'
