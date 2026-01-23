@@ -40,7 +40,7 @@ export function animate (element, className, onComplete = () => {}) {
       resolve()
     }
     // Ensure the animations run at the next available tick
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       element.addEventListener('animationcancel', complete)
       element.addEventListener('animationend', complete)
       element.classList.add(className)

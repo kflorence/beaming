@@ -1,7 +1,59 @@
 {
   "id": "56bd2470",
+  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
+    "modifiers": [
+      {
+        "id": "201bce1a",
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "clockwise": false
+      },
+      {
+        "id": "aa925e09",
+        "type": "swap",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "003",
+            "unlocked": true
+          }
+        ]
+      },
+      {
+        "id": "ccaf2c87",
+        "type": "move",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "004",
+            "unlocked": true
+          }
+        ]
+      },
+      {
+        "id": "5989dc20",
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "007",
+            "unlocked": true
+          }
+        ]
+      }
+    ],
     "tiles": {
       "0": {
         "0": {
@@ -306,7 +358,23 @@
               "r": 0,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "011"
+              },
+              "id": "3a9386ea"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-items",
+              "id": "449c7a8c"
+            }
+          ]
         },
         "-2": {
           "id": "70dbb697",
@@ -328,7 +396,19 @@
               "r": 0,
               "c": 3
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "9d1884cb"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "77fe4855"
+            }
+          ]
         },
         "-5": {
           "id": "611a4233",
@@ -441,17 +521,7 @@
               "r": 1,
               "c": 1
             }
-          },
-          "items": [
-            {
-              "type": "modifier",
-              "modifier": {
-                "type": "puzzle",
-                "puzzleId": "011"
-              },
-              "id": "f3dc9e7a"
-            }
-          ]
+          }
         },
         "-2": {
           "id": "dbaeb3de",
@@ -747,7 +817,35 @@
               "r": 0,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "012"
+              },
+              "id": "6776e546"
+            },
+            {
+              "type": "wall",
+              "directions": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "immutable": true,
+              "id": "52f60a73"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "a4ba32c5"
+            }
+          ]
         },
         "1": {
           "id": "43142953",
@@ -769,7 +867,19 @@
               "r": 0,
               "c": -1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "047adf20"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "1e268ffb"
+            }
+          ]
         }
       },
       "9": {
@@ -942,7 +1052,19 @@
               "r": 2,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "fd8cc81f"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "c442ea9c"
+            }
+          ]
         },
         "2": {
           "id": "3622ae8a",
@@ -1144,12 +1266,12 @@
           },
           "items": [
             {
-              "type": "wall",
-              "directions": [
-                1
-              ],
-              "immutable": true,
-              "id": "5b132ba8"
+              "type": "modifier",
+              "id": "3713ecb1",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "004"
+              }
             }
           ]
         },
@@ -1196,7 +1318,13 @@
               "r": 1,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "4f988330"
+            }
+          ]
         },
         "-1": {
           "id": "a7ae7f64",
@@ -1289,12 +1417,15 @@
           },
           "items": [
             {
-              "type": "modifier",
-              "modifier": {
-                "type": "puzzle",
-                "puzzleId": "004"
-              },
-              "id": "7ccf9930"
+              "type": "reflector",
+              "id": "5ee9afde",
+              "rotation": -2
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "91002e9a"
             }
           ]
         },
@@ -1307,12 +1438,6 @@
               "c": -1
             }
           },
-          "items": [
-            {
-              "type": "reflector",
-              "id": "e93d9c58"
-            }
-          ],
           "id": "da5ab990"
         },
         "3": {
@@ -1556,6 +1681,15 @@
                 "type": "puzzle",
                 "puzzleId": "008"
               }
+            },
+            {
+              "type": "wall",
+              "directions": [
+                0,
+                1
+              ],
+              "immutable": true,
+              "id": "af0848a4"
             }
           ],
           "modifiers": [
@@ -1609,7 +1743,13 @@
               "r": 0,
               "c": -1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "09565917"
+            }
+          ]
         },
         "-2": {
           "id": "4278d79d",
@@ -1633,20 +1773,7 @@
               "r": -1,
               "c": 0
             }
-          },
-          "items": [
-            {
-              "type": "reflector",
-              "rotation": 3,
-              "id": "521ff130"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "5ed1da13"
-            }
-          ]
+          }
         },
         "1": {
           "id": "78e0360f",
@@ -1698,14 +1825,7 @@
               "r": -1,
               "c": -1
             }
-          },
-          "items": [
-            {
-              "type": "reflector",
-              "id": "b8a4c02c",
-              "rotation": 3
-            }
-          ]
+          }
         },
         "-2": {
           "id": "3f752831",
@@ -1831,7 +1951,27 @@
               "r": 1,
               "c": -2
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "fcdb63c0"
+            },
+            {
+              "type": "wall",
+              "directions": [
+                2
+              ],
+              "immutable": true,
+              "id": "f2e60645"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "0ada3a55"
+            }
+          ]
         }
       },
       "-12": {
@@ -1855,7 +1995,19 @@
               "r": -1,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "8a7251a8"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "9773b8b7"
+            }
+          ]
         },
         "-1": {
           "id": "41281869",
@@ -2708,47 +2860,7 @@
           }
         ]
       }
-    ],
-    "modifiers": [
-      {
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ],
-        "id": "201bce1a",
-        "clockwise": false
-      },
-      {
-        "type": "swap",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "003",
-            "unlocked": true
-          }
-        ],
-        "id": "aa925e09"
-      },
-      {
-        "type": "move",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "004",
-            "unlocked": true
-          }
-        ],
-        "id": "ccaf2c87"
-      }
     ]
   },
-  "version": 0,
-  "title": "pack 001"
+  "version": 0
 }

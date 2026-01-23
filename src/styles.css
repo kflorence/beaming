@@ -332,7 +332,12 @@ dialog ul {
 
 #editor {
   background-color: #f9f9f9;
+  border-bottom: 1px solid #ddd;
   padding: 1em 0 1em 1em;
+
+  &.loading #editor-loading {
+    display: flex;
+  }
 }
 
 #editor div[data-schematype=array] > .je-indented-panel {
@@ -428,6 +433,19 @@ dialog ul {
   height: 400px;
   padding: 1em;
   width: 100%;
+}
+
+#editor-loading {
+  align-items: center;
+  display: none;
+  justify-content: center;
+  min-height: 3em;
+}
+
+#editor-loading i {
+  animation: spin 1s infinite;
+  height: 24px;
+  width: 24px;
 }
 
 #editor-menu {
@@ -1109,6 +1127,15 @@ dialog ul {
 
   to {
     translate: 0 -100vh;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
   }
 }
 

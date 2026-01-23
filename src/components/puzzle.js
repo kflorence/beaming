@@ -799,7 +799,10 @@ export class Puzzle {
     this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
-    await this.update()
+
+    // No need to wait for update
+    // noinspection ES6MissingAwait
+    this.update()
 
     if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
       await fadeIn(this.element)
@@ -915,7 +918,7 @@ export class Puzzle {
     })
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(resolve), this.#beamsUpdateDelay)
+    window.requestAnimationFrame(() => this.#updateBeams(resolve))
   }
 
   #updateMessage (tile) {

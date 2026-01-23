@@ -76,16 +76,13 @@ export class Editor {
       id = undefined
     }
 
+    elements.editor.classList.add('loading')
+
     this.teardown()
     this.#gutter.setup()
 
     await this.#puzzle.select(id, options)
-    await this.setup()
 
-    this.#updateDropdown()
-  }
-
-  async setup () {
     if (this.#editor) {
       return
     }
@@ -123,6 +120,7 @@ export class Editor {
     this.#updateDock()
     this.#updateLock()
     this.#updateCenter()
+    this.#updateDropdown(this.#puzzle.state.getId())
 
     this.#setup()
   }
@@ -367,6 +365,8 @@ export class Editor {
       return
     }
 
+    elements.editor.classList.add('loading')
+
     if (this.#copy && !tile) {
       // Remove the copied tile if no tile is selected
       const tile = this.#puzzle.layout.getTile(this.#copy)
@@ -430,6 +430,7 @@ export class Editor {
 
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
     this.#editor.element.classList.remove('hide')
+    elements.editor.classList.remove('loading')
   }
 
   #toggleDock () {
@@ -470,7 +471,7 @@ export class Editor {
     }
   }
 
-  #updateDropdown () {
+  #updateDropdown (id) {
     elements.select.replaceChildren()
 
     State.getIds().forEach((id) => {
@@ -478,7 +479,9 @@ export class Editor {
     })
 
     // Select current ID
-    elements.select.value = this.#puzzle.state.getId()
+    if (id !== undefined) {
+      elements.select.value = id
+    }
   }
 
   #updateLock () {
