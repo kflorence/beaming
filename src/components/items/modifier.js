@@ -4,6 +4,7 @@ import { merge } from '../util.js'
 import { Item } from '../item.js'
 import { Modifiers } from '../modifiers.js'
 import { PuzzleModifier } from '../modifiers/puzzle.js'
+import { Schema } from '../schema.js'
 
 export class ModifierItem extends movable(Item) {
   color
@@ -67,6 +68,7 @@ export class ModifierItem extends movable(Item) {
     movable.schema(),
     {
       properties: {
+        color: Schema.color,
         modifier: {
           oneOf: [
             PuzzleModifier.schema()

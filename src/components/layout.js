@@ -130,11 +130,12 @@ export class Layout extends Stateful {
               : tile.modifiers.filter((item) => modifierFilters.every((filter) => filter.apply(source, item)))
           }
 
-          // Keep a reference to the puzzle and location the tile was imported from in state
-          tile.ref = { id: ref.id, offset: { r: tileOffset.r, c: tileOffset.c } }
-
           // Merge the base configuration with any existing configuration
           const state = merge(tile, existing || {}, { arrayMerge: arrayMergeUniqueById })
+
+          // Keep a reference to the puzzle and location the tile was imported from in state
+          state.ref = { id: ref.id, offset: { r: tileOffset.r, c: tileOffset.c } }
+
           tiles[translatedOffset.r] ??= {}
           tiles[translatedOffset.r][translatedOffset.c] = state
           console.debug(Layout.toString(), `Imported tile from puzzle '${ref.id}' to '${translatedOffset}'.`)
@@ -152,12 +153,6 @@ export class Layout extends Stateful {
         }
 
         this.addTile(new OffsetCoordinates(r, c), state)
-        // // Every collected puzzle modifier represents a puzzle unlock
-        // const modifier = tile.modifiers?.find((modifier) => modifier.type === Modifier.Types.Puzzle)
-        // if (modifier) {
-        //   console.debug(Layout.toString(), `Marking import as unlocked: ${modifier.puzzleId}`)
-        //   this.#imports[modifier.puzzleId].unlocked = true
-        // }
       }
     }
 

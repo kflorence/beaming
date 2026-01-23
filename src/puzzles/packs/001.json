@@ -39,7 +39,6 @@
           "id": "da960fda"
         },
         "-2": {
-          "id": "8f2cda31",
           "type": "tile",
           "ref": {
             "id": "002",
@@ -48,16 +47,15 @@
               "c": 0
             }
           },
+          "id": "8f2cda31",
           "items": [
             {
-              "type": "portal",
-              "id": "f57a1f2c"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "27bd25dc"
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "003"
+              },
+              "id": "b224cae3"
             }
           ]
         },
@@ -130,7 +128,23 @@
               "r": -1,
               "c": 2
             }
-          }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "010"
+              },
+              "id": "7dc9f107"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "7991b9b0"
+            }
+          ]
         },
         "-1": {
           "id": "e3bec484",
@@ -214,7 +228,19 @@
               "r": 0,
               "c": -3
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "647d5d1b"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "9f91a4f9"
+            }
+          ]
         },
         "2": {
           "id": "8a2041c5",
@@ -392,7 +418,19 @@
               "r": 1,
               "c": 2
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "4c4cbc1d"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "ad62bc38"
+            }
+          ]
         },
         "-3": {
           "id": "42aa42df",
@@ -403,7 +441,17 @@
               "r": 1,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "011"
+              },
+              "id": "f3dc9e7a"
+            }
+          ]
         },
         "-2": {
           "id": "dbaeb3de",
@@ -861,15 +909,8 @@
           },
           "items": [
             {
-              "type": "terminus",
-              "openings": [
-                {
-                  "color": "#0000ff",
-                  "direction": 2,
-                  "toggled": true
-                }
-              ],
-              "id": "ca1add80"
+              "type": "portal",
+              "id": "c7c14bce"
             }
           ],
           "modifiers": [
@@ -950,17 +991,7 @@
               "r": -1,
               "c": 0
             }
-          },
-          "items": [
-            {
-              "type": "modifier",
-              "modifier": {
-                "type": "puzzle",
-                "puzzleId": "003"
-              },
-              "id": "314f06b9"
-            }
-          ]
+          }
         },
         "-3": {
           "id": "e2e2cc4d",
@@ -1110,7 +1141,17 @@
               "r": -1,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "wall",
+              "directions": [
+                1
+              ],
+              "immutable": true,
+              "id": "5b132ba8"
+            }
+          ]
         },
         "1": {
           "id": "6a9d44bf",
@@ -1155,13 +1196,7 @@
               "r": 1,
               "c": 0
             }
-          },
-          "modifiers": [
-            {
-              "type": "move",
-              "id": "2d56363e"
-            }
-          ]
+          }
         },
         "-1": {
           "id": "a7ae7f64",
@@ -1268,7 +1303,7 @@
           "ref": {
             "id": "005",
             "offset": {
-              "r": 1,
+              "r": 0,
               "c": -1
             }
           },
@@ -1276,12 +1311,6 @@
             {
               "type": "reflector",
               "id": "e93d9c58"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "sticky-modifiers",
-              "id": "8297efa7"
             }
           ],
           "id": "da5ab990"
@@ -1340,8 +1369,8 @@
           "ref": {
             "id": "006",
             "offset": {
-              "r": 1,
-              "c": 0
+              "r": 0,
+              "c": 1
             }
           },
           "items": [
@@ -1380,7 +1409,13 @@
               "r": 1,
               "c": 0
             }
-          }
+          },
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "e780351b"
+            }
+          ]
         },
         "1": {
           "id": "8472fea8",
@@ -1392,10 +1427,17 @@
               "c": 1
             }
           },
+          "items": [
+            {
+              "type": "reflector",
+              "rotation": 2,
+              "id": "03e47eba"
+            }
+          ],
           "modifiers": [
             {
               "type": "immutable",
-              "id": "cfb84dfd"
+              "id": "7e6db0d4"
             }
           ]
         },
@@ -1443,8 +1485,8 @@
           ],
           "modifiers": [
             {
-              "type": "lock",
-              "id": "90add8b0"
+              "type": "sticky-items",
+              "id": "10279b1f"
             }
           ]
         },
@@ -1468,7 +1510,13 @@
               "r": 1,
               "c": -1
             }
-          }
+          },
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "7303dcd3"
+            }
+          ]
         },
         "-2": {
           "id": "f62e3a1a",
@@ -1479,7 +1527,13 @@
               "r": 1,
               "c": -2
             }
-          }
+          },
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "01ff72f0"
+            }
+          ]
         }
       },
       "-8": {
@@ -1495,23 +1549,13 @@
           },
           "items": [
             {
-              "type": "wall",
-              "directions": [
-                2,
-                3,
-                4,
-                5
-              ],
-              "immutable": true,
-              "id": "9457a323"
-            },
-            {
               "type": "modifier",
+              "id": "9791a1d0",
+              "color": "#0000ff",
               "modifier": {
                 "type": "puzzle",
                 "puzzleId": "008"
-              },
-              "id": "9791a1d0"
+              }
             }
           ],
           "modifiers": [
@@ -1530,7 +1574,14 @@
               "r": 0,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "filter",
+              "color": "#0000ff",
+              "id": "c2afe8b1"
+            }
+          ]
         },
         "2": {
           "id": "4d3d4d5c",
@@ -1545,7 +1596,7 @@
           "modifiers": [
             {
               "type": "immutable",
-              "id": "14903dfa"
+              "id": "2928dc2a"
             }
           ]
         },
@@ -1582,7 +1633,20 @@
               "r": -1,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "rotation": 3,
+              "id": "521ff130"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "5ed1da13"
+            }
+          ]
         },
         "1": {
           "id": "78e0360f",
@@ -1634,7 +1698,14 @@
               "r": -1,
               "c": -1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "reflector",
+              "id": "b8a4c02c",
+              "rotation": 3
+            }
+          ]
         },
         "-2": {
           "id": "3f752831",
@@ -1656,20 +1727,7 @@
               "r": -1,
               "c": -3
             }
-          },
-          "items": [
-            {
-              "type": "filter",
-              "color": "#0000ff",
-              "id": "1e6d54a5"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "move",
-              "id": "7c15c912"
-            }
-          ]
+          }
         }
       },
       "-11": {
@@ -1750,7 +1808,19 @@
               "r": 1,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "portal",
+              "id": "ececb123"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "4f4cf79c"
+            }
+          ]
         },
         "-1": {
           "id": "16730a74",
@@ -1761,23 +1831,7 @@
               "r": 1,
               "c": -2
             }
-          },
-          "items": [
-            {
-              "type": "modifier",
-              "modifier": {
-                "type": "puzzle",
-                "puzzleId": "009"
-              },
-              "id": "ea1ec2b5"
-            }
-          ],
-          "modifiers": [
-            {
-              "type": "lock",
-              "id": "9236ecae"
-            }
-          ]
+          }
         }
       },
       "-12": {
@@ -1815,7 +1869,6 @@
           }
         },
         "-2": {
-          "id": "6ce87703",
           "type": "tile",
           "ref": {
             "id": "008",
@@ -1826,16 +1879,21 @@
           },
           "items": [
             {
-              "id": "3f5c4881",
-              "type": "portal"
+              "type": "modifier",
+              "modifier": {
+                "type": "puzzle",
+                "puzzleId": "009"
+              },
+              "id": "bd531586"
             }
           ],
           "modifiers": [
             {
-              "id": "06d1ba7e",
-              "type": "move"
+              "type": "lock",
+              "id": "159f99e8"
             }
-          ]
+          ],
+          "id": "6ce87703"
         }
       }
     },
@@ -2663,7 +2721,7 @@
           }
         ],
         "id": "201bce1a",
-        "clockwise": true
+        "clockwise": false
       },
       {
         "type": "swap",

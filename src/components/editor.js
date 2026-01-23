@@ -170,13 +170,7 @@ export class Editor {
     this.#puzzle.state.addMove()
 
     // Need to force a reload to make sure the UI is in sync with the state
-    await this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
-
-    // Reset the editor to make sure the UI matches the configuration
-    this.#editor.destroy()
-    this.#editor.element.remove()
-    delete this.#editors[this.getId()]
-    this.#setup()
+    this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
 
     if (diff.title) {
       // Title was changed
@@ -244,14 +238,15 @@ export class Editor {
       return
     }
 
-    const state = this.#puzzle.layout.getTile(this.#copy).getState()
+    const from = this.#puzzle.layout.getTile(this.#copy).getState()
 
     // Remove all 'id' keys
-    const value = JSON.parse(JSON.stringify(state, (k, v) => k === 'id' ? undefined : v))
+    const value = JSON.parse(JSON.stringify(from, (k, v) => k === 'id' ? undefined : v))
 
-    // Restore the ref id if it exists
-    if (state.ref) {
-      value.ref.id = state.ref.id
+    const to = this.#puzzle.layout.getTile(this.#puzzle.selectedTile.coordinates.offset)
+    if (to.ref) {
+      // Retain ref on copy
+      value.ref = to.ref
     }
 
     this.#onEditorUpdate(value)
@@ -394,9 +389,11 @@ export class Editor {
       this.#editor.element.classList.add('hide')
     }
 
+    const value = tile ? tile.getState() : this.#puzzle.state.getCurrent()
     if (this.#editors[id]) {
       console.debug(Editor.toString('#setup'), `Activating editor: ${id}`)
       this.#editor = this.#editors[id]
+      this.#editor.setValue(value)
     } else {
       console.debug(Editor.toString('#setup'), `Creating editor: ${id}`)
       const options = {
@@ -415,7 +412,7 @@ export class Editor {
         remove_button_labels: true,
         schema: tile ? Tile.schema() : Puzzle.schema(),
         show_opt_in: true,
-        startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
+        startval: value,
         theme: 'barebones'
       }
 
@@ -427,6 +424,7 @@ export class Editor {
       elements.editor.append(element)
 
       console.debug(Editor.toString('#setup'), JSON.stringify(options, null, 2))
+      // FIXME: this is getting pretty slow for the root editor and it's causing UX lag
       this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 

@@ -678,7 +678,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches('canvas') || !this.debug || Game.is(Game.States.Edit)) {
+    if (!event.target.matches?.('canvas') || !this.debug || Game.is(Game.States.Edit)) {
       return
     }
 
