@@ -1,59 +1,7 @@
 {
   "id": "56bd2470",
-  "title": "pack 001",
   "layout": {
     "offset": "odd-row",
-    "modifiers": [
-      {
-        "id": "201bce1a",
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "002",
-            "unlocked": true
-          }
-        ],
-        "clockwise": false
-      },
-      {
-        "id": "aa925e09",
-        "type": "swap",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "003",
-            "unlocked": true
-          }
-        ]
-      },
-      {
-        "id": "ccaf2c87",
-        "type": "move",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "004",
-            "unlocked": true
-          }
-        ]
-      },
-      {
-        "id": "5989dc20",
-        "type": "rotate",
-        "filters": [
-          {
-            "type": "import",
-            "name": "unlocked",
-            "importId": "007",
-            "unlocked": true
-          }
-        ]
-      }
-    ],
     "tiles": {
       "0": {
         "0": {
@@ -578,7 +526,14 @@
               "r": -1,
               "c": -1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "filter",
+              "color": "#ff0000",
+              "id": "89da7379"
+            }
+          ]
         },
         "1": {
           "id": "1b76a8a0",
@@ -613,7 +568,25 @@
               "r": 0,
               "c": 0
             }
-          }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#ff0000",
+                  "direction": 0
+                }
+              ],
+              "id": "1a1e2ad5"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "fbce6330"
+            }
+          ]
         },
         "1": {
           "id": "84eab54c",
@@ -668,7 +641,26 @@
               "r": 0,
               "c": -1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#b400b4",
+                  "direction": 1,
+                  "toggled": true
+                }
+              ],
+              "id": "5a680d10"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "5cde9a8f"
+            }
+          ]
         }
       },
       "6": {
@@ -692,7 +684,25 @@
               "r": 1,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#0000ff",
+                  "direction": 2
+                }
+              ],
+              "id": "41f197e4"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-items",
+              "id": "c69136f5"
+            }
+          ]
         },
         "3": {
           "id": "b44b0f4c",
@@ -714,7 +724,25 @@
               "r": 1,
               "c": -3
             }
-          }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#ff0000",
+                  "direction": 5
+                }
+              ],
+              "id": "e7f8c069"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "sticky-items",
+              "id": "a7150226"
+            }
+          ]
         },
         "-1": {
           "id": "665ba31e",
@@ -832,7 +860,6 @@
               "directions": [
                 0,
                 1,
-                2,
                 3,
                 4
               ],
@@ -856,7 +883,29 @@
               "r": 0,
               "c": 1
             }
-          }
+          },
+          "items": [
+            {
+              "type": "terminus",
+              "openings": [
+                {
+                  "color": "#b400b4",
+                  "direction": 5
+                }
+              ],
+              "id": "7cc24906"
+            }
+          ],
+          "modifiers": [
+            {
+              "type": "lock",
+              "id": "d763c4f2"
+            },
+            {
+              "id": "d41b8e0f",
+              "type": "toggle"
+            }
+          ]
         },
         "-1": {
           "id": "da8da7c6",
@@ -1418,8 +1467,8 @@
           "items": [
             {
               "type": "reflector",
-              "id": "5ee9afde",
-              "rotation": -2
+              "rotation": -2,
+              "id": "5ee9afde"
             }
           ],
           "modifiers": [
@@ -2860,7 +2909,65 @@
           }
         ]
       }
+    ],
+    "modifiers": [
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "002",
+            "unlocked": true
+          }
+        ],
+        "id": "201bce1a",
+        "clockwise": false
+      },
+      {
+        "type": "swap",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "003",
+            "unlocked": true
+          }
+        ],
+        "id": "aa925e09"
+      },
+      {
+        "type": "move",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "004",
+            "unlocked": true
+          }
+        ],
+        "id": "ccaf2c87"
+      },
+      {
+        "type": "rotate",
+        "filters": [
+          {
+            "type": "import",
+            "name": "unlocked",
+            "importId": "007",
+            "unlocked": true
+          }
+        ],
+        "id": "5989dc20"
+      }
     ]
   },
-  "version": 0
+  "version": 0,
+  "title": "pack 001",
+  "requirements": [
+    {
+      "type": "connections",
+      "amount": 4
+    }
+  ]
 }
