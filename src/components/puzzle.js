@@ -609,9 +609,8 @@ export class Puzzle {
     const state = event.detail.state
 
     state?.get(StepState.Collisions)?.forEach((collision) => {
-      const offset = this.layout.getOffset(collision.point)
-      const tile = this.layout.getTile(offset)
-      if (tile.flags.has(Tile.Flags.Hidden)) {
+      const step = beam.getStep()
+      if (step.tile.flags.has(Tile.Flags.Hidden)) {
         // Don't show collisions for hidden tiles
         return
       }
