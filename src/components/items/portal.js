@@ -220,7 +220,7 @@ export class Portal extends movable(rotatable(Item)) {
       direction,
       insertAbove: exitPortal,
       onAdd: (step) => {
-        exitPortal.update(direction, step)
+        exitPortal.updateDirection(direction, step)
         // Store this decision in beam state
         beam.updateState((state) => {
           state.steps ??= {}
@@ -235,7 +235,7 @@ export class Portal extends movable(rotatable(Item)) {
       onRemove: (step) => {
         // Remove any associated beam state
         beam.updateState((state) => { delete state.steps[step.index][Item.Types.Portal] })
-        exitPortal.update(direction)
+        exitPortal.updateDirection(direction)
       },
       point: exitPortal.parent.center,
       state: nextStep.state.copy(new StepState.Portal(this, exitPortal)),
