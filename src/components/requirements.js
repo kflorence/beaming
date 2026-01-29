@@ -114,8 +114,6 @@ class ConnectionsRequirement extends Requirement {
   }
 
   update (event) {
-    console.debug(ConnectionsRequirement.toString('update'), event)
-
     const terminus = event.detail.terminus
     const opening = event.detail.opening
     const connectionId = `${terminus.id}:${opening.direction}`
@@ -193,7 +191,6 @@ class MovesRequirement extends Requirement {
 
   update (event) {
     const moves = event.detail.state.moves()
-    console.debug(MovesRequirement.toString('update'), event, moves)
     this.#moves = moves.length
     this.#completed.textContent = this.#moves.toString()
   }

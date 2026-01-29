@@ -312,6 +312,7 @@ dialog ul {
   display: none;
   left: 1em;
   padding: 1em;
+  pointer-events: none;
   position: absolute;
   z-index: 1;
 }
@@ -331,7 +332,12 @@ dialog ul {
 
 #editor {
   background-color: #f9f9f9;
+  border-bottom: 1px solid #ddd;
   padding: 1em 0 1em 1em;
+
+  &.loading #editor-loading {
+    display: flex;
+  }
 }
 
 #editor div[data-schematype=array] > .je-indented-panel {
@@ -355,6 +361,14 @@ dialog ul {
 
 #editor div[data-schematype=object] + div[data-schematype=object] {
   margin-top: 1em;
+}
+
+#editor input,
+#editor select {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 0.5em;
 }
 
 #editor .empty .je-indented-panel {
@@ -419,6 +433,19 @@ dialog ul {
   height: 400px;
   padding: 1em;
   width: 100%;
+}
+
+#editor-loading {
+  align-items: center;
+  display: none;
+  justify-content: center;
+  min-height: 3em;
+}
+
+#editor-loading i {
+  animation: spin 1s infinite;
+  height: 24px;
+  width: 24px;
 }
 
 #editor-menu {
@@ -610,6 +637,10 @@ dialog ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+#puzzle-header-wrapper .flex-left .menu li:last-child {
+  border-right: 1px solid #ddd;
 }
 
 #puzzle-footer-wrapper .menu {
@@ -871,6 +902,7 @@ dialog ul {
   min-height: 24px;
   padding: 1em;
   pointer-events: all;
+  width: fit-content;
 }
 
 .message:empty {
@@ -1095,6 +1127,15 @@ dialog ul {
 
   to {
     translate: 0 -100vh;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
   }
 }
 

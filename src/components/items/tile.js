@@ -1,22 +1,26 @@
 import { Color, Path } from 'paper'
 import { Item } from '../item'
 import { Items } from '../items'
-import { emitEvent, getPointBetween, merge } from '../util'
+import { emitEvent, getPointBetween, merge, removeEmpties } from '../util'
 import { Modifiers } from '../modifiers'
+import { Flag as BaseFlag, Flags } from '../flag.js'
+
+// Incrementing value for Tile flags
+let flagValue = 0
 
 export class Tile extends Item {
   coordinates
+  flags
   items = []
   modifiers = []
   parameters
   path
   ref
-  selected = false
 
-  constructor (coordinates, center, parameters, state = {}) {
+  constructor (layout, coordinates, center, parameters, state = {}) {
     state = Object.assign({ type: Item.Types.Tile }, state)
 
-    super(null, state, { clickable: true })
+    super(layout, state, { clickable: true })
 
     const dashWidth = parameters.circumradius / 10
 
@@ -28,6 +32,12 @@ export class Tile extends Item {
       }
     })
 
+    this.flags = new Flags(state.flags)
+
+    if (this.flags.has(Tile.Flags.Hidden)) {
+      this.group.visible = false
+    }
+
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
@@ -36,11 +46,13 @@ export class Tile extends Item {
     this.path = new Path.RegularPolygon({
       center,
       closed: true,
+      // Data should only contain properties that don't change
       data: { coordinates, type: this.type },
       radius: parameters.circumradius,
-      sides: 6,
-      style: this.styles.default
+      sides: 6
     })
+
+    this.setStyle()
 
     this.group.addChildren([this.path])
 
@@ -70,46 +82,36 @@ export class Tile extends Item {
   }
 
   afterModify () {
-    this.setStyle(this.selected ? 'selected' : 'default')
+    this.flags.remove(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: false }))
+    this.update()
   }
 
   beforeModify () {
     this.group.bringToFront()
-    this.setStyle('edit')
+    this.flags.add(Tile.Flags.Edit)
     this.modifiers.forEach((modifier) => modifier.update({ disabled: true }))
+    this.update()
   }
 
   getState () {
-    const state = { id: this.id, type: this.type }
-
-    if (this.ref) {
-      // This property will be set if this tile was imported from one puzzle into another
-      state.ref = this.ref
-    }
-
     // Filter out beams, which are not stored in state
     const items = this.items.filter((item) => item.type !== Item.Types.Beam).map((item) => item.getState())
-    if (items.length) {
-      state.items = items
-    }
-
     const modifiers = this.modifiers.map((modifier) => modifier.getState())
-    if (modifiers.length) {
-      state.modifiers = modifiers
-    }
 
-    return state
-  }
-
-  onTap (event) {
-    this.items.forEach((item) => item.onTap(event))
+    return removeEmpties({
+      id: this.id,
+      type: this.type,
+      ref: this.ref,
+      items,
+      modifiers
+    })
   }
 
   onDeselected (selectedTile) {
-    this.selected = false
-    this.path.style = this.styles.default
+    this.flags.remove(Tile.Flags.Selected)
     this.items.forEach((item) => item.onDeselected())
+    this.update()
 
     document.body.classList.remove(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
@@ -118,14 +120,18 @@ export class Tile extends Item {
 
   onSelected (deselectedTile) {
     console.debug(this.toString(), 'selected')
-    this.selected = true
     this.group.bringToFront()
-    this.path.style = this.styles.selected
+    this.flags.add(Tile.Flags.Selected)
     this.items.forEach((item) => item.onSelected())
+    this.update()
 
     document.body.classList.add(`tile-selected_${this.coordinates.offset.toString('_')}`)
 
     emitEvent(Tile.Events.Selected, { selectedTile: this, deselectedTile })
+  }
+
+  onTap (event) {
+    this.items.forEach((item) => item.onTap(event))
   }
 
   removeItem (item) {
@@ -144,8 +150,12 @@ export class Tile extends Item {
     }
   }
 
-  setStyle (style) {
-    this.path.set(this.styles[style])
+  setStyle () {
+    const style = Object.assign({}, Tile.Styles.default)
+    Object.values(Tile.Flags)
+      .filter((flag) => this.flags.has(flag))
+      .forEach((flag) => Object.assign(style, this.styles[flag.name]))
+    this.path.set({ style })
   }
 
   teardown () {
@@ -156,6 +166,13 @@ export class Tile extends Item {
 
   toString () {
     return `[${this.type}:${this.coordinates.offset.toString()}]`
+  }
+
+  update () {
+    this.group.visible = !this.flags.has(Tile.Flags.Hidden)
+    this.setStyle()
+    this.items.forEach((item) => item.update())
+    this.modifiers.forEach((modifier) => modifier.update())
   }
 
   updateIcon (modifier) {
@@ -169,8 +186,9 @@ export class Tile extends Item {
       )
       const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
       const icon = modifier.getIcon()
-      const item = icon.symbol.place(position, { locked: true, style })
+      const item = icon.symbol.place(position, { style })
       item.data = { id: modifier.id, name: icon.symbol.name, type: modifier.type }
+      item.locked = true
       const childIndex = this.group.children.findIndex((item) => item.data.id === modifier.id)
       if (childIndex >= 0) {
         // Update existing
@@ -192,6 +210,12 @@ export class Tile extends Item {
 
   static schema = () => Object.freeze(merge(Item.schema(Item.Types.Tile), {
     properties: {
+      flags: {
+        options: {
+          hidden: true
+        },
+        type: 'number'
+      },
       ref: {
         options: {
           hidden: true
@@ -202,6 +226,23 @@ export class Tile extends Item {
       modifiers: Modifiers.schema()
     }
   }))
+
+  static Flag = class extends BaseFlag {
+    constructor (name) {
+      super()
+      this.name = name
+      this.value = 1 << flagValue++
+    }
+  }
+
+  static Flags = Object.freeze({
+    Copy: new Tile.Flag('copy'),
+    Edit: new Tile.Flag('edit'),
+    // TODO implement hidden
+    Hidden: new Tile.Flag('hidden'),
+    Placeholder: new Tile.Flag('placeholder'),
+    Selected: new Tile.Flag('selected')
+  })
 
   static Styles = Object.freeze({
     // Need to use new Color here explicitly due to:
@@ -221,6 +262,12 @@ export class Tile extends Item {
       dashArray: true,
       strokeColor: new Color('black'),
       strokeWidth: 2
+    },
+    placeholder: {
+      dashArray: [],
+      fillColor: new Color('#bbb'),
+      strokeColor: new Color('#999'),
+      strokeWidth: 1
     },
     selected: {
       dashArray: [],

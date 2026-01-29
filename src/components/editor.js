@@ -67,7 +67,7 @@ export class Editor {
   }
 
   isLocked () {
-    return Storage.get(Editor.key(State.getId(), Editor.CacheKeys.Locked)) === 'true'
+    return Storage.get(Editor.key(State.getId(), State.CacheKeys.Locked)) === 'true'
   }
 
   async select (id, options) {
@@ -76,28 +76,20 @@ export class Editor {
       id = undefined
     }
 
+    elements.editor.classList.add('loading')
+
+    this.teardown()
     this.#gutter.setup()
 
     await this.#puzzle.select(id, options)
-    await this.setup()
-
-    this.#updateDropdown()
-  }
-
-  async setup () {
-    if (!this.#layer) {
-      this.group = new Group({ locked: true })
-      this.#center = new Group({ locked: true })
-      this.#layer = new Layer({ name: 'editor' })
-    }
-
-    paper.project.addLayer(this.#layer)
 
     if (this.#editor) {
       return
     }
 
-    this.#gutter.setup()
+    this.group = new Group({ locked: true })
+    this.#center = new Group({ locked: true })
+    this.#layer = new Layer({ name: 'editor' })
 
     this.#eventListener.add([
       { type: 'click', element: elements.cancel, handler: this.#onConfigurationCancel },
@@ -110,6 +102,7 @@ export class Editor {
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
       { type: Gutter.Events.Moved, handler: this.#onGutterMoved },
       { type: 'pointermove', handler: this.#onPointerMove },
+      { type: Puzzle.Events.Reloaded, handler: this.#onPuzzleReload },
       { type: Puzzle.Events.Updated, handler: this.#onPuzzleUpdate },
       { type: 'tap', handler: this.#onTap },
       { type: Tile.Events.Deselected, handler: this.#setup },
@@ -117,15 +110,17 @@ export class Editor {
       { type: View.Events.Center, handler: this.#onCenter }
     ])
 
-    const state = this.#puzzle.state
-    elements.configuration.value = state.getCurrentJSON()
+    elements.configuration.value = this.#puzzle.state.getCurrentJSON()
 
     this.group.addChild(this.#center)
     this.#layer.addChild(this.group)
 
+    paper.project.addLayer(this.#layer)
+
     this.#updateDock()
     this.#updateLock()
     this.#updateCenter()
+    this.#updateDropdown(this.#puzzle.state.getId())
 
     this.#setup()
   }
@@ -162,10 +157,8 @@ export class Editor {
 
   async #onConfigurationUpdate () {
     const state = this.getState()
-    // Ensure the configuration is in sync with the editor value
-    this.#onEditorUpdate(state)
     const diff = this.#puzzle.state.getDiff(state)
-    console.debug(Editor.toString('onConfigurationUpdate'), diff)
+    console.debug(Editor.toString('onConfigurationUpdate'), diff, state)
 
     if (diff === undefined) {
       // No changes
@@ -175,7 +168,7 @@ export class Editor {
     this.#puzzle.state.addMove()
 
     // Need to force a reload to make sure the UI is in sync with the state
-    await this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
+    this.#puzzle.reload(state, { onError: this.#onError.bind(this) })
 
     if (diff.title) {
       // Title was changed
@@ -192,9 +185,15 @@ export class Editor {
       return
     }
 
-    this.#puzzle.layout.getTile(this.#copy)?.setStyle('default')
+    const previous = this.#puzzle.layout.getTile(this.#copy)
+    if (previous) {
+      previous.flags.remove(Tile.Flags.Copy)
+      previous.update()
+    }
     this.#copy = this.#puzzle.selectedTile.coordinates.offset
-    this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+    const tile = this.#puzzle.layout.getTile(this.#copy)
+    tile.flags.add(Tile.Flags.Copy)
+    tile.update()
   }
 
   #onEditorUpdate (value = this.#editor?.getValue()) {
@@ -203,22 +202,19 @@ export class Editor {
       return
     }
 
-    const current = this.#puzzle.state.getCurrent()
-    const offset = this.#puzzle.selectedTile?.coordinates.offset
+    console.debug(Editor.toString('#onEditorUpdate'), value)
 
-    let state
-    if (offset) {
-      // Update a specific tile
-      state = current
+    let state = this.#puzzle.state.getCurrent()
+    const tile = this.#puzzle.selectedTile
+    if (tile) {
+      // Update the selected tile
+      const offset = tile.coordinates.offset
+      state.layout.tiles[offset.r] ??= {}
       state.layout.tiles[offset.r][offset.c] = value
     } else {
-      // Update the entire state
+      // Update the entire puzzle
       state = value
-      // Tiles are not editable globally
-      state.layout.tiles = current.layout.tiles
     }
-
-    console.debug(Editor.toString('#onEditorUpdate'), 'current', current, 'new', value, 'updated', state)
 
     this.#updateConfiguration(state)
   }
@@ -229,8 +225,6 @@ export class Editor {
 
   async #onGutterMoved () {
     await this.#puzzle.resize()
-    await this.setup()
-    this.#updateCenter()
   }
 
   async #onNew () {
@@ -242,17 +236,32 @@ export class Editor {
       return
     }
 
-    const value = JSON.parse(JSON.stringify(
-      this.#puzzle.layout.getTile(this.#copy).getState(),
-      // Remove 'id' keys
-      (k, v) => k === 'id' ? undefined : v)
-    )
+    const from = this.#puzzle.layout.getTile(this.#copy).getState()
+
+    // Remove all 'id' keys
+    const value = JSON.parse(JSON.stringify(from, (k, v) => k === 'id' ? undefined : v))
+
+    const to = this.#puzzle.layout.getTile(this.#puzzle.selectedTile.coordinates.offset)
+    if (to.ref) {
+      // Retain ref on copy
+      value.ref = to.ref
+    }
 
     this.#onEditorUpdate(value)
     await this.#onConfigurationUpdate()
   }
 
   #onPointerMove (event) {
+    if (!event.target.matches?.('canvas')) {
+      return
+    }
+
+    const layout = this.#puzzle.layout
+    if (!layout) {
+      // Puzzle isn't ready yet
+      return
+    }
+
     elements.debug.textContent = ''
 
     if (event.pointerType !== 'mouse') {
@@ -260,7 +269,6 @@ export class Editor {
       return
     }
 
-    const layout = this.#puzzle.layout
     const offset = layout.getOffset(this.#puzzle.getProjectPoint(Interact.point(event)))
     const center = layout.getPoint(offset)
     if (!this.#hover) {
@@ -284,8 +292,14 @@ export class Editor {
     elements.debug.textContent = `[${offset.r},${offset.c}]`
   }
 
-  #onPuzzleUpdate () {
+  #onPuzzleReload () {
+    // The project changes on reload, so we need to re-attach the layer
+    paper.project.addLayer(this.#layer)
     this.#layer.bringToFront()
+    this.#updateCenter()
+  }
+
+  #onPuzzleUpdate () {
     elements.configuration.value = this.#puzzle.state.getCurrentJSON()
     this.#updatePlayUrl()
   }
@@ -333,8 +347,7 @@ export class Editor {
 
     // TODO: adding/removing tiles would ideally not require a reload. but getting rid of it would require fixing
     //  some bugs related to the beam
-    await this.#puzzle.reload()
-    await this.setup()
+    this.#puzzle.reload()
   }
 
   #setup (event) {
@@ -352,15 +365,21 @@ export class Editor {
       return
     }
 
+    elements.editor.classList.add('loading')
+
     if (this.#copy && !tile) {
       // Remove the copied tile if no tile is selected
-      this.#puzzle.layout.getTile(this.#copy).setStyle('default')
+      const tile = this.#puzzle.layout.getTile(this.#copy)
+      tile.flags.remove(Tile.Flags.Copy)
+      tile.update()
       this.#copy = undefined
     }
 
     if (this.#copy && !this.#copy.equals(tile?.coordinates.offset)) {
       // If the copied tile is not selected, show it as copied
-      this.#puzzle.layout.getTile(this.#copy).setStyle('copy')
+      const tile = this.#puzzle.layout.getTile(this.#copy)
+      tile.flags.add(Tile.Flags.Copy)
+      tile.update()
     }
 
     if (this.#editor) {
@@ -370,9 +389,11 @@ export class Editor {
       this.#editor.element.classList.add('hide')
     }
 
+    const value = tile ? tile.getState() : this.#puzzle.state.getCurrent()
     if (this.#editors[id]) {
       console.debug(Editor.toString('#setup'), `Activating editor: ${id}`)
       this.#editor = this.#editors[id]
+      this.#editor.setValue(value)
     } else {
       console.debug(Editor.toString('#setup'), `Creating editor: ${id}`)
       const options = {
@@ -391,7 +412,7 @@ export class Editor {
         remove_button_labels: true,
         schema: tile ? Tile.schema() : Puzzle.schema(),
         show_opt_in: true,
-        startval: tile ? tile.getState() : this.#puzzle.state.getCurrent(),
+        startval: value,
         theme: 'barebones'
       }
 
@@ -403,11 +424,13 @@ export class Editor {
       elements.editor.append(element)
 
       console.debug(Editor.toString('#setup'), JSON.stringify(options, null, 2))
+      // FIXME: this is getting pretty slow for the root editor and it's causing UX lag
       this.#editor = this.#editors[id] = new JSONEditor(element, options)
     }
 
     this.#editor.on('change', this.#onEditorUpdate.bind(this))
     this.#editor.element.classList.remove('hide')
+    elements.editor.classList.remove('loading')
   }
 
   #toggleDock () {
@@ -416,7 +439,7 @@ export class Editor {
   }
 
   #toggleLock () {
-    Storage.set(Editor.key(State.getId(), Editor.CacheKeys.Locked), (!this.isLocked()).toString())
+    Storage.set(Editor.key(State.getId(), State.CacheKeys.Locked), (!this.isLocked()).toString())
     this.#updateLock()
   }
 
@@ -448,7 +471,7 @@ export class Editor {
     }
   }
 
-  #updateDropdown () {
+  #updateDropdown (id) {
     elements.select.replaceChildren()
 
     State.getIds().forEach((id) => {
@@ -456,7 +479,9 @@ export class Editor {
     })
 
     // Select current ID
-    elements.select.value = this.#puzzle.state.getId()
+    if (id !== undefined) {
+      elements.select.value = id
+    }
   }
 
   #updateLock () {
@@ -472,7 +497,7 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl())
+    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl(State.ContextKeys.Play))
   }
 
   static mark (center, width) {
@@ -493,11 +518,7 @@ export class Editor {
     ]
   }
 
+  static key = getKeyFactory(State.ContextKeys.Edit, State.ScopeKeys.Editor)
+
   static toString = classToString('Editor')
-
-  static CacheKeys = Object.freeze({
-    Locked: 'locked'
-  })
-
-  static key = getKeyFactory(State.CacheKeys.Edit, 'editor')
 }

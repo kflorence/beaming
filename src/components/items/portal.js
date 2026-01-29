@@ -6,6 +6,7 @@ import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
 import { coalesce, getOppositeDirection, merge } from '../util'
 import { Schema } from '../schema'
+import { Tile } from './tile.js'
 
 export class Portal extends movable(rotatable(Item)) {
   #directions = {}
@@ -94,8 +95,8 @@ export class Portal extends movable(rotatable(Item)) {
       // Handle entry collision
       return nextStep.copy({
         insertAbove: this,
-        onAdd: (step) => this.update(entryDirection, step),
-        onRemove: () => this.update(entryDirection),
+        onAdd: (step) => this.updateDirection(entryDirection, step),
+        onRemove: () => this.updateDirection(entryDirection),
         state: nextStep.state.copy(new StepState.Portal(this))
       })
     } else if (portalState.exitPortal === this) {
@@ -174,7 +175,7 @@ export class Portal extends movable(rotatable(Item)) {
     this.#directions = {}
   }
 
-  update (direction, data) {
+  updateDirection (direction, data) {
     this.#directions[direction] = data
   }
 
@@ -184,6 +185,8 @@ export class Portal extends movable(rotatable(Item)) {
       item.type === Item.Types.Portal &&
       // But not the entry portal
       !item.equals(this) &&
+      // Not on a placeholder tile
+      !item.parent.flags.has(Tile.Flags.Placeholder) &&
       // There is no other beam occupying the portal at the exit direction
       !item.get(Portal.getExitDirection(nextStep, this, item)) && (
         // Entry portals without defined direction can exit from any other portal.
@@ -217,7 +220,7 @@ export class Portal extends movable(rotatable(Item)) {
       direction,
       insertAbove: exitPortal,
       onAdd: (step) => {
-        exitPortal.update(direction, step)
+        exitPortal.updateDirection(direction, step)
         // Store this decision in beam state
         beam.updateState((state) => {
           state.steps ??= {}
@@ -232,7 +235,7 @@ export class Portal extends movable(rotatable(Item)) {
       onRemove: (step) => {
         // Remove any associated beam state
         beam.updateState((state) => { delete state.steps[step.index][Item.Types.Portal] })
-        exitPortal.update(direction)
+        exitPortal.updateDirection(direction)
       },
       point: exitPortal.parent.center,
       state: nextStep.state.copy(new StepState.Portal(this, exitPortal)),
