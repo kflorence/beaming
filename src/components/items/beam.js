@@ -315,14 +315,14 @@ export class Beam extends Item {
         // There is no matching collision in state yet
         if (!isSelf) {
           // Update beam at point of impact
-          this.update(stepIndex, {
+          this.#update(stepIndex, {
             done: true,
             state: step.state.copy(new StepState.Collisions(...collisions, collision.mirror()))
           })
         } else if (!isSameDirection) {
           // For a collision with self, the update at point of impact will occur on the next update loop. This results in
           // a better visualization of the collision which will result in an infinite looping animation.
-          this.update(stepIndex, puzzle.getBeamsUpdateDelay())
+          setTimeout(() => this.#update(stepIndex), puzzle.getBeamsUpdateDelay())
         }
       }
 
@@ -579,15 +579,6 @@ export class Beam extends Item {
     return `[${this.type}:${this.id}:${chroma(this.getColor()).name()}]`
   }
 
-  update (stepIndex, settings = {}, timeout) {
-    if (typeof settings === 'number') {
-      timeout = settings
-      settings = {}
-    }
-    const update = this.#update.bind(this, stepIndex, settings, timeout)
-    return timeout === undefined ? update() : setTimeout(update, timeout)
-  }
-
   updateState (updater, eventDetail = {}) {
     return this.parent.updateState((state) =>
       updater(state.openings.find((opening) => opening.direction === this.#direction)), eventDetail)
@@ -662,7 +653,7 @@ export class Beam extends Item {
     return settings instanceof Step ? settings : step.copy(settings)
   }
 
-  #update (stepIndex, settings) {
+  #update (stepIndex, settings = {}) {
     if (stepIndex < this.getLastStepIndex()) {
       const step = this.#updateHistory(stepIndex)
       this.addStep(this.#getUpdatedStep(step, settings))

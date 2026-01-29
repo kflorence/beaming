@@ -252,7 +252,7 @@ export class Editor {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches('canvas')) {
+    if (!event.target.matches?.('canvas')) {
       return
     }
 

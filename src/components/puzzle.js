@@ -422,16 +422,22 @@ export class Puzzle {
       return
     }
 
-    const result = paper.project.hitTest(event.detail.point)
+    // Using getItems instead of hitTest so we can match invisible items.
+    // Pop will get the item that's the highest up in the layers stack.
+    const result = paper.project.getItems({
+      match: (item) => {
+        return !item.locked && item.data.type && item.contains(event.detail.point)
+      }
+    }).pop()
 
     let tile
-    switch (result?.item.data.type) {
+    switch (result?.data.type) {
       case Item.Types.Mask:
         return
       case Item.Types.Tile:
-        tile = this.layout.getTile(result.item.data.coordinates.offset)
-        if (tile.flags.has(Tile.Flags.Placeholder) && !Game.is(Game.States.Edit)) {
-          // Ignore taps on placeholder tiles
+        tile = this.layout.getTile(result.data.coordinates.offset)
+        if (Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag)) && !Game.is(Game.States.Edit)) {
+          // Ignore taps on un-selectable tiles
           tile = undefined
         }
         break
@@ -603,6 +609,13 @@ export class Puzzle {
     const state = event.detail.state
 
     state?.get(StepState.Collisions)?.forEach((collision) => {
+      const offset = this.layout.getOffset(collision.point)
+      const tile = this.layout.getTile(offset)
+      if (tile.flags.has(Tile.Flags.Hidden)) {
+        // Don't show collisions for hidden tiles
+        return
+      }
+
       const collisionId = Puzzle.Collision.id(collision.point)
       const existing = this.#collisions[collisionId]
 
@@ -752,7 +765,11 @@ export class Puzzle {
 
   #onTilesUnlocked (event) {
     this.getBeams().forEach((beam) => beam.onTilesUnlocked(event, this))
-    setTimeout(() => this.update())
+    setTimeout(() => {
+      // Ensure any changes to state are preserved (such as marking puzzles as unlocked)
+      this.updateState()
+      this.update()
+    })
   }
 
   #removeLayers () {
@@ -1099,4 +1116,6 @@ export class Puzzle {
   })
 
   static toString = classToString('Puzzle')
+
+  static unSelectableTileFlags = [Tile.Flags.Hidden, Tile.Flags.Placeholder]
 }

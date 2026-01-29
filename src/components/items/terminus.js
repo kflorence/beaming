@@ -137,6 +137,7 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
   }
 
   update () {
+    super.update()
     this.beams.forEach((beam) => this.updateOpening(beam.getOpening()))
   }
 

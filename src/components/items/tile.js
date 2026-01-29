@@ -34,6 +34,10 @@ export class Tile extends Item {
 
     this.flags = new Flags(state.flags)
 
+    if (this.flags.has(Tile.Flags.Hidden)) {
+      this.group.visible = false
+    }
+
     this.center = center
     this.coordinates = coordinates
     this.parameters = parameters
@@ -165,7 +169,10 @@ export class Tile extends Item {
   }
 
   update () {
+    this.group.visible = !this.flags.has(Tile.Flags.Hidden)
     this.setStyle()
+    this.items.forEach((item) => item.update())
+    this.modifiers.forEach((modifier) => modifier.update())
   }
 
   updateIcon (modifier) {
@@ -179,8 +186,9 @@ export class Tile extends Item {
       )
       const style = { fillColor: modifier.immutable ? '#ccc' : '#333' }
       const icon = modifier.getIcon()
-      const item = icon.symbol.place(position, { locked: true, style })
+      const item = icon.symbol.place(position, { style })
       item.data = { id: modifier.id, name: icon.symbol.name, type: modifier.type }
+      item.locked = true
       const childIndex = this.group.children.findIndex((item) => item.data.id === modifier.id)
       if (childIndex >= 0) {
         // Update existing

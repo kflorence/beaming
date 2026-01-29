@@ -95,8 +95,8 @@ export class Portal extends movable(rotatable(Item)) {
       // Handle entry collision
       return nextStep.copy({
         insertAbove: this,
-        onAdd: (step) => this.update(entryDirection, step),
-        onRemove: () => this.update(entryDirection),
+        onAdd: (step) => this.updateDirection(entryDirection, step),
+        onRemove: () => this.updateDirection(entryDirection),
         state: nextStep.state.copy(new StepState.Portal(this))
       })
     } else if (portalState.exitPortal === this) {
@@ -175,7 +175,7 @@ export class Portal extends movable(rotatable(Item)) {
     this.#directions = {}
   }
 
-  update (direction, data) {
+  updateDirection (direction, data) {
     this.#directions[direction] = data
   }
 
