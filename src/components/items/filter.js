@@ -1,7 +1,7 @@
 import { Item } from '../item'
 import { Color, Path } from 'paper'
 import { movable } from '../modifiers/move'
-import { getColorElement, merge } from '../util'
+import { merge } from '../util'
 import { StepState } from '../step'
 import { Schema } from '../schema'
 
