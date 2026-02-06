@@ -200,6 +200,11 @@ export function getColorElements (colors) {
 
   elements.push(getColorElement(color))
 
+  const descriptor = document.createElement('span')
+  descriptor.classList.add('text')
+  descriptor.textContent = `(${color})`
+  elements.push(descriptor)
+
   return elements
 }
 

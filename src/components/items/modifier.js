@@ -36,6 +36,10 @@ export class ModifierItem extends movable(Item) {
     this.group.addChild(this.item)
   }
 
+  getColors () {
+    return [this.color]
+  }
+
   onCollision ({ collisionStep, nextStep, puzzle }) {
     if (this.color === ModifierItem.DefaultColor || nextStep.color === this.color) {
       // Collided with an icon of matching color, or the default wildcard color

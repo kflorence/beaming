@@ -32,8 +32,8 @@ export class Filter extends movable(Item) {
     this.group.addChild(item)
   }
 
-  getColorElements () {
-    return [getColorElement(this.color)]
+  getColors () {
+    return [this.color]
   }
 
   onCollision ({ currentStep, nextStep }) {

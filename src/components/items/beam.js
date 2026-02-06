@@ -2,7 +2,6 @@ import chroma from 'chroma-js'
 import { CompoundPath, Path } from 'paper'
 import { Item } from '../item'
 import {
-  getColorElements,
   emitEvent,
   fuzzyEquals,
   getPointBetween,
@@ -123,16 +122,10 @@ export class Beam extends Item {
     return this.getStep()?.color || this.getOpening().color
   }
 
-  getColors () {
-    return Array.from(this.getStep()?.colors || this.getOpening().colors)
-  }
-
-  getColorElements (tile) {
-    return getColorElements(
-      this.getSteps(tile)
-        // Show color elements for merges and filters
-        .filter((step) => step.state.has(StepState.Filter) || step.state.has(StepState.MergeWith))
-        .map((step) => step.colors).find((colors) => colors.length > 1) ?? [])
+  getColors (tile) {
+    return tile
+      ? this.getSteps(tile).map((step) => step.colors)
+      : Array.from(this.getStep()?.colors || this.getOpening().colors)
   }
 
   getCompoundPath () {

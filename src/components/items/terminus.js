@@ -4,7 +4,6 @@ import { toggleable } from '../modifiers/toggle'
 import { Item } from '../item'
 import { rotatable } from '../modifiers/rotate'
 import {
-  getColorElements,
   emitEvent,
   getOppositeDirection,
   addDirection,
@@ -66,8 +65,8 @@ export class Terminus extends movable(rotatable(toggleable(Item))) {
     this.update()
   }
 
-  getColorElements () {
-    return getColorElements(this.openings.map((opening) => opening.color))
+  getColors () {
+    return this.openings.map((opening) => opening.color)
   }
 
   getOpening (direction) {

@@ -48,7 +48,7 @@ export class Item extends Stateful {
     return otherItem instanceof Item && this.id === otherItem.id
   }
 
-  getColorElements () {
+  getColors (tile) {
     return []
   }
 

@@ -8,7 +8,7 @@ import {
   base64encode, baseUrl, classToString,
   debounce,
   emitEvent, fadeIn, fadeOut,
-  fuzzyEquals,
+  fuzzyEquals, getColorElements,
   noop,
   params,
   removeClass, url, writeToClipboard
@@ -39,9 +39,7 @@ const elements = Object.freeze({
   debug: document.getElementById('debug'),
   delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
-  footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
-  headerMessage: document.getElementById('puzzle-header-message'),
   info: document.getElementById('puzzle-info'),
   infoAuthor: document.getElementById('puzzle-info-author'),
   infoId: document.getElementById('puzzle-info-id'),
@@ -69,9 +67,10 @@ export class Puzzle {
   connections = []
   debug = params.has('debug')
   error = false
+  footerMessages
+  headerMessages
   layers = {}
   layout
-  message
   modifiers = []
   project
   selectedTile
@@ -89,6 +88,8 @@ export class Puzzle {
   #requirements
 
   constructor () {
+    this.footerMessages = new Puzzle.Messages('puzzle-footer-messages')
+    this.headerMessages = new Puzzle.Messages('puzzle-header-messages')
     this.#interact = new Interact()
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
@@ -228,7 +229,7 @@ export class Puzzle {
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
 
     if (mask.message) {
-      elements.headerMessage.textContent = mask.message
+      this.headerMessages.add(mask.message)
     }
 
     mask.onMask(this)
@@ -256,7 +257,7 @@ export class Puzzle {
     }
 
     message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
-    elements.headerMessage.textContent = message
+    this.headerMessages.add(message)
     document.body.classList.add(Puzzle.Events.Error)
   }
 
@@ -412,10 +413,6 @@ export class Puzzle {
     elements.delete.classList.toggle('hide', Puzzles.has(id))
   }
 
-  setMessage (message) {
-    elements.headerMessage.textContent = this.message = message
-  }
-
   tap (event) {
     if (this.error || this.solved) {
       // Can't tap
@@ -484,7 +481,7 @@ export class Puzzle {
     console.debug('unmask', this.#mask)
 
     this.layers.mask.removeChildren()
-    this.#updateMessage(this.selectedTile)
+    this.#updateFooterMessages(this.selectedTile)
     this.#mask.onUnmask(this)
     this.#mask = undefined
 
@@ -526,7 +523,7 @@ export class Puzzle {
 
     this.selectedTile = tile
     this.state.setSelectedTile(tile)
-    this.#updateMessage(tile)
+    this.#updateFooterMessages(tile)
     this.updateModifiers()
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
@@ -736,7 +733,7 @@ export class Puzzle {
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
 
-    elements.headerMessage.replaceChildren(p, Icons.Solved.getElement())
+    this.headerMessages.set([p, Icons.Solved.getElement()])
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -791,15 +788,16 @@ export class Puzzle {
   }
 
   async #setup (options, project = { cleanup: () => {} }) {
-    const { layout, message, requirements } = this.state.getCurrent()
+    const { layout, requirements } = this.state.getCurrent()
 
     await this.resize(false)
 
+    this.footerMessages.reset()
+    this.headerMessages.reset()
     this.state.setSolution([])
     State.add(this.state.getId())
 
     this.layout = new Layout(layout)
-    this.message = message
     this.#requirements = new Requirements(requirements)
 
     this.#addLayers()
@@ -929,7 +927,7 @@ export class Puzzle {
       const step = beam.step(this)
       if (step?.tile.equals(this.selectedTile)) {
         // Make sure messages are displayed for the selected tile when a beam travels through it
-        this.#updateMessage(step.tile)
+        this.#updateFooterMessages(step.tile)
       }
     })
 
@@ -937,29 +935,24 @@ export class Puzzle {
     window.requestAnimationFrame(() => this.#updateBeams(resolve))
   }
 
-  #updateMessage (tile) {
-    elements.footerMessage.replaceChildren()
+  #updateFooterMessages (tile) {
+    this.footerMessages.reset()
 
     if (tile) {
       const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
       if (puzzleModifier) {
-        elements.footerMessage.textContent = `Puzzle '${puzzleModifier.getState().puzzleId}'`
-      } else {
-        // Check to see if tile has any color elements that need to be displayed
-        // Note: these will only be displayed if the tile contains an item with more than one color
-        const colorElements = tile.items
-          .map((item) => item.getColorElements(tile))
-          .find((colorElements) => colorElements.length > 1) || []
-        if (colorElements.length) {
-          const container = document.createElement('div')
-          container.classList.add('colors')
-          container.replaceChildren(...colorElements)
-          elements.footerMessage.replaceChildren(container)
-        }
+        this.footerMessages.add(`Puzzle '${puzzleModifier.getState().puzzleId}'`)
+      }
+
+      const colors = Array.from(new Set(tile.items.flatMap((item) => item.getColors(tile)).flat()))
+      if (colors.length) {
+        // Display color element hints for tiles that contain multiple colors
+        const container = document.createElement('div')
+        container.classList.add('colors')
+        container.replaceChildren(...getColorElements(colors))
+        this.footerMessages.add(container)
       }
     }
-
-    this.setMessage(this.message)
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
@@ -1066,6 +1059,37 @@ export class Puzzle {
 
     equals (other) {
       return this.id === other.id
+    }
+  }
+
+  static Messages = class {
+    element
+
+    constructor (id) {
+      this.element = document.getElementById(id)
+      console.log(id, this.element)
+    }
+
+    add (...messages) {
+      messages.forEach((message) => {
+        const li = document.createElement('li')
+        li.classList.add('message')
+        if (typeof message === 'string') {
+          li.textContent = message
+        } else {
+          li.append(...(Array.isArray(message) ? message : [message]))
+        }
+        this.element.append(li)
+      })
+    }
+
+    reset () {
+      this.element.replaceChildren()
+    }
+
+    set (...messages) {
+      this.reset()
+      this.add(...messages)
     }
   }
 
