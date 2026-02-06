@@ -625,8 +625,11 @@ export class Beam extends Item {
       .sort((a, b) => {
         // Sort items returned by proximity to starting point
         const distance = getDistance(firstPoint)(a.points[0], b.points[0])
-        if (distance === 0) {
+        if (distance === 0 || [a, b].some((collision) => collision.item.type === Item.Types.Reflector)) {
           // If two items are an equal distance away, sort by sort order as defined on item
+          // NOTE: reflector collisions also end up here because the beam will always collide with the reflector first
+          // before colliding with any other beam that has already collided with the reflector -- but we want to handle
+          // the beam collisions first.
           return a.item.sortOrder - b.item.sortOrder
         }
 
