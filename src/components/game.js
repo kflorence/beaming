@@ -10,9 +10,10 @@ import { Keys } from '../electron/settings/keys.js'
 
 const elements = Object.freeze({
   delete: document.getElementById('delete'),
-  dialog: document.getElementById('dialog-title'),
+  dialogPlay: document.getElementById('dialog-play'),
+  dialogTitle: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
-  play: document.getElementById('title-play'),
+  play: document.getElementById('play'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
   select: document.getElementById('select'),
@@ -33,7 +34,7 @@ export class Game {
       { type: 'change', element: elements.select, handler: this.#onSelect },
       { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
-      { type: 'click', element: elements.play, handler: this.play },
+      // { type: 'click', element: elements.play, handler: this.play },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
       { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
@@ -48,7 +49,7 @@ export class Game {
       // noinspection JSIgnoredPromiseFromCall
       this.edit()
     } else {
-      elements.dialog.showModal()
+      elements.dialogTitle.showModal()
     }
   }
 
@@ -59,7 +60,7 @@ export class Game {
       await this.editor.select({ animations: [Puzzle.Animations.FadeIn] })
     }
 
-    await Game.dialogClose()
+    await Game.dialogClose(elements.dialogTitle)
   }
 
   async play () {
@@ -70,7 +71,7 @@ export class Game {
       await this.puzzle.select({ animations: [Puzzle.Animations.FadeIn] })
     }
 
-    await Game.dialogClose()
+    await Game.dialogClose(elements.dialogPlay)
   }
 
   quit () {
@@ -86,10 +87,10 @@ export class Game {
   }
 
   async title () {
-    if (elements.dialog.open) {
-      await Game.dialogClose()
+    if (elements.dialogTitle.open) {
+      await Game.dialogClose(elements.dialogTitle)
     } else {
-      await Game.dialogOpen()
+      await Game.dialogOpen(elements.dialogTitle)
     }
   }
 
@@ -157,20 +158,20 @@ export class Game {
 
   static debug = debug
 
-  static async dialogClose () {
-    if (elements.dialog.open) {
+  static async dialogClose (dialog) {
+    if (dialog.open) {
       await Promise.all([
-        animate(elements.screen, 'slide-up-in'),
-        animate(elements.dialog, 'slide-up-out', () => { elements.dialog.close() })
+        animate(elements.screen, 'slide-left-in'),
+        animate(dialog, 'slide-left-out', () => { dialog.close() })
       ])
     }
   }
 
-  static async dialogOpen () {
-    if (!elements.dialog.open) {
+  static async dialogOpen (dialog) {
+    if (!dialog.open) {
       await Promise.all([
-        animate(elements.screen, 'slide-down-out'),
-        animate(elements.dialog, 'slide-down-in', () => { elements.dialog.showModal() })
+        animate(elements.screen, 'slide-right-out'),
+        animate(dialog, 'slide-right-in', () => { dialog.showModal() })
       ])
     }
   }

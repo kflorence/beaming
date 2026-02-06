@@ -514,8 +514,6 @@ export class Puzzle {
     this.modifiers.forEach((modifier) => modifier.detach())
     this.modifiers = this.#getModifiers(this.selectedTile)
     this.modifiers.filter((modifier) => modifier.unlocked).forEach((modifier) => modifier.attach(this.selectedTile))
-
-    elements.footer.classList.toggle(Puzzle.ClassNames.Active, this.modifiers.length > 0)
   }
 
   updateSelectedTile (tile) {
@@ -944,12 +942,15 @@ export class Puzzle {
         this.footerMessages.add(`Puzzle '${puzzleModifier.getState().puzzleId}'`)
       }
 
-      const colors = Array.from(new Set(tile.items.flatMap((item) => item.getColors(tile)).flat()))
+      const colors = Array.from(new Set(
+        tile.items.flatMap((item) => item.getColors(tile)).flat().map((color) => chroma(color).name())))
       if (colors.length) {
         // Display color element hints for tiles that contain multiple colors
         const container = document.createElement('div')
         container.classList.add('colors')
-        container.replaceChildren(...getColorElements(colors))
+
+        const elements = getColorElements(colors)
+        container.replaceChildren(...elements)
         this.footerMessages.add(container)
       }
     }
@@ -1067,7 +1068,6 @@ export class Puzzle {
 
     constructor (id) {
       this.element = document.getElementById(id)
-      console.log(id, this.element)
     }
 
     add (...messages) {

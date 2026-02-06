@@ -623,13 +623,8 @@ dialog ul {
 }
 
 #puzzle-footer {
-  display: none;
   bottom: 0;
   flex-flow: column wrap;
-}
-
-#puzzle-footer.active {
-  display: flex;
 }
 
 #puzzle-footer-messages,
@@ -902,7 +897,7 @@ dialog ul {
 
 .message {
   align-items: center;
-  background-color: #ddd;
+  background-color: #eee;
   border: 1px solid #999;
   border-radius: 0.5em;
   display: flex;

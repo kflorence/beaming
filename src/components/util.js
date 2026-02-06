@@ -176,7 +176,7 @@ export function getColorElements (colors) {
     return []
   }
 
-  const color = chroma.average(colors).hex()
+  const color = chroma.average(colors).name()
   const elements = []
 
   if (colors.some((other) => other !== color)) {

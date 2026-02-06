@@ -98,13 +98,24 @@
     <dialog class="fullscreen" id="dialog-title">
       <svg id="logo"><use href="images/logo.svg#root"></use></svg>
       <ul>
-        <li id="title-play">play</li>
+        <li data-dialog="dialog-play">play</li>
         <li data-dialog="dialog-about">about</li>
         <li data-dialog="dialog-settings" id="title-settings">settings</li>
         <li id="title-editor">editor</li>
         <li id="title-quit">quit</li>
       </ul>
       <div id="version"></div>
+    </dialog>
+    <dialog class="fullscreen" id="dialog-play">
+      <header>
+        <h1 class="flex-left">Play</h1>
+        <div class="flex-right">
+          <button><i class="ph-bold ph-x" title="Close"></i></button>
+        </div>
+      </header>
+      <main>
+        TODO
+      </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-about">
       <header>

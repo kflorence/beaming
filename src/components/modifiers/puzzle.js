@@ -26,6 +26,8 @@ export class PuzzleModifier extends Modifier {
     const ref = puzzle.layout.getImport(state.puzzleId)
 
     // Set the parent of the puzzle we are entering to the current puzzle
+    // FIXME need to re-think how to structure the parent/child relationship here, since a single puzzle could be nested
+    //   inside of multiple other puzzles
     State.setParent(state.puzzleId, puzzle.state.getId())
 
     // Center the screen on the anchor point of the import
