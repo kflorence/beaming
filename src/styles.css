@@ -26,6 +26,7 @@ body {
 
 button {
   font-family: 'Noto Sans Mono Variable', monospace;
+  line-height: 24px;
 
   &:not(:disabled,.disabled) {
     cursor: pointer;
@@ -62,7 +63,11 @@ i {
 }
 
 input {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
   cursor: pointer;
+  line-height: 24px;
+  padding: 0.5em;
 }
 
 #editor-new,
@@ -134,10 +139,6 @@ dialog[open] {
   z-index: 9999;
 }
 
-dialog .flex-left {
-  flex: 2;
-}
-
 dialog details h3,
 dialog details h4,
 dialog details p {
@@ -149,6 +150,7 @@ dialog details p {
 
 dialog h1 {
   color: #333;
+  filter: drop-shadow(0 0.1em 0.1em #999);
   margin: 0;
   padding: 0;
 }
@@ -178,7 +180,7 @@ dialog > main {
 dialog header button {
   background: #fff;
   border: 1px solid #666;
-  border-radius: 0.25em;
+  border-radius: 0.5em;
   color: #000;
   cursor: pointer;
   outline: none;
@@ -225,7 +227,7 @@ dialog footer ul li:first-child {
 dialog > main {
   background-color: white;
   border: 1px solid #666;
-  border-radius: 0.25em;
+  border-radius: 0.5em;
   overflow: auto;
   padding: 1em;
   width: 100%;
@@ -234,6 +236,32 @@ dialog > main {
 dialog ul {
   margin: 0 0 0 1em;
   padding: 0 0 0 1em;
+}
+
+#dialog-play section {
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 1em;
+
+  h4 {
+    border-bottom: 1px solid #ddd;
+    margin: 0 0 1em 0;
+    padding-bottom: 0.5em;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  textarea {
+    border: 1px solid #aaa;
+    border-radius: 0.5em;
+    box-sizing: border-box;
+    height: 10em;
+    margin: 1em 0;
+    padding: 0.25em;
+    width: 100%;
+  }
 }
 
 #dialog-settings button,
@@ -576,6 +604,42 @@ dialog ul {
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
+/* Play
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#play-profiles {
+  list-style: none;
+  margin: 0 0 1em 0;
+  padding: 0;
+
+  li {
+    cursor: pointer;
+    display: flex;
+    line-height: 24px;
+    padding: 0.5em 0;
+    text-overflow: ellipsis;
+
+    &.selected {
+      cursor: default;
+      font-weight: bold;
+
+      .flex-left:before {
+        content: '>';
+        margin-right: 0.5em;
+      }
+    }
+
+    .remove {
+      cursor: pointer;
+    }
+  }
+}
+
+#play-profiles-name {
+  margin-right: 1em;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
 /* Puzzle
 /* ------------------------------------------------------------------------------------------------------------------ */
 
@@ -824,6 +888,21 @@ dialog ul {
 
 .flex-right {
   justify-content: flex-end;
+}
+
+.flex-two-column {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1em;
+
+  > * {
+    flex: 1;
+
+    &.full-width {
+      flex-basis: 100%;
+    }
+  }
 }
 
 .grab #puzzle canvas {

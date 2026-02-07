@@ -53,7 +53,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "003"
+                "id": "003"
               },
               "id": "b224cae3"
             }
@@ -80,7 +80,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "002"
+                "id": "002"
               },
               "id": "108d9afd"
             }
@@ -140,7 +140,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "010"
+                "id": "010"
               },
               "id": "7dc9f107",
               "color": "#b400b4"
@@ -327,7 +327,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "011"
+                "id": "011"
               },
               "id": "3a9386ea",
               "color": "#0000ff"
@@ -901,7 +901,7 @@
               "id": "6776e546",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "012"
+                "id": "012"
               },
               "color": "#ff0000"
             },
@@ -1190,7 +1190,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "005"
+                "id": "005"
               },
               "id": "aaf67885",
               "color": "#b400b4"
@@ -1363,7 +1363,7 @@
               "id": "3713ecb1",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "004"
+                "id": "004"
               }
             }
           ]
@@ -1575,7 +1575,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "006"
+                "id": "006"
               },
               "id": "b9513437",
               "color": "#0000ff"
@@ -1714,7 +1714,7 @@
               "id": "851f02cc",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "007"
+                "id": "007"
               },
               "color": "#b400b4"
             }
@@ -1784,7 +1784,7 @@
               "color": "#0000ff",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "008"
+                "id": "008"
               }
             },
             {
@@ -2095,7 +2095,7 @@
               "type": "modifier",
               "modifier": {
                 "type": "puzzle",
-                "puzzleId": "009"
+                "id": "009"
               },
               "id": "d7f13379"
             }
@@ -2284,7 +2284,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "003"
+                    "id": "003"
                   },
                   "id": "48db2545"
                 }
@@ -2333,7 +2333,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "004"
+                    "id": "004"
                   },
                   "id": "a1ee5c6e"
                 }
@@ -2441,7 +2441,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "005"
+                    "id": "005"
                   },
                   "id": "5bd6690d"
                 }
@@ -2538,7 +2538,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "006"
+                    "id": "006"
                   },
                   "id": "eae8806d"
                 }
@@ -2635,7 +2635,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "007"
+                    "id": "007"
                   },
                   "id": "262e9db1"
                 }
@@ -2791,7 +2791,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "008"
+                    "id": "008"
                   },
                   "id": "27b47a5c"
                 },
@@ -2892,7 +2892,7 @@
                   "type": "modifier",
                   "modifier": {
                     "type": "puzzle",
-                    "puzzleId": "009"
+                    "id": "009"
                   },
                   "id": "e97e699f"
                 }
@@ -3083,7 +3083,7 @@
     ]
   },
   "version": 0,
-  "title": "pack 001",
+  "title": "Puzzle Pack 001",
   "requirements": [
     {
       "type": "connections",

@@ -22,16 +22,8 @@
               <div class="group">
                 <ul class="menu" id="puzzle-header-main-menu">
                   <li id="title"><i class="ph-bold ph-list" title="Main Menu"></i></li>
-                  <li class="hide" id="back"><i class="ph-bold ph-arrow-left" title="Exit Puzzle"></i></li>
-                </ul>
-                <label id="selector">
-                  <select id="select"></select>
-                  <svg height="10px" width="10px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/></svg>
-                </label>
-                <ul class="menu" id="puzzle-header-action-menu">
-                  <li id="share"><i class="ph-bold ph-share-network" title="Share puzzle"></i></li>
-                  <li class="hide" id="delete"><i class="ph-bold ph-trash" title="Remove Puzzle"></i></li>
-                  <li id="editor-new"><i class="ph-bold ph-file-plus" title="Create New Puzzle"></i></li>
+                  <li id="back"><i class="ph-bold ph-arrow-left" title="Go Back"></i></li>
+                  <li id="share"><i class="ph-bold ph-share-network" title="Share"></i></li>
                 </ul>
               </div>
             </div>
@@ -114,7 +106,23 @@
         </div>
       </header>
       <main>
-        TODO
+        <div class="flex-two-column">
+          <section>
+            <h4>Profiles</h4>
+            <ul id="play-profiles"></ul>
+            <label class="hide" for="play-profiles-name">Create new profile</label>
+            <input type="text" id="play-profiles-name"><button id="play-profiles-add">Create</button>
+          </section>
+          <section>
+            <h4>Puzzles</h4>
+            <ul id="play-puzzles"></ul>
+          </section>
+          <section class="full-width" id="play-custom">
+            <p><label for="play-custom-configuration">Load a puzzle from configuration</label></p>
+            <textarea id="play-custom-configuration"></textarea>
+            <button id="play-custom-load">Load</button>
+          </section>
+        </div>
       </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-about">

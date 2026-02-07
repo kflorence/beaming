@@ -250,13 +250,6 @@ export class State {
     const data = { id }
     const hashParams = ['', id]
 
-    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
-      // Include encoded state in URL if cache is not being cleared for this puzzle ID
-      data.state = this.encode()
-      hashParams.push(data.state)
-      Storage.set(State.key(id), data.state)
-    }
-
     url.hash = hashParams.join('/')
     history.pushState(data, '', url)
     Storage.set(State.key(), id)
@@ -401,10 +394,6 @@ export class State {
     return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
   }
 
-  static getParent (id) {
-    return Storage.get(State.key(id, State.CacheKeys.Parent))
-  }
-
   static resolve (id) {
     let values = []
 
@@ -477,17 +466,6 @@ export class State {
 
     // Return an empty state if all else fails
     return state ?? new State(id)
-  }
-
-  static setParam = function (name, value) {
-    params.set(name, value)
-    history.pushState({}, '', url)
-  }
-
-  // Tracks the location of nested puzzles
-  static setParent (id, parentId) {
-    // TODO add URL param support?
-    Storage.set(State.key(id, State.CacheKeys.Parent), parentId)
   }
 
   static CacheKeys = Object.freeze({

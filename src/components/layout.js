@@ -8,7 +8,16 @@ import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
-import { arrayMergeUniqueById, classToString, emitEvent, hexagon, merge, removeEmpties } from './util.js'
+import {
+  arrayMergeUniqueById,
+  classToString,
+  emitEvent,
+  hexagon,
+  merge,
+  nonEmpty,
+  params,
+  removeEmpties
+} from './util.js'
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 import { Flags } from './flag.js'
@@ -160,6 +169,12 @@ export class Layout extends Stateful {
     this.modifiers = state.modifiers
       .map((state, index) => Modifiers.factory(null, state, index))
       .filter((modifier) => modifier !== undefined)
+
+    if (nonEmpty(this.#imports)) {
+      params.set(State.CacheKeys.Parent, state.id)
+    } else {
+      params.delete(State.CacheKeys.Parent)
+    }
 
     this.setState(state)
     this.#updateModifiers()

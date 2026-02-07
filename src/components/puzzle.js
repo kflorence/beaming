@@ -34,7 +34,6 @@ import Tippy from 'tippy.js'
 import { Tile } from './items/tile.js'
 
 const elements = Object.freeze({
-  back: document.getElementById('back'),
   canvas: document.getElementById('puzzle-canvas-wrapper'),
   debug: document.getElementById('debug'),
   delete: document.getElementById('delete'),
@@ -48,7 +47,6 @@ const elements = Object.freeze({
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
-  select: document.getElementById('select'),
   share: document.getElementById('share'),
   title: document.querySelector('title'),
   wrapper: document.getElementById('puzzle-wrapper')
@@ -93,7 +91,6 @@ export class Puzzle {
     this.#interact = new Interact()
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
-      { type: 'click', element: elements.back, handler: this.#onBack },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
@@ -188,8 +185,7 @@ export class Puzzle {
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
     Game.states.forEach((state) => shareUrl.searchParams.delete(state))
     shareUrl.searchParams.append(context, '')
-    // Cloning will flatten current state into original state and get rid of history
-    shareUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
+    shareUrl.hash = ['', State.getId(), this.state.encode()].join('/')
     return shareUrl.toString()
   }
 
@@ -403,14 +399,6 @@ export class Puzzle {
     }
 
     await this.reload(State.resolve(id), options)
-
-    id = this.state.getId()
-
-    // Show 'back' button if the loaded puzzle has a parent puzzle
-    elements.back.classList.toggle('hide', State.getParent(id) === null)
-
-    // Can't remove puzzles that exist in configuration
-    elements.delete.classList.toggle('hide', Puzzles.has(id))
   }
 
   tap (event) {
@@ -584,15 +572,6 @@ export class Puzzle {
     // Sort by ID to ensure they always appear in the same order regardless of ownership
     return (tile?.modifiers ?? []).concat(this.layout.modifiers)
     // .sort((a, b) => a.id - b.id)
-  }
-
-  async #onBack () {
-    const id = this.state.getId()
-    const parentId = State.getParent(id)
-
-    View.setZoom(1)
-    this.centerOnTile(0, 0)
-    await this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
   }
 
   #onBeamUpdate (event) {
@@ -808,7 +787,6 @@ export class Puzzle {
 
     // TODO https://github.com/kflorence/beaming/issues/71
     // this.#updateDetails()
-    this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
 
@@ -939,7 +917,7 @@ export class Puzzle {
     if (tile) {
       const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
       if (puzzleModifier) {
-        this.footerMessages.add(`Puzzle '${puzzleModifier.getState().puzzleId}'`)
+        this.footerMessages.add(`Puzzle '${puzzleModifier.getState().id}'`)
       }
 
       const colors = Array.from(new Set(

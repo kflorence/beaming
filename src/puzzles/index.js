@@ -1,6 +1,13 @@
 // noinspection JSFileReferences
+import * as packs from './packs/*.json'
+// noinspection JSFileReferences
 import * as puzzles from './*.json'
 import { State } from '../components/state.js'
+
+export class Packs {
+  static ids = Object.keys(packs).sort()
+  static titles = Object.fromEntries(Packs.ids.map((id) => [id, packs[id].title ?? id]))
+}
 
 export class Puzzles {
   static ids = Object.keys(puzzles).sort()

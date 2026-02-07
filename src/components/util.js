@@ -138,6 +138,10 @@ export function emitEvent (type, detail = null) {
   document.dispatchEvent(new CustomEvent(type, { detail }))
 }
 
+export function escape (string) {
+  return string.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 export async function fadeIn (element) {
   return animate(element, 'fade-in').then(() => {
     element.classList.remove('see-through')
