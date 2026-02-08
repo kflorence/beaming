@@ -1,7 +1,6 @@
-import { confirm } from '../../components/dialog.js'
-import { emitEvent } from '../../components/util.js'
+import { confirm } from '../dialog.js'
+import { emitEvent } from '../util.js'
 import Tippy from 'tippy.js'
-import { Keys } from './keys.js'
 
 const $dialog = document.getElementById('dialog-settings')
 const $reset = document.getElementById('settings-cache-reset')
@@ -14,14 +13,18 @@ const tippy = Tippy($reset, {
   trigger: 'manual'
 })
 
-document.addEventListener(Keys.cacheCleared, (event) => {
-  console.debug(event.type)
+export const Events = Object.freeze({
+  CacheClear: 'cache-clear',
+  CacheCleared: 'cache-cleared'
+})
+
+document.addEventListener(Events.CacheCleared, (event) => {
   tippy.show()
   setTimeout(() => tippy.hide(), 1000)
 })
 
 $reset.addEventListener('click', () => {
   confirm('Are you sure you want to reset cache? This cannot be undone.', () => {
-    emitEvent(Keys.cacheClear)
+    emitEvent(Events.CacheClear)
   })
 })

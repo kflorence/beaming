@@ -62,16 +62,46 @@ i {
   word-wrap: normal;
 }
 
+button,
 input {
   border: 1px solid #aaa;
   border-radius: 0.25em;
   cursor: pointer;
+  justify-self: start;
   line-height: 24px;
   padding: 0.5em;
 }
 
+button.danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+button:disabled,
+input:disabled {
+  border: 1px solid #999;
+}
+
+fieldset {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
+  margin: 0;
+  padding: 1em;
+
+  + fieldset {
+    margin-top: 1em;
+  }
+}
+
+fieldset legend {
+  font-weight: bold;
+  line-height: 0;
+  margin: 0;
+  padding: 0 1em;
+}
+
 #editor-new,
-#title-settings,
 #title-quit {
   display: none;
 }
@@ -236,55 +266,6 @@ dialog > main {
 dialog ul {
   margin: 0 0 0 1em;
   padding: 0 0 0 1em;
-}
-
-#dialog-play section {
-  border: 1px solid #ddd;
-  border-radius: 0.5em;
-  padding: 1em;
-
-  h4 {
-    border-bottom: 1px solid #ddd;
-    margin: 0 0 1em 0;
-    padding-bottom: 0.5em;
-  }
-
-  p {
-    margin: 0;
-  }
-
-  textarea {
-    border: 1px solid #aaa;
-    border-radius: 0.5em;
-    box-sizing: border-box;
-    height: 10em;
-    margin: 1em 0;
-    padding: 0.25em;
-    width: 100%;
-  }
-}
-
-#dialog-settings button,
-#dialog-settings input {
-  border: 1px solid #333;
-  border-radius: 0.25em;
-  justify-self: start;
-  margin: 0;
-  padding: 0.5em;
-}
-
-#dialog-settings button.danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
-}
-
-#dialog-settings input:disabled {
-  border: 1px solid #999;
-}
-
-#dialog-settings fieldset p {
-  margin: 1em 0;
 }
 
 #dialog-title {
@@ -607,36 +588,26 @@ dialog ul {
 /* Play
 /* ------------------------------------------------------------------------------------------------------------------ */
 
-#play-profiles {
-  list-style: none;
-  margin: 0 0 1em 0;
-  padding: 0;
+#dialog-play {
+  p {
+    margin: 0;
+  }
 
-  li {
-    cursor: pointer;
-    display: flex;
-    line-height: 24px;
-    padding: 0.5em 0;
-    text-overflow: ellipsis;
-
-    &.selected {
-      cursor: default;
-      font-weight: bold;
-
-      .flex-left:before {
-        content: '>';
-        margin-right: 0.5em;
-      }
-    }
-
-    .remove {
-      cursor: pointer;
-    }
+  textarea {
+    border: 1px solid #aaa;
+    border-radius: 0.5em;
+    box-sizing: border-box;
+    height: 10em;
+    margin: 1em 0;
+    padding: 0.25em;
+    width: 100%;
   }
 }
 
-#play-profiles-name {
-  margin-right: 1em;
+#play-puzzles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -801,6 +772,64 @@ dialog ul {
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
+/* Settings
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#dialog-settings fieldset p {
+  margin: 0 0 1em 0;
+}
+
+#settings-profile {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
+  list-style: none;
+  margin: 0 0 1em 0;
+  overflow: clip;
+  padding: 0;
+
+  li {
+    border-bottom: 1px solid #aaa;
+    cursor: pointer;
+    display: flex;
+    line-height: 24px;
+    padding: 0.5em;
+    text-overflow: ellipsis;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &.selected {
+      background-color: #eee;
+      cursor: default;
+      font-weight: bold;
+    }
+
+    .remove {
+      cursor: pointer;
+    }
+  }
+}
+
+#settings-profile-name {
+  margin-right: 1em;
+}
+
+#settings-window {
+  display: none;
+}
+
+.electron #settings-window {
+  display: block;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  grid-gap: 1em;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
 /* Classes
 /* ------------------------------------------------------------------------------------------------------------------ */
 
@@ -864,7 +893,7 @@ dialog ul {
 }
 
 .electron {
-  #title-settings,
+  #settings-window,
   #title-quit {
     display: block;
   }
@@ -1042,12 +1071,6 @@ dialog ul {
 
 .see-through {
   opacity: 0;
-}
-
-.settings {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  grid-gap: 1em;
 }
 
 .text {

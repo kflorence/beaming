@@ -6,8 +6,9 @@ import { animate, classToString, emitEvent, params, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
-import { Keys } from '../electron/settings/keys.js'
 import { View } from './view.js'
+import { Events } from './settings/cache.js'
+import { Packs, Puzzles } from '../puzzles/index.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -16,9 +17,7 @@ const elements = Object.freeze({
   dialogTitle: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
   play: document.getElementById('play'),
-  profiles: document.getElementById('play-profiles'),
-  profilesAdd: document.getElementById('play-profiles-add'),
-  profilesName: document.getElementById('play-profiles-name'),
+  puzzles: document.getElementById('play-puzzles'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
   select: document.getElementById('select'),
@@ -41,16 +40,14 @@ export class Game {
       // { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
       // { type: 'click', element: elements.play, handler: this.play },
-      { type: 'click', element: elements.profiles, handler: this.#onProfilesClick },
-      { type: 'click', element: elements.profilesAdd, handler: this.#onProfilesAdd },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
-      { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
+      { type: Events.CacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    this.#profilesLoad()
+    this.updatePuzzles()
 
     if (Game.is(Game.States.Play)) {
       // noinspection JSIgnoredPromiseFromCall
@@ -104,6 +101,39 @@ export class Game {
     }
   }
 
+  updatePuzzles () {
+    elements.puzzles.replaceChildren()
+
+    Object.entries(Packs.titles).forEach(([id, title]) => {
+      const li = document.createElement('li')
+      li.classList.add('puzzle')
+      li.classList.toggle('selected', id === State.getId())
+      li.dataset.id = id
+
+      const span = document.createElement('span')
+      span.classList.add('title')
+      span.textContent = title
+      li.append(span)
+
+      const ul = document.createElement('ul')
+      ul.classList.add('imports')
+
+      const pack = Packs.get(id)
+      pack.layout.imports.forEach((ref) => {
+        const state = State.fromCache(ref.id)
+        const li = document.createElement('li')
+        li.classList.toggle('unlocked', state !== undefined)
+        li.dataset.id = ref.id
+        li.textContent = Puzzles.titles[ref.id]
+        ul.append(li)
+      })
+
+      li.append(ul)
+
+      elements.puzzles.append(li)
+    })
+  }
+
   async #onBack () {
     const currentId = this.puzzle.state.getId()
     const parentId = params.get(State.CacheKeys.Parent)
@@ -125,41 +155,6 @@ export class Game {
     })
   }
 
-  #onProfilesAdd () {
-    const name = elements.profilesName.value
-    const profile = Storage.Profiles.add(name)
-    Storage.Profiles.set(profile.id)
-
-    elements.profiles.querySelector('.selected').classList.remove('selected')
-    this.#profilesAdd(profile)
-
-    elements.profilesName.value = ''
-  }
-
-  #onProfilesClick (event) {
-    const profile = event.target.closest('.profile')
-    const remove = event.target.closest('.remove')
-    const id = profile?.dataset.id
-    if (remove) {
-      Storage.Profiles.remove(id)
-      profile.remove()
-      if (profile.classList.contains('selected')) {
-        // If the removed profile was selected, select the last profile that was created
-        const selected = elements.profiles.querySelector('li:last-child')
-        selected.classList.add('selected')
-        Storage.Profiles.set(selected.dataset.id)
-      }
-    } else {
-      if (!profile || profile.classList.contains('selected')) {
-        return
-      }
-
-      elements.profiles.querySelector('.selected').classList.toggle('selected')
-      Storage.Profiles.set(id)
-      profile.classList.add('selected')
-    }
-  }
-
   async #onSelect (event) {
     await this.select(event.target.value, {
       animations: [Puzzle.Animations.FadeIn, Puzzle.Animations.FadeOutBefore]
@@ -172,7 +167,7 @@ export class Game {
     window.localStorage.clear()
     await window.electron?.store.delete()
     await this.puzzle.select()
-    emitEvent(Keys.cacheCleared)
+    emitEvent(Events.CacheCleared)
   }
 
   #onStorageDelete (event) {
@@ -196,45 +191,6 @@ export class Game {
 
     window.electron?.store.set(event.detail.key, event.detail.value)
   }
-
-  #profilesAdd (profile) {
-    const selected = Storage.Profile.get() ?? Storage.Profiles.Default
-
-    const li = document.createElement('li')
-    li.classList.add('profile')
-    li.classList.toggle('selected', profile.id === selected.id)
-    li.dataset.id = profile.id
-
-    const left = document.createElement('div')
-    left.classList.add('flex-left')
-    left.textContent = profile.name
-    li.append(left)
-
-    if (profile.id !== Storage.Profiles.Default.id) {
-      const right = document.createElement('div')
-      right.classList.add('flex-right')
-
-      const span = document.createElement('span')
-      span.classList.add('remove')
-      span.title = 'Remove Profile'
-      right.append(span)
-
-      const icon = document.createElement('i')
-      icon.classList.add('ph-bold', 'ph-trash')
-      span.append(icon)
-
-      li.append(right)
-    }
-
-    elements.profiles.append(li)
-  }
-
-  #profilesLoad () {
-    const profiles = [Storage.Profiles.Default].concat(Storage.Profiles.get())
-    profiles.forEach((profile) => this.#profilesAdd(profile))
-  }
-
-  #profilesRemove () {}
 
   #reset (state) {
     if (!state) {

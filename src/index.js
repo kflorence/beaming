@@ -5,6 +5,7 @@ import 'tippy.js/dist/tippy.css'
 
 import './components/paper.js'
 import './components/dialog.js'
+import './components/settings.js'
 
 import { Game } from './components/game'
 import pkg from '../package.json'

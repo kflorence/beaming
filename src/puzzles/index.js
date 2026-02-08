@@ -7,6 +7,17 @@ import { State } from '../components/state.js'
 export class Packs {
   static ids = Object.keys(packs).sort()
   static titles = Object.fromEntries(Packs.ids.map((id) => [id, packs[id].title ?? id]))
+
+  static get (id) {
+    if (Packs.has(id)) {
+      // Note: deep cloning puzzles to prevent mutation
+      return structuredClone(packs[id])
+    }
+  }
+
+  static has (id) {
+    return Packs.ids.includes(id)
+  }
 }
 
 export class Puzzles {

@@ -106,23 +106,16 @@
         </div>
       </header>
       <main>
-        <div class="flex-two-column">
-          <section>
-            <h4>Profiles</h4>
-            <ul id="play-profiles"></ul>
-            <label class="hide" for="play-profiles-name">Create new profile</label>
-            <input type="text" id="play-profiles-name"><button id="play-profiles-add">Create</button>
-          </section>
-          <section>
-            <h4>Puzzles</h4>
-            <ul id="play-puzzles"></ul>
-          </section>
-          <section class="full-width" id="play-custom">
-            <p><label for="play-custom-configuration">Load a puzzle from configuration</label></p>
-            <textarea id="play-custom-configuration"></textarea>
-            <button id="play-custom-load">Load</button>
-          </section>
-        </div>
+        <fieldset>
+          <legend>Puzzles</legend>
+          <ul id="play-puzzles"></ul>
+        </fieldset>
+        <fieldset id="play-custom">
+          <legend>Import</legend>
+          <p><label for="play-custom-configuration">Load a puzzle from configuration</label></p>
+          <textarea id="play-custom-configuration"></textarea>
+          <button id="play-custom-load">Load</button>
+        </fieldset>
       </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-about">
@@ -391,6 +384,12 @@
       </header>
       <main>
         <fieldset>
+          <legend>Profiles</legend>
+          <ul id="settings-profile"></ul>
+          <label class="hide" for="settings-profile-name">Create new profile</label>
+          <input type="text" id="settings-profile-name"><button id="settings-profile-create">New Profile</button>
+        </fieldset>
+        <fieldset id="settings-window">
           <legend>Window</legend>
           <div class="settings">
             <input id="settings-window-fullscreen" name="settings-window" type="radio" value="fullscreen" />
