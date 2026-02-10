@@ -32,6 +32,7 @@ import { Game } from './game'
 import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
 import { Tile } from './items/tile.js'
+import { Storage } from './storage.js'
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas-wrapper'),
@@ -398,6 +399,7 @@ export class Puzzle {
       return
     }
 
+    // FIXME should not be able to load a puzzle that has not been unlocked yet
     await this.reload(State.resolve(id), options)
   }
 
@@ -767,12 +769,15 @@ export class Puzzle {
   async #setup (options, project = { cleanup: () => {} }) {
     const { layout, requirements } = this.state.getCurrent()
 
+    const id = this.state.getId()
+    State.add(id)
+    Storage.set(State.key(), id)
+
     await this.resize(false)
 
     this.footerMessages.reset()
     this.headerMessages.reset()
     this.state.setSolution([])
-    State.add(this.state.getId())
 
     this.layout = new Layout(layout)
     this.#requirements = new Requirements(requirements)
@@ -804,6 +809,8 @@ export class Puzzle {
 
     // If the old canvas hasn't been cleaned up yet, do it now
     project.cleanup()
+
+    Puzzles.updateDom()
 
     document.body.classList.add(Puzzle.Events.Loaded)
   }
@@ -1102,6 +1109,12 @@ export class Puzzle {
       },
       layout: Layout.schema(),
       requirements: Requirements.schema(),
+      unlocked: {
+        options: {
+          hidden: true
+        },
+        type: 'boolean'
+      },
       version: {
         default: 0,
         type: 'number'

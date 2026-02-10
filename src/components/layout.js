@@ -14,8 +14,6 @@ import {
   emitEvent,
   hexagon,
   merge,
-  nonEmpty,
-  params,
   removeEmpties
 } from './util.js'
 import { ModifierFilter } from './modifier.js'
@@ -169,12 +167,6 @@ export class Layout extends Stateful {
     this.modifiers = state.modifiers
       .map((state, index) => Modifiers.factory(null, state, index))
       .filter((modifier) => modifier !== undefined)
-
-    if (nonEmpty(this.#imports)) {
-      params.set(State.CacheKeys.Parent, state.id)
-    } else {
-      params.delete(State.CacheKeys.Parent)
-    }
 
     this.setState(state)
     this.#updateModifiers()

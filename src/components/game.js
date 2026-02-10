@@ -8,7 +8,7 @@ import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
 import { View } from './view.js'
 import { Events } from './settings/cache.js'
-import { Packs, Puzzles } from '../puzzles/index.js'
+import { Puzzles } from '../puzzles/index.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
@@ -35,11 +35,11 @@ export class Game {
     this.editor = new Editor(this.puzzle)
 
     this.#eventListeners.add([
-      // { type: 'change', element: elements.select, handler: this.#onSelect },
       { type: 'click', element: elements.back, handler: this.#onBack },
       // { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
       // { type: 'click', element: elements.play, handler: this.play },
+      { type: 'click', element: elements.puzzles, handler: this.#onSelect },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
       { type: Events.CacheClear, handler: this.#onSettingsCacheClear },
@@ -47,8 +47,9 @@ export class Game {
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    this.updatePuzzles()
+    Puzzles.updateDom()
 
+    // FIXME it should only do this if there is an ID in the URL. otherwise it should show the play modal
     if (Game.is(Game.States.Play)) {
       // noinspection JSIgnoredPromiseFromCall
       this.play()
@@ -70,13 +71,14 @@ export class Game {
     await Game.dialogClose(elements.dialogTitle)
   }
 
-  async play () {
+  async play (id) {
     if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset(Game.States.Play)
       this.editor.teardown()
       this.puzzle.teardown()
-      await this.puzzle.select({ animations: [Puzzle.Animations.FadeIn] })
     }
+
+    await this.puzzle.select(id, { animations: [Puzzle.Animations.FadeIn] })
 
     await Game.dialogClose(elements.dialogPlay)
   }
@@ -101,44 +103,21 @@ export class Game {
     }
   }
 
-  updatePuzzles () {
-    elements.puzzles.replaceChildren()
-
-    Object.entries(Packs.titles).forEach(([id, title]) => {
-      const li = document.createElement('li')
-      li.classList.add('puzzle')
-      li.classList.toggle('selected', id === State.getId())
-      li.dataset.id = id
-
-      const span = document.createElement('span')
-      span.classList.add('title')
-      span.textContent = title
-      li.append(span)
-
-      const ul = document.createElement('ul')
-      ul.classList.add('imports')
-
-      const pack = Packs.get(id)
-      pack.layout.imports.forEach((ref) => {
-        const state = State.fromCache(ref.id)
-        const li = document.createElement('li')
-        li.classList.toggle('unlocked', state !== undefined)
-        li.dataset.id = ref.id
-        li.textContent = Puzzles.titles[ref.id]
-        ul.append(li)
-      })
-
-      li.append(ul)
-
-      elements.puzzles.append(li)
-    })
-  }
-
   async #onBack () {
     const currentId = this.puzzle.state.getId()
-    const parentId = params.get(State.CacheKeys.Parent)
+    const parent = params.get(State.CacheKeys.Parent)
+    const parents = parent?.split(',')
+    const parentId = parents?.pop()
 
-    if (parentId !== null && currentId !== parentId) {
+    if (parentId !== undefined && currentId !== parentId) {
+      // Update parents breadcrumbs
+      if (parents.length) {
+        params.set(State.CacheKeys.Parent, parents.join(','))
+      } else {
+        params.delete(State.CacheKeys.Parent)
+      }
+
+      // TODO replace this with screen slide animation
       // Go back to parent puzzle
       View.setZoom(1)
       this.puzzle.centerOnTile(0, 0)
@@ -156,9 +135,15 @@ export class Game {
   }
 
   async #onSelect (event) {
-    await this.select(event.target.value, {
-      animations: [Puzzle.Animations.FadeIn, Puzzle.Animations.FadeOutBefore]
-    })
+    const $item = event.target.closest('.puzzle')
+    const id = $item.dataset.id
+    const puzzle = Puzzles.get(id)
+    const state = State.fromCache(id)
+    if (!puzzle.unlocked && state === undefined) {
+      console.debug(`Puzzle not unlocked: ${id}`)
+      return
+    }
+    this.play(id)
   }
 
   async #onSettingsCacheClear (event) {

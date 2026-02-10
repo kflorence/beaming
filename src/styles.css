@@ -608,6 +608,63 @@ dialog ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  position: relative;
+
+  li {
+    color: #999;
+    display: block;
+    line-height: 24px;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 calc(1em - 1px);
+    position: relative;
+
+    &:after,
+    &:before {
+      box-sizing: border-box;
+      content: '';
+      display: block;
+      position: absolute;
+    }
+
+    &:before {
+      border-left: 1px solid #aaa;
+      height: 100%;
+      left: 0;
+      top: 0;
+    }
+
+    &:after {
+      border-bottom: 1px solid #aaa;
+      left: 0;
+      top: 0.5lh;
+      width: 1em;
+    }
+
+    &:last-child:before {
+      height: 0.5lh;
+    }
+
+    &.selected > .title {
+      font-weight: bold;
+    }
+
+    &.unlocked > .title {
+      color: #333;
+      cursor: pointer;
+    }
+
+    .title {
+      display: block;
+      margin-left: 0.5em;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin: 0 0 0 1.5em;
+    padding: 0;
+  }
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

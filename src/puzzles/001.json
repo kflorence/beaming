@@ -1,5 +1,7 @@
 {
-  "id": "56bd2470",
+  "id": "001",
+  "title": "Introductory Pack",
+  "unlocked": true,
   "layout": {
     "offset": "odd-row",
     "tiles": {
@@ -3083,7 +3085,6 @@
     ]
   },
   "version": 0,
-  "title": "Puzzle Pack 001",
   "requirements": [
     {
       "type": "connections",

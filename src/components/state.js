@@ -250,6 +250,11 @@ export class State {
     const data = { id }
     const hashParams = ['', id]
 
+    if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
+      data.state = this.encode()
+      Storage.set(State.key(id), data.state)
+    }
+
     url.hash = hashParams.join('/')
     history.pushState(data, '', url)
     Storage.set(State.key(), id)
@@ -370,10 +375,6 @@ export class State {
     )
   }
 
-  static getState (id) {
-    return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
-  }
-
   static getBaseKeys () {
     return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(State.getContext, scope, State.getId)))
   }
@@ -387,6 +388,7 @@ export class State {
   }
 
   static getId () {
+    console.log(State.key())
     return Storage.get(State.key())
   }
 
