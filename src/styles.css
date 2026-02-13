@@ -604,6 +604,19 @@ dialog ul {
   }
 }
 
+#play-custom-configuration-error {
+  background-color: #dc3545;
+  border: 1px #dc3545 solid;
+  border-radius: 0.25em;
+  color: white;
+  margin-bottom: 1em;
+  padding: 1em;
+
+  &:empty {
+    display: none;
+  }
+}
+
 #play-puzzles {
   list-style: none;
   margin: 0;
@@ -612,7 +625,6 @@ dialog ul {
 
   li {
     color: #999;
-    display: block;
     line-height: 24px;
     list-style: none;
     margin: 0;
@@ -645,11 +657,12 @@ dialog ul {
       height: 0.5lh;
     }
 
-    &.selected > .title {
+    &.selected > .wrapper .title {
       font-weight: bold;
     }
 
-    &.unlocked > .title {
+    &.unlocked > .wrapper .title,
+    .remove {
       color: #333;
       cursor: pointer;
     }
@@ -657,6 +670,11 @@ dialog ul {
     .title {
       display: block;
       margin-left: 0.5em;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: row;
     }
   }
 

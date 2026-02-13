@@ -33,12 +33,22 @@ export class Puzzles {
       li.classList.toggle('unlocked', puzzle.unlocked === true || state !== undefined)
       li.dataset.id = id
 
-      const span = document.createElement('span')
-      span.classList.add('title')
-      span.textContent = Puzzles.titles[id] ?? state.getTitle() ?? id
-      li.append(span)
+      const div = document.createElement('div')
+      div.classList.add('wrapper')
+      li.append(div)
 
-      if (puzzle.layout.imports?.length) {
+      const span = document.createElement('span')
+      span.classList.add('flex-left', 'title')
+      span.textContent = Puzzles.titles[id] ?? state.getTitle() ?? id
+      div.append(span)
+
+      if (!Puzzles.has(id)) {
+        const i = document.createElement('i')
+        i.classList.add('flex-right', 'ph-bold', 'ph-trash', 'remove')
+        div.append(i)
+      }
+
+      if (puzzle.layout?.imports?.length) {
         const ul = document.createElement('ul')
         ul.classList.add('imports')
         puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id)))

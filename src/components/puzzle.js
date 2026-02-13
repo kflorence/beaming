@@ -3,7 +3,7 @@ import chroma from 'chroma-js'
 import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Project, Size } from 'paper'
 import {
-  addClass,
+  addClass, animate,
   appendOption,
   base64encode, baseUrl, classToString,
   debounce,
@@ -323,7 +323,7 @@ export class Puzzle {
     const project = this.project
 
     if (element) {
-      element.classList.remove('active')
+      element.classList.remove(Puzzle.ClassNames.Active)
     }
 
     this.#createProject(options)
@@ -388,19 +388,20 @@ export class Puzzle {
   }
 
   async select (id, options) {
-    if (typeof id === 'object') {
-      // id could be null
-      options = id ?? {}
-      id = undefined
-    }
+    const state = id instanceof State ? id : State.resolve(id)
+    id = state.getId()
 
-    if (id !== undefined && id === this.state?.getId()) {
-      // This ID is already selected
+    if (id === this.state?.getId()) {
+      // This ID is already selected, nothing to do
       return
     }
 
-    // FIXME should not be able to load a puzzle that has not been unlocked yet
-    await this.reload(State.resolve(id), options)
+    const isUnlocked = State.fromCache(id) !== undefined
+    if (!(isUnlocked || state.unlocked)) {
+      return this.onError('This puzzle has not been unlocked yet.')
+    }
+
+    await this.reload(state, options)
   }
 
   tap (event) {
@@ -554,7 +555,7 @@ export class Puzzle {
 
     this.element = document.createElement('canvas')
 
-    this.element.className = 'active'
+    this.element.className = Puzzle.ClassNames.Active
     this.element.height = height
     this.element.width = width
     this.element.style.height = height + 'px'
@@ -799,6 +800,18 @@ export class Puzzle {
     // noinspection ES6MissingAwait
     this.update()
 
+    if (options.animations?.includes(Puzzle.Animations.SlideLeft)) {
+      await Promise.all([
+        animate(project.element, 'slide-left-out'),
+        animate(this.element, 'slide-left-in')
+      ])
+    } else if (options.animations?.includes(Puzzle.Animations.SlideRight)) {
+      await Promise.all([
+        animate(project.element, 'slide-right-out'),
+        animate(this.element, 'slide-right-in')
+      ])
+    }
+
     if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
       await fadeIn(this.element)
     }
@@ -1009,7 +1022,9 @@ export class Puzzle {
   static Animations = Object.freeze({
     FadeIn: 'fade-in',
     FadeOutAfter: 'fade-out-after',
-    FadeOutBefore: 'fade-out-before'
+    FadeOutBefore: 'fade-out-before',
+    SlideLeft: 'slide-left',
+    SlideRight: 'slide-right'
   })
 
   static ClassNames = Object.freeze({

@@ -90,7 +90,7 @@
     <dialog class="fullscreen" id="dialog-title">
       <svg id="logo"><use href="images/logo.svg#root"></use></svg>
       <ul>
-        <li data-dialog="dialog-play">play</li>
+        <li data-dialog="dialog-play" id="title-play">play</li>
         <li data-dialog="dialog-about">about</li>
         <li data-dialog="dialog-settings" id="title-settings">settings</li>
         <li id="title-editor">editor</li>
@@ -114,6 +114,7 @@
           <legend>Import</legend>
           <p><label for="play-custom-configuration">Load a puzzle from configuration</label></p>
           <textarea id="play-custom-configuration"></textarea>
+          <div id="play-custom-configuration-error"></div>
           <button id="play-custom-load">Load</button>
         </fieldset>
       </main>

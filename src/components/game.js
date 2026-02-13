@@ -2,21 +2,23 @@ import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import { debug } from './debug'
-import { animate, classToString, emitEvent, params, url } from './util'
+import { animate, classToString, emitEvent, params, uniqueId, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
-import { View } from './view.js'
 import { Events } from './settings/cache.js'
 import { Puzzles } from '../puzzles/index.js'
 
 const elements = Object.freeze({
   back: document.getElementById('back'),
+  configuration: document.getElementById('play-custom-configuration'),
+  configurationError: document.getElementById('play-custom-configuration-error'),
   delete: document.getElementById('delete'),
   dialogPlay: document.getElementById('dialog-play'),
   dialogTitle: document.getElementById('dialog-title'),
   edit: document.getElementById('title-editor'),
-  play: document.getElementById('play'),
+  load: document.getElementById('play-custom-load'),
+  play: document.getElementById('title-play'),
   puzzles: document.getElementById('play-puzzles'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
@@ -38,7 +40,7 @@ export class Game {
       { type: 'click', element: elements.back, handler: this.#onBack },
       // { type: 'click', element: elements.delete, handler: this.#onDelete },
       { type: 'click', element: elements.edit, handler: this.edit },
-      // { type: 'click', element: elements.play, handler: this.play },
+      { type: 'click', element: elements.load, handler: this.#onLoad },
       { type: 'click', element: elements.puzzles, handler: this.#onSelect },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
@@ -49,11 +51,16 @@ export class Game {
 
     Puzzles.updateDom()
 
-    // FIXME it should only do this if there is an ID in the URL. otherwise it should show the play modal
+    const state = State.resolve()
     if (Game.is(Game.States.Play)) {
-      // noinspection JSIgnoredPromiseFromCall
-      this.play()
+      if (!state) {
+        elements.dialogPlay.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.play(state)
+      }
     } else if (Game.is(Game.States.Edit)) {
+      // TODO edit should also have a screen in front of the editor for managing puzzles for editing
       // noinspection JSIgnoredPromiseFromCall
       this.edit()
     } else {
@@ -71,14 +78,18 @@ export class Game {
     await Game.dialogClose(elements.dialogTitle)
   }
 
-  async play (id) {
+  async play (state) {
     if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset(Game.States.Play)
+
+      // Transition back to the puzzle when the play dialog is closed
+      elements.play.dataset.element = 'screen'
+
       this.editor.teardown()
       this.puzzle.teardown()
     }
 
-    await this.puzzle.select(id, { animations: [Puzzle.Animations.FadeIn] })
+    await this.puzzle.select(state, { animations: [Puzzle.Animations.FadeIn] })
 
     await Game.dialogClose(elements.dialogPlay)
   }
@@ -117,33 +128,51 @@ export class Game {
         params.delete(State.CacheKeys.Parent)
       }
 
-      // TODO replace this with screen slide animation
-      // Go back to parent puzzle
-      View.setZoom(1)
-      this.puzzle.centerOnTile(0, 0)
-      this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
+      this.select(parentId, { animations: [Puzzle.Animations.SlideRight] })
     } else {
       Game.dialogOpen(elements.dialogPlay)
     }
   }
 
-  #onDelete () {
-    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', async () => {
-      const ids = State.delete(this.puzzle.state.getId())
-      await this.select(ids[ids.length - 1])
+  #delete (id) {
+    if (Puzzles.has(id)) {
+      return
+    }
+
+    confirm(`Are you sure you want to remove puzzle "${id}"? This cannot be undone.`, async () => {
+      State.delete(id)
+      Puzzles.updateDom()
     })
+  }
+
+  async #onLoad () {
+    try {
+      const configuration = JSON.parse(elements.configuration.value)
+      const state = new State(configuration.id ?? uniqueId(), configuration)
+      await this.puzzle.reload(state, { animations: [Puzzle.Animations.FadeIn] })
+      elements.configuration.value = ''
+      elements.configurationError.textContent = ''
+      await Game.dialogClose(elements.dialogPlay)
+    } catch (e) {
+      console.error(e)
+      elements.configurationError.textContent = 'Could not load puzzle: configuration is invalid'
+    }
   }
 
   async #onSelect (event) {
     const $item = event.target.closest('.puzzle')
     const id = $item.dataset.id
-    const puzzle = Puzzles.get(id)
-    const state = State.fromCache(id)
-    if (!puzzle.unlocked && state === undefined) {
-      console.debug(`Puzzle not unlocked: ${id}`)
-      return
+    if (event.target.classList.contains('remove')) {
+      this.#delete(id)
+    } else {
+      const puzzle = Puzzles.get(id)
+      const state = State.fromCache(id)
+      if (!puzzle?.unlocked && state === undefined) {
+        console.debug(`Puzzle not unlocked: ${id}`)
+        return
+      }
+      this.play(id)
     }
-    this.play(id)
   }
 
   async #onSettingsCacheClear (event) {

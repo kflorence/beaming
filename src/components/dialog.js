@@ -1,9 +1,14 @@
 import { animate } from './util.js'
 
 const title = document.getElementById('dialog-title')
+const screen = document.getElementById('screen')
 
-document.querySelectorAll('[data-dialog]').forEach((element) => {
-  const id = element.dataset.dialog
+function getElement () {
+  return title.open ? title : screen
+}
+
+document.querySelectorAll('[data-dialog]').forEach((target) => {
+  const id = target.dataset.dialog
   const dialog = document.getElementById(id)
   if (!dialog) {
     console.warn(`No matching dialog found for ID: ${id}`)
@@ -12,21 +17,30 @@ document.querySelectorAll('[data-dialog]').forEach((element) => {
 
   const close = dialog.querySelector('header button')
   close.addEventListener('click', async () => {
-    await Promise.all([
-      animate(dialog, 'slide-down-out', () => { dialog.close() }),
-      animate(title, 'slide-down-in', () => { title.showModal() })
-    ])
+    const element = getElement()
+    const direction = element?.id === title.id ? 'right' : 'left'
+    const promises = [() => animate(dialog, `slide-${direction}-out`, () => { dialog.close() })]
+    console.log(element)
+    if (element) {
+      promises.push(() => animate(element, `slide-${direction}-in`, () => { element.showModal?.() }))
+    }
+    await Promise.all(promises.map((promise) => promise()))
   })
 
-  element.addEventListener('click', async () => {
+  target.addEventListener('click', async () => {
     if (!dialog.open) {
-      await Promise.all([
-        animate(dialog, 'slide-up-in', () => {
+      const element = getElement()
+      const direction = element?.id === title.id ? 'left' : 'right'
+      const promises = [
+        () => animate(dialog, `slide-${direction}-in`, () => {
           dialog.showModal()
-          dialog.dispatchEvent(new CustomEvent('open'))
-        }),
-        animate(title, 'slide-up-out', () => { title.close() })
-      ])
+          dialog.dispatchEvent(new CustomEvent('opened'))
+        })
+      ]
+      if (element) {
+        promises.push(() => animate(element, `slide-${direction}-out`, () => { element.close?.() }))
+      }
+      await Promise.all(promises.map((promise) => promise()))
     }
   })
 })

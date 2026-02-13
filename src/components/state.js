@@ -388,7 +388,6 @@ export class State {
   }
 
   static getId () {
-    console.log(State.key())
     return Storage.get(State.key())
   }
 
@@ -406,17 +405,6 @@ export class State {
       // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
       // Encoded state will take precedence over ID (in case there is a mismatch with local cache)
       values.push(...url.hash.substring(1).split('/').filter((path) => path !== '').reverse())
-
-      // Last active puzzle ID
-      const lastId = State.getId()
-      if (lastId !== null) {
-        values.push(lastId)
-      }
-
-      if (values.length === 0 && !params.has(State.ParamKeys.Edit)) {
-        // If puzzle is not being edited, fall back to first puzzle ID
-        values.push(Puzzles.firstId)
-      }
     }
 
     if (params.has(State.ParamKeys.ClearCache)) {
@@ -462,12 +450,7 @@ export class State {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
 
-    if (!state && !params.has(State.ParamKeys.Edit)) {
-      throw new Error(`Could not resolve state for puzzle ID ${id}.`)
-    }
-
-    // Return an empty state if all else fails
-    return state ?? new State(id)
+    return state
   }
 
   static CacheKeys = Object.freeze({
