@@ -8,9 +8,17 @@ import { View } from './view'
 import { Schema } from './schema'
 import { State } from './state.js'
 import { ImportFilter, Imports } from './import.js'
-import { classToString, hexagon } from './util.js'
+import {
+  arrayMergeUniqueById,
+  classToString,
+  emitEvent,
+  hexagon,
+  merge,
+  removeEmpties
+} from './util.js'
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
+import { Flags } from './flag.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -39,144 +47,129 @@ export class Layout extends Stateful {
     this.offset = state.offset ?? Layout.Offsets.OddRow
     this.#offset = new Point(this.offset === Layout.Offsets.EvenRow ? this.parameters.width / 2 : 0, 0)
 
-    // Remove any previously imported tiles from state.
-    const imports = {}
-    for (const r in tiles) {
-      const row = tiles[r]
-      for (const c in row) {
-        const ref = row[c].ref
-        if (ref) {
-          const tile = tiles[r][c]
-          // Keep a reference to the previous state of the tile, at its location in the puzzle that owns it, so it can
-          // be carried over if the tile is still being imported
-          imports[ref.id] ??= {}
-          imports[ref.id][ref.offset.r] ??= {}
-          imports[ref.id][ref.offset.r][ref.offset.c] = tile
-          delete tiles[r][c]
-        }
-      }
-    }
-
     this.#imports = {}
     state.importsCache ??= {}
     state.imports ??= []
+    const importConfigs = {}
     for (const ref of state.imports) {
       const { id, offset } = ref
       console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, ref)
 
       this.#imports[id] = structuredClone(ref)
 
-      // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
-      // This will ensure the latest version will always get cached in the puzzle if cache is true.
-      const source = (
-        State.fromCache(id) ||
-        State.fromConfig(id) ||
-        State.fromEncoded(state.importsCache[id])
-      )
-
+      const source = this.getCached(id, state)
       if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
 
       console.debug(Layout.toString(), `Resolved source for puzzle ID '${id}'`, source)
 
-      // Need to convert offsets into cube/axial coordinates to generate the proper offsets for each tile below.
-      // This is because the offsets cannot be applied statically across tiles, because they are different depending
-      // on where in the grid the tile is located (due to the even/odd offsetting of tiles).
-      const anchorAxial = OffsetCoordinates.toAxialCoordinates(new OffsetCoordinates(offset.r, offset.c))
-
       if (ref.cache === true) {
         // Include the imported puzzle's configuration in the current puzzle's configuration.
         // This is only necessary for custom puzzles, since official puzzles can be loaded from configuration.
         // Note: cloning here will cause any history to get squashed into the base config
-        const cache = state.importsCache[id] = source.clone().encode()
-        Storage.set(State.key(id), cache)
-        State.add(id)
+        state.importsCache[id] = source.clone().encode()
       } else {
         delete state.importsCache[id]
       }
 
-      const importFilters = (ref.filters ?? []).map((filter) => ImportFilter.factory(filter))
-      if (
-        !importFilters
-          .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
-          .every((filter) => filter.apply(source))
-      ) {
-        console.debug(Layout.toString(), `Not importing puzzle ID '${id}' due to failing import filters`)
-        continue
-      }
-
-      const config = source.clone().getConfig()
+      const config = importConfigs[id] = source.getCurrent()
       if (!config.layout) {
         // Generally indicates a problem
         console.warn(Layout.toString(), `Resolved config has no layout for puzzle ID '${id}'`)
       }
 
+      const importFilters = (ref.filters ?? []).map((filter) => ImportFilter.factory(filter))
+      const itemFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Item)
+      const modifierFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Modifier)
+      const tileFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Tile)
+
+      const excludeImport = !importFilters
+        .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
+        .every((filter) => filter.apply(source, ref))
+      if (excludeImport) {
+        console.debug(Layout.toString(), `Excluding tiles from import '${ref.id}' due to failed puzzle filter`)
+      }
+
+      // Need to convert offsets into cube/axial coordinates to generate the proper offsets for each tile below.
+      // This is because the offsets cannot be applied statically across tiles, because they are different depending
+      // on where in the grid the tile is located (due to the even/odd offsetting of tiles).
+      const anchorAxial = OffsetCoordinates.toAxialCoordinates(new OffsetCoordinates(ref.offset.r, ref.offset.c))
+
       config.layout ??= {}
       config.layout.tiles ??= []
-      const itemFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Item)
-      const tileFilters = importFilters.filter((filter) => filter.type === ImportFilter.Types.Tile)
       for (const r in config.layout.tiles) {
         const row = config.layout.tiles[r]
         for (const c in row) {
-          const tile = row[c]
           const tileOffset = new OffsetCoordinates(Number(r), Number(c))
           const tileAxial = OffsetCoordinates.toAxialCoordinates(tileOffset)
           const translatedOffset = CubeCoordinates.toOffsetCoordinates(anchorAxial.add(tileAxial))
 
-          if (tile.items) {
-            tile.items = tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+          const existing = tiles[translatedOffset.r]?.[translatedOffset.c]
+          if (existing && existing.ref?.id !== ref.id) {
+            throw new Error(`Collision detected when importing tile from puzzle '${ref.id}' to '${translatedOffset}'.`)
           }
 
-          // Carry over any previous state changes for the tile
-          Object.assign(tile, imports[id]?.[tileOffset.r]?.[tileOffset.c] || {})
+          const tile = row[c]
+          const flags = new Flags()
+
+          if (excludeImport) {
+            flags.add(Tile.Flags.Hidden)
+          }
+
+          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile))) {
+            flags.add(Tile.Flags.Placeholder)
+          }
+
+          tile.flags = flags.get()
+
+          if (tile.items) {
+            // Items are excluded by default. Filters can be used to include them
+            tile.items = itemFilters.length === 0
+              ? []
+              : tile.items.filter((item) => itemFilters.every((filter) => filter.apply(source, item)))
+          }
+
+          if (tile.modifiers) {
+            // Modifiers are excluded by default. Filters can be used to include them
+            tile.modifiers = modifierFilters.length === 0
+              ? []
+              : tile.modifiers.filter((item) => modifierFilters.every((filter) => filter.apply(source, item)))
+          }
+
+          // Merge the base configuration with any existing configuration
+          const state = merge(tile, existing || {}, { arrayMerge: arrayMergeUniqueById })
 
           // Keep a reference to the puzzle and location the tile was imported from in state
-          tile.ref = { id, offset: { r: tileOffset.r, c: tileOffset.c } }
-
-          if (!tileFilters.every((filter) => filter.apply(source, translatedOffset, tile))) {
-            // If any filter fails, the tile will not be imported.
-            console.debug(
-              Layout.toString(),
-              `Not importing tile from puzzle '${id}' at '${translatedOffset}' due to failing filter`
-            )
-            continue
-          }
-
-          if (tiles[translatedOffset.r]?.[translatedOffset.c]) {
-            // There is already a tile at this location
-            throw new Error(`Collision detected when importing tile from puzzle '${id}' to '${translatedOffset}'.`)
-          }
+          state.ref = { id: ref.id, offset: { r: tileOffset.r, c: tileOffset.c } }
 
           tiles[translatedOffset.r] ??= {}
-          tiles[translatedOffset.r][translatedOffset.c] = tile
-          console.debug(Layout.toString(), `Imported tile from puzzle '${id}' to '${translatedOffset}'.`)
-
-          // Consider this import seen if at least one tile was added
-          this.#imports[id].seen = ref.seen ?? true
+          tiles[translatedOffset.r][translatedOffset.c] = state
+          console.debug(Layout.toString(), `Imported tile from puzzle '${ref.id}' to '${translatedOffset}'.`)
         }
+      }
+    }
+
+    for (const r in tiles) {
+      const row = tiles[r]
+      for (const c in row) {
+        const state = row[c]
+        if (state.ref && !importConfigs[state.ref.id]?.layout.tiles[state.ref.offset.r]?.[state.ref.offset.c]) {
+          // The tile references an import or location that doesn't exist anymore
+          continue
+        }
+
+        this.addTile(new OffsetCoordinates(r, c), state)
       }
     }
 
     state.modifiers ??= []
     this.modifiers = state.modifiers
-      .filter((modifier) => {
-        // Exclude any modifiers with filters that fail
-        return (modifier.filters ?? [])
-          .map((filter) => ModifierFilter.factory(filter))
-          .every((filter) => filter.apply(state, this))
-      })
       .map((state, index) => Modifiers.factory(null, state, index))
       .filter((modifier) => modifier !== undefined)
 
-    for (const r in tiles) {
-      const row = tiles[r]
-      for (const c in row) {
-        this.addTile(new OffsetCoordinates(r, c), row[c])
-      }
-    }
-
     this.setState(state)
+    this.#updateModifiers()
 
     View.update()
   }
@@ -206,7 +199,7 @@ export class Layout extends Stateful {
     const axial = new CubeCoordinates(offset.c - rowOffset, offset.r)
     const center = this.getPoint(offset)
     const coordinates = { axial, offset }
-    const tile = new Tile(coordinates, center, this.parameters, state)
+    const tile = new Tile(this, coordinates, center, this.parameters, state)
 
     this.#tiles[offset.r] ??= {}
     this.#tiles[offset.r][offset.c] = tile
@@ -222,9 +215,22 @@ export class Layout extends Stateful {
     return tile
   }
 
+  getCached (id, state) {
+    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+    // This will ensure the latest version is always used.
+    return State.fromCache(id) ||
+      State.fromCache(id, State.ContextKeys.Play) ||
+      State.fromConfig(id) ||
+      State.fromEncoded((state ?? this.getState()).importsCache[id])
+  }
+
   getCenter () {
     // The center of the canvas
     return new Point(paper.view.viewSize.divide(2))
+  }
+
+  getImport (id) {
+    return this.getImports()[id]
   }
 
   getImports () {
@@ -254,7 +260,6 @@ export class Layout extends Stateful {
     const config = super.getState()
 
     const tiles = {}
-
     for (const r in this.#tiles) {
       const row = this.#tiles[r]
       for (const c in row) {
@@ -263,25 +268,13 @@ export class Layout extends Stateful {
       }
     }
 
-    const state = { offset: this.offset }
-
-    if (config.imports.length) {
-      state.imports = config.imports
-    }
-
-    if (Object.keys(config.importsCache).length) {
-      state.importsCache = config.importsCache
-    }
-
-    if (Object.keys(tiles).length) {
-      state.tiles = tiles
-    }
-
-    if (this.modifiers.length) {
-      state.modifiers = this.modifiers.map((modifier) => modifier.getState())
-    }
-
-    return state
+    return removeEmpties({
+      imports: Object.values(this.#imports),
+      importsCache: config.importsCache,
+      modifiers: this.modifiers.map((modifier) => modifier.getState()),
+      offset: this.offset,
+      tiles
+    })
   }
 
   getTile (offset = {}) {
@@ -316,6 +309,59 @@ export class Layout extends Stateful {
     this.modifiers.forEach((modifier) => modifier.detach())
     Object.values(this.layers).forEach((layer) => layer.remove())
   }
+
+  unlock (id) {
+    const ref = this.#imports[id]
+    if (!ref) {
+      return
+    }
+
+    ref.unlocked = true
+
+    const cache = this.getCached(id)
+    const key = State.key(id)
+
+    if (cache && !Storage.get(key)) {
+      // Ensure a cache entry exists for this puzzle. This is necessary for custom import puzzles
+      Storage.set(key, cache.encode())
+      State.add(id)
+    }
+
+    const filters = ref?.filters?.map((filter) => ImportFilter.factory(filter)) ?? []
+
+    const hide = !filters
+      .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
+      .every((filter) => filter.apply(cache, ref))
+
+    const tileFilters = filters.filter((filter) => filter.type === ImportFilter.Types.Tile)
+
+    const tiles = this.tiles.filter((tile) => tile.ref?.id === id)
+    tiles.forEach((tile) => {
+      // Re-evaluate unlocked tiles
+      const offset = new OffsetCoordinates(tile.ref.offset.r, tile.ref.offset.c)
+      tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile)))
+      tile.flags.toggle(Tile.Flags.Hidden, hide)
+      tile.update()
+    })
+
+    // Re-evaluate modifiers
+    this.#updateModifiers()
+
+    emitEvent(Layout.Events.TilesUnlocked, { tiles })
+  }
+
+  #updateModifiers () {
+    this.modifiers.forEach((modifier) => {
+      // Mark modifiers which fail a filter as locked
+      modifier.unlocked = (modifier.getState().filters ?? [])
+        .map((filter) => ModifierFilter.factory(filter))
+        .every((filter) => filter.apply(this))
+    })
+  }
+
+  static Events = Object.freeze({
+    TilesUnlocked: 'tiles-unlocked'
+  })
 
   static Offsets = Object.freeze({
     EvenRow: 'even-row',

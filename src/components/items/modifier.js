@@ -4,6 +4,7 @@ import { merge } from '../util.js'
 import { Item } from '../item.js'
 import { Modifiers } from '../modifiers.js'
 import { PuzzleModifier } from '../modifiers/puzzle.js'
+import { Schema } from '../schema.js'
 
 export class ModifierItem extends movable(Item) {
   color
@@ -35,6 +36,10 @@ export class ModifierItem extends movable(Item) {
     this.group.addChild(this.item)
   }
 
+  getColors () {
+    return [this.color]
+  }
+
   onCollision ({ collisionStep, nextStep, puzzle }) {
     if (this.color === ModifierItem.DefaultColor || nextStep.color === this.color) {
       // Collided with an icon of matching color, or the default wildcard color
@@ -51,8 +56,8 @@ export class ModifierItem extends movable(Item) {
 
       const modifier = Modifiers.factory(parent, state.modifier)
 
+      modifier.onCollect(...arguments)
       puzzle.addModifier(modifier)
-      puzzle.setMessage(modifier.getMessage(this))
 
       return nextStep
     }
@@ -67,6 +72,7 @@ export class ModifierItem extends movable(Item) {
     movable.schema(),
     {
       properties: {
+        color: Schema.color,
         modifier: {
           oneOf: [
             PuzzleModifier.schema()

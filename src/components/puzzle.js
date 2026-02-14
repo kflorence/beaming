@@ -3,12 +3,11 @@ import chroma from 'chroma-js'
 import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Project, Size } from 'paper'
 import {
-  addClass,
-  appendOption,
+  addClass, animate,
   base64encode, baseUrl, classToString,
   debounce,
   emitEvent, fadeIn, fadeOut,
-  fuzzyEquals,
+  fuzzyEquals, getColorElements,
   noop,
   params,
   removeClass, url, writeToClipboard
@@ -21,7 +20,6 @@ import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
-import { Puzzles } from '../puzzles'
 import { StepState } from './step'
 import { EventListeners } from './eventListeners'
 import { Requirements } from './requirements.js'
@@ -31,16 +29,15 @@ import { Schema } from './schema'
 import { Game } from './game'
 import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
+import { Tile } from './items/tile.js'
+import { Storage } from './storage.js'
 
 const elements = Object.freeze({
-  back: document.getElementById('back'),
   canvas: document.getElementById('puzzle-canvas-wrapper'),
   debug: document.getElementById('debug'),
   delete: document.getElementById('delete'),
   footer: document.getElementById('puzzle-footer'),
-  footerMessage: document.getElementById('puzzle-footer-message'),
   headerMenu: document.getElementById('puzzle-header-menu'),
-  headerMessage: document.getElementById('puzzle-header-message'),
   info: document.getElementById('puzzle-info'),
   infoAuthor: document.getElementById('puzzle-info-author'),
   infoId: document.getElementById('puzzle-info-id'),
@@ -49,7 +46,6 @@ const elements = Object.freeze({
   redo: document.getElementById('puzzle-redo'),
   reset: document.getElementById('puzzle-reset'),
   undo: document.getElementById('puzzle-undo'),
-  select: document.getElementById('select'),
   share: document.getElementById('share'),
   title: document.querySelector('title'),
   wrapper: document.getElementById('puzzle-wrapper')
@@ -68,9 +64,10 @@ export class Puzzle {
   connections = []
   debug = params.has('debug')
   error = false
+  footerMessages
+  headerMessages
   layers = {}
   layout
-  message
   modifiers = []
   project
   selectedTile
@@ -88,16 +85,18 @@ export class Puzzle {
   #requirements
 
   constructor () {
+    this.footerMessages = new Puzzle.Messages('puzzle-footer-messages')
+    this.headerMessages = new Puzzle.Messages('puzzle-header-messages')
     this.#interact = new Interact()
     this.#eventListeners.add([
       { type: Beam.Events.Update, handler: this.#onBeamUpdate },
-      { type: 'click', element: elements.back, handler: this.#onBack },
       { type: 'click', element: elements.recenter, handler: this.#onRecenter },
       { type: 'click', element: elements.redo, handler: this.#redo },
       { type: 'click', element: elements.reset, handler: this.#reset, options: { passive: true } },
       { type: 'click', element: elements.share, handler: this.#onShare },
       { type: 'click', element: elements.undo, handler: this.#undo },
       { type: 'keyup', handler: this.#onKeyup },
+      { type: Layout.Events.TilesUnlocked, handler: this.#onTilesUnlocked },
       { type: Modifier.Events.Invoked, handler: this.#onModifierInvoked },
       { type: Modifier.Events.Toggled, handler: this.#onModifierToggled },
       { type: 'pointermove', handler: this.#onPointerMove },
@@ -114,7 +113,7 @@ export class Puzzle {
       this.updateSelectedTile(modifier.parent)
     } else {
       this.layout.addModifier(modifier)
-      this.#updateModifiers()
+      this.updateModifiers()
     }
 
     // Update state but don't add a move, since it was the previous move that caused the collision.
@@ -172,10 +171,6 @@ export class Puzzle {
     return this.#beamsUpdateDelay
   }
 
-  getImport (id) {
-    return this.layout.getImports()?.[id]
-  }
-
   getMoves () {
     return this.state.moves()
   }
@@ -184,30 +179,17 @@ export class Puzzle {
     return this.#interact.getProjectPoint(point)
   }
 
-  getShareUrl () {
+  getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
-    const context = State.getContext()
     Game.states.forEach((state) => shareUrl.searchParams.delete(state))
     shareUrl.searchParams.append(context, '')
-    // Cloning will flatten current state into original state and get rid of history
-    shareUrl.hash = ['', State.getId(), this.state.clone().encode()].join('/')
+    shareUrl.hash = ['', State.getId(), this.state.encode()].join('/')
     return shareUrl.toString()
   }
 
   getSolution () {
     return base64encode(JSON.stringify(this.getMoves()))
-  }
-
-  getTile (point) {
-    const result = paper.project.hitTest(point.ceil(), {
-      fill: true,
-      match: (result) => result.item.data.type === Item.Types.Tile,
-      segments: true,
-      stroke: true,
-      tolerance: 0
-    })
-    return result ? this.layout.getTile(result.item.data.coordinates.offset) : result
   }
 
   getTitle () {
@@ -242,7 +224,7 @@ export class Puzzle {
     this.layers.mask.addChildren(tiles.map((tile) => tile.group))
 
     if (mask.message) {
-      elements.headerMessage.textContent = mask.message
+      this.headerMessages.add(mask.message)
     }
 
     mask.onMask(this)
@@ -270,7 +252,7 @@ export class Puzzle {
     }
 
     message = message ?? error?.message ?? 'The puzzle has encountered an error, please consider reporting.'
-    elements.headerMessage.textContent = message
+    this.headerMessages.add(message)
     document.body.classList.add(Puzzle.Events.Error)
   }
 
@@ -331,7 +313,7 @@ export class Puzzle {
       }
     }
 
-    emitEvent(Puzzle.Events.Updated, { state: this.state })
+    emitEvent(Puzzle.Events.Reloaded, { puzzle: this })
   }
 
   resetProject (options) {
@@ -339,7 +321,7 @@ export class Puzzle {
     const project = this.project
 
     if (element) {
-      element.classList.remove('active')
+      element.classList.remove(Puzzle.ClassNames.Active)
     }
 
     this.#createProject(options)
@@ -360,7 +342,7 @@ export class Puzzle {
       modifier.parent.removeModifier(modifier)
     } else {
       this.layout.removeModifier(modifier)
-      this.#updateModifiers()
+      this.updateModifiers()
     }
 
     // Update state but don't add a move, since it was the previous move that caused the collision.
@@ -368,6 +350,11 @@ export class Puzzle {
   }
 
   async resize (reload = true, event = true) {
+    if (!paper.view) {
+      // Paper isn't ready yet
+      return
+    }
+
     const { width, height } = elements.wrapper.getBoundingClientRect()
     const newSize = new Size(width, height)
     if (paper.view.viewSize.equals(newSize)) {
@@ -399,29 +386,20 @@ export class Puzzle {
   }
 
   async select (id, options) {
-    if (typeof id === 'object') {
-      options = id
-      id = undefined
-    }
+    const state = id instanceof State ? id : State.resolve(id)
+    id = state.getId()
 
-    if (id !== undefined && id === this.state?.getId()) {
-      // This ID is already selected
+    if (id === this.state?.getId()) {
+      // This ID is already selected, nothing to do
       return
     }
 
-    await this.reload(State.resolve(id), options)
+    const isUnlocked = State.fromCache(id) !== undefined
+    if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
+      return this.onError('This puzzle has not been unlocked yet.')
+    }
 
-    id = this.state.getId()
-
-    // Show 'back' button if the loaded puzzle has a parent puzzle
-    elements.back.classList.toggle('hide', State.getParent(id) === null)
-
-    // Can't remove puzzles that exist in configuration
-    elements.delete.classList.toggle('hide', Puzzles.has(id))
-  }
-
-  setMessage (message) {
-    elements.headerMessage.textContent = message
+    await this.reload(state, options)
   }
 
   tap (event) {
@@ -430,14 +408,24 @@ export class Puzzle {
       return
     }
 
-    const result = paper.project.hitTest(event.detail.point)
+    // Using getItems instead of hitTest so we can match invisible items.
+    // Pop will get the item that's the highest up in the layers stack.
+    const result = paper.project.getItems({
+      match: (item) => {
+        return !item.locked && item.data.type && item.contains(event.detail.point)
+      }
+    }).pop()
 
     let tile
-    switch (result?.item.data.type) {
+    switch (result?.data.type) {
       case Item.Types.Mask:
         return
       case Item.Types.Tile:
-        tile = this.layout.getTile(result.item.data.coordinates.offset)
+        tile = this.layout.getTile(result.data.coordinates.offset)
+        if (Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag)) && !Game.is(Game.States.Edit)) {
+          // Ignore taps on un-selectable tiles
+          tile = undefined
+        }
         break
     }
 
@@ -482,7 +470,7 @@ export class Puzzle {
     console.debug('unmask', this.#mask)
 
     this.layers.mask.removeChildren()
-    this.#updateMessage(this.selectedTile)
+    this.#updateFooterMessages(this.selectedTile)
     this.#mask.onUnmask(this)
     this.#mask = undefined
 
@@ -502,11 +490,19 @@ export class Puzzle {
     }
   }
 
-  update () {
+  async update () {
     if (!this.#mask && !this.#isUpdatingBeams) {
       this.#isUpdatingBeams = true
-      this.#updateBeams()
+      return new Promise((resolve) => this.#updateBeams(resolve))
     }
+
+    return Promise.resolve()
+  }
+
+  updateModifiers () {
+    this.modifiers.forEach((modifier) => modifier.detach())
+    this.modifiers = this.#getModifiers(this.selectedTile)
+    this.modifiers.filter((modifier) => modifier.unlocked).forEach((modifier) => modifier.attach(this.selectedTile))
   }
 
   updateSelectedTile (tile) {
@@ -514,8 +510,8 @@ export class Puzzle {
 
     this.selectedTile = tile
     this.state.setSelectedTile(tile)
-    this.#updateMessage(tile)
-    this.#updateModifiers()
+    this.#updateFooterMessages(tile)
+    this.updateModifiers()
 
     if (previouslySelectedTile && previouslySelectedTile !== tile) {
       previouslySelectedTile.onDeselected(tile)
@@ -557,7 +553,7 @@ export class Puzzle {
 
     this.element = document.createElement('canvas')
 
-    this.element.className = 'active'
+    this.element.className = Puzzle.ClassNames.Active
     this.element.height = height
     this.element.width = width
     this.element.style.height = height + 'px'
@@ -574,17 +570,7 @@ export class Puzzle {
   }
 
   #getModifiers (tile) {
-    // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return (tile?.modifiers ?? []).concat(this.layout.modifiers)
-    // .sort((a, b) => a.id - b.id)
-  }
-
-  async #onBack () {
-    const id = this.state.getId()
-    const parentId = State.getParent(id)
-
-    this.centerOnTile(0, 0)
-    await this.select(parentId, { animations: [Puzzle.Animations.FadeIn] })
+    return (tile?.modifiers ?? []).concat(this.layout?.modifiers ?? [])
   }
 
   #onBeamUpdate (event) {
@@ -595,8 +581,13 @@ export class Puzzle {
     const beam = event.detail.beam
     const state = event.detail.state
 
-    if (state?.has(StepState.Collision)) {
-      const collision = state.get(StepState.Collision)
+    state?.get(StepState.Collisions)?.forEach((collision) => {
+      const step = beam.getStep()
+      if (step.tile.flags.has(Tile.Flags.Hidden)) {
+        // Don't show collisions for hidden tiles
+        return
+      }
+
       const collisionId = Puzzle.Collision.id(collision.point)
       const existing = this.#collisions[collisionId]
 
@@ -611,7 +602,7 @@ export class Puzzle {
       if (mask?.beam?.equals(beam)) {
         this.unmask()
       }
-    }
+    })
 
     Object.values(this.#collisions).forEach((collision) => collision.update())
 
@@ -619,12 +610,12 @@ export class Puzzle {
       .filter((otherBeam) => otherBeam !== beam)
       .forEach((beam) => beam.onBeamUpdated(event, this))
 
-    setTimeout(() => this.update(), 0)
+    setTimeout(() => this.update())
   }
 
-  #onKeyup (event) {
+  async #onKeyup (event) {
     if (this.debug && event.key === 's') {
-      this.update()
+      await this.update()
     }
   }
 
@@ -644,7 +635,7 @@ export class Puzzle {
       modifier.move(tile)
       console.debug('Modifier is stuck to tile', modifier, tile)
       if (!selectedTile) {
-        this.#updateModifiers()
+        this.updateModifiers()
       }
     }
 
@@ -652,17 +643,18 @@ export class Puzzle {
       this.updateSelectedTile(selectedTile)
     }
 
-    await modifier.onInvoked(this, event)
-
-    this.state.addMove(event.type, tile, modifier, selectedTile)
-    this.updateState()
-
     this.getBeams()
       // Update beams in the tile being modified first
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
-    setTimeout(() => this.update(), 0)
+    this.state.addMove(event.type, tile, modifier, this.selectedTile)
+
+    setTimeout(async () => {
+      this.updateState()
+      await this.update()
+      await modifier.onInvoked(this, event)
+    })
   }
 
   #onModifierToggled (event) {
@@ -671,7 +663,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches('canvas') || !this.debug || params.has(State.ParamKeys.Edit)) {
+    if (!event.target.matches?.('canvas') || !this.debug || Game.is(Game.States.Edit)) {
       return
     }
 
@@ -717,7 +709,7 @@ export class Puzzle {
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
 
-    elements.headerMessage.replaceChildren(p, Icons.Solved.getElement())
+    this.headerMessages.set([p, Icons.Solved.getElement()])
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
@@ -743,6 +735,15 @@ export class Puzzle {
     }
   }
 
+  #onTilesUnlocked (event) {
+    this.getBeams().forEach((beam) => beam.onTilesUnlocked(event, this))
+    setTimeout(() => {
+      // Ensure any changes to state are preserved (such as marking puzzles as unlocked)
+      this.updateState()
+      this.update()
+    })
+  }
+
   #removeLayers () {
     Object.values(this.layers).forEach((layer) => {
       // For some reason children are not being removed from some layers (e.g. mask) with .remove()
@@ -763,15 +764,19 @@ export class Puzzle {
   }
 
   async #setup (options, project = { cleanup: () => {} }) {
-    const { layout, message, requirements } = this.state.getCurrent()
+    const { layout, requirements } = this.state.getCurrent()
+
+    const id = this.state.getId()
+    State.add(id)
+    Storage.set(State.key(), id)
 
     await this.resize(false)
 
+    this.footerMessages.reset()
+    this.headerMessages.reset()
     this.state.setSolution([])
-    State.add(this.state.getId())
 
     this.layout = new Layout(layout)
-    this.message = message
     this.#requirements = new Requirements(requirements)
 
     this.#addLayers()
@@ -784,10 +789,24 @@ export class Puzzle {
 
     // TODO https://github.com/kflorence/beaming/issues/71
     // this.#updateDetails()
-    this.#updateDropdown()
     this.updateSelectedTile(selectedTile)
     this.updateState()
+
+    // No need to wait for update
+    // noinspection ES6MissingAwait
     this.update()
+
+    if (options.animations?.includes(Puzzle.Animations.SlideLeft)) {
+      await Promise.all([
+        animate(project.element, 'slide-left-out'),
+        animate(this.element, 'slide-left-in')
+      ])
+    } else if (options.animations?.includes(Puzzle.Animations.SlideRight)) {
+      await Promise.all([
+        animate(project.element, 'slide-right-out'),
+        animate(this.element, 'slide-right-in')
+      ])
+    }
 
     if (options.animations?.includes(Puzzle.Animations.FadeIn)) {
       await fadeIn(this.element)
@@ -799,6 +818,8 @@ export class Puzzle {
 
     // If the old canvas hasn't been cleaned up yet, do it now
     project.cleanup()
+
+    Game.updatePuzzles([State.ContextKeys.Play])
 
     document.body.classList.add(Puzzle.Events.Loaded)
   }
@@ -842,40 +863,7 @@ export class Puzzle {
     elements.infoTitle.textContent = `Title: "${title}"`
   }
 
-  #updateDropdown () {
-    if (params.has(Game.States.Edit)) {
-      // The editor will handle the dropdown
-      return
-    }
-
-    elements.select.replaceChildren()
-
-    // TODO: once levels are implemented, this should just use State.getIds()
-    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
-    const customIds = []
-    ids.forEach((id) => {
-      if (Puzzles.has(id)) {
-        appendOption(elements.select, { value: id, text: Puzzles.titles[id] })
-      } else {
-        customIds.push(id)
-      }
-    })
-
-    if (customIds.length) {
-      const customGroup = document.createElement('optgroup')
-      customGroup.label = '———'
-      customIds.forEach((id) => {
-        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() || id })
-      })
-
-      elements.select.append(customGroup)
-    }
-
-    // Select current ID
-    elements.select.value = this.state?.getId()
-  }
-
-  #updateBeams () {
+  #updateBeams (resolve) {
     const beams = this.getBeams().filter((beam) => beam.isPending())
 
     if (!beams.length) {
@@ -886,7 +874,8 @@ export class Puzzle {
         if (this.#requirements.areMet()) {
           this.#onSolved()
         }
-      }, 0)
+        resolve()
+      })
       return
     }
 
@@ -896,47 +885,37 @@ export class Puzzle {
 
     beams.forEach((beam) => {
       const step = beam.step(this)
-      if (step.tile.equals(this.selectedTile)) {
+      if (step?.tile.equals(this.selectedTile)) {
         // Make sure messages are displayed for the selected tile when a beam travels through it
-        this.#updateMessage(step.tile)
+        this.#updateFooterMessages(step.tile)
       }
     })
 
     // Ensure the UI has a chance to update between loops
-    setTimeout(() => this.#updateBeams(), this.#beamsUpdateDelay)
+    window.requestAnimationFrame(() => this.#updateBeams(resolve))
   }
 
-  #updateMessage (tile) {
-    elements.footerMessage.replaceChildren()
+  #updateFooterMessages (tile) {
+    this.footerMessages.reset()
 
     if (tile) {
       const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
       if (puzzleModifier) {
-        elements.footerMessage.textContent = `Puzzle '${puzzleModifier.getState().puzzleId}'`
-      } else {
-        // Check to see if tile has any color elements that need to be displayed
-        // Note: these will only be displayed if the tile contains an item with more than one color
-        const colorElements = tile.items
-          .map((item) => item.getColorElements(tile))
-          .find((colorElements) => colorElements.length > 1) || []
-        if (colorElements.length) {
-          const container = document.createElement('div')
-          container.classList.add('colors')
-          container.replaceChildren(...colorElements)
-          elements.footerMessage.replaceChildren(container)
-        }
+        this.footerMessages.add(`Puzzle '${puzzleModifier.getState().id}'`)
+      }
+
+      const colors = Array.from(new Set(
+        tile.items.flatMap((item) => item.getColors(tile)).flat().map((color) => chroma(color).name())))
+      if (colors.length) {
+        // Display color element hints for tiles that contain multiple colors
+        const container = document.createElement('div')
+        container.classList.add('colors')
+
+        const elements = getColorElements(colors)
+        container.replaceChildren(...elements)
+        this.footerMessages.add(container)
       }
     }
-
-    elements.headerMessage.textContent = this.message
-  }
-
-  #updateModifiers () {
-    this.modifiers.forEach((modifier) => modifier.detach())
-    this.modifiers = this.#getModifiers(this.selectedTile)
-    this.modifiers.forEach((modifier) => modifier.attach(this.selectedTile))
-
-    elements.footer.classList.toggle(Puzzle.ClassNames.Active, this.modifiers.length > 0)
   }
 
   // Filters for all beams that are connected to the terminus, or have been merged into a beam that is connected
@@ -983,7 +962,7 @@ export class Puzzle {
 
     update () {
       // Remove any beam which no longer matches its collision point
-      this.beams = this.beams.filter((beam) => this.equals(beam.getCollision()))
+      this.beams = this.beams.filter((beam) => beam.getCollisions().some((collision) => this.equals(collision)))
 
       const color = this.getColor()
 
@@ -1007,7 +986,9 @@ export class Puzzle {
   static Animations = Object.freeze({
     FadeIn: 'fade-in',
     FadeOutAfter: 'fade-out-after',
-    FadeOutBefore: 'fade-out-before'
+    FadeOutBefore: 'fade-out-before',
+    SlideLeft: 'slide-left',
+    SlideRight: 'slide-right'
   })
 
   static ClassNames = Object.freeze({
@@ -1021,6 +1002,7 @@ export class Puzzle {
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Reloaded: 'puzzle-reloaded',
     Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',
     Updated: 'puzzle-updated'
@@ -1042,6 +1024,36 @@ export class Puzzle {
 
     equals (other) {
       return this.id === other.id
+    }
+  }
+
+  static Messages = class {
+    element
+
+    constructor (id) {
+      this.element = document.getElementById(id)
+    }
+
+    add (...messages) {
+      messages.forEach((message) => {
+        const li = document.createElement('li')
+        li.classList.add('message')
+        if (typeof message === 'string') {
+          li.textContent = message
+        } else {
+          li.append(...(Array.isArray(message) ? message : [message]))
+        }
+        this.element.append(li)
+      })
+    }
+
+    reset () {
+      this.element.replaceChildren()
+    }
+
+    set (...messages) {
+      this.reset()
+      this.add(...messages)
     }
   }
 
@@ -1076,6 +1088,12 @@ export class Puzzle {
       },
       layout: Layout.schema(),
       requirements: Requirements.schema(),
+      unlocked: {
+        options: {
+          hidden: true
+        },
+        type: 'boolean'
+      },
       version: {
         default: 0,
         type: 'number'
@@ -1091,4 +1109,6 @@ export class Puzzle {
   })
 
   static toString = classToString('Puzzle')
+
+  static unSelectableTileFlags = [Tile.Flags.Hidden, Tile.Flags.Placeholder]
 }

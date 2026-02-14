@@ -38,14 +38,17 @@ export class Item extends Stateful {
     }
 
     this.parent = parent
-    this.group = new Group({ data: this.data, locked: !this.clickable })
+
+    // If the parent is hidden, hide this too
+    const visible = parent?.group?.visible ?? true
+    this.group = new Group({ data: this.data, locked: !this.clickable, visible })
   }
 
   equals (otherItem) {
     return otherItem instanceof Item && this.id === otherItem.id
   }
 
-  getColorElements () {
+  getColors (tile) {
     return []
   }
 
@@ -95,7 +98,12 @@ export class Item extends Stateful {
     return `[${this.type}:${this.id}]`
   }
 
-  update () {}
+  update () {
+    if (this.group) {
+      // Keep in sync with parent visibility
+      this.group.visible = this.parent?.group?.visible ?? this.group.visible ?? true
+    }
+  }
 
   static immutable (item) {
     return item.immutable

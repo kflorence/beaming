@@ -7,4 +7,5 @@ jobs:
   test:
     uses: './.github/workflows/test.yml'
   make:
+    needs: test
     uses: './.github/workflows/make.yml'

@@ -1,7 +1,16 @@
 import { Puzzles } from '../puzzles'
 import { Storage } from './storage'
-import { base64decode, base64encode, classToString, getKeyFactory, jsonDiffPatch, params, uniqueId, url } from './util'
-import { View } from './view.js'
+import {
+  base64decode,
+  base64encode,
+  classToString, getKey,
+  getKeyFactory,
+  jsonDiffPatch,
+  params,
+  uniqueId,
+  url
+} from './util'
+import { Game } from './game.js'
 
 const history = window.history
 
@@ -19,15 +28,9 @@ export class State {
 
   constructor (id, original, deltas, moveIndex, moves, solution, selectedTile, version) {
     if (id === undefined) {
-      if (params.has(State.ParamKeys.Edit)) {
-        // This will happen when editing a new puzzle in the editor from scratch
-        id = uniqueId()
-      } else {
-        // This shouldn't happen
-        throw new Error('Cannot play puzzle without ID')
-      }
-    } else if (params.has(State.ParamKeys.Edit) && Puzzles.has(id)) {
-      // This will happen when editing a puzzle that exists in source configuration
+      throw new Error('Invalid state: missing ID')
+    } else if (Puzzles.has(id) && Game.is(State.ContextKeys.Edit)) {
+      // Create a unique ID for any official puzzle when edited
       id = `${id}-${uniqueId()}`
     }
 
@@ -37,7 +40,7 @@ export class State {
     this.#moves = moves || []
     this.#moveIndex = moveIndex ?? this.#moves.length - 1
     this.#selectedTile = selectedTile
-    this.#solution = solution ?? []
+    this.#solution = solution
     this.#version = version ?? State.Version
 
     this.#resetCurrent()
@@ -67,11 +70,10 @@ export class State {
       console.debug(this.toString(), `addMove: ignoring duplicate move for deltaIndex ${deltaIndex}.`)
     } else {
       this.#moves.push(new State.Move(deltaIndex, eventType, tile, modifier, selectedTile))
+      this.#moveIndex = this.#moves.length - 1
+
+      console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
     }
-
-    this.#moveIndex = this.#moves.length - 1
-
-    console.debug(this.toString(), 'addMove: added move', this.#moveIndex, this.#moves[this.#moveIndex])
 
     return this.#moveIndex
   }
@@ -179,7 +181,7 @@ export class State {
     this.#deltas.splice(this.#moves[0].deltaIndex + 1)
     this.#moveIndex = -1
     this.#moves = []
-    this.#solution = []
+    this.#solution = undefined
     this.#selectedTile = undefined
 
     State.clearCache(this.getId())
@@ -215,7 +217,7 @@ export class State {
     console.debug(this.toString(), 'undo', this.#moveIndex)
 
     this.#moveIndex--
-    this.#solution = []
+    this.#solution = undefined
     this.#resetCurrent()
     this.updateCache()
 
@@ -244,9 +246,7 @@ export class State {
     const hashParams = ['', id]
 
     if (!hashParams.includes(params.get(State.ParamKeys.ClearCache))) {
-      // Include encoded state in URL if cache is not being cleared for this puzzle ID
       data.state = this.encode()
-      hashParams.push(data.state)
       Storage.set(State.key(id), data.state)
     }
 
@@ -284,22 +284,25 @@ export class State {
     }
   }
 
-  static delete (id) {
+  static delete (id, context = State.getContext()) {
     if (Puzzles.has(id)) {
       // Can't delete puzzles that exist in configuration
       return
     }
 
-    const ids = State.remove(id)
+    const ids = State.remove(id, context)
 
-    // Remove associated puzzle from cache
-    Storage.delete(State.key(id))
-    Storage.delete(View.key(View.CacheKeys.Center))
-    Storage.delete(View.key(View.CacheKeys.Zoom))
+    // Remove associated puzzle keys from cache
+    const baseKeys = State.getBaseKeys(context)
+    Object.keys(Storage.get()).forEach((key) => {
+      if (baseKeys.some((base) => key.startsWith(base))) {
+        Storage.delete(key)
+      }
+    })
 
     // Currently selected puzzle
-    if (State.getId() === id) {
-      Storage.delete(State.key())
+    if (State.getId(context) === id) {
+      Storage.delete(getKey(context, 'puzzle'))
 
       // Clear URL cache
       url.hash = ''
@@ -308,8 +311,8 @@ export class State {
     return ids
   }
 
-  static fromCache (id) {
-    const str = Storage.get(State.key(id))
+  static fromCache (id, context) {
+    const str = Storage.get(getKey(context ?? State.getContext(), 'puzzle', id))
     if (str) {
       return State.fromEncoded(str)
     }
@@ -367,28 +370,24 @@ export class State {
     )
   }
 
-  static getState (id) {
-    return Puzzles.has(id) ? Puzzles.get(id) : State.decode(Storage.get(State.key(id)))
+  static getBaseKeys (context) {
+    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId)))
   }
 
   static getContext () {
     if (params.has(State.ParamKeys.Edit)) {
-      return State.CacheKeys.Edit
+      return State.ContextKeys.Edit
     } else if (params.has(State.ParamKeys.Play)) {
-      return State.CacheKeys.Play
+      return State.ContextKeys.Play
     }
   }
 
-  static getId () {
-    return Storage.get(State.key())
+  static getId (context) {
+    return Storage.get(getKey(context ?? State.getContext(), 'puzzle'))
   }
 
-  static getIds () {
-    return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
-  }
-
-  static getParent (id) {
-    return Storage.get(State.key(id, State.CacheKeys.Parent))
+  static getIds (context) {
+    return JSON.parse(Storage.get(getKey(context ?? State.getContext(), 'puzzle', State.CacheKeys.Ids)) ?? '[]')
   }
 
   static resolve (id) {
@@ -401,17 +400,6 @@ export class State {
       // Check each segment of the URL hash (e.g. #/[id]/[encoded_state])
       // Encoded state will take precedence over ID (in case there is a mismatch with local cache)
       values.push(...url.hash.substring(1).split('/').filter((path) => path !== '').reverse())
-
-      // Last active puzzle ID
-      const lastId = State.getId()
-      if (lastId !== null) {
-        values.push(lastId)
-      }
-
-      if (values.length === 0 && !params.has(State.ParamKeys.Edit)) {
-        // If puzzle is not being edited, fall back to first puzzle ID
-        values.push(Puzzles.firstId)
-      }
     }
 
     if (params.has(State.ParamKeys.ClearCache)) {
@@ -457,30 +445,18 @@ export class State {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
 
-    if (!state && !params.has(State.ParamKeys.Edit)) {
-      throw new Error(`Could not resolve state for puzzle ID ${id}.`)
-    }
-
-    // Return an empty state if all else fails
-    return state ?? new State(id)
-  }
-
-  static setParam = function (name, value) {
-    params.set(name, value)
-    history.pushState({}, '', url)
-  }
-
-  // Tracks the location of nested puzzles
-  static setParent (id, parentId) {
-    // TODO add URL param support?
-    Storage.set(State.key(id, State.CacheKeys.Parent), parentId)
+    return state
   }
 
   static CacheKeys = Object.freeze({
-    Edit: 'edit',
     Id: 'id',
     Ids: 'ids',
-    Parent: 'parent',
+    Locked: 'locked',
+    Parent: 'parent'
+  })
+
+  static ContextKeys = Object.freeze({
+    Edit: 'edit',
     Play: 'play'
   })
 
@@ -488,7 +464,13 @@ export class State {
     ClearCache: 'clearCache',
     Edit: 'edit',
     Parents: 'parents',
-    Play: 'play'
+    Play: 'play',
+    Unlock: 'unlock'
+  })
+
+  static ScopeKeys = Object.freeze({
+    Editor: 'editor',
+    Puzzle: 'puzzle'
   })
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
@@ -505,11 +487,11 @@ export class State {
     return ids
   }
 
-  static remove (id) {
-    const ids = State.getIds()
+  static remove (id, context = State.getContext()) {
+    const ids = State.getIds(context)
     const index = ids.indexOf(id)
     ids.splice(index, 1)
-    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    Storage.set(getKey(context, 'puzzle', State.CacheKeys.Ids), JSON.stringify(ids))
     return ids
   }
 

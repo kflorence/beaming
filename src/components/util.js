@@ -4,6 +4,7 @@ import pako from 'pako'
 import chroma from 'chroma-js'
 import { Point, Size } from 'paper'
 
+const empty = Symbol('empty')
 const location = window.location
 
 export const baseUrl = 'https://kflorence.github.io/beaming'
@@ -39,7 +40,7 @@ export function animate (element, className, onComplete = () => {}) {
       resolve()
     }
     // Ensure the animations run at the next available tick
-    setTimeout(() => {
+    window.requestAnimationFrame(() => {
       element.addEventListener('animationcancel', complete)
       element.addEventListener('animationend', complete)
       element.classList.add(className)
@@ -55,6 +56,10 @@ export function appendOption (element, option) {
     $option.disabled = option.disabled
   }
   element.append($option)
+}
+
+export function arrayMergeUniqueById (target, source) {
+  return uniqueBy('id', target.concat(source))
 }
 
 export function base64decode (string) {
@@ -133,6 +138,10 @@ export function emitEvent (type, detail = null) {
   document.dispatchEvent(new CustomEvent(type, { detail }))
 }
 
+export function escape (string) {
+  return string.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 export async function fadeIn (element) {
   return animate(element, 'fade-in').then(() => {
     element.classList.remove('see-through')
@@ -141,6 +150,17 @@ export async function fadeIn (element) {
 
 export async function fadeOut (element) {
   return animate(element, 'fade-out')
+}
+
+export function filter (t, f) {
+  switch (t?.constructor) {
+    case Array:
+      return t.filter(f)
+    case Object:
+      return Object.fromEntries(Object.entries(t).filter(([k, v]) => f(v, k)))
+    default:
+      return t
+  }
 }
 
 export function fuzzyEquals (pointA, pointB, maxDiff = 0) {
@@ -160,7 +180,7 @@ export function getColorElements (colors) {
     return []
   }
 
-  const color = chroma.average(colors).hex()
+  const color = chroma.average(colors).name()
   const elements = []
 
   if (colors.some((other) => other !== color)) {
@@ -184,7 +204,19 @@ export function getColorElements (colors) {
 
   elements.push(getColorElement(color))
 
+  const descriptor = document.createElement('span')
+  descriptor.classList.add('text')
+  descriptor.textContent = `(${color})`
+  elements.push(descriptor)
+
   return elements
+}
+
+// Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
+// first point (direction zero) corresponding to direction 4 in the cube system.
+// See: http://paperjs.org/tutorials/geometry/vector-geometry/
+export function getConvertedDirection (direction, toPaperJs = true) {
+  return getNormalizedDirection(direction + (toPaperJs ? -1 : 1) * 2)
 }
 
 export function getDistance (point) {
@@ -213,18 +245,14 @@ export function getPointFrom (point, length, direction) {
   return point.add(vector)
 }
 
-export function getOppositeDirection (direction) {
-  return direction + (direction >= 3 ? -3 : 3)
-}
-
-// Normalize the direction. Currently, directions correspond to points in the hexagon as PaperJS draws it, with the
-// first point (direction zero) corresponding to direction 4 in the cube system.
-// See: http://paperjs.org/tutorials/geometry/vector-geometry/
-export function getConvertedDirection (direction, toPaperJs = true) {
-  direction = direction + (toPaperJs ? -1 : 1) * 2
+export function getNormalizedDirection (direction) {
   if (direction < 0) return direction + 6
   else if (direction > 5) return direction - 6
   return direction
+}
+
+export function getOppositeDirection (direction) {
+  return getNormalizedDirection(direction + (direction >= 3 ? -3 : 3))
 }
 
 // Gets the position of the point relative to the line.
@@ -236,7 +264,7 @@ export function getPosition (line, point) {
 
 export function getReflectedDirection (beamDirection, reflectorDirection) {
   // Have to convert to PaperJS directions on the way in
-  const beamAngle = getConvertedDirection(beamDirection, true) * 60
+  const beamAngle = getConvertedDirection(beamDirection) * 60
   const reflectorAngle = reflectorDirection * 30
   const reflectedBeamAngle = (reflectorAngle - beamAngle) * 2
   // And convert back to our normal directions on the way out
@@ -266,6 +294,17 @@ export function hexagon (height) {
   }
 }
 
+export function map (t, f) {
+  switch (t?.constructor) {
+    case Array:
+      return t.map(f)
+    case Object:
+      return Object.fromEntries(Object.entries(t).map(([k, v]) => [k, f(v, k)]))
+    default:
+      return t
+  }
+}
+
 export function merge (a, b, options) {
   let args
 
@@ -277,6 +316,17 @@ export function merge (a, b, options) {
   }
 
   return deepmerge.all(args, options)
+}
+
+export function nonEmpty (t) {
+  switch (t?.constructor) {
+    case Array:
+      return t.length > 0
+    case Object:
+      return Object.keys(t).length > 0
+    default:
+      return t !== empty // <- all other t are OK, except for sentinel
+  }
 }
 
 export function noop (value) {
@@ -291,6 +341,16 @@ export function pointToString (point) {
 
 export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
+}
+
+export function removeEmpties (t) {
+  switch (t?.constructor) {
+    case Array:
+    case Object:
+      return filter(map(t, removeEmpties), nonEmpty)
+    default:
+      return nonEmpty(t) ? t : empty
+  }
 }
 
 export function sizeToString (size) {

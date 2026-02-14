@@ -26,6 +26,7 @@ body {
 
 button {
   font-family: 'Noto Sans Mono Variable', monospace;
+  line-height: 24px;
 
   &:not(:disabled,.disabled) {
     cursor: pointer;
@@ -61,12 +62,46 @@ i {
   word-wrap: normal;
 }
 
+button,
 input {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
   cursor: pointer;
+  justify-self: start;
+  line-height: 24px;
+  padding: 0.5em;
+}
+
+button.danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+button:disabled,
+input:disabled {
+  border: 1px solid #999;
+}
+
+fieldset {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
+  margin: 0;
+  padding: 1em;
+
+  + fieldset {
+    margin-top: 1em;
+  }
+}
+
+fieldset legend {
+  font-weight: bold;
+  line-height: 0;
+  margin: 0;
+  padding: 0 1em;
 }
 
 #editor-new,
-#title-settings,
 #title-quit {
   display: none;
 }
@@ -134,10 +169,6 @@ dialog[open] {
   z-index: 9999;
 }
 
-dialog .flex-left {
-  flex: 2;
-}
-
 dialog details h3,
 dialog details h4,
 dialog details p {
@@ -149,6 +180,7 @@ dialog details p {
 
 dialog h1 {
   color: #333;
+  filter: drop-shadow(0 0.1em 0.1em #999);
   margin: 0;
   padding: 0;
 }
@@ -178,7 +210,7 @@ dialog > main {
 dialog header button {
   background: #fff;
   border: 1px solid #666;
-  border-radius: 0.25em;
+  border-radius: 0.5em;
   color: #000;
   cursor: pointer;
   outline: none;
@@ -225,7 +257,7 @@ dialog footer ul li:first-child {
 dialog > main {
   background-color: white;
   border: 1px solid #666;
-  border-radius: 0.25em;
+  border-radius: 0.5em;
   overflow: auto;
   padding: 1em;
   width: 100%;
@@ -234,29 +266,6 @@ dialog > main {
 dialog ul {
   margin: 0 0 0 1em;
   padding: 0 0 0 1em;
-}
-
-#dialog-settings button,
-#dialog-settings input {
-  border: 1px solid #333;
-  border-radius: 0.25em;
-  justify-self: start;
-  margin: 0;
-  padding: 0.5em;
-}
-
-#dialog-settings button.danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: white;
-}
-
-#dialog-settings input:disabled {
-  border: 1px solid #999;
-}
-
-#dialog-settings fieldset p {
-  margin: 1em 0;
 }
 
 #dialog-title {
@@ -312,6 +321,7 @@ dialog ul {
   display: none;
   left: 1em;
   padding: 1em;
+  pointer-events: none;
   position: absolute;
   z-index: 1;
 }
@@ -329,9 +339,18 @@ dialog ul {
 /* Editor
 /* ------------------------------------------------------------------------------------------------------------------ */
 
+#edit-new {
+  margin-top: 1em;
+}
+
 #editor {
   background-color: #f9f9f9;
+  border-bottom: 1px solid #ddd;
   padding: 1em 0 1em 1em;
+
+  &.loading #editor-loading {
+    display: flex;
+  }
 }
 
 #editor div[data-schematype=array] > .je-indented-panel {
@@ -355,6 +374,14 @@ dialog ul {
 
 #editor div[data-schematype=object] + div[data-schematype=object] {
   margin-top: 1em;
+}
+
+#editor input,
+#editor select {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0.5em;
+  padding: 0.5em;
 }
 
 #editor .empty .je-indented-panel {
@@ -419,6 +446,19 @@ dialog ul {
   height: 400px;
   padding: 1em;
   width: 100%;
+}
+
+#editor-loading {
+  align-items: center;
+  display: none;
+  justify-content: center;
+  min-height: 3em;
+}
+
+#editor-loading i {
+  animation: spin 1s infinite;
+  height: 24px;
+  width: 24px;
 }
 
 #editor-menu {
@@ -549,6 +589,39 @@ dialog ul {
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */
+/* Play
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#dialog-play {
+  p {
+    margin: 0;
+  }
+
+  textarea {
+    border: 1px solid #aaa;
+    border-radius: 0.5em;
+    box-sizing: border-box;
+    height: 10em;
+    margin: 1em 0;
+    padding: 0.25em;
+    width: 100%;
+  }
+}
+
+#play-custom-configuration-error {
+  background-color: #dc3545;
+  border: 1px #dc3545 solid;
+  border-radius: 0.25em;
+  color: white;
+  margin-bottom: 1em;
+  padding: 1em;
+
+  &:empty {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
 /* Puzzle
 /* ------------------------------------------------------------------------------------------------------------------ */
 
@@ -596,13 +669,21 @@ dialog ul {
 }
 
 #puzzle-footer {
-  display: none;
   bottom: 0;
   flex-flow: column wrap;
 }
 
-#puzzle-footer.active {
+#puzzle-footer-messages,
+#puzzle-header-messages {
+  align-items: center;
   display: flex;
+  list-style: none;
+  justify-content: center;
+  justify-self: center;
+  margin: 0 auto;
+  padding: 0;
+  pointer-events: all;
+  width: fit-content;
 }
 
 #puzzle-footer-wrapper,
@@ -610,6 +691,10 @@ dialog ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+#puzzle-header-wrapper .flex-left .menu li:last-child {
+  border-right: 1px solid #ddd;
 }
 
 #puzzle-footer-wrapper .menu {
@@ -697,6 +782,133 @@ dialog ul {
   overflow: hidden;
 }
 
+
+.puzzles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+  li {
+    color: #999;
+    line-height: 24px;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 calc(1em - 1px);
+    position: relative;
+
+    &:after,
+    &:before {
+      box-sizing: border-box;
+      content: '';
+      display: block;
+      position: absolute;
+    }
+
+    &:before {
+      border-left: 1px solid #aaa;
+      height: 100%;
+      left: 0;
+      top: 0;
+    }
+
+    &:after {
+      border-bottom: 1px solid #aaa;
+      left: 0;
+      top: 0.5lh;
+      width: 1em;
+    }
+
+    &:last-child:before {
+      height: 0.5lh;
+    }
+
+    &.selected > .wrapper .title {
+      font-weight: bold;
+    }
+
+    &.unlocked > .wrapper .title,
+    .remove {
+      color: #333;
+      cursor: pointer;
+    }
+
+    .title {
+      display: block;
+      margin-left: 0.5em;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: row;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin: 0 0 0 1.5em;
+    padding: 0;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------------ */
+/* Settings
+/* ------------------------------------------------------------------------------------------------------------------ */
+
+#dialog-settings fieldset p {
+  margin: 0 0 1em 0;
+}
+
+#settings-profile {
+  border: 1px solid #aaa;
+  border-radius: 0.25em;
+  list-style: none;
+  margin: 0 0 1em 0;
+  overflow: clip;
+  padding: 0;
+
+  li {
+    border-bottom: 1px solid #aaa;
+    cursor: pointer;
+    display: flex;
+    line-height: 24px;
+    padding: 0.5em;
+    text-overflow: ellipsis;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &.selected {
+      background-color: #eee;
+      cursor: default;
+      font-weight: bold;
+    }
+
+    .remove {
+      cursor: pointer;
+    }
+  }
+}
+
+#settings-profile-name {
+  margin-right: 1em;
+}
+
+#settings-window {
+  display: none;
+}
+
+.electron #settings-window {
+  display: block;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  grid-gap: 1em;
+}
+
 /* ------------------------------------------------------------------------------------------------------------------ */
 /* Classes
 /* ------------------------------------------------------------------------------------------------------------------ */
@@ -729,9 +941,9 @@ dialog ul {
 .color {
   color: white;
   display: inline-block;
-  height: 1em;
+  height: 24px;
   vertical-align: middle;
-  width: 1em;
+  width: 24px;
 }
 
 .color::selection {
@@ -761,7 +973,7 @@ dialog ul {
 }
 
 .electron {
-  #title-settings,
+  #settings-window,
   #title-quit {
     display: block;
   }
@@ -785,6 +997,21 @@ dialog ul {
 
 .flex-right {
   justify-content: flex-end;
+}
+
+.flex-two-column {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1em;
+
+  > * {
+    flex: 1;
+
+    &.full-width {
+      flex-basis: 100%;
+    }
+  }
 }
 
 .grab #puzzle canvas {
@@ -858,7 +1085,7 @@ dialog ul {
 
 .message {
   align-items: center;
-  background-color: #ddd;
+  background-color: #eee;
   border: 1px solid #999;
   border-radius: 0.5em;
   display: flex;
@@ -867,10 +1094,10 @@ dialog ul {
   justify-content: center;
   justify-self: center;
   line-height: 24px;
-  margin: 1em auto;
+  margin: 1em 0.5em;
   min-height: 24px;
   padding: 1em;
-  pointer-events: all;
+  width: fit-content;
 }
 
 .message:empty {
@@ -926,14 +1153,12 @@ dialog ul {
   opacity: 0;
 }
 
-.settings {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  grid-gap: 1em;
-}
-
 .text {
   padding: 0 0.25em;
+}
+
+.text:last-child {
+  padding-right: 0;
 }
 
 .wrapper details {
@@ -1095,6 +1320,15 @@ dialog ul {
 
   to {
     translate: 0 -100vh;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(359deg);
   }
 }
 

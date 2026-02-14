@@ -1,8 +1,10 @@
 import { Modifier } from '../modifier.js'
 import { Icons } from '../icon.js'
-import { merge } from '../util.js'
-import { State } from '../state.js'
+import { merge, params } from '../util.js'
 import { Puzzle } from '../puzzle.js'
+import { Puzzles } from '../../puzzles/index.js'
+import { State } from '../state.js'
+import { Game } from '../game.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -12,41 +14,42 @@ export class PuzzleModifier extends Modifier {
     return Icons.Puzzle
   }
 
-  getMessage () {
-    return "You've unlocked a new puzzle!"
+  onCollect ({ puzzle }) {
+    const state = this.getState()
+
+    puzzle.headerMessages.add(`You've unlocked puzzle '${state.id}'!`)
+    puzzle.layout.unlock(state.id)
+
+    Game.updatePuzzles([State.ContextKeys.Play])
   }
 
   async onInvoked (puzzle) {
     const state = this.getState()
-    const ref = puzzle.getImport(state.puzzleId)
 
-    // Set the parent of the puzzle we are entering to the current puzzle
-    State.setParent(state.puzzleId, puzzle.state.getId())
-
-    // Center the screen on the anchor point of the import
-    puzzle.centerOn(ref.offset.r, ref.offset.c)
+    // Track parent(s)
+    const id = puzzle.state.getId()
+    const parent = params.get(State.CacheKeys.Parent)
+    params.set(State.CacheKeys.Parent, parent ? [parent, id].join(',') : id)
 
     // Load the import behind the current puzzle and then swap them
-    await puzzle.select(state.puzzleId, { animations: [Puzzle.Animations.FadeOutAfter] })
+    await puzzle.select(state.id, { animations: [Puzzle.Animations.SlideLeft] })
   }
 
   static schema () {
-    const currentId = State.getId()
-    const ids = State.getIds().filter((id) => id !== currentId)
-    const titles = ids.map((id) => State.fromCache(id)?.getTitle() ?? id)
+    const imports = Puzzles.imports()
     return Object.freeze(merge([
       Modifier.schema(Modifier.Types.Puzzle),
       {
         properties: {
-          puzzleId: {
-            enum: ids,
+          id: {
+            enum: imports.ids,
             options: {
-              enum_titles: titles
+              enum_titles: imports.titles
             },
             type: 'string'
           }
         },
-        required: ['puzzleId']
+        required: ['id']
       }
     ]))
   }

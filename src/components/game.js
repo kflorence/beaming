@@ -2,17 +2,27 @@ import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import { debug } from './debug'
-import { animate, classToString, emitEvent, params, url } from './util'
+import { animate, classToString, emitEvent, params, uniqueId, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
-import { Keys } from '../electron/settings/keys.js'
+import { Events } from './settings/cache.js'
+import { Puzzles } from '../puzzles/index.js'
 
 const elements = Object.freeze({
+  back: document.getElementById('back'),
+  configuration: document.getElementById('play-custom-configuration'),
+  configurationError: document.getElementById('play-custom-configuration-error'),
   delete: document.getElementById('delete'),
-  dialog: document.getElementById('dialog-title'),
-  edit: document.getElementById('title-editor'),
+  dialogEdit: document.getElementById('dialog-edit'),
+  dialogPlay: document.getElementById('dialog-play'),
+  dialogTitle: document.getElementById('dialog-title'),
+  edit: document.getElementById('title-edit'),
+  editNew: document.getElementById('edit-new'),
+  editPuzzles: document.getElementById('edit-puzzles'),
   play: document.getElementById('title-play'),
+  playLoad: document.getElementById('play-custom-load'),
+  playPuzzles: document.getElementById('play-puzzles'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
   select: document.getElementById('select'),
@@ -30,47 +40,67 @@ export class Game {
     this.editor = new Editor(this.puzzle)
 
     this.#eventListeners.add([
-      { type: 'change', element: elements.select, handler: this.#onSelect },
-      { type: 'click', element: elements.delete, handler: this.#onDelete },
-      { type: 'click', element: elements.edit, handler: this.edit },
-      { type: 'click', element: elements.play, handler: this.play },
+      { type: 'click', element: elements.back, handler: this.#onBack },
+      { type: 'click', element: elements.editNew, handler: this.#onEditNew },
+      { type: 'click', element: elements.editPuzzles, handler: this.#onEditPuzzleClick },
+      { type: 'click', element: elements.playLoad, handler: this.#onPlayLoad },
+      { type: 'click', element: elements.playPuzzles, handler: this.#onPlayPuzzleClick },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
-      { type: Keys.cacheClear, handler: this.#onSettingsCacheClear },
+      { type: Events.CacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    if (params.has(Game.States.Play)) {
-      // noinspection JSIgnoredPromiseFromCall
-      this.play()
-    } else if (params.has(Game.States.Edit)) {
-      // noinspection JSIgnoredPromiseFromCall
-      this.edit()
+    Game.updatePuzzles()
+
+    const state = State.resolve()
+    if (Game.is(Game.States.Play)) {
+      if (!state) {
+        elements.dialogPlay.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.play(state)
+      }
+    } else if (Game.is(Game.States.Edit)) {
+      if (!state) {
+        elements.dialogEdit.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.edit(state)
+      }
     } else {
-      elements.dialog.showModal()
+      elements.dialogTitle.showModal()
     }
   }
 
-  async edit () {
+  async edit (state) {
     if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset(Game.States.Edit)
+
+      // Transition back to the puzzle when the edit dialog is closed
+      elements.edit.dataset.element = 'screen'
+
       this.puzzle.teardown()
-      await this.editor.select({ animations: [Puzzle.Animations.FadeIn] })
     }
 
-    await Game.dialogClose()
+    await Game.dialogClose(elements.dialogEdit)
+    await this.editor.select(state, { animations: [Puzzle.Animations.FadeIn] })
   }
 
-  async play () {
+  async play (state) {
     if (!document.body.classList.contains(Game.States.Play)) {
       this.#reset(Game.States.Play)
+
+      // Transition back to the puzzle when the play dialog is closed
+      elements.play.dataset.element = 'screen'
+
       this.editor.teardown()
       this.puzzle.teardown()
-      await this.puzzle.select({ animations: [Puzzle.Animations.FadeIn] })
     }
 
-    await Game.dialogClose()
+    await Game.dialogClose(elements.dialogPlay)
+    await this.puzzle.select(state, { animations: [Puzzle.Animations.FadeIn] })
   }
 
   quit () {
@@ -78,32 +108,95 @@ export class Game {
   }
 
   async select (id, options) {
-    if (params.has(Game.States.Play)) {
+    if (Game.is(Game.States.Play)) {
       await this.puzzle.select(id, options)
-    } else if (params.has(Game.States.Edit)) {
+    } else if (Game.is(Game.States.Edit)) {
       await this.editor.select(id, options)
     }
   }
 
   async title () {
-    if (elements.dialog.open) {
-      await Game.dialogClose()
+    if (elements.dialogTitle.open) {
+      await Game.dialogClose(elements.dialogTitle)
     } else {
-      await Game.dialogOpen()
+      await Game.dialogOpen(elements.dialogTitle)
     }
   }
 
-  #onDelete () {
-    confirm('Are you sure you want to remove this puzzle? This cannot be undone.', async () => {
-      const ids = State.delete(this.puzzle.state.getId())
-      await this.select(ids[ids.length - 1])
+  async #onBack () {
+    const currentId = this.puzzle.state.getId()
+    const parent = params.get(State.CacheKeys.Parent)
+    const parents = parent?.split(',')
+    const parentId = parents?.pop()
+
+    if (parentId !== undefined && currentId !== parentId) {
+      // Update parents breadcrumbs
+      if (parents.length) {
+        params.set(State.CacheKeys.Parent, parents.join(','))
+      } else {
+        params.delete(State.CacheKeys.Parent)
+      }
+
+      this.select(parentId, { animations: [Puzzle.Animations.SlideRight] })
+    } else {
+      Game.dialogOpen(Game.is(State.ContextKeys.Play) ? elements.dialogPlay : elements.dialogEdit)
+    }
+  }
+
+  #delete (id, context) {
+    if (Puzzles.has(id)) {
+      return
+    }
+
+    confirm(`Are you sure you want to remove puzzle "${id}"? This cannot be undone.`, async () => {
+      State.delete(id, context)
+      Game.updatePuzzles()
     })
   }
 
-  async #onSelect (event) {
-    await this.select(event.target.value, {
-      animations: [Puzzle.Animations.FadeIn, Puzzle.Animations.FadeOutBefore]
-    })
+  async #onPlayLoad () {
+    try {
+      const configuration = JSON.parse(elements.configuration.value)
+      const state = new State(configuration.id ?? uniqueId(), configuration)
+      await this.puzzle.reload(state, { animations: [Puzzle.Animations.FadeIn] })
+      elements.configuration.value = ''
+      elements.configurationError.textContent = ''
+      await Game.dialogClose(elements.dialogPlay)
+    } catch (e) {
+      console.error(e)
+      elements.configurationError.textContent = 'Could not load puzzle: configuration is invalid'
+    }
+  }
+
+  #onEditNew () {
+    const id = uniqueId()
+    this.edit(new State(id, { id, unlocked: true }))
+  }
+
+  async #onEditPuzzleClick (event) {
+    const $item = event.target.closest('.puzzle')
+    const id = $item.dataset.id
+    if (event.target.classList.contains('remove')) {
+      this.#delete(id, State.ContextKeys.Edit)
+    } else {
+      this.edit(id)
+    }
+  }
+
+  async #onPlayPuzzleClick (event) {
+    const $item = event.target.closest('.puzzle')
+    const id = $item.dataset.id
+    if (event.target.classList.contains('remove')) {
+      this.#delete(id, State.ContextKeys.Play)
+    } else {
+      const puzzle = Puzzles.get(id)
+      const state = State.fromCache(id)
+      if (!puzzle?.unlocked && state === undefined) {
+        console.debug(`Puzzle not unlocked: ${id}`)
+        return
+      }
+      this.play(id)
+    }
   }
 
   async #onSettingsCacheClear (event) {
@@ -112,7 +205,7 @@ export class Game {
     window.localStorage.clear()
     await window.electron?.store.delete()
     await this.puzzle.select()
-    emitEvent(Keys.cacheCleared)
+    emitEvent(Events.CacheCleared)
   }
 
   #onStorageDelete (event) {
@@ -144,11 +237,10 @@ export class Game {
 
     document.body.classList.remove(...Game.states)
     document.body.classList.add(state)
-    elements.select.replaceChildren()
 
     if (!params.has(state)) {
       Game.states.forEach((state) => params.delete(state))
-      State.setParam(state, '')
+      params.set(state, '')
 
       // Don't carry state via URL from one context to another
       url.hash = ''
@@ -157,21 +249,34 @@ export class Game {
 
   static debug = debug
 
-  static async dialogClose () {
-    if (elements.dialog.open) {
+  static async dialogClose (dialog) {
+    if (dialog.open) {
       await Promise.all([
-        animate(elements.screen, 'slide-up-in'),
-        animate(elements.dialog, 'slide-up-out', () => { elements.dialog.close() })
+        animate(elements.screen, 'slide-left-in'),
+        animate(dialog, 'slide-left-out', () => { dialog.close() })
       ])
     }
   }
 
-  static async dialogOpen () {
-    if (!elements.dialog.open) {
+  static async dialogOpen (dialog) {
+    if (!dialog.open) {
       await Promise.all([
-        animate(elements.screen, 'slide-down-out'),
-        animate(elements.dialog, 'slide-down-in', () => { elements.dialog.showModal() })
+        animate(elements.screen, 'slide-right-out'),
+        animate(dialog, 'slide-right-in', () => { dialog.showModal() })
       ])
+    }
+  }
+
+  static is (state) {
+    return Object.values(Game.States).includes(state) && params.has(state)
+  }
+
+  static updatePuzzles (contexts = Object.values(State.ContextKeys)) {
+    if (contexts.includes(State.ContextKeys.Edit)) {
+      Puzzles.updateDom('edit-puzzles', State.ContextKeys.Edit)
+    }
+    if (contexts.includes(State.ContextKeys.Play)) {
+      Puzzles.updateDom('play-puzzles', State.ContextKeys.Play)
     }
   }
 
