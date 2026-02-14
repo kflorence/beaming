@@ -262,7 +262,10 @@ export class Game {
     if (!dialog.open) {
       await Promise.all([
         animate(elements.screen, 'slide-right-out'),
-        animate(dialog, 'slide-right-in', () => { dialog.showModal() })
+        animate(dialog, 'slide-right-in', () => {
+          dialog.dataset.from = 'screen'
+          dialog.showModal()
+        })
       ])
     }
   }
