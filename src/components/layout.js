@@ -219,6 +219,7 @@ export class Layout extends Stateful {
     // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
     // This will ensure the latest version is always used.
     return State.fromCache(id) ||
+      State.fromCache(id, State.ContextKeys.Play) ||
       State.fromConfig(id) ||
       State.fromEncoded((state ?? this.getState()).importsCache[id])
   }

@@ -5,12 +5,13 @@ import { View } from './view'
 import { Puzzle } from './puzzle'
 import { State } from './state'
 import { Storage } from './storage'
-import { appendOption, classToString, getKeyFactory, uniqueId } from './util'
+import { classToString, getKeyFactory } from './util'
 import { JSONEditor } from '@json-editor/json-editor/src/core'
 import { Tile } from './items/tile'
 import { Gutter } from './gutter'
 import { Phosphor } from './iconlib.js'
 import { Icon, Icons } from './icon.js'
+import { Game } from './game.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
@@ -20,7 +21,6 @@ const elements = Object.freeze({
   dock: document.getElementById('editor-dock'),
   editor: document.getElementById('editor'),
   lock: document.getElementById('editor-lock'),
-  new: document.getElementById('editor-new'),
   paste: document.getElementById('editor-paste'),
   play: document.getElementById('editor-play'),
   puzzle: document.getElementById('puzzle'),
@@ -70,18 +70,13 @@ export class Editor {
     return Storage.get(Editor.key(State.getId(), State.CacheKeys.Locked)) === 'true'
   }
 
-  async select (id, options) {
-    if (typeof id === 'object') {
-      options = id
-      id = undefined
-    }
-
+  async select (state, options) {
     elements.editor.classList.add('loading')
 
     this.teardown()
     this.#gutter.setup()
 
-    await this.#puzzle.select(id, options)
+    await this.#puzzle.select(state, options)
 
     if (this.#editor) {
       return
@@ -96,7 +91,6 @@ export class Editor {
       { type: 'click', element: elements.copy, handler: this.#onCopy },
       { type: 'click', element: elements.dock, handler: this.#toggleDock },
       { type: 'click', element: elements.lock, handler: this.#toggleLock },
-      { type: 'click', element: elements.new, handler: this.#onNew },
       { type: 'click', element: elements.paste, handler: this.#onPaste },
       { type: 'click', element: elements.reset, handler: this.#onReset },
       { type: 'click', element: elements.update, handler: this.#onConfigurationUpdate },
@@ -120,7 +114,8 @@ export class Editor {
     this.#updateDock()
     this.#updateLock()
     this.#updateCenter()
-    this.#updateDropdown(this.#puzzle.state.getId())
+
+    Game.updatePuzzles([State.ContextKeys.Edit])
 
     this.#setup()
   }
@@ -172,7 +167,7 @@ export class Editor {
 
     if (diff.title) {
       // Title was changed
-      this.#updateDropdown()
+      Game.updatePuzzles([State.ContextKeys.Edit])
     }
   }
 
@@ -225,10 +220,6 @@ export class Editor {
 
   async #onGutterMoved () {
     await this.#puzzle.resize()
-  }
-
-  async #onNew () {
-    await this.select(uniqueId())
   }
 
   async #onPaste () {
@@ -468,19 +459,6 @@ export class Editor {
     } else {
       icon.title = Icons.DockBottom.title
       icon.className = Icons.DockBottom.className
-    }
-  }
-
-  #updateDropdown (id) {
-    elements.select.replaceChildren()
-
-    State.getIds().forEach((id) => {
-      appendOption(elements.select, { value: id, text: State.fromCache(id)?.getTitle() || id })
-    })
-
-    // Select current ID
-    if (id !== undefined) {
-      elements.select.value = id
     }
   }
 

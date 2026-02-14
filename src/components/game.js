@@ -14,12 +14,15 @@ const elements = Object.freeze({
   configuration: document.getElementById('play-custom-configuration'),
   configurationError: document.getElementById('play-custom-configuration-error'),
   delete: document.getElementById('delete'),
+  dialogEdit: document.getElementById('dialog-edit'),
   dialogPlay: document.getElementById('dialog-play'),
   dialogTitle: document.getElementById('dialog-title'),
-  edit: document.getElementById('title-editor'),
-  load: document.getElementById('play-custom-load'),
+  edit: document.getElementById('title-edit'),
+  editNew: document.getElementById('edit-new'),
+  editPuzzles: document.getElementById('edit-puzzles'),
   play: document.getElementById('title-play'),
-  puzzles: document.getElementById('play-puzzles'),
+  playLoad: document.getElementById('play-custom-load'),
+  playPuzzles: document.getElementById('play-puzzles'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
   select: document.getElementById('select'),
@@ -38,10 +41,10 @@ export class Game {
 
     this.#eventListeners.add([
       { type: 'click', element: elements.back, handler: this.#onBack },
-      // { type: 'click', element: elements.delete, handler: this.#onDelete },
-      { type: 'click', element: elements.edit, handler: this.edit },
-      { type: 'click', element: elements.load, handler: this.#onLoad },
-      { type: 'click', element: elements.puzzles, handler: this.#onSelect },
+      { type: 'click', element: elements.editNew, handler: this.#onEditNew },
+      { type: 'click', element: elements.editPuzzles, handler: this.#onEditPuzzleClick },
+      { type: 'click', element: elements.playLoad, handler: this.#onPlayLoad },
+      { type: 'click', element: elements.playPuzzles, handler: this.#onPlayPuzzleClick },
       { type: 'click', element: elements.quit, handler: this.quit },
       { type: 'click', element: elements.title, handler: this.title },
       { type: Events.CacheClear, handler: this.#onSettingsCacheClear },
@@ -49,7 +52,7 @@ export class Game {
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    Puzzles.updateDom()
+    Game.updatePuzzles()
 
     const state = State.resolve()
     if (Game.is(Game.States.Play)) {
@@ -60,22 +63,29 @@ export class Game {
         this.play(state)
       }
     } else if (Game.is(Game.States.Edit)) {
-      // TODO edit should also have a screen in front of the editor for managing puzzles for editing
-      // noinspection JSIgnoredPromiseFromCall
-      this.edit()
+      if (!state) {
+        elements.dialogEdit.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.edit(state)
+      }
     } else {
       elements.dialogTitle.showModal()
     }
   }
 
-  async edit () {
+  async edit (state) {
     if (!document.body.classList.contains(Game.States.Edit)) {
       this.#reset(Game.States.Edit)
+
+      // Transition back to the puzzle when the edit dialog is closed
+      elements.edit.dataset.element = 'screen'
+
       this.puzzle.teardown()
-      await this.editor.select({ animations: [Puzzle.Animations.FadeIn] })
     }
 
-    await Game.dialogClose(elements.dialogTitle)
+    await Game.dialogClose(elements.dialogEdit)
+    await this.editor.select(state, { animations: [Puzzle.Animations.FadeIn] })
   }
 
   async play (state) {
@@ -89,9 +99,8 @@ export class Game {
       this.puzzle.teardown()
     }
 
-    await this.puzzle.select(state, { animations: [Puzzle.Animations.FadeIn] })
-
     await Game.dialogClose(elements.dialogPlay)
+    await this.puzzle.select(state, { animations: [Puzzle.Animations.FadeIn] })
   }
 
   quit () {
@@ -130,22 +139,22 @@ export class Game {
 
       this.select(parentId, { animations: [Puzzle.Animations.SlideRight] })
     } else {
-      Game.dialogOpen(elements.dialogPlay)
+      Game.dialogOpen(Game.is(State.ContextKeys.Play) ? elements.dialogPlay : elements.dialogEdit)
     }
   }
 
-  #delete (id) {
+  #delete (id, context) {
     if (Puzzles.has(id)) {
       return
     }
 
     confirm(`Are you sure you want to remove puzzle "${id}"? This cannot be undone.`, async () => {
-      State.delete(id)
-      Puzzles.updateDom()
+      State.delete(id, context)
+      Game.updatePuzzles()
     })
   }
 
-  async #onLoad () {
+  async #onPlayLoad () {
     try {
       const configuration = JSON.parse(elements.configuration.value)
       const state = new State(configuration.id ?? uniqueId(), configuration)
@@ -159,11 +168,26 @@ export class Game {
     }
   }
 
-  async #onSelect (event) {
+  #onEditNew () {
+    const id = uniqueId()
+    this.edit(new State(id, { id, unlocked: true }))
+  }
+
+  async #onEditPuzzleClick (event) {
     const $item = event.target.closest('.puzzle')
     const id = $item.dataset.id
     if (event.target.classList.contains('remove')) {
-      this.#delete(id)
+      this.#delete(id, State.ContextKeys.Edit)
+    } else {
+      this.edit(id)
+    }
+  }
+
+  async #onPlayPuzzleClick (event) {
+    const $item = event.target.closest('.puzzle')
+    const id = $item.dataset.id
+    if (event.target.classList.contains('remove')) {
+      this.#delete(id, State.ContextKeys.Play)
     } else {
       const puzzle = Puzzles.get(id)
       const state = State.fromCache(id)
@@ -245,6 +269,15 @@ export class Game {
 
   static is (state) {
     return Object.values(Game.States).includes(state) && params.has(state)
+  }
+
+  static updatePuzzles (contexts = Object.values(State.ContextKeys)) {
+    if (contexts.includes(State.ContextKeys.Edit)) {
+      Puzzles.updateDom('edit-puzzles', State.ContextKeys.Edit)
+    }
+    if (contexts.includes(State.ContextKeys.Play)) {
+      Puzzles.updateDom('play-puzzles', State.ContextKeys.Play)
+    }
   }
 
   static toString = classToString('Game')

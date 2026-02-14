@@ -4,7 +4,6 @@ import { confirm } from './dialog.js'
 import paper, { Layer, Path, Point, Project, Size } from 'paper'
 import {
   addClass, animate,
-  appendOption,
   base64encode, baseUrl, classToString,
   debounce,
   emitEvent, fadeIn, fadeOut,
@@ -21,7 +20,6 @@ import { Collision as CollisionItem } from './items/collision'
 import { Stateful } from './stateful'
 import { OffsetCoordinates } from './coordinates/offset'
 import { State } from './state'
-import { Puzzles } from '../puzzles'
 import { StepState } from './step'
 import { EventListeners } from './eventListeners'
 import { Requirements } from './requirements.js'
@@ -397,7 +395,7 @@ export class Puzzle {
     }
 
     const isUnlocked = State.fromCache(id) !== undefined
-    if (!(isUnlocked || state.unlocked)) {
+    if (!(isUnlocked || state.getCurrent().unlocked)) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
 
@@ -572,9 +570,7 @@ export class Puzzle {
   }
 
   #getModifiers (tile) {
-    // Sort by ID to ensure they always appear in the same order regardless of ownership
-    return (tile?.modifiers ?? []).concat(this.layout.modifiers)
-    // .sort((a, b) => a.id - b.id)
+    return (tile?.modifiers ?? []).concat(this.layout?.modifiers ?? [])
   }
 
   #onBeamUpdate (event) {
@@ -823,7 +819,7 @@ export class Puzzle {
     // If the old canvas hasn't been cleaned up yet, do it now
     project.cleanup()
 
-    Puzzles.updateDom()
+    Game.updatePuzzles([State.ContextKeys.Play])
 
     document.body.classList.add(Puzzle.Events.Loaded)
   }
@@ -865,38 +861,6 @@ export class Puzzle {
     elements.info.setAttribute('open', (!hide).toString())
     elements.infoId.textContent = `Puzzle: ${id}`
     elements.infoTitle.textContent = `Title: "${title}"`
-  }
-
-  #updateDropdown () {
-    if (Game.is(Game.States.Edit)) {
-      // The editor will handle the dropdown
-      return
-    }
-
-    elements.select.replaceChildren()
-
-    const ids = State.getIds()
-    const customIds = []
-    ids.forEach((id) => {
-      if (Puzzles.has(id)) {
-        appendOption(elements.select, { value: id, text: Puzzles.titles[id] })
-      } else {
-        customIds.push(id)
-      }
-    })
-
-    if (customIds.length) {
-      const customGroup = document.createElement('optgroup')
-      customGroup.label = '———'
-      customIds.forEach((id) => {
-        appendOption(customGroup, { value: id, text: State.fromCache(id)?.getTitle() ?? id })
-      })
-
-      elements.select.append(customGroup)
-    }
-
-    // Select current ID
-    elements.select.value = this.state?.getId()
   }
 
   #updateBeams (resolve) {

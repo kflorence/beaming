@@ -13,8 +13,11 @@ export class Puzzles {
     }
   }
 
-  static getDom () {
-    const currentId = State.getId()
+  static getDom (context) {
+    const currentId = State.getId(context)
+    const ids = context === State.ContextKeys.Play
+      ? Array.from(new Set(Puzzles.ids.concat(State.getIds(context))))
+      : State.getIds(context)
     const processedIds = []
 
     function addItem (id) {
@@ -22,8 +25,12 @@ export class Puzzles {
         return
       }
 
-      const state = State.fromCache(id)
-      const puzzle = puzzles[id] ?? state.getConfig()
+      const state = State.fromCache(id, context)
+      const puzzle = puzzles[id] ?? state?.getConfig()
+
+      if (!puzzle) {
+        return
+      }
 
       const li = document.createElement('li')
       li.classList.add('puzzle')
@@ -48,7 +55,7 @@ export class Puzzles {
         div.append(i)
       }
 
-      if (puzzle.layout?.imports?.length) {
+      if (context === State.ContextKeys.Play && puzzle.layout?.imports?.length) {
         const ul = document.createElement('ul')
         ul.classList.add('imports')
         puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id)))
@@ -60,7 +67,6 @@ export class Puzzles {
       return li
     }
 
-    const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds())))
     return ids.map((id) => addItem(id)).filter((element) => element !== undefined)
   }
 
@@ -75,7 +81,7 @@ export class Puzzles {
     return { ids, titles }
   }
 
-  static updateDom () {
-    document.getElementById('play-puzzles').replaceChildren(...Puzzles.getDom())
+  static updateDom (elementId, context) {
+    document.getElementById(elementId).replaceChildren(...Puzzles.getDom(context))
   }
 }

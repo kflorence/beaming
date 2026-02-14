@@ -93,7 +93,7 @@
         <li data-dialog="dialog-play" id="title-play">play</li>
         <li data-dialog="dialog-about">about</li>
         <li data-dialog="dialog-settings" id="title-settings">settings</li>
-        <li id="title-editor">editor</li>
+        <li data-dialog="dialog-edit" id="title-edit">editor</li>
         <li id="title-quit">quit</li>
       </ul>
       <div id="version"></div>
@@ -108,7 +108,7 @@
       <main>
         <fieldset>
           <legend>Puzzles</legend>
-          <ul id="play-puzzles"></ul>
+          <ul class="puzzles" id="play-puzzles"></ul>
         </fieldset>
         <fieldset id="play-custom">
           <legend>Import</legend>
@@ -414,6 +414,21 @@
             use with caution!
           </p>
           <button id="settings-cache-reset" class="danger">Reset Cache</button>
+        </fieldset>
+      </main>
+    </dialog>
+    <dialog class="fullscreen" id="dialog-edit">
+      <header>
+        <h1 class="flex-left">Edit</h1>
+        <div class="flex-right">
+          <button><i class="ph-bold ph-x" title="Close"></i></button>
+        </div>
+      </header>
+      <main>
+        <fieldset>
+          <legend>Puzzles</legend>
+          <ul class="puzzles" id="edit-puzzles"></ul>
+          <button id="edit-new"><i class="ph-bold ph-file-plus"></i> Create New Puzzle</button>
         </fieldset>
       </main>
     </dialog>

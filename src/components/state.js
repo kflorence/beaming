@@ -10,6 +10,7 @@ import {
   uniqueId,
   url
 } from './util'
+import { Game } from './game.js'
 
 const history = window.history
 
@@ -27,15 +28,9 @@ export class State {
 
   constructor (id, original, deltas, moveIndex, moves, solution, selectedTile, version) {
     if (id === undefined) {
-      if (params.has(State.ParamKeys.Edit)) {
-        // This will happen when editing a new puzzle in the editor from scratch
-        id = uniqueId()
-      } else {
-        // This shouldn't happen
-        throw new Error('Cannot play puzzle without ID')
-      }
-    } else if (params.has(State.ParamKeys.Edit) && Puzzles.has(id)) {
-      // This will happen when editing a puzzle that exists in source configuration
+      throw new Error('Invalid state: missing ID')
+    } else if (Puzzles.has(id) && Game.is(State.ContextKeys.Edit)) {
+      // Create a unique ID for any official puzzle when edited
       id = `${id}-${uniqueId()}`
     }
 
@@ -289,16 +284,16 @@ export class State {
     }
   }
 
-  static delete (id) {
+  static delete (id, context = State.getContext()) {
     if (Puzzles.has(id)) {
       // Can't delete puzzles that exist in configuration
       return
     }
 
-    const ids = State.remove(id)
+    const ids = State.remove(id, context)
 
     // Remove associated puzzle keys from cache
-    const baseKeys = State.getBaseKeys()
+    const baseKeys = State.getBaseKeys(context)
     Object.keys(Storage.get()).forEach((key) => {
       if (baseKeys.some((base) => key.startsWith(base))) {
         Storage.delete(key)
@@ -306,8 +301,8 @@ export class State {
     })
 
     // Currently selected puzzle
-    if (State.getId() === id) {
-      Storage.delete(State.key())
+    if (State.getId(context) === id) {
+      Storage.delete(getKey(context, 'puzzle'))
 
       // Clear URL cache
       url.hash = ''
@@ -316,8 +311,8 @@ export class State {
     return ids
   }
 
-  static fromCache (id) {
-    const str = Storage.get(State.key(id)) || Storage.get(getKey(State.ContextKeys.Play, 'puzzle', id))
+  static fromCache (id, context) {
+    const str = Storage.get(getKey(context ?? State.getContext(), 'puzzle', id))
     if (str) {
       return State.fromEncoded(str)
     }
@@ -375,8 +370,8 @@ export class State {
     )
   }
 
-  static getBaseKeys () {
-    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(State.getContext, scope, State.getId)))
+  static getBaseKeys (context) {
+    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId)))
   }
 
   static getContext () {
@@ -387,12 +382,12 @@ export class State {
     }
   }
 
-  static getId () {
-    return Storage.get(State.key())
+  static getId (context) {
+    return Storage.get(getKey(context ?? State.getContext(), 'puzzle'))
   }
 
-  static getIds () {
-    return JSON.parse(Storage.get(State.key(State.CacheKeys.Ids)) ?? '[]')
+  static getIds (context) {
+    return JSON.parse(Storage.get(getKey(context ?? State.getContext(), 'puzzle', State.CacheKeys.Ids)) ?? '[]')
   }
 
   static resolve (id) {
@@ -491,11 +486,11 @@ export class State {
     return ids
   }
 
-  static remove (id) {
-    const ids = State.getIds()
+  static remove (id, context = State.getContext()) {
+    const ids = State.getIds(context)
     const index = ids.indexOf(id)
     ids.splice(index, 1)
-    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    Storage.set(getKey(context, 'puzzle', State.CacheKeys.Ids), JSON.stringify(ids))
     return ids
   }
 

@@ -20,7 +20,6 @@ document.querySelectorAll('[data-dialog]').forEach((target) => {
     const element = getElement()
     const direction = element?.id === title.id ? 'right' : 'left'
     const promises = [() => animate(dialog, `slide-${direction}-out`, () => { dialog.close() })]
-    console.log(element)
     if (element) {
       promises.push(() => animate(element, `slide-${direction}-in`, () => { element.showModal?.() }))
     }
