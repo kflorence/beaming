@@ -4,6 +4,7 @@ import { merge, params } from '../util.js'
 import { Puzzle } from '../puzzle.js'
 import { Puzzles } from '../../puzzles/index.js'
 import { State } from '../state.js'
+import { Game } from '../game.js'
 
 export class PuzzleModifier extends Modifier {
   requiresItem = false
@@ -18,6 +19,8 @@ export class PuzzleModifier extends Modifier {
 
     puzzle.headerMessages.add(`You've unlocked puzzle '${state.id}'!`)
     puzzle.layout.unlock(state.id)
+
+    Game.updatePuzzles([State.ContextKeys.Play])
   }
 
   async onInvoked (puzzle) {

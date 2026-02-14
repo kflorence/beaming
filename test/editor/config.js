@@ -9,6 +9,8 @@ describe('Editor', function () {
   before(puzzle.before)
 
   it('should produce matching configuration', async function () {
+    await puzzle.clickElement('#edit-new')
+    await puzzle.isLoaded()
     await puzzle.clickAtOffset(0, 0)
     await puzzle.clickElement('#editor-lock')
     await puzzle.clickAtOffset(0, 0)
@@ -34,7 +36,8 @@ describe('Editor', function () {
             }
           }
         }
-      }
+      },
+      unlocked: true
     })
   })
 })

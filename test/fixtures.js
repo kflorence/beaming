@@ -34,7 +34,7 @@ export class PuzzleFixture {
   constructor (id, mode = 'play') {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?${mode}#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${mode}&unlock#/${id}`
   }
 
   async after () {
@@ -66,9 +66,6 @@ export class PuzzleFixture {
     await this.driver.get(this.url)
 
     this.elements.body = await this.driver.findElement(By.tagName('body'))
-
-    // Wait for the puzzle to be ready
-    await this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-loaded'))
   }
 
   async clickAtOffset (r, c) {
@@ -110,6 +107,10 @@ export class PuzzleFixture {
 
   async getModifier (name) {
     return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
+  }
+
+  async isLoaded () {
+    return await this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-loaded'))
   }
 
   async isMasked () {
@@ -180,6 +181,7 @@ export class PuzzleFixture {
   }
 
   async solve (actions) {
+    await this.isLoaded()
     for (const action of actions) {
       await this.process(action)
     }

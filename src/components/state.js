@@ -464,7 +464,8 @@ export class State {
     ClearCache: 'clearCache',
     Edit: 'edit',
     Parents: 'parents',
-    Play: 'play'
+    Play: 'play',
+    Unlock: 'unlock'
   })
 
   static ScopeKeys = Object.freeze({

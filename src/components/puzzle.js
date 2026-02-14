@@ -395,7 +395,7 @@ export class Puzzle {
     }
 
     const isUnlocked = State.fromCache(id) !== undefined
-    if (!(isUnlocked || state.getCurrent().unlocked)) {
+    if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
 
