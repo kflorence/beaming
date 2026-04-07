@@ -5,14 +5,15 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses'
 // noinspection JSUnusedGlobalSymbols
 export default {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '*(steamworks_sdk/**|**/steamworks-ffi-node/**)'
+    },
     icon: './src/images/icon',
     // See: https://github.com/electron/universal/issues/36
     osxSign: {},
     // See: https://electron.github.io/packager/main/interfaces/OsxUniversalOptions.html
     osxUniversal: {
-      mergeASARs: true,
-      x64ArchFiles: 'Contents/Resources/app.asar.unpacked/node_modules/koffi/build/koffi/*/koffi.node'
+      mergeASARs: true
     }
   },
   rebuildConfig: {},
