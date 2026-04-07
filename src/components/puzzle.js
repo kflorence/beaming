@@ -27,7 +27,6 @@ import { Interact } from './interact'
 import { View } from './view'
 import { Schema } from './schema'
 import { Game } from './game'
-import { Icons } from './icon.js'
 import Tippy from 'tippy.js'
 import { Tile } from './items/tile.js'
 import { Storage } from './storage.js'
@@ -719,7 +718,12 @@ export class Puzzle {
     p.classList.add(Puzzle.ClassNames.Solved)
     p.textContent = 'Puzzle solved!'
 
-    this.headerMessages.set([p, Icons.Solved.getElement()])
+    const span = document.createElement('span')
+    span.id = 'continue'
+    span.classList.add('back')
+    span.textContent = 'Continue'
+
+    this.headerMessages.set([p, span])
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)

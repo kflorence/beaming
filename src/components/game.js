@@ -13,6 +13,7 @@ const elements = Object.freeze({
   back: document.getElementById('back'),
   configuration: document.getElementById('play-custom-configuration'),
   configurationError: document.getElementById('play-custom-configuration-error'),
+  continue: document.getElementById('continue'),
   delete: document.getElementById('delete'),
   dialogEdit: document.getElementById('dialog-edit'),
   dialogPlay: document.getElementById('dialog-play'),
@@ -40,7 +41,7 @@ export class Game {
     this.editor = new Editor(this.puzzle)
 
     this.#eventListeners.add([
-      { type: 'click', element: elements.back, handler: this.#onBack },
+      { type: 'click', handler: this.#onBack },
       { type: 'click', element: elements.editNew, handler: this.#onEditNew },
       { type: 'click', element: elements.editPuzzles, handler: this.#onEditPuzzleClick },
       { type: 'click', element: elements.playLoad, handler: this.#onPlayLoad },
@@ -105,7 +106,11 @@ export class Game {
     }
   }
 
-  async #onBack () {
+  async #onBack (event) {
+    if (!event.target.closest('.back')) {
+      return
+    }
+
     const currentId = this.puzzle.state.getId()
     const parent = params.get(State.CacheKeys.Parent)
     const parents = parent?.split(',')
