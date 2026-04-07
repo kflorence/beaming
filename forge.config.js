@@ -12,7 +12,7 @@ export default {
     // See: https://electron.github.io/packager/main/interfaces/OsxUniversalOptions.html
     osxUniversal: {
       mergeASARs: true,
-      x64ArchFiles: '*(steamworks_sdk/**|**/steam-overlay.node|**/koffi.node)'
+      x64ArchFiles: 'Contents/Resources/app.asar.unpacked/node_modules/**/*.node'
     }
   },
   rebuildConfig: {},
