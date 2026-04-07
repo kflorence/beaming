@@ -2,7 +2,7 @@ import { confirm } from './dialog.js'
 import { Puzzle } from './puzzle'
 import { Editor } from './editor'
 import { debug } from './debug'
-import { animate, classToString, emitEvent, params, uniqueId, url } from './util'
+import { animate, classToString, params, resetUrl, uniqueId, url } from './util'
 import { State } from './state'
 import { Storage } from './storage'
 import { EventListeners } from './eventListeners'
@@ -49,29 +49,11 @@ export class Game {
       { type: 'click', element: elements.title, handler: this.title },
       { type: Events.CacheClear, handler: this.#onSettingsCacheClear },
       { type: Storage.Events.Delete, handler: this.#onStorageDelete },
+      { type: Storage.Profiles.Events.Update, handler: this.#onProfileUpdate },
       { type: Storage.Events.Set, handler: this.#onStorageSet }
     ])
 
-    Game.updatePuzzles()
-
-    const state = State.resolve()
-    if (Game.is(Game.States.Play)) {
-      if (!state) {
-        elements.dialogPlay.showModal()
-      } else {
-        // noinspection JSIgnoredPromiseFromCall
-        this.play(state)
-      }
-    } else if (Game.is(Game.States.Edit)) {
-      if (!state) {
-        elements.dialogEdit.showModal()
-      } else {
-        // noinspection JSIgnoredPromiseFromCall
-        this.edit(state)
-      }
-    } else {
-      elements.dialogTitle.showModal()
-    }
+    this.#setup()
   }
 
   async edit (state) {
@@ -189,23 +171,20 @@ export class Game {
     if (event.target.classList.contains('remove')) {
       this.#delete(id, State.ContextKeys.Play)
     } else {
-      const puzzle = Puzzles.get(id)
-      const state = State.fromCache(id)
-      if (!puzzle?.unlocked && state === undefined) {
-        console.debug(`Puzzle not unlocked: ${id}`)
-        return
-      }
       this.play(id)
     }
   }
 
-  async #onSettingsCacheClear (event) {
-    console.debug(Game.toString(event.type))
-    url.hash = ''
-    window.localStorage.clear()
-    await window.electron?.store.delete()
-    await this.puzzle.select()
-    emitEvent(Events.CacheCleared)
+  async #onProfileUpdate (event) {
+    this.#teardown()
+    Storage.Profiles.set(event.detail.id)
+    Game.updatePuzzles()
+  }
+
+  async #onSettingsCacheClear () {
+    this.#onStorageDelete(Storage.delete())
+    // Force a page reload without persisting anything in the URL
+    window.location.href = window.location.href.split('?')[0]
   }
 
   #onStorageDelete (event) {
@@ -245,6 +224,38 @@ export class Game {
       // Don't carry state via URL from one context to another
       url.hash = ''
     }
+  }
+
+  #setup () {
+    Game.updatePuzzles()
+
+    const state = State.resolve()
+    if (Game.is(Game.States.Play)) {
+      if (!state) {
+        elements.dialogPlay.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.play(state)
+      }
+    } else if (Game.is(Game.States.Edit)) {
+      if (!state) {
+        elements.dialogEdit.showModal()
+      } else {
+        // noinspection JSIgnoredPromiseFromCall
+        this.edit(state)
+      }
+    } else {
+      elements.dialogTitle.showModal()
+    }
+  }
+
+  #teardown () {
+    document.body.classList.remove(...Game.states)
+
+    resetUrl()
+
+    this.editor.teardown()
+    this.puzzle.teardown()
   }
 
   static debug = debug

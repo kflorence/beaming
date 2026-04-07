@@ -295,6 +295,10 @@ export class Puzzle {
       this.state = State.resolve()
     }
 
+    if (!this.state) {
+      return
+    }
+
     this.#updateActions()
 
     try {
@@ -387,12 +391,12 @@ export class Puzzle {
 
   async select (id, options) {
     const state = id instanceof State ? id : State.resolve(id)
-    id = state.getId()
 
-    if (id === this.state?.getId()) {
-      // This ID is already selected, nothing to do
+    if (!state) {
       return
     }
+
+    id = state.getId()
 
     const isUnlocked = State.fromCache(id) !== undefined
     if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
@@ -445,6 +449,11 @@ export class Puzzle {
     this.#isTearingDown = true
 
     document.body.classList.remove(...Object.values(Puzzle.Events))
+
+    this.footerMessages.reset()
+    this.headerMessages.reset()
+
+    this.modifiers.forEach((modifier) => modifier.detach())
 
     this.#collisions = {}
     this.#maskQueue = []
@@ -510,6 +519,7 @@ export class Puzzle {
 
     this.selectedTile = tile
     this.state.setSelectedTile(tile)
+    this.headerMessages.reset()
     this.#updateFooterMessages(tile)
     this.updateModifiers()
 
@@ -835,15 +845,15 @@ export class Puzzle {
 
     const disable = []
 
-    if (!this.state.canUndo()) {
+    if (!this.state?.canUndo()) {
       disable.push(elements.undo)
     }
 
-    if (!this.state.canRedo()) {
+    if (!this.state?.canRedo()) {
       disable.push(elements.redo)
     }
 
-    if (!this.state.canReset()) {
+    if (!this.state?.canReset()) {
       disable.push(elements.reset)
     }
 
@@ -1002,6 +1012,7 @@ export class Puzzle {
     Error: 'puzzle-error',
     Loaded: 'puzzle-loaded',
     Mask: 'puzzle-mask',
+    Reload: 'puzzle-reload',
     Reloaded: 'puzzle-reloaded',
     Resized: 'puzzle-resized',
     Solved: 'puzzle-solved',

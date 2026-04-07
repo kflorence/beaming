@@ -29,7 +29,10 @@ export class PuzzleModifier extends Modifier {
     // Track parent(s)
     const id = puzzle.state.getId()
     const parent = params.get(State.CacheKeys.Parent)
-    params.set(State.CacheKeys.Parent, parent ? [parent, id].join(',') : id)
+    const parents = parent?.split(',') ?? []
+    if (!parents.includes(id)) {
+      params.set(State.CacheKeys.Parent, parent ? [parent, id].join(',') : id)
+    }
 
     // Load the import behind the current puzzle and then swap them
     await puzzle.select(state.id, { animations: [Puzzle.Animations.SlideLeft] })

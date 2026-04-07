@@ -135,7 +135,9 @@ export function deepEqual (x, y) {
 }
 
 export function emitEvent (type, detail = null) {
-  document.dispatchEvent(new CustomEvent(type, { detail }))
+  const event = new CustomEvent(type, { detail })
+  document.dispatchEvent(event)
+  return event
 }
 
 export function escape (string) {
@@ -351,6 +353,14 @@ export function removeEmpties (t) {
     default:
       return nonEmpty(t) ? t : empty
   }
+}
+
+export function resetUrl () {
+  // Update URL reference
+  url.hash = ''
+  url.search = ''
+  // Update URL in browser
+  window.history.replaceState({}, null, '/')
 }
 
 export function sizeToString (size) {
