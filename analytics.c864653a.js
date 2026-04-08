@@ -1,0 +1,2 @@
+(0,("u">typeof globalThis?globalThis:"u">typeof self?self:"u">typeof window?window:"u">typeof global?global:{}).parcelRequiref3c5.register)("jae0J",function(e,t){let a=document.createElement("script");a.setAttribute("src","https://www.googletagmanager.com/gtag/js?id=G-HXLD6EE5NS"),document.head.append(a);let o=window.dataLayer=window.dataLayer||[];function l(){o.push(arguments)}l("js",new Date),l("config","G-HXLD6EE5NS")});
+//# sourceMappingURL=analytics.c864653a.js.map
