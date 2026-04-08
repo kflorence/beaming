@@ -11,7 +11,7 @@ export class Storage {
       localStorage.removeItem(key)
     }
 
-    emitEvent(Storage.Events.Delete, { key, persist })
+    return emitEvent(Storage.Events.Delete, { key, persist })
   }
 
   static get (key) {
@@ -87,6 +87,10 @@ export class Storage {
     }
 
     static get (id) {
+      if (id === Storage.Profiles.Default.id) {
+        return Storage.Profiles.Default
+      }
+
       const profiles = JSON.parse(localStorage.getItem(getKey(Storage.Prefix, Storage.Keys.Profiles)) ?? '[]')
       return id ? profiles.find((profile) => profile.id === id) : profiles
     }
@@ -104,23 +108,26 @@ export class Storage {
     }
 
     static set (id) {
-      if (id === Storage.Profiles.Default.id) {
-        return Storage.Profiles.unset()
-      }
-
       const profile = Storage.Profiles.get(id)
       if (!profile) {
         throw new Error(`Invalid profile id: ${id}`)
       }
 
-      localStorage.setItem(getKey(Storage.Prefix, Storage.Keys.Profile), id)
+      if (profile.id === Storage.Profiles.Default.id) {
+        localStorage.removeItem(getKey(Storage.Prefix, Storage.Keys.Profile))
+      } else {
+        localStorage.setItem(getKey(Storage.Prefix, Storage.Keys.Profile), id)
+      }
+
+      emitEvent(Storage.Profiles.Events.Updated, { profile })
       return profile
     }
 
-    static unset () {
-      localStorage.removeItem(getKey(Storage.Prefix, Storage.Keys.Profile))
-    }
-
     static Default = new Storage.Profile('default')
+
+    static Events = Object.freeze({
+      Update: getKey(Storage.Key, Storage.Keys.Profiles, 'update'),
+      Updated: getKey(Storage.Key, Storage.Keys.Profiles, 'updated')
+    })
   }
 }

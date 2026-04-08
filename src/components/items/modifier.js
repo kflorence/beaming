@@ -56,8 +56,8 @@ export class ModifierItem extends movable(Item) {
 
       const modifier = Modifiers.factory(parent, state.modifier)
 
-      modifier.onCollect(...arguments)
       puzzle.addModifier(modifier)
+      modifier.onCollect(...arguments)
 
       return nextStep
     }

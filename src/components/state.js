@@ -251,7 +251,7 @@ export class State {
     }
 
     url.hash = hashParams.join('/')
-    history.pushState(data, '', url)
+    history.replaceState(data, '', url)
     Storage.set(State.key(), id)
   }
 

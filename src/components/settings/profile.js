@@ -1,12 +1,11 @@
 import { Storage } from '../storage.js'
 import { confirm } from '../dialog.js'
+import { emitEvent } from '../util.js'
 
 const $profiles = document.getElementById('settings-profile')
 const $name = document.getElementById('settings-profile-name')
 
-function add (profile) {
-  const selected = Storage.Profile.get() ?? Storage.Profiles.Default
-
+function add (profile, selected = Storage.Profile.get() ?? Storage.Profiles.Default) {
   const li = document.createElement('li')
   li.classList.add('profile')
   li.classList.toggle('selected', profile.id === selected.id)
@@ -42,10 +41,10 @@ document.getElementById('settings-profile-create').addEventListener('click', () 
   }
 
   const profile = Storage.Profiles.add($name.value)
-  Storage.Profiles.set(profile.id)
-
   $profiles.querySelector('.selected').classList.remove('selected')
-  add(profile)
+
+  add(profile, profile)
+  emitEvent(Storage.Profiles.Events.Update, { id: profile.id })
 
   $name.value = ''
 })
@@ -62,7 +61,7 @@ $profiles.addEventListener('click', (event) => {
         // If the removed profile was selected, select the last profile that was created
         const $selected = $profiles.querySelector('li:last-child')
         $selected.classList.add('selected')
-        Storage.Profiles.set($selected.dataset.id)
+        emitEvent(Storage.Profiles.Events.Update, { id: $selected.dataset.id })
       }
     })
   } else {
@@ -71,8 +70,8 @@ $profiles.addEventListener('click', (event) => {
     }
 
     $profiles.querySelector('.selected').classList.toggle('selected')
-    Storage.Profiles.set(id)
     $profile.classList.add('selected')
+    emitEvent(Storage.Profiles.Events.Update, { id })
   }
 })
 
