@@ -263,8 +263,9 @@ dialog > main {
   background-color: white;
   border: 1px solid #666;
   border-radius: 0.5em;
-  overflow: auto;
-  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   width: 100%;
 }
 
@@ -608,7 +609,7 @@ dialog ul {
     box-sizing: border-box;
     height: 10em;
     margin: 1em 0;
-    padding: 0.25em;
+    padding: 0.5em;
     width: 100%;
   }
 }
@@ -789,13 +790,16 @@ dialog ul {
 
 
 .puzzles {
+  border: 1px solid #aaa;
+  border-radius: 0.5em;
+  background-color: #eee;
   list-style: none;
-  margin: 0;
-  padding: 0;
+  margin: 1em 0 0 0;
+  padding: 1em;
   position: relative;
 
   li {
-    color: #999;
+    color: #aaa;
     line-height: 24px;
     list-style: none;
     margin: 0;
@@ -1152,6 +1156,11 @@ dialog ul {
 
 .puzzle-solved #puzzle-footer {
   display: none;
+}
+
+.scroll {
+  overflow-y: auto;
+  padding: 1em;
 }
 
 .see-through {

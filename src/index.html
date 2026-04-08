@@ -106,17 +106,20 @@
         </div>
       </header>
       <main>
-        <fieldset>
-          <legend>Puzzles</legend>
-          <ul class="puzzles" id="play-puzzles"></ul>
-        </fieldset>
-        <fieldset id="play-custom">
-          <legend>Import</legend>
-          <p><label for="play-custom-configuration">Load a puzzle from configuration</label></p>
-          <textarea id="play-custom-configuration"></textarea>
-          <div id="play-custom-configuration-error"></div>
-          <button id="play-custom-load">Load</button>
-        </fieldset>
+        <div class="scroll">
+          <fieldset>
+            <legend>Puzzles</legend>
+            <p>Load an official puzzle by tapping on its name below</p>
+            <ul class="puzzles" id="play-puzzles"></ul>
+          </fieldset>
+          <fieldset id="play-custom">
+            <legend>Import</legend>
+            <p><label for="play-custom-configuration">Or load a custom puzzle from configuration</label></p>
+            <textarea id="play-custom-configuration" placeholder="Must be valid JSON. See the puzzle editor for an example"></textarea>
+            <div id="play-custom-configuration-error"></div>
+            <button id="play-custom-load">Load</button>
+          </fieldset>
+        </div>
       </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-about">
@@ -127,253 +130,255 @@
         </div>
       </header>
       <main>
-        <p>
-          <em>Beaming</em> is an open source, browser-based puzzle game that involves directing beams through a
-          hexagonal grid. The rules and requirements for each puzzle can be inferred by interaction and visual cues. If
-          you'd prefer a little more guidance before you get started, you can expand the sections below for more
-          information.
-        </p>
-        <h3>Table of Contents</h3>
-        <div class="wrapper">
-          <details>
-            <summary>The Basics</summary>
-            <main>
-              <p>
-                The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
-                screen that contains <em>actions</em> that can be used to manipulate items in the puzzle, the goal being
-                to figure out the solution for the puzzle. When you have successfully solved a puzzle, you will see a
-                message indicating as much, as well as a puzzle overlay indicating the tiles that were part of your
-                solution.
-              </p>
-              <h4>Actions and Attributes</h4>
-              <p>
-                The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
-                Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
-                belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
-                when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
-                can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
-                situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
-              </p>
-              <h4>Solution Requirements</h4>
-              <p>
-                The solution for each puzzle varies. The requirements for solving a puzzle will be displayed in the
-                upper right corner of the screen.
-              </p>
-              <h4>Interaction</h4>
-              <p>
-                In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
-                then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
-                which are listed below and expanded upon in the <em>Actions</em> section below:
-              </p>
-              <ul>
-                <li>
-                  <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
-                  tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
-                  either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside the
-                  puzzle area.
-                </li>
-                <li>
-                  <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
-                  the pointer outside the action, to toggle between states. For example, the <em>Rotate</em> action can be
-                  swiped to change the applied direction of rotation.
-                </li>
-              </ul>
-            </main>
-          </details>
-          <details>
-            <summary>Attributes</summary>
-            <main>
-              <p>
-                As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
-                indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
-              </p>
-              <details>
-                <summary><i class="ph-fill ph-prohibit-inset" title="Immutable">block</i> - Immutable</summary>
+        <div class="scroll">
+          <p>
+            <em>Beaming</em> is an open source, browser-based puzzle game that involves directing beams through a
+            hexagonal grid. The rules and requirements for each puzzle can be inferred by interaction and visual cues. If
+            you'd prefer a little more guidance before you get started, you can expand the sections below for more
+            information.
+          </p>
+          <h3>Table of Contents</h3>
+          <div class="wrapper">
+            <details>
+              <summary>The Basics</summary>
+              <main>
                 <p>
-                  The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
-                  disabled.
+                  The core gameplay involves selecting a hexagonal tile and interacting with the toolbar at the bottom of the
+                  screen that contains <em>actions</em> that can be used to manipulate items in the puzzle, the goal being
+                  to figure out the solution for the puzzle. When you have successfully solved a puzzle, you will see a
+                  message indicating as much, as well as a puzzle overlay indicating the tiles that were part of your
+                  solution.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-fill ph-lock" title="Locked"></i> - Locked</summary>
+                <h4>Actions and Attributes</h4>
                 <p>
-                  The items and modifiers on the tile cannot be added or removed. Any available <em>actions</em> on the
-                  tile may still be used.
+                  The actions shown in the toolbar at the bottom of the screen are updated based on the currently selected tile.
+                  Actions which are available to use on any tile will always show up in the toolbar, whereas actions which
+                  belong to a specific tile, indicated by the corresponding icon within the tile, will only be available
+                  when that tile is currently selected. You will notice that some tiles also contain <em>attributes</em> which
+                  can change the way a tile behaves. Actions which are available generally but cannot be applied in the current
+                  situation, for example because no tile is selected, will still be visible in the toolbar but disabled.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-fill ph-sticker" title="Locked"></i> - Sticky Items</summary>
+                <h4>Solution Requirements</h4>
                 <p>
-                  Any items placed on the tile are stuck to the tile, they cannot be removed. If the item is a
-                  <em>collectable</em>, it will be treated as a <em>Sticky Modifier</em> when collected.
+                  The solution for each puzzle varies. The requirements for solving a puzzle will be displayed in the
+                  upper right corner of the screen.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-fill ph-push-pin" title="Locked"></i> - Sticky Modifiers</summary>
+                <h4>Interaction</h4>
                 <p>
-                  Any <em>actions</em> applied to the tile are stuck to the tile. A maximum of six actions can be added
-                  to a single tile, at which point no further actions will be available for that tile.
+                  In general, puzzles can be solved strictly by <strong>tapping</strong>. You tap on a tile to select it, and
+                  then tap on an action in the toolbar to apply it to that tile. Some actions support additional behaviors,
+                  which are listed below and expanded upon in the <em>Actions</em> section below:
                 </p>
-              </details>
-            </main>
-          </details>
-          <details>
-            <summary>Actions</summary>
-            <main>
-              <p>
-                As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
-                and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
-                learn more about it.
-              </p>
-              <details>
-                <summary><i class="ph-fill ph-toggle-left" title="Toggle"></i> - Toggle</summary>
+                <ul>
+                  <li>
+                    <strong>Masks</strong> - Some actions require the user to select other tiles. The mask is used to restrict which
+                    tiles can be chosen by covering the invalid ones. While the mask is active, the action can be cancelled by
+                    either tapping on the currently selected tile (displayed with a dashed border), or by tapping outside the
+                    puzzle area.
+                  </li>
+                  <li>
+                    <strong>Swiping</strong> - Some actions in the toolbar support swiping, or pressing on the action and then releasing
+                    the pointer outside the action, to toggle between states. For example, the <em>Rotate</em> action can be
+                    swiped to change the applied direction of rotation.
+                  </li>
+                </ul>
+              </main>
+            </details>
+            <details>
+              <summary>Attributes</summary>
+              <main>
                 <p>
-                  Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
-                  <em>terminus</em> item will turn beams on and off.
+                  As mentioned in <em>The Basics</em> above, <strong>attributes change the way a tile behaves</strong> and are
+                  indicated on a tile by a light gray icon. Click or tap on an icon below to learn more about it.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-bold ph-arrow-counter-clockwise" title="Rotate"></i> - Rotate</summary>
+                <details>
+                  <summary><i class="ph-fill ph-prohibit-inset" title="Immutable">block</i> - Immutable</summary>
+                  <p>
+                    The tile, and the items within the tile, cannot be modified in any way. Any available <em>actions</em> are
+                    disabled.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-fill ph-lock" title="Locked"></i> - Locked</summary>
+                  <p>
+                    The items and modifiers on the tile cannot be added or removed. Any available <em>actions</em> on the
+                    tile may still be used.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-fill ph-sticker" title="Locked"></i> - Sticky Items</summary>
+                  <p>
+                    Any items placed on the tile are stuck to the tile, they cannot be removed. If the item is a
+                    <em>collectable</em>, it will be treated as a <em>Sticky Modifier</em> when collected.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-fill ph-push-pin" title="Locked"></i> - Sticky Modifiers</summary>
+                  <p>
+                    Any <em>actions</em> applied to the tile are stuck to the tile. A maximum of six actions can be added
+                    to a single tile, at which point no further actions will be available for that tile.
+                  </p>
+                </details>
+              </main>
+            </details>
+            <details>
+              <summary>Actions</summary>
+              <main>
                 <p>
-                  Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
-                  (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which
-                  can be used to change the direction of the applied rotation.
+                  As previously mentioned in <em>The Basics</em> above, <strong>actions manipulate the items within tiles</strong>
+                  and are indicated by the icons in the toolbar at the bottom of the screen. Click or tap on an icon below to
+                  learn more about it.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-bold ph-arrows-out-cardinal" title="Move"></i> - Move</summary>
+                <details>
+                  <summary><i class="ph-fill ph-toggle-left" title="Toggle"></i> - Toggle</summary>
+                  <p>
+                    Any valid (toggleable) items in the tile will have their state toggled. For example, toggling a
+                    <em>terminus</em> item will turn beams on and off.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-bold ph-arrow-counter-clockwise" title="Rotate"></i> - Rotate</summary>
+                  <p>
+                    Any valid (rotatable) items in the tile will be rotated in the direction indicated by the icon
+                    (either clockwise or counter-clockwise). <strong>This action supports <em>swiping</em></strong>, which
+                    can be used to change the direction of the applied rotation.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-bold ph-arrows-out-cardinal" title="Move"></i> - Move</summary>
+                  <p>
+                    Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
+                    of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-fill ph-puzzle-piece" title="Puzzle"></i> - Puzzle</summary>
+                  <p>
+                    Using this action will navigate the user to the puzzle it is configured for, which will be listed in
+                    a message above the tile. Any puzzles which have been navigated to before will also be available in the
+                    dropdown menu in the top toolbar.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-bold ph-swap" title="Swap"></i> - Swap</summary>
+                  <p>
+                    Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
+                    items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                  </p>
+                </details>
+              </main>
+            </details>
+            <details id="items">
+              <summary>Items</summary>
+              <main>
                 <p>
-                  Any valid (movable) items in the tile will be moved from the currently selected tile to a valid tile
-                  of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
+                  Items are placed within tiles and generally will have some impact on the behavior of a beam in that tile.
+                  Items can be manipulated through the use of <em>actions</em>, as described in the section above. Their
+                  behaviors may also be modified by any <em>attributes</em> applied to the tile. Some items are <em>collectable</em>,
+                  meaning that when a beam collides with them, they will be converted into an action. Click or tap on an icon
+                  below to learn more about it.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-fill ph-puzzle-piece" title="Puzzle"></i> - Puzzle</summary>
+                <details>
+                  <summary><span class="item" id="svg-filter"></span> - Filter</summary>
+                  <p>
+                    The filter item changes the color of a beam which passes through it by
+                    <a href="https://gka.github.io/chroma.js/#chroma-average" target="_blank>">averaging</a> the RBG
+                    channels of the beam with the color of the filter. For example, if the beam is blue
+                    (<span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span>) and the filter
+                    is red (<span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span>), the
+                    result is: <span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span> +
+                    <span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span> =
+                    <span class="color" title="#b400b4" style="background-color: rgb(180, 0, 180);"></span>.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-portal"></span> - Portal</summary>
+                  <p>
+                    The portal item transports a beam that collides with it from one tile to another, retaining the
+                    direction of travel the beam had when it entered the portal. In order for a beam to travel through a
+                    pair of portals, it must enter and exit from a direction that is not occupied by another beam.
+                    <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
+                    is more than one valid exit portal location.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-portal-directional"></span> - Portal (directional)</summary>
+                  <p>
+                    As with the portal item, a <em>directional</em> portal transports a beam that collides with it from one
+                    tile to another. However, unlike a standard portal, the directional portal will change the direction of
+                    the beam when it exits to the direction indicated by the arrow attached to the portal.
+                    <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
+                    is more than one valid exit portal location.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-modifier-puzzle"></span> - Puzzle Piece (collectable)</summary>
+                  <p>
+                    The puzzle item is a <em>collectable</em> that will unlock access to a puzzle when a beam collides with it,
+                    converting the item into a puzzle action on collection. This item will always convert to a stuck modifier
+                    on collection, regardless of what modifiers are on the tile.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-reflector"></span> - Reflector</summary>
+                  <p>
+                    The reflector item changes the direction a beam is traveling when it is collided with, producing a
+                    <a href="https://en.wikipedia.org/wiki/Specular_reflection" target="_blank">specular reflection</a>,
+                    or a mirrored reflection angle.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-terminus"></span> - Terminus</summary>
+                  <p>
+                    The terminus item is both the origin of and destination for beams. Each terminus may have up to six
+                    openings, one for each direction. Each opening is capable of sending, if toggled on, or receiving, if
+                    toggled off, beams in the color indicated by the opening. When a beam enters an available opening of
+                    matching color, a <em>connection</em> is formed between the origin and destination terminus. However,
+                    if the color of the beam does not match the opening color, a collision will occur.
+                  </p>
+                </details>
+                <details>
+                  <summary><span class="item" id="svg-wall"></span> - Wall</summary>
+                  <p>Wall items are attached to the edges of tiles and will stop any beams that collide with them.</p>
+                </details>
+              </main>
+            </details>
+            <details>
+              <summary>Solution Requirements</summary>
+              <main>
                 <p>
-                  Using this action will navigate the user to the puzzle it is configured for, which will be listed in
-                  a message above the tile. Any puzzles which have been navigated to before will also be available in the
-                  dropdown menu in the top toolbar.
+                  As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
+                  and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
+                  require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
+                  more about it.
                 </p>
-              </details>
-              <details>
-                <summary><i class="ph-bold ph-swap" title="Swap"></i> - Swap</summary>
-                <p>
-                  Any valid (movable) items in the currently selected tile will trade places with any valid (movable)
-                  items in a valid tile of your choice. <strong>This action utilizes a <em>mask</em></strong> for selecting the valid tile.
-                </p>
-              </details>
-            </main>
-          </details>
-          <details id="items">
-            <summary>Items</summary>
-            <main>
-              <p>
-                Items are placed within tiles and generally will have some impact on the behavior of a beam in that tile.
-                Items can be manipulated through the use of <em>actions</em>, as described in the section above. Their
-                behaviors may also be modified by any <em>attributes</em> applied to the tile. Some items are <em>collectable</em>,
-                meaning that when a beam collides with them, they will be converted into an action. Click or tap on an icon
-                below to learn more about it.
-              </p>
-              <details>
-                <summary><span class="item" id="svg-filter"></span> - Filter</summary>
-                <p>
-                  The filter item changes the color of a beam which passes through it by
-                  <a href="https://gka.github.io/chroma.js/#chroma-average" target="_blank>">averaging</a> the RBG
-                  channels of the beam with the color of the filter. For example, if the beam is blue
-                  (<span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span>) and the filter
-                  is red (<span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span>), the
-                  result is: <span class="color" title="#0000ff" style="background-color: rgb(0, 0, 255);"></span> +
-                  <span class="color" title="#ff0000" style="background-color: rgb(255, 0, 0);"></span> =
-                  <span class="color" title="#b400b4" style="background-color: rgb(180, 0, 180);"></span>.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-portal"></span> - Portal</summary>
-                <p>
-                  The portal item transports a beam that collides with it from one tile to another, retaining the
-                  direction of travel the beam had when it entered the portal. In order for a beam to travel through a
-                  pair of portals, it must enter and exit from a direction that is not occupied by another beam.
-                  <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
-                  is more than one valid exit portal location.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-portal-directional"></span> - Portal (directional)</summary>
-                <p>
-                  As with the portal item, a <em>directional</em> portal transports a beam that collides with it from one
-                  tile to another. However, unlike a standard portal, the directional portal will change the direction of
-                  the beam when it exits to the direction indicated by the arrow attached to the portal.
-                  <strong>This item will utilize a <em>mask</em></strong> for the user to choose an exit portal if there
-                  is more than one valid exit portal location.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-modifier-puzzle"></span> - Puzzle Piece (collectable)</summary>
-                <p>
-                  The puzzle item is a <em>collectable</em> that will unlock access to a puzzle when a beam collides with it,
-                  converting the item into a puzzle action on collection. This item will always convert to a stuck modifier
-                  on collection, regardless of what modifiers are on the tile.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-reflector"></span> - Reflector</summary>
-                <p>
-                  The reflector item changes the direction a beam is traveling when it is collided with, producing a
-                  <a href="https://en.wikipedia.org/wiki/Specular_reflection" target="_blank">specular reflection</a>,
-                  or a mirrored reflection angle.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-terminus"></span> - Terminus</summary>
-                <p>
-                  The terminus item is both the origin of and destination for beams. Each terminus may have up to six
-                  openings, one for each direction. Each opening is capable of sending, if toggled on, or receiving, if
-                  toggled off, beams in the color indicated by the opening. When a beam enters an available opening of
-                  matching color, a <em>connection</em> is formed between the origin and destination terminus. However,
-                  if the color of the beam does not match the opening color, a collision will occur.
-                </p>
-              </details>
-              <details>
-                <summary><span class="item" id="svg-wall"></span> - Wall</summary>
-                <p>Wall items are attached to the edges of tiles and will stop any beams that collide with them.</p>
-              </details>
-            </main>
-          </details>
-          <details>
-            <summary>Solution Requirements</summary>
-            <main>
-              <p>
-                As mentioned in <em>The Basics</em> above, <strong>the requirements for solving each puzzle vary</strong>
-                and are indicated by the text and icons on the right side of the top toolbar. Generally, solutions will
-                require that a user meet one or more threshold requirements. Click or tap on an icon below to learn
-                more about it.
-              </p>
-              <details>
-                <summary><i class="ph-bold ph-link-simple-horizontal" title="Connections">link</i> - Connections</summary>
-                <p>
-                  A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
-                  of the same color.
-                </p>
-              </details>
-              <details>
-                <summary><i class="ph-bold ph-stack" title="Moves">stacks</i> - Moves</summary>
-                <p>
-                  A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
-                  some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
-                  multiple potential exit portals, the resulting decision will result in an additional move.
-                </p>
-              </details>
-            </main>
-          </details>
+                <details>
+                  <summary><i class="ph-bold ph-link-simple-horizontal" title="Connections">link</i> - Connections</summary>
+                  <p>
+                    A connection is formed when a beam emitted from one terminus enters an available opening in another terminus
+                    of the same color.
+                  </p>
+                </details>
+                <details>
+                  <summary><i class="ph-bold ph-stack" title="Moves">stacks</i> - Moves</summary>
+                  <p>
+                    A move is stored any time the user makes a decision, generally in relation to taking an action. Note that
+                    some actions may result in multiple moves. For example, if an action causes a beam to enter a portal with
+                    multiple potential exit portals, the resulting decision will result in an additional move.
+                  </p>
+                </details>
+              </main>
+            </details>
+          </div>
+          <h3>Credits</h3>
+          <ul>
+            <li>Game design by: <a href="http://kflorence.com">Kyle Florence</a></li>
+            <li>Logo design by: Kat</li>
+            <li>Built with: <a href="http://paperjs.org">Paper.js</a></li>
+            <li>Inspired by: The Talos Principle and The Witness</li>
+            <li>Special thanks to: Kat and the Thinky Games community for play testing and quality assurance!</li>
+          </ul>
         </div>
-        <h3>Credits</h3>
-        <ul>
-          <li>Game design by: <a href="http://kflorence.com">Kyle Florence</a></li>
-          <li>Logo design by: Kat</li>
-          <li>Built with: <a href="http://paperjs.org">Paper.js</a></li>
-          <li>Inspired by: The Talos Principle and The Witness</li>
-          <li>Special thanks to: Kat and the Thinky Games community for play testing and quality assurance!</li>
-        </ul>
       </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-settings">
@@ -384,37 +389,39 @@
         </div>
       </header>
       <main>
-        <fieldset>
-          <legend>Profiles</legend>
-          <ul id="settings-profile"></ul>
-          <label class="hide" for="settings-profile-name">Create new profile</label>
-          <input type="text" id="settings-profile-name"><button id="settings-profile-create">New Profile</button>
-        </fieldset>
-        <fieldset id="settings-window">
-          <legend>Window</legend>
-          <div class="settings">
-            <input id="settings-window-fullscreen" name="settings-window" type="radio" value="fullscreen" />
-            <label for="settings-window-fullscreen">Fullscreen</label>
-            <input id="settings-window-maximized" name="settings-window" type="radio" value="maximized" />
-            <label for="settings-window-maximized">Maximized</label>
-            <input checked id="settings-window-custom" name="settings-window" type="radio" value="custom" />
-            <div>
-              <label for="settings-window-custom">Custom:</label>
-              <input class="number" id="settings-window-width" type="number" />
-              <label for="settings-window-width">Width</label>
-              <input class="number" id="settings-window-height" type="number" />
-              <label for="settings-window-height">Height</label>
+        <div class="scroll">
+          <fieldset>
+            <legend>Profiles</legend>
+            <ul id="settings-profile"></ul>
+            <label class="hide" for="settings-profile-name">Create new profile</label>
+            <input type="text" id="settings-profile-name"><button id="settings-profile-create">New Profile</button>
+          </fieldset>
+          <fieldset id="settings-window">
+            <legend>Window</legend>
+            <div class="settings">
+              <input id="settings-window-fullscreen" name="settings-window" type="radio" value="fullscreen" />
+              <label for="settings-window-fullscreen">Fullscreen</label>
+              <input id="settings-window-maximized" name="settings-window" type="radio" value="maximized" />
+              <label for="settings-window-maximized">Maximized</label>
+              <input checked id="settings-window-custom" name="settings-window" type="radio" value="custom" />
+              <div>
+                <label for="settings-window-custom">Custom:</label>
+                <input class="number" id="settings-window-width" type="number" />
+                <label for="settings-window-width">Width</label>
+                <input class="number" id="settings-window-height" type="number" />
+                <label for="settings-window-height">Height</label>
+              </div>
             </div>
-          </div>
-        </fieldset>
-        <fieldset id="settings-cache">
-          <legend>Cache</legend>
-          <p>
-            Reset the game cache. This will erase all progress and settings across the game. This cannot be undone,
-            use with caution!
-          </p>
-          <button id="settings-cache-reset" class="danger">Reset Cache</button>
-        </fieldset>
+          </fieldset>
+          <fieldset id="settings-cache">
+            <legend>Cache</legend>
+            <p>
+              Reset the game cache. This will erase all progress and settings across the game. This cannot be undone,
+              use with caution!
+            </p>
+            <button id="settings-cache-reset" class="danger">Reset Cache</button>
+          </fieldset>
+        </div>
       </main>
     </dialog>
     <dialog class="fullscreen" id="dialog-edit">
@@ -425,11 +432,13 @@
         </div>
       </header>
       <main>
-        <fieldset>
-          <legend>Puzzles</legend>
-          <ul class="puzzles" id="edit-puzzles"></ul>
-          <button id="edit-new"><i class="ph-bold ph-file-plus"></i> Create New Puzzle</button>
-        </fieldset>
+        <div class="scroll">
+          <fieldset>
+            <legend>Puzzles</legend>
+            <ul class="puzzles" id="edit-puzzles"></ul>
+            <button id="edit-new"><i class="ph-bold ph-file-plus"></i> Create New Puzzle</button>
+          </fieldset>
+        </div>
       </main>
     </dialog>
     <template id="dialog-confirm">
