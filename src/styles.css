@@ -798,6 +798,10 @@ dialog ul {
   padding: 1em;
   position: relative;
 
+  &:empty {
+    display: none;
+  }
+
   li {
     color: #aaa;
     line-height: 24px;
@@ -942,11 +946,6 @@ dialog ul {
   }
 }
 
-.buttons {
-  grid-gap: 1em;
-  margin: 1em 0;
-}
-
 .color {
   color: white;
   display: inline-block;
@@ -964,6 +963,17 @@ dialog ul {
   align-items: center;
   color: #666;
   display: flex;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: -1em;
+
+  button, input {
+    display: flex;
+    margin-top: 1em;
+  }
 }
 
 :disabled + label {
