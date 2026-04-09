@@ -174,7 +174,7 @@ export class Game {
     const id = $item.dataset.id
     if (event.target.classList.contains('remove')) {
       this.#delete(id, State.ContextKeys.Play)
-    } else {
+    } else if ($item.classList.contains('unlocked')) {
       this.play(id)
     }
   }
