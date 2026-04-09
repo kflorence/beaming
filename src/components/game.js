@@ -145,10 +145,9 @@ export class Game {
     try {
       const configuration = JSON.parse(elements.configuration.value)
       const state = new State(configuration.id ?? uniqueId(), configuration)
-      await this.puzzle.reload(state, { animations: [Puzzle.Animations.FadeIn] })
       elements.configuration.value = ''
       elements.configurationError.textContent = ''
-      await Game.dialogClose(elements.dialogPlay)
+      this.play(state)
     } catch (e) {
       console.error(e)
       elements.configurationError.textContent = 'Could not load puzzle: configuration is invalid'
@@ -175,7 +174,7 @@ export class Game {
     const id = $item.dataset.id
     if (event.target.classList.contains('remove')) {
       this.#delete(id, State.ContextKeys.Play)
-    } else {
+    } else if ($item.classList.contains('unlocked')) {
       this.play(id)
     }
   }

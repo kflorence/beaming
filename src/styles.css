@@ -163,6 +163,10 @@ dialog.confirm {
   button {
     margin: 0 0.5em;
   }
+
+  > main {
+    padding: 1em;
+  }
 }
 
 dialog.slide-down-in,
