@@ -30,6 +30,7 @@ import { Game } from './game'
 import Tippy from 'tippy.js'
 import { Tile } from './items/tile.js'
 import { Storage } from './storage.js'
+import { Puzzles } from '../puzzles/index.js'
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas-wrapper'),
@@ -397,7 +398,7 @@ export class Puzzle {
 
     id = state.getId()
 
-    const isUnlocked = State.fromCache(id) !== undefined
+    const isUnlocked = !Puzzles.has(id) || State.fromCache(id) !== undefined
     if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
