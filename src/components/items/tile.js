@@ -238,7 +238,6 @@ export class Tile extends Item {
   static Flags = Object.freeze({
     Copy: new Tile.Flag('copy'),
     Edit: new Tile.Flag('edit'),
-    // TODO implement hidden
     Hidden: new Tile.Flag('hidden'),
     Placeholder: new Tile.Flag('placeholder'),
     Selected: new Tile.Flag('selected')

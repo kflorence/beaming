@@ -60,8 +60,8 @@ export class Storage {
     id
     name
 
-    constructor (name) {
-      this.id = uniqueId()
+    constructor (name, id) {
+      this.id = id ?? uniqueId()
       this.name = name
     }
 
@@ -77,6 +77,16 @@ export class Storage {
     }
   }
 
+  static ProfilesByName = Object.freeze({
+    Default: new Storage.Profile('default', 'default'),
+    Share: new Storage.Profile('share', 'share')
+  })
+
+  static ProfilesById = Object.freeze(Object.fromEntries(
+    Object.values(Storage.ProfilesByName).map((profile) => [profile.id, profile])))
+
+  static ProfileIds = Object.keys(Storage.ProfilesById)
+
   static Profiles = class {
     static add (name) {
       const profiles = Storage.Profiles.get()
@@ -87,8 +97,9 @@ export class Storage {
     }
 
     static get (id) {
-      if (id === Storage.Profiles.Default.id) {
-        return Storage.Profiles.Default
+      const def = Storage.ProfilesById[id]
+      if (def) {
+        return def
       }
 
       const profiles = JSON.parse(localStorage.getItem(getKey(Storage.Prefix, Storage.Keys.Profiles)) ?? '[]')
@@ -113,7 +124,7 @@ export class Storage {
         throw new Error(`Invalid profile id: ${id}`)
       }
 
-      if (profile.id === Storage.Profiles.Default.id) {
+      if (profile.id === Storage.ProfilesByName.Default) {
         localStorage.removeItem(getKey(Storage.Prefix, Storage.Keys.Profile))
       } else {
         localStorage.setItem(getKey(Storage.Prefix, Storage.Keys.Profile), id)
@@ -122,8 +133,6 @@ export class Storage {
       emitEvent(Storage.Profiles.Events.Updated, { profile })
       return profile
     }
-
-    static Default = new Storage.Profile('default')
 
     static Events = Object.freeze({
       Update: getKey(Storage.Key, Storage.Keys.Profiles, 'update'),

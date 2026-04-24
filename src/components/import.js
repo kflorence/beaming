@@ -88,8 +88,8 @@ export class ImportFilterModifierInclusion extends ImportFilter {
 }
 
 export class ImportFilterPuzzleSolved extends ImportFilter {
-  apply (state) {
-    return this.state.solved === (state.getSolution() !== undefined)
+  apply (state, ref) {
+    return this.state.solved === (state.getSolution() !== undefined || ref.solution !== undefined)
   }
 
   static Name = ImportFilter.Names.Solved
@@ -134,8 +134,8 @@ export class ImportFilterPuzzleUnlocked extends ImportFilter {
 }
 
 export class ImportFilterTileInSolution extends ImportFilter {
-  apply (state, offset, tile) {
-    return this.state.inSolution === state.getSolution()?.includes(offset.toString())
+  apply (state, offset, tile, ref) {
+    return this.state.inSolution === (state.getSolution() ?? ref.solution)?.includes(offset.toString())
   }
 
   static Name = ImportFilter.Names.InSolution
@@ -191,6 +191,15 @@ export class Import {
               ImportFilterTileInSolution.schema()
             ],
             headerTemplate: 'filter {{i1}}'
+          },
+          type: 'array'
+        },
+        solution: {
+          items: {
+            type: 'string'
+          },
+          options: {
+            hidden: true
           },
           type: 'array'
         },

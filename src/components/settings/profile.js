@@ -5,7 +5,7 @@ import { emitEvent } from '../util.js'
 const $profiles = document.getElementById('settings-profile')
 const $name = document.getElementById('settings-profile-name')
 
-function add (profile, selected = Storage.Profile.get() ?? Storage.Profiles.Default) {
+function add (profile, selected = Storage.Profile.get() ?? Storage.ProfilesByName.Default) {
   const li = document.createElement('li')
   li.classList.add('profile')
   li.classList.toggle('selected', profile.id === selected.id)
@@ -16,7 +16,7 @@ function add (profile, selected = Storage.Profile.get() ?? Storage.Profiles.Defa
   left.textContent = profile.name
   li.append(left)
 
-  if (profile.id !== Storage.Profiles.Default.id) {
+  if (!Storage.ProfileIds.includes(profile.id)) {
     const right = document.createElement('div')
     right.classList.add('flex-right')
 
@@ -33,6 +33,13 @@ function add (profile, selected = Storage.Profile.get() ?? Storage.Profiles.Defa
   }
 
   $profiles.append(li)
+}
+
+export function setProfile (id) {
+  Storage.Profiles.set(id)
+  const $profile = $profiles.querySelector(`[data-id='${id}']`)
+  $profiles.querySelector('.selected').classList.toggle('selected')
+  $profile.classList.add('selected')
 }
 
 document.getElementById('settings-profile-create').addEventListener('click', () => {
@@ -75,5 +82,5 @@ $profiles.addEventListener('click', (event) => {
   }
 })
 
-const profiles = [Storage.Profiles.Default].concat(Storage.Profiles.get())
+const profiles = Object.values(Storage.ProfilesByName).concat(Storage.Profiles.get())
 profiles.forEach((profile) => add(profile))

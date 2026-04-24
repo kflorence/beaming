@@ -1566,10 +1566,6 @@
             {
               "type": "lock",
               "id": "4cc3d75b"
-            },
-            {
-              "type": "immutable",
-              "id": "2e9f8691"
             }
           ],
           "items": [
@@ -2174,11 +2170,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2303,11 +2294,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2411,11 +2397,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2484,11 +2465,6 @@
           "c": 3
         },
         "filters": [
-          {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
           {
             "type": "tile",
             "name": "in-solution",
@@ -2605,11 +2581,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2709,11 +2680,6 @@
           "c": 0
         },
         "filters": [
-          {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
           {
             "type": "puzzle",
             "name": "unlocked",
@@ -2863,11 +2829,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2943,11 +2904,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -2966,11 +2922,6 @@
           "c": -4
         },
         "filters": [
-          {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
           {
             "type": "tile",
             "name": "in-solution",
@@ -2991,11 +2942,6 @@
         },
         "filters": [
           {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
-          {
             "type": "tile",
             "name": "in-solution",
             "inSolution": true
@@ -3014,11 +2960,6 @@
           "c": 0
         },
         "filters": [
-          {
-            "type": "puzzle",
-            "name": "solved",
-            "solved": true
-          },
           {
             "type": "tile",
             "name": "in-solution",
