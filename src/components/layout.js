@@ -327,7 +327,7 @@ export class Layout extends Stateful {
       State.add(id)
     }
 
-    const filters = ref?.filters?.map((filter) => ImportFilter.factory(filter)) ?? []
+    const filters = ref.filters?.map((filter) => ImportFilter.factory(filter)) ?? []
 
     const hide = !filters
       .filter((filter) => filter.type === ImportFilter.Types.Puzzle)
@@ -339,7 +339,7 @@ export class Layout extends Stateful {
     tiles.forEach((tile) => {
       // Re-evaluate unlocked tiles
       const offset = new OffsetCoordinates(tile.ref.offset.r, tile.ref.offset.c)
-      tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile)))
+      tile.flags.toggle(Tile.Flags.Placeholder, !tileFilters.every((filter) => filter.apply(cache, offset, tile, ref)))
       tile.flags.toggle(Tile.Flags.Hidden, hide)
       tile.update()
     })
