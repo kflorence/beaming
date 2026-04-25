@@ -20,13 +20,13 @@ export class Puzzles {
       : State.getIds(context)
     const processedIds = []
 
-    function addItem (id) {
+    function addItem (id, ref) {
       if (processedIds.includes(id)) {
         return
       }
 
       const state = State.fromCache(id, context)
-      const puzzle = puzzles[id] ?? state?.getConfig()
+      const puzzle = state?.getCurrent() ?? puzzles[id]
 
       if (!puzzle) {
         return
@@ -37,7 +37,7 @@ export class Puzzles {
       li.classList.toggle('custom', !Puzzles.has(id))
       li.classList.toggle('selected', id === currentId)
       li.classList.toggle('solved', state?.getSolution() !== undefined)
-      li.classList.toggle('unlocked', puzzle.unlocked === true || state !== undefined)
+      li.classList.toggle('unlocked', ref?.unlocked || puzzle.unlocked || state !== undefined)
       li.dataset.id = id
 
       const div = document.createElement('div')
@@ -58,7 +58,7 @@ export class Puzzles {
       if (context === State.ContextKeys.Play && puzzle.layout?.imports?.length) {
         const ul = document.createElement('ul')
         ul.classList.add('imports')
-        puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id)))
+        puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id, ref)))
         li.append(ul)
       }
 

@@ -14,6 +14,10 @@ export class Filter {
 
   apply () {}
 
+  toString () {
+    return `[Filter:${this.type}->${this.name}]`
+  }
+
   static Name
   static Type
 

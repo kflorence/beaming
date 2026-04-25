@@ -398,7 +398,7 @@ export class Puzzle {
 
     id = state.getId()
 
-    const isUnlocked = !Puzzles.has(id) || State.fromCache(id) !== undefined
+    const isUnlocked = !Puzzles.has(id) || State.fromCache(id) !== undefined || this.layout?.getImport(id)?.unlocked
     if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
@@ -426,7 +426,7 @@ export class Puzzle {
         return
       case Item.Types.Tile:
         tile = this.layout.getTile(result.data.coordinates.offset)
-        if (Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag)) && !Game.is(Game.States.Edit)) {
+        if (Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag))) {
           // Ignore taps on un-selectable tiles
           tile = undefined
         }

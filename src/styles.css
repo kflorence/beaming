@@ -145,7 +145,8 @@ dialog.fullscreen {
   height: 100vh;
   left: 0;
   margin: 0;
-  max-height: 100vh;
+  /* Can't use vh here for mobile. See: https://developer.chrome.com/blog/url-bar-resizing */
+  max-height: 100%;
   max-width: 100vw;
   top: 0;
   width: 100vw;

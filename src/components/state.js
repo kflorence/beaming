@@ -11,6 +11,7 @@ import {
   url
 } from './util'
 import { Game } from './game.js'
+import { setProfile } from './settings/profile.js'
 
 const history = window.history
 
@@ -426,7 +427,11 @@ export class State {
       try {
         state = State.fromEncoded(value)
         id = state.getId()
-        console.debug(`Successfully resolved locally cached state for puzzle ID '${id}'.`, state)
+        console.debug(`Successfully resolved cached state for puzzle ID '${id}'.`, state)
+        if (cached === null) {
+          console.debug('User loaded a share URL, setting profile to "share"')
+          setProfile(Storage.ProfilesByName.Share.id)
+        }
         return state
       } catch (e) {
         console.debug(`Could not decode value: ${value}`, e)

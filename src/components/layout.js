@@ -117,7 +117,7 @@ export class Layout extends Stateful {
             flags.add(Tile.Flags.Hidden)
           }
 
-          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile))) {
+          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))) {
             flags.add(Tile.Flags.Placeholder)
           }
 

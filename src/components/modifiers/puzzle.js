@@ -19,6 +19,7 @@ export class PuzzleModifier extends Modifier {
 
     puzzle.headerMessages.add(`You've unlocked puzzle '${state.id}'!`)
     puzzle.layout.unlock(state.id)
+    puzzle.updateState()
 
     Game.updatePuzzles([State.ContextKeys.Play])
   }
