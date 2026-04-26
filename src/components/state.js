@@ -5,7 +5,7 @@ import {
   base64encode,
   classToString, getKey,
   getKeyFactory,
-  jsonDiffPatch,
+  jsonDiffPatch, merge,
   params,
   uniqueId,
   url
@@ -98,11 +98,19 @@ export class State {
     return new State(this.#id, this.getCurrent())
   }
 
-  encode () {
+  encode (recursive = false) {
+    const config = this.getConfig()
+    if (recursive) {
+      // Recursively load all nested puzzles into cache
+      State.resolveImportsCache(config)
+    }
+
     return base64encode(JSON.stringify({
       id: this.#id,
-      // If this puzzle exists in code, just cache the version
-      original: Puzzles.has(this.#id) ? { version: this.#original.version } : this.#original,
+      // If this puzzle exists in code, most of the configuration can be loaded from memory
+      original: Puzzles.has(this.#id)
+        ? { layout: { importsCache: config.layout.importsCache }, version: config.version }
+        : config,
       deltas: this.#deltas,
       moveIndex: this.#moveIndex,
       moves: this.#moves,
@@ -356,7 +364,9 @@ export class State {
         State.clearCache(state.id)
         return
       }
-      state.original = original
+
+      // Merge in memory configuration into cache configuration
+      state.original = merge(state.original, original)
     }
 
     return new State(
@@ -371,8 +381,14 @@ export class State {
     )
   }
 
+  static get (id) {
+    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+    // This will ensure the latest version is always used.
+    return State.fromCache(id) || State.fromCache(id, State.ContextKeys.Play) || State.fromConfig(id)
+  }
+
   static getBaseKeys (context) {
-    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId)))
+    return Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId))
   }
 
   static getContext () {
@@ -430,6 +446,7 @@ export class State {
         console.debug(`Successfully resolved cached state for puzzle ID '${id}'.`, state)
         if (cached === null) {
           console.debug('User loaded a share URL, setting profile to "share"')
+          Storage.Profiles.clear(Storage.ProfilesByName.Share.id)
           setProfile(Storage.ProfilesByName.Share.id)
         }
         return state
@@ -449,6 +466,26 @@ export class State {
     if (state) {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
+
+    return state
+  }
+
+  static resolveImportsCache (state) {
+    console.log('resolveImportsCache', state)
+    if (!state.layout.imports?.length) {
+      return
+    }
+
+    state.layout.importsCache ??= {}
+    state.layout.imports.forEach((ref) => {
+      // Try to load from local cache before falling back to existing puzzle cache
+      const cached = State.get(ref.id) || State.fromEncoded(state.layout.importsCache[ref.id])
+      if (cached) {
+        state.layout.importsCache[ref.id] = cached.clone().encode()
+        // Resolved any nested imports
+        State.resolveImportsCache(cached.getCurrent())
+      }
+    })
 
     return state
   }

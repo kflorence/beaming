@@ -3,11 +3,13 @@ import { emitEvent, getKey, uniqueId } from './util.js'
 const localStorage = window.localStorage
 
 export class Storage {
-  static delete (key = undefined, persist = true) {
+  static delete (key = undefined, persist = true, preserveKey = false) {
     if (key === undefined) {
       localStorage.clear()
     } else {
-      key = Storage.key(key)
+      if (!preserveKey) {
+        key = Storage.key(key)
+      }
       localStorage.removeItem(key)
     }
 
@@ -96,6 +98,16 @@ export class Storage {
       return profile
     }
 
+    static clear (id) {
+      const profile = Storage.Profiles.get(id)
+      if (!profile) {
+        throw new Error(`Invalid profile id: ${id}`)
+      }
+      Object.keys(Storage.get())
+        .filter((key) => key.startsWith(getKey(Storage.Prefix, id)))
+        .forEach((key) => Storage.delete(key, true, true))
+    }
+
     static get (id) {
       const def = Storage.ProfilesById[id]
       if (def) {
@@ -112,6 +124,8 @@ export class Storage {
       if (index < 0) {
         throw new Error(`Invalid profile id: ${id}`)
       }
+
+      Storage.Profiles.clear(id)
 
       const profile = profiles.splice(index, 1)[0]
       localStorage.setItem(getKey(Storage.Prefix, Storage.Keys.Profiles), JSON.stringify(profiles))

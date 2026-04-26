@@ -56,8 +56,13 @@ export class Layout extends Stateful {
       console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, ref)
 
       this.#imports[id] = structuredClone(ref)
+console.log('importsCache', state.importsCache[id])
+      // Use local cache if available, followed by imports cache, and finally falling back to in memory cache
+      const source = State.fromCache(id) ||
+        State.fromCache(id, State.ContextKeys.Play) ||
+        State.fromEncoded(state.importsCache[id]) ||
+        State.fromConfig(id)
 
-      const source = this.getCached(id, state)
       if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
@@ -215,15 +220,6 @@ export class Layout extends Stateful {
     return tile
   }
 
-  getCached (id, state) {
-    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
-    // This will ensure the latest version is always used.
-    return State.fromCache(id) ||
-      State.fromCache(id, State.ContextKeys.Play) ||
-      State.fromConfig(id) ||
-      State.fromEncoded((state ?? this.getState()).importsCache[id])
-  }
-
   getCenter () {
     // The center of the canvas
     return new Point(paper.view.viewSize.divide(2))
@@ -318,7 +314,7 @@ export class Layout extends Stateful {
 
     ref.unlocked = true
 
-    const cache = this.getCached(id)
+    const cache = State.get(id)
     const key = State.key(id)
 
     if (cache && !Storage.get(key)) {
