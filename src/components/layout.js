@@ -19,6 +19,7 @@ import {
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 import { Flags } from './flag.js'
+import { Puzzles } from '../puzzles/index.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -56,7 +57,7 @@ export class Layout extends Stateful {
       console.debug(Layout.toString(), `Importing from puzzle ${id}, offset [${offset.r},${offset.c}]`, ref)
 
       this.#imports[id] = structuredClone(ref)
-console.log('importsCache', state.importsCache[id])
+
       // Use local cache if available, followed by imports cache, and finally falling back to in memory cache
       const source = State.fromCache(id) ||
         State.fromCache(id, State.ContextKeys.Play) ||
@@ -122,7 +123,10 @@ console.log('importsCache', state.importsCache[id])
             flags.add(Tile.Flags.Hidden)
           }
 
-          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))) {
+          if (
+            !(ref.unlocked || Puzzles.isUnlocked(ref.id)) ||
+            !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))
+          ) {
             flags.add(Tile.Flags.Placeholder)
           }
 
@@ -312,8 +316,6 @@ console.log('importsCache', state.importsCache[id])
       return
     }
 
-    ref.unlocked = true
-
     const cache = State.get(id)
     const key = State.key(id)
 
@@ -382,6 +384,7 @@ console.log('importsCache', state.importsCache[id])
         type: 'object'
       },
       imports: Imports.schema(),
+      // TODO move this cache into the imports
       importsCache: {
         options: {
           hidden: true

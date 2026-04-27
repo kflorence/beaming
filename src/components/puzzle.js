@@ -397,8 +397,7 @@ export class Puzzle {
 
     id = state.getId()
 
-    const isUnlocked = !Puzzles.has(id) || State.fromCache(id) !== undefined || this.layout?.getImport(id)?.unlocked
-    if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
+    if (!Puzzles.isUnlocked(id) && !this.layout.getImport(id).unlocked) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
 
