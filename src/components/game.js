@@ -156,7 +156,7 @@ export class Game {
 
   #onEditNew () {
     const id = uniqueId()
-    this.edit(new State(id, { id, unlocked: true }))
+    this.edit(new State(id, { id }))
   }
 
   async #onEditPuzzleClick (event) {

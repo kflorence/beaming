@@ -1,6 +1,7 @@
 // noinspection JSFileReferences
 import * as puzzles from './*.json'
 import { State } from '../components/state.js'
+import { params } from '../components/util.js'
 
 export class Puzzles {
   static ids = Object.keys(puzzles).sort()
@@ -37,7 +38,7 @@ export class Puzzles {
       li.classList.toggle('custom', !Puzzles.has(id))
       li.classList.toggle('selected', id === currentId)
       li.classList.toggle('solved', state?.getSolution() !== undefined)
-      li.classList.toggle('unlocked', ref?.unlocked || puzzle.unlocked || state !== undefined)
+      li.classList.toggle('unlocked', Puzzles.isUnlocked(id))
       li.dataset.id = id
 
       const div = document.createElement('div')
@@ -79,6 +80,17 @@ export class Puzzles {
     const ids = Array.from(new Set(Puzzles.ids.concat(State.getIds().filter((id) => id !== currentId))))
     const titles = ids.map((id) => Puzzles.titles[id] ?? State.fromCache(id)?.getTitle() ?? id)
     return { ids, titles }
+  }
+
+  static isUnlocked (id) {
+    // Allow unlocking a puzzle via URL override
+    return params.has(State.ParamKeys.Unlock) ||
+      // Custom puzzles are always unlocked
+      !Puzzles.has(id) ||
+      // The puzzle is unlocked by default
+      Puzzles.get(id).unlocked ||
+      // Puzzles the user has unlocked will have their ID in the getIds entry
+      State.getIds().includes(id)
   }
 
   static updateDom (elementId, context) {

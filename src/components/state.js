@@ -5,7 +5,7 @@ import {
   base64encode,
   classToString, getKey,
   getKeyFactory,
-  jsonDiffPatch,
+  jsonDiffPatch, merge,
   params,
   uniqueId,
   url
@@ -27,7 +27,7 @@ export class State {
   #solution
   #version
 
-  constructor (id, original, deltas, moveIndex, moves, solution, selectedTile, version) {
+  constructor (id, original, solution, selectedTile, deltas, moveIndex, moves, version) {
     if (id === undefined) {
       throw new Error('Invalid state: missing ID')
     } else if (Puzzles.has(id) && Game.is(State.ContextKeys.Edit)) {
@@ -95,14 +95,22 @@ export class State {
    * @returns {State} Creates a clone of state at current point without history
    */
   clone () {
-    return new State(this.#id, this.getCurrent())
+    return new State(this.#id, this.getCurrent(), this.#solution, this.#selectedTile)
   }
 
-  encode () {
+  encode (recursive = false) {
+    const original = this.getConfig()
+    if (recursive) {
+      // Recursively load all nested puzzles into cache
+      State.resolveImports(original)
+    }
+
     return base64encode(JSON.stringify({
       id: this.#id,
-      // If this puzzle exists in code, just cache the version
-      original: Puzzles.has(this.#id) ? { version: this.#original.version } : this.#original,
+      // If this puzzle exists in code, most of the configuration can be loaded from memory
+      original: Puzzles.has(this.#id)
+        ? { layout: { imports: original.layout.imports }, version: original.version }
+        : original,
       deltas: this.#deltas,
       moveIndex: this.#moveIndex,
       moves: this.#moves,
@@ -356,23 +364,31 @@ export class State {
         State.clearCache(state.id)
         return
       }
-      state.original = original
+
+      // Merge in memory configuration into cache configuration
+      state.original = merge(state.original, original)
     }
 
     return new State(
       state.id,
       state.original,
+      state.solution,
+      state.selectedTile,
       state.deltas,
       state.moveIndex,
       state.moves,
-      state.solution,
-      state.selectedTile,
       state.version
     )
   }
 
+  static get (id) {
+    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
+    // This will ensure the latest version is always used.
+    return State.fromCache(id) || State.fromCache(id, State.ContextKeys.Play) || State.fromConfig(id)
+  }
+
   static getBaseKeys (context) {
-    return Object.freeze(Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId)))
+    return Object.values(State.ScopeKeys).map((scope) => getKey(context, scope, State.getId))
   }
 
   static getContext () {
@@ -430,6 +446,7 @@ export class State {
         console.debug(`Successfully resolved cached state for puzzle ID '${id}'.`, state)
         if (cached === null) {
           console.debug('User loaded a share URL, setting profile to "share"')
+          Storage.Profiles.clear(Storage.ProfilesByName.Share.id)
           setProfile(Storage.ProfilesByName.Share.id)
         }
         return state
@@ -449,6 +466,24 @@ export class State {
     if (state) {
       console.debug(`Resolved state for puzzle ID '${id}' from source configuration.`)
     }
+
+    return state
+  }
+
+  static resolveImports (state) {
+    if (!state.layout.imports?.length) {
+      return
+    }
+
+    state.layout.imports.filter((ref) => Puzzles.isUnlocked(ref.id)).forEach((ref) => {
+      // Try to load from local cache before falling back to existing puzzle cache
+      const cached = State.get(ref.id) || State.fromEncoded(state.layout.importsCache[ref.id])
+      if (cached) {
+        ref.solution = cached.getSolution()
+        ref.unlocked = true
+        State.resolveImports(cached.getCurrent())
+      }
+    })
 
     return state
   }
@@ -480,7 +515,7 @@ export class State {
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 7
+  static Version = 8
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
 

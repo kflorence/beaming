@@ -19,6 +19,7 @@ import {
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 import { Flags } from './flag.js'
+import { Puzzles } from '../puzzles/index.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -57,7 +58,12 @@ export class Layout extends Stateful {
 
       this.#imports[id] = structuredClone(ref)
 
-      const source = this.getCached(id, state)
+      // Use local cache if available, followed by imports cache, and finally falling back to in memory cache
+      const source = State.fromCache(id) ||
+        State.fromCache(id, State.ContextKeys.Play) ||
+        State.fromEncoded(state.importsCache[id]) ||
+        State.fromConfig(id)
+
       if (!source) {
         throw new Error(`Could not resolve import for puzzle ID '${id}'.`)
       }
@@ -117,7 +123,10 @@ export class Layout extends Stateful {
             flags.add(Tile.Flags.Hidden)
           }
 
-          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))) {
+          if (
+            !(ref.unlocked || Puzzles.isUnlocked(ref.id)) ||
+            !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))
+          ) {
             flags.add(Tile.Flags.Placeholder)
           }
 
@@ -215,15 +224,6 @@ export class Layout extends Stateful {
     return tile
   }
 
-  getCached (id, state) {
-    // Gather the source cache for the puzzle from storage first, followed by config, and finally from puzzle cache
-    // This will ensure the latest version is always used.
-    return State.fromCache(id) ||
-      State.fromCache(id, State.ContextKeys.Play) ||
-      State.fromConfig(id) ||
-      State.fromEncoded((state ?? this.getState()).importsCache[id])
-  }
-
   getCenter () {
     // The center of the canvas
     return new Point(paper.view.viewSize.divide(2))
@@ -316,9 +316,7 @@ export class Layout extends Stateful {
       return
     }
 
-    ref.unlocked = true
-
-    const cache = this.getCached(id)
+    const cache = State.get(id)
     const key = State.key(id)
 
     if (cache && !Storage.get(key)) {
@@ -386,6 +384,7 @@ export class Layout extends Stateful {
         type: 'object'
       },
       imports: Imports.schema(),
+      // TODO move this cache into the imports
       importsCache: {
         options: {
           hidden: true

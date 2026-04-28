@@ -182,9 +182,8 @@ export class Puzzle {
   getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
-    Game.states.forEach((state) => shareUrl.searchParams.delete(state))
     shareUrl.searchParams.append(context, '')
-    shareUrl.hash = ['', State.getId(), this.state.encode()].join('/')
+    shareUrl.hash = ['', State.getId(), this.state.encode(true)].join('/')
     return shareUrl.toString()
   }
 
@@ -398,8 +397,7 @@ export class Puzzle {
 
     id = state.getId()
 
-    const isUnlocked = !Puzzles.has(id) || State.fromCache(id) !== undefined || this.layout?.getImport(id)?.unlocked
-    if (!(isUnlocked || state.getCurrent().unlocked || params.has(State.ParamKeys.Unlock))) {
+    if (!Puzzles.isUnlocked(id) && !this.layout.getImport(id).unlocked) {
       return this.onError('This puzzle has not been unlocked yet.')
     }
 
