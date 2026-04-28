@@ -36,8 +36,7 @@ describe('Editor', function () {
             }
           }
         }
-      },
-      unlocked: true
+      }
     })
   })
 })
