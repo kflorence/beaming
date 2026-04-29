@@ -183,7 +183,10 @@ export class Puzzle {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
     shareUrl.searchParams.append(context, '')
-    shareUrl.hash = ['', State.getId(), this.state.encode(true)].join('/')
+    const state = this.state.getConfig()
+    // Update the imports using data from local cache
+    State.resolveImports(state, this.state.getCurrent())
+    shareUrl.hash = ['', State.getId(), this.state.encode(state)].join('/')
     return shareUrl.toString()
   }
 

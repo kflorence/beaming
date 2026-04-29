@@ -99,13 +99,7 @@ export class State {
     return new State(this.#id, this.getCurrent(), this.#solution, this.#selectedTile)
   }
 
-  encode (recursive = false) {
-    const original = this.getConfig()
-    if (recursive) {
-      // Recursively load all nested puzzles into cache
-      State.resolveImports(original)
-    }
-
+  encode (original = this.getConfig()) {
     return base64encode(JSON.stringify({
       id: this.#id,
       // If this puzzle exists in code, most of the configuration can be loaded from memory
@@ -366,8 +360,8 @@ export class State {
         return
       }
 
-      // Merge in memory configuration into cache configuration
-      state.original = merge(state.original, original, { arrayMerge: arrayMergeOverwrite })
+      // Merge the encoded cache into the one from in memory configuration (allows override)
+      state.original = merge(original, state.original, { arrayMerge: arrayMergeOverwrite })
     }
 
     return new State(
@@ -471,22 +465,26 @@ export class State {
     return state
   }
 
-  static resolveImports (state) {
-    if (!state.layout.imports?.length) {
+  static resolveImports (original, current) {
+    if (!original.layout.imports?.length) {
       return
     }
 
-    state.layout.imports.filter((ref) => Puzzles.isUnlocked(ref.id)).forEach((ref) => {
-      // Try to load from local cache before falling back to existing puzzle cache
-      const cached = State.get(ref.id) || State.fromEncoded(state.layout.importsCache[ref.id])
-      if (cached) {
-        ref.solution = cached.getSolution()
-        ref.unlocked = true
-        State.resolveImports(cached.getCurrent())
-      }
-    })
+    current ??= original
 
-    return state
+    original.layout.imports
+      // Only resolve imports which have been unlocked
+      .filter((ref, index) => current.layout.imports[index].unlocked === true)
+      .forEach((ref) => {
+        // Try to load from local cache before falling back to existing puzzle cache
+        const cached = State.get(ref.id) || State.fromEncoded(current.layout.importsCache[ref.id])
+        if (cached) {
+          ref.solution = cached.getSolution()
+          State.resolveImports(cached.getCurrent())
+        }
+      })
+
+    return original
   }
 
   static CacheKeys = Object.freeze({
