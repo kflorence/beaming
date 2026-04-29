@@ -112,7 +112,8 @@ export class ImportFilterPuzzleSolved extends ImportFilter {
 
 export class ImportFilterPuzzleUnlocked extends ImportFilter {
   apply (state, ref) {
-    return this.state.unlocked === (Puzzles.isUnlocked(ref.id) || ref.unlocked)
+    // Always checks if the import is unlocked within the puzzle, regardless of global unlock state
+    return this.state.unlocked === ref.unlocked
   }
 
   static Name = ImportFilter.Names.Unlocked

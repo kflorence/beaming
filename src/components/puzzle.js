@@ -718,8 +718,7 @@ export class Puzzle {
     p.textContent = 'Puzzle solved!'
 
     const span = document.createElement('span')
-    span.id = 'continue'
-    span.classList.add('back')
+    span.classList.add('action', 'action-back')
     span.textContent = 'Continue'
 
     this.headerMessages.set([p, span])

@@ -19,7 +19,6 @@ import {
 import { ModifierFilter } from './modifier.js'
 import { Storage } from './storage.js'
 import { Flags } from './flag.js'
-import { Puzzles } from '../puzzles/index.js'
 
 export class Layout extends Stateful {
   #imports = {}
@@ -123,10 +122,8 @@ export class Layout extends Stateful {
             flags.add(Tile.Flags.Hidden)
           }
 
-          if (
-            !(ref.unlocked || Puzzles.isUnlocked(ref.id)) ||
-            !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))
-          ) {
+          if (!ref.unlocked || !tileFilters.every((filter) => filter.apply(source, tileOffset, tile, ref))) {
+            // Show tile as a placeholder if it has not been unlocked within the parent puzzle yet
             flags.add(Tile.Flags.Placeholder)
           }
 
@@ -315,6 +312,9 @@ export class Layout extends Stateful {
     if (!ref) {
       return
     }
+
+    // Mark the import as unlocked
+    ref.unlocked = true
 
     const cache = State.get(id)
     const key = State.key(id)

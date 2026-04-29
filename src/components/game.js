@@ -107,7 +107,7 @@ export class Game {
   }
 
   async #onBack (event) {
-    if (!event.target.closest('.back')) {
+    if (!event.target.closest('.action-back')) {
       return
     }
 

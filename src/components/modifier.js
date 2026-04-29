@@ -250,7 +250,7 @@ export class ModifierFilter extends Filter {
 
 export class ModifierFilterImportUnlocked extends ModifierFilter {
   apply (layout) {
-    return this.state.unlocked === layout.getImports()[this.state.importId]?.unlocked ?? false
+    return this.state.unlocked === layout.getImports()[this.state.importId]?.unlocked
   }
 
   static Name = ModifierFilter.Names.Unlocked
