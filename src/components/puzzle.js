@@ -789,7 +789,7 @@ export class Puzzle {
 
     this.footerMessages.reset()
     this.headerMessages.reset()
-    this.state.setSolution([])
+    this.state.setSolution()
 
     this.layout = new Layout(layout)
     this.#requirements = new Requirements(requirements)

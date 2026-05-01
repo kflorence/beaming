@@ -31,10 +31,13 @@ export class PuzzleFixture {
   driver
   elements = {}
 
-  constructor (id, mode = 'play', unlock = true) {
+  static DefaultOptions = Object.freeze({ mode: 'play', unlock: true })
+
+  constructor (id, options) {
+    options = Object.assign({}, PuzzleFixture.DefaultOptions, options)
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?${mode}${unlock ? '&unlock' : ''}#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${options.mode}${options.unlock ? '&unlock' : ''}#/${id}`
   }
 
   async after () {
@@ -107,6 +110,10 @@ export class PuzzleFixture {
 
   async getModifier (name) {
     return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
+  }
+
+  async getShareUrl () {
+    return await this.driver.executeScript('return game.puzzle.getShareUrl()')
   }
 
   async isLoaded () {

@@ -83,6 +83,18 @@ const solutions = {
     { type: 'tile-select', tile: '-1,-1' },
     { type: 'modifier-invoke', modifier: 'swap' },
     { type: 'tile-click', tile: '0,-1' }
+  ],
+  '007': [
+    { type: 'tile-select', tile: '1,-1' },
+    { type: 'modifier-invoke', modifier: 'move' },
+    { type: 'tile-click', tile: '0,-2' },
+    { type: 'tile-select', tile: '1,0' },
+    { type: 'modifier-invoke', modifier: 'move' },
+    { type: 'tile-click', tile: '0,2' },
+    { type: 'tile-select', tile: '0,0' },
+    { type: 'modifier-invoke', modifier: 'rotate' },
+    { type: 'modifier-invoke', modifier: 'move' },
+    { type: 'tile-click', tile: '0,1' }
   ]
 }
 
@@ -90,7 +102,7 @@ describe('Puzzle 001', function () {
   // This test needs more time
   this.timeout(60000)
 
-  const puzzle = new PuzzleFixture('001')
+  const puzzle = new PuzzleFixture('001', { unlock: false })
 
   after(puzzle.after)
   before(puzzle.before)
@@ -184,8 +196,14 @@ describe('Puzzle 001', function () {
         { type: 'modifier-invoke', modifier: 'rotate', options: { times: 2 } },
         { type: 'modifier-invoke', modifier: 'puzzle' },
         { type: 'wait', for: 'puzzle-loaded' }
+      ],
+      solutions['007'],
+      [
+        { type: 'continue' }
       ]
     ].flat())
+
+    console.log(await puzzle.getShareUrl())
 
     assert(await puzzle.isSolved())
   })

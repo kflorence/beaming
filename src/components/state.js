@@ -205,7 +205,7 @@ export class State {
   }
 
   setSolution (tiles) {
-    this.#solution = tiles.map((tile) => tile.coordinates.offset.toString())
+    this.#solution = tiles?.map((tile) => tile.coordinates.offset.toString())
     this.updateCache()
   }
 

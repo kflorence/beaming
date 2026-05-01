@@ -2268,6 +2268,11 @@
             "type": "puzzle",
             "name": "unlocked",
             "unlocked": true
+          },
+          {
+            "type": "tile",
+            "name": "in-solution",
+            "inSolution": true
           }
         ]
       },
@@ -2419,7 +2424,7 @@
       }
     ]
   },
-  "version": 0,
+  "version": 1,
   "requirements": [
     {
       "type": "connections",
