@@ -58,6 +58,10 @@ export function appendOption (element, option) {
   element.append($option)
 }
 
+export function arrayMergeOverwrite (target, source) {
+  return source
+}
+
 export function arrayMergeUniqueById (target, source) {
   return uniqueBy('id', target.concat(source))
 }

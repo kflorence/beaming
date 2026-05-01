@@ -278,8 +278,11 @@ export class Beam extends Item {
       return
     }
 
-    // Check for a reflection on either this beam or the one being collided with at the collision point.
-    const reflector = step.state.get(StepState.Reflector) ?? currentStep.state.get(StepState.Reflector)
+    // Check for a reflector collision or a reflection on either this beam or the one being collided with at the
+    // collision point.
+    const reflector = step.state.get(StepState.Collisions)?.find((col) => col.item.type === Item.Types.Reflector) ??
+      step.state.get(StepState.Reflector) ??
+      currentStep.state.get(StepState.Reflector)
     if (reflector) {
       // Since every step goes to the center of the tile, we need to go one pixel back in the direction we came from
       // in order to properly test which side of the reflector the beams are on.

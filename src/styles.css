@@ -106,11 +106,6 @@ fieldset legend {
   display: none;
 }
 
-#continue {
-  cursor: pointer;
-  font-weight: bold;
-}
-
 #screen {
   box-sizing: border-box;
   display: flex;
@@ -1122,6 +1117,14 @@ dialog ul {
   min-height: 24px;
   padding: 1em;
   width: fit-content;
+
+  .action {
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 0.5em;
+    padding-top: 0.25em;
+    border-top: 1px solid #ccc;
+  }
 }
 
 .message:empty {
@@ -1130,12 +1133,6 @@ dialog ul {
 
 .message p {
   margin: 0;
-
-  &.solved {
-    margin-bottom: 0.5em;
-    padding-bottom: 0.25em;
-    border-bottom: 1px solid #ccc;
-  }
 }
 
 .number {

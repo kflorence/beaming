@@ -17,9 +17,20 @@ export class PuzzleModifier extends Modifier {
   onCollect ({ puzzle }) {
     const state = this.getState()
 
-    puzzle.headerMessages.add(`You've unlocked puzzle '${state.id}'!`)
+    const p = document.createElement('p')
+    p.textContent = `You've unlocked puzzle '${state.id}'!`
+
+    const span = document.createElement('span')
+    span.classList.add('action')
+    span.textContent = 'Enter Puzzle'
+
+    span.addEventListener('click', () => this.onTap())
+
+    puzzle.headerMessages.set([p, span])
+
     puzzle.layout.unlock(state.id)
     puzzle.updateState()
+    puzzle.updateModifiers()
 
     Game.updatePuzzles([State.ContextKeys.Play])
   }
