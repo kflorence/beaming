@@ -31,10 +31,10 @@ export class PuzzleFixture {
   driver
   elements = {}
 
-  constructor (id, mode = 'play') {
+  constructor (id, mode = 'play', unlock = true) {
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?${mode}&unlock#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${mode}${unlock ? '&unlock' : ''}#/${id}`
   }
 
   async after () {
@@ -50,7 +50,7 @@ export class PuzzleFixture {
       '--disable-extensions',
       '--disable-gpu',
       // Comment this out to watch the tests run in-browser
-      '--headless',
+      // '--headless',
       '--ignore-certificate-errors',
       '--no-sandbox',
       '--window-size=768,1024'
@@ -117,6 +117,10 @@ export class PuzzleFixture {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
   }
 
+  async isNotLoaded () {
+    return await this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-loaded'))
+  }
+
   async isNotMasked () {
     return this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-mask'))
   }
@@ -139,6 +143,12 @@ export class PuzzleFixture {
   async process (action) {
     console.log('processing action', JSON.stringify(action))
     switch (action.type) {
+      case 'continue': {
+        await this.clickElement('#back')
+        await this.isNotLoaded()
+        await this.isLoaded()
+        break
+      }
       case 'modifier-invoke': {
         await this.invokeModifier(action.modifier, action.options || {})
         break
@@ -153,6 +163,11 @@ export class PuzzleFixture {
       }
       case 'wait': {
         switch (action.for) {
+          case 'puzzle-loaded': {
+            await this.isNotLoaded()
+            await this.isLoaded()
+            break
+          }
           case 'mask-hidden': {
             await this.isNotMasked()
             break
