@@ -3,7 +3,7 @@ import { PuzzleFixture, removeKeys } from '../fixtures.js'
 import assert from 'assert'
 
 describe('Editor', function () {
-  const puzzle = new PuzzleFixture('config', 'edit')
+  const puzzle = new PuzzleFixture('config', { mode: 'edit' })
 
   after(puzzle.after)
   before(puzzle.before)
