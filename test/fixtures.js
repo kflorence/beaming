@@ -37,7 +37,8 @@ export class PuzzleFixture {
     options = Object.assign({}, PuzzleFixture.DefaultOptions, options)
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?${options.mode}${options.unlock ? '&unlock' : ''}#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${options.mode}` +
+      `${options.unlock ? '&unlock' : ''}#/${id}${options.data ? `/${options.data}` : ''}`
   }
 
   async after () {

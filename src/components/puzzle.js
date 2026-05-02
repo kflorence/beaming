@@ -217,7 +217,8 @@ export class Puzzle {
 
     // TODO animation?
     const tiles = this.layout.tiles
-      .filter((tile) => !Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag)))
+      // Hidden tiles should remain hidden
+      .filter((tile) => !tile.flags.has(Tile.Flags.Hidden))
       .filter(mask.tileFilter)
       .map((tile) => new Mask(
         tile,
@@ -882,6 +883,7 @@ export class Puzzle {
   }
 
   #updateBeams (resolve) {
+    // FIXME: Ensure the beams always process in the same order
     const beams = this.getBeams().filter((beam) => beam.isPending())
 
     if (!beams.length) {

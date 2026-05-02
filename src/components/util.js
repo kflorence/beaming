@@ -72,13 +72,9 @@ export function base64decode (string) {
   return new TextDecoder().decode(pako.inflate(Uint8Array.from(binString, (c) => c.codePointAt(0))))
 }
 
-window.base64decode = base64decode
-
 export function base64encode (string) {
   return base64escape(window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string)))))
 }
-
-window.base64encode = base64encode
 
 function base64escape (string) {
   // https://en.wikipedia.org/wiki/Base64#URL_applications
@@ -264,7 +260,8 @@ export function getOppositeDirection (direction) {
 // Gets the position of the point relative to the line.
 // Returns 0 if point is on the line, +1 on one side of the line and -1 on the other.
 export function getPosition (line, point) {
-  const [a, b] = line; const c = point
+  const [a, b] = line
+  const c = point
   return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 }
 
@@ -411,3 +408,8 @@ export async function writeToClipboard (string) {
     console.error('Could not write to clipboard.', error.message)
   }
 }
+
+// Exported for testing purposes
+window.base64decode = base64decode
+window.base64encode = base64encode
+window.uniqueId = uniqueId

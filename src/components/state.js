@@ -479,7 +479,8 @@ export class State {
         // Try to load from local cache before falling back to existing puzzle cache
         const cached = State.get(ref.id) || State.fromEncoded(current.layout.importsCache[ref.id])
         if (cached) {
-          ref.solution = cached.getSolution()
+          // Try to load from cache, but fall back to existing value (for example, if this was a share URL)
+          ref.solution = cached.getSolution() ?? ref.solution
           State.resolveImports(cached.getCurrent())
         }
       })

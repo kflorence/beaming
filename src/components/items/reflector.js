@@ -41,6 +41,7 @@ export class Reflector extends movable(rotatable(Item)) {
     ]
   }
 
+  // FIXME: this doesn't seem to be accurately returning 0 when it should be
   getSide (point) {
     // Returns the side of the reflector the point is on (0, 1, or -1)
     return getPosition(this.midLine(), point)

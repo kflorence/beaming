@@ -4,7 +4,7 @@ import { Path, Point } from 'paper'
 import { rotatable } from '../modifiers/rotate'
 import { StepState } from '../step'
 import { Puzzle } from '../puzzle'
-import { coalesce, getOppositeDirection, merge } from '../util'
+import { coalesce, getOppositeDirection, merge, uniqueBy } from '../util'
 import { Schema } from '../schema'
 import { Tile } from './tile.js'
 
