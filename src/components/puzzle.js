@@ -182,6 +182,7 @@ export class Puzzle {
   getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
+    shareUrl.search = ''
     shareUrl.searchParams.append(context, '')
     const state = this.state.getConfig()
     // Update the imports using data from local cache
@@ -215,7 +216,9 @@ export class Puzzle {
     this.#mask = mask
 
     // TODO animation?
-    const tiles = this.layout.tiles.filter(mask.tileFilter)
+    const tiles = this.layout.tiles
+      .filter((tile) => !Puzzle.unSelectableTileFlags.some((flag) => tile.flags.has(flag)))
+      .filter(mask.tileFilter)
       .map((tile) => new Mask(
         tile,
         typeof mask.configuration.style === 'function'

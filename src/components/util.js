@@ -349,14 +349,26 @@ export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
-export function removeEmpties (t) {
-  switch (t?.constructor) {
-    case Array:
-    case Object:
-      return filter(map(t, removeEmpties), nonEmpty)
-    default:
-      return nonEmpty(t) ? t : empty
+export function removeEmpties (t, maxDepth = 0) {
+  let depth = 0
+
+  function removeEmpties (t) {
+    if (maxDepth > 0) {
+      depth++
+    }
+    if (depth > maxDepth) {
+      return t
+    }
+    switch (t?.constructor) {
+      case Array:
+      case Object:
+        return filter(map(t, removeEmpties), nonEmpty)
+      default:
+        return nonEmpty(t) ? t : empty
+    }
   }
+
+  return removeEmpties(t)
 }
 
 export function resetUrl () {

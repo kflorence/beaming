@@ -271,7 +271,7 @@ export class Layout extends Stateful {
       modifiers: this.modifiers.map((modifier) => modifier.getState()),
       offset: this.offset,
       tiles
-    })
+    }, 1)
   }
 
   getTile (offset = {}) {
