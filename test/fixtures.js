@@ -42,6 +42,7 @@ export class PuzzleFixture {
   }
 
   async after () {
+    console.log(await this.getShareUrl())
     if (this.driver) {
       await this.driver.quit()
     }

@@ -247,7 +247,7 @@ export class Layout extends Stateful {
   }
 
   getItems () {
-    return this.tiles.flatMap((tile) => tile.items)
+    return this.tiles.flatMap((tile) => tile.items).toSorted((a, b) => a.index - b.index)
   }
 
   getOffset (point) {

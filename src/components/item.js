@@ -4,6 +4,8 @@ import { Stateful } from './stateful'
 import { Schema } from './schema'
 import { Modifier } from './modifier.js'
 
+let index = 0
+
 export class Item extends Stateful {
   center
   clickable
@@ -22,6 +24,7 @@ export class Item extends Stateful {
     super(state)
 
     this.id = state.id
+    this.index = index++
     this.clickable ??= state.clickable ?? configuration.clickable ?? false
     this.immutable ??= state.immutable ?? configuration.immutable ?? false
     this.type ??= state.type ?? configuration.type
