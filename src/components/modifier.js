@@ -250,7 +250,7 @@ export class ModifierFilter extends Filter {
 
 export class ModifierFilterImportUnlocked extends ModifierFilter {
   apply (layout) {
-    return this.state.unlocked === layout.getImports()[this.state.importId]?.unlocked
+    return this.state.unlocked === layout.getImports()[this.state.id]?.unlocked
   }
 
   static Name = ModifierFilter.Names.Unlocked
@@ -262,7 +262,7 @@ export class ModifierFilterImportUnlocked extends ModifierFilter {
       ModifierFilter.schema(this.Type, this.Name),
       {
         properties: {
-          importId: {
+          id: {
             enum: imports.ids,
             options: {
               enum_titles: imports.titles
@@ -274,7 +274,7 @@ export class ModifierFilterImportUnlocked extends ModifierFilter {
             type: 'boolean'
           }
         },
-        required: ['importId', 'unlocked']
+        required: ['id', 'unlocked']
       }
     ))
   }

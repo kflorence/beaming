@@ -1,6 +1,6 @@
 import { Modifier } from '../modifier.js'
 import { Icons } from '../icon.js'
-import { merge, params } from '../util.js'
+import { merge } from '../util.js'
 import { Puzzle } from '../puzzle.js'
 import { Puzzles } from '../../puzzles/index.js'
 import { State } from '../state.js'
@@ -18,7 +18,7 @@ export class PuzzleModifier extends Modifier {
     const state = this.getState()
 
     const p = document.createElement('p')
-    p.textContent = `You've unlocked puzzle '${state.id}'!`
+    p.textContent = `You've unlocked puzzle ${Puzzles.getTitle(state.id)}!`
 
     const span = document.createElement('span')
     span.classList.add('action')
@@ -39,12 +39,7 @@ export class PuzzleModifier extends Modifier {
     const state = this.getState()
 
     // Track parent(s)
-    const id = puzzle.state.getId()
-    const parent = params.get(State.CacheKeys.Parent)
-    const parents = parent?.split(',') ?? []
-    if (!parents.includes(id)) {
-      params.set(State.CacheKeys.Parent, parent ? [parent, id].join(',') : id)
-    }
+    State.setParentId(puzzle.state.getId())
 
     // Load the import behind the current puzzle and then swap them
     await puzzle.select(state.id, { animations: [Puzzle.Animations.SlideLeft] })

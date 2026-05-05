@@ -1,4 +1,6 @@
 {
+  "id": "001-009",
+  "title": "Re-thinking with portals",
   "layout": {
     "offset": "odd-row",
     "tiles": {
@@ -91,14 +93,8 @@
       },
       "1": {
         "1": {
-          "id": "42aa42df",
           "type": "tile",
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "7bf21678"
-            }
-          ]
+          "id": "42aa42df"
         },
         "2": {
           "id": "dbaeb3de",
@@ -123,8 +119,14 @@
           "type": "tile"
         },
         "-3": {
-          "id": "e21f9280",
-          "type": "tile"
+          "type": "tile",
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "bb2f901a"
+            }
+          ],
+          "id": "690c22b2"
         },
         "-2": {
           "id": "55a0cecf",

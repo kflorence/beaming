@@ -599,6 +599,17 @@ dialog ul {
 /* ------------------------------------------------------------------------------------------------------------------ */
 
 #dialog-play {
+  details {
+    border: 1px solid #aaa;
+    border-radius: .25em;
+    margin: 1em 0 0 0;
+    padding: 1em;
+
+    &[open] summary {
+      margin-bottom: 1em;
+    }
+  }
+
   p {
     margin: 0;
   }
@@ -804,6 +815,7 @@ dialog ul {
 
   li {
     color: #aaa;
+    cursor: default;
     line-height: 24px;
     list-style: none;
     margin: 0;
@@ -836,7 +848,7 @@ dialog ul {
       height: 0.5lh;
     }
 
-    &.selected > .wrapper .title {
+    &.selected > .wrapper .continue {
       font-weight: bold;
     }
 
@@ -844,6 +856,11 @@ dialog ul {
     .remove {
       color: #333;
       cursor: pointer;
+    }
+
+    .continue {
+      font-weight: bold;
+      margin-left: 0.5em;
     }
 
     .title {

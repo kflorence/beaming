@@ -365,7 +365,9 @@ export class Layout extends Stateful {
       // Mark modifiers which fail a filter as locked
       modifier.unlocked = (modifier.getState().filters ?? [])
         .map((filter) => ModifierFilter.factory(filter))
-        .every((filter) => filter.apply(this))
+        .every((filter) => {
+          return filter.apply(this)
+        })
     })
   }
 

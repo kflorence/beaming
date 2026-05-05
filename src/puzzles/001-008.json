@@ -1,4 +1,6 @@
 {
+  "id": "001-008",
+  "title": "Thinking with portals",
   "layout": {
     "offset": "odd-row",
     "tiles": {
@@ -91,8 +93,14 @@
       },
       "1": {
         "1": {
+          "id": "42aa42df",
           "type": "tile",
-          "id": "42aa42df"
+          "modifiers": [
+            {
+              "type": "immutable",
+              "id": "7bf21678"
+            }
+          ]
         },
         "2": {
           "id": "dbaeb3de",
@@ -117,14 +125,8 @@
           "type": "tile"
         },
         "-3": {
-          "type": "tile",
-          "modifiers": [
-            {
-              "type": "immutable",
-              "id": "bb2f901a"
-            }
-          ],
-          "id": "690c22b2"
+          "id": "e21f9280",
+          "type": "tile"
         },
         "-2": {
           "id": "55a0cecf",

@@ -402,6 +402,10 @@ export class State {
     return JSON.parse(Storage.get(getKey(context ?? State.getContext(), 'puzzle', State.CacheKeys.Ids)) ?? '[]')
   }
 
+  static getParentIds () {
+    return params.get(State.CacheKeys.Parent)?.split(',') ?? []
+  }
+
   static resolve (id) {
     let values = []
 
@@ -488,6 +492,22 @@ export class State {
     return original
   }
 
+  static setParentId (id) {
+    const parent = params.get(State.CacheKeys.Parent)
+    const parents = parent?.split(',') ?? []
+    if (id && !parents.includes(id)) {
+      params.set(State.CacheKeys.Parent, parent ? [parent, id].join(',') : id)
+    }
+  }
+
+  static setParentIds (ids) {
+    if (ids.length) {
+      params.set(State.CacheKeys.Parent, Array.from(new Set(ids)).join(','))
+    } else {
+      params.delete(State.CacheKeys.Parent)
+    }
+  }
+
   static CacheKeys = Object.freeze({
     Id: 'id',
     Ids: 'ids',
@@ -515,7 +535,7 @@ export class State {
 
   // This should be incremented whenever the state cache object changes in a way that requires it to be invalidated
   // WARNING !!! Use this sparingly as it will reset the state of every puzzle on the users end
-  static Version = 8
+  static Version = 9
 
   static key = getKeyFactory([State.getContext, 'puzzle'])
 
