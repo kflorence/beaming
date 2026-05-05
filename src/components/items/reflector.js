@@ -41,14 +41,15 @@ export class Reflector extends movable(rotatable(Item)) {
     ]
   }
 
-  // FIXME: this doesn't seem to be accurately returning 0 when it should be
   getSide (point) {
     // Returns the side of the reflector the point is on (0, 1, or -1)
     return getPosition(this.midLine(), point)
   }
 
   isSameSide (pointA, pointB) {
-    return this.getSide(pointA) === this.getSide(pointB)
+    const sideA = this.getSide(pointA)
+    const sideB = this.getSide(pointB)
+    return sideA !== 0 && sideA === sideB
   }
 
   onCollision ({ beam, collision, collisionStep, currentStep, nextStep }) {

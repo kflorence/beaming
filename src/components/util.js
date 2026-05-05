@@ -48,16 +48,6 @@ export function animate (element, className, onComplete = () => {}) {
   })
 }
 
-export function appendOption (element, option) {
-  const $option = document.createElement('option')
-  $option.value = option.value
-  $option.innerText = option.text
-  if (option.disabled) {
-    $option.disabled = option.disabled
-  }
-  element.append($option)
-}
-
 export function arrayMergeOverwrite (target, source) {
   return source
 }
@@ -260,8 +250,9 @@ export function getOppositeDirection (direction) {
 // Gets the position of the point relative to the line.
 // Returns 0 if point is on the line, +1 on one side of the line and -1 on the other.
 export function getPosition (line, point) {
-  const [a, b] = line
-  const c = point
+  const a = line[0].floor()
+  const b = line[1].floor()
+  const c = point.floor()
   return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 }
 
