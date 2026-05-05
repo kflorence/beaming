@@ -48,16 +48,6 @@ export function animate (element, className, onComplete = () => {}) {
   })
 }
 
-export function appendOption (element, option) {
-  const $option = document.createElement('option')
-  $option.value = option.value
-  $option.innerText = option.text
-  if (option.disabled) {
-    $option.disabled = option.disabled
-  }
-  element.append($option)
-}
-
 export function arrayMergeOverwrite (target, source) {
   return source
 }
@@ -72,13 +62,9 @@ export function base64decode (string) {
   return new TextDecoder().decode(pako.inflate(Uint8Array.from(binString, (c) => c.codePointAt(0))))
 }
 
-window.base64decode = base64decode
-
 export function base64encode (string) {
   return base64escape(window.btoa(String.fromCodePoint(...pako.deflate(new TextEncoder().encode(string)))))
 }
-
-window.base64encode = base64encode
 
 function base64escape (string) {
   // https://en.wikipedia.org/wiki/Base64#URL_applications
@@ -264,7 +250,9 @@ export function getOppositeDirection (direction) {
 // Gets the position of the point relative to the line.
 // Returns 0 if point is on the line, +1 on one side of the line and -1 on the other.
 export function getPosition (line, point) {
-  const [a, b] = line; const c = point
+  const a = line[0].floor()
+  const b = line[1].floor()
+  const c = point.floor()
   return Math.sign((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
 }
 
@@ -349,14 +337,26 @@ export function removeClass (className, ...elements) {
   elements.forEach((element) => element.classList.remove(className))
 }
 
-export function removeEmpties (t) {
-  switch (t?.constructor) {
-    case Array:
-    case Object:
-      return filter(map(t, removeEmpties), nonEmpty)
-    default:
-      return nonEmpty(t) ? t : empty
+export function removeEmpties (t, maxDepth = 0) {
+  let depth = 0
+
+  function removeEmpties (t) {
+    if (maxDepth > 0) {
+      depth++
+    }
+    if (depth > maxDepth) {
+      return t
+    }
+    switch (t?.constructor) {
+      case Array:
+      case Object:
+        return filter(map(t, removeEmpties), nonEmpty)
+      default:
+        return nonEmpty(t) ? t : empty
+    }
   }
+
+  return removeEmpties(t)
 }
 
 export function resetUrl () {
@@ -399,3 +399,8 @@ export async function writeToClipboard (string) {
     console.error('Could not write to clipboard.', error.message)
   }
 }
+
+// Exported for testing purposes
+window.base64decode = base64decode
+window.base64encode = base64encode
+window.uniqueId = uniqueId

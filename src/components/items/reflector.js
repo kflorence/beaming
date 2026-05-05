@@ -47,7 +47,9 @@ export class Reflector extends movable(rotatable(Item)) {
   }
 
   isSameSide (pointA, pointB) {
-    return this.getSide(pointA) === this.getSide(pointB)
+    const sideA = this.getSide(pointA)
+    const sideB = this.getSide(pointB)
+    return sideA !== 0 && sideA === sideB
   }
 
   onCollision ({ beam, collision, collisionStep, currentStep, nextStep }) {

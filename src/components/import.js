@@ -136,7 +136,9 @@ export class ImportFilterPuzzleUnlocked extends ImportFilter {
 
 export class ImportFilterTileInSolution extends ImportFilter {
   apply (state, offset, tile, ref) {
-    return this.state.inSolution === (state.getSolution() ?? ref.solution)?.includes(offset.toString())
+    const solution = (state.getSolution() ?? ref.solution)
+    // An empty solution will include all tiles
+    return this.state.inSolution === (solution?.length === 0 || solution?.includes(offset.toString()))
   }
 
   static Name = ImportFilter.Names.InSolution

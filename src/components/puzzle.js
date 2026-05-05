@@ -182,6 +182,7 @@ export class Puzzle {
   getShareUrl (context = State.getContext()) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
+    shareUrl.search = ''
     shareUrl.searchParams.append(context, '')
     const state = this.state.getConfig()
     // Update the imports using data from local cache
@@ -215,7 +216,10 @@ export class Puzzle {
     this.#mask = mask
 
     // TODO animation?
-    const tiles = this.layout.tiles.filter(mask.tileFilter)
+    const tiles = this.layout.tiles
+      // Hidden tiles should remain hidden
+      .filter((tile) => !tile.flags.has(Tile.Flags.Hidden))
+      .filter(mask.tileFilter)
       .map((tile) => new Mask(
         tile,
         typeof mask.configuration.style === 'function'
@@ -789,7 +793,7 @@ export class Puzzle {
 
     this.footerMessages.reset()
     this.headerMessages.reset()
-    this.state.setSolution([])
+    this.state.setSolution()
 
     this.layout = new Layout(layout)
     this.#requirements = new Requirements(requirements)
@@ -879,6 +883,7 @@ export class Puzzle {
   }
 
   #updateBeams (resolve) {
+    // FIXME: Ensure the beams always process in the same order
     const beams = this.getBeams().filter((beam) => beam.isPending())
 
     if (!beams.length) {

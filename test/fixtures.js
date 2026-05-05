@@ -31,13 +31,18 @@ export class PuzzleFixture {
   driver
   elements = {}
 
-  constructor (id, mode = 'play') {
+  static DefaultOptions = Object.freeze({ mode: 'play', unlock: true })
+
+  constructor (id, options) {
+    options = Object.assign({}, PuzzleFixture.DefaultOptions, options)
     this.after = this.after.bind(this)
     this.before = this.before.bind(this)
-    this.url = `${PuzzleFixture.baseUrl}/?${mode}&unlock#/${id}`
+    this.url = `${PuzzleFixture.baseUrl}/?${options.mode}` +
+      `${options.unlock ? '&unlock' : ''}#/${id}${options.data ? `/${options.data}` : ''}`
   }
 
   async after () {
+    console.log(await this.getShareUrl())
     if (this.driver) {
       await this.driver.quit()
     }
@@ -109,12 +114,20 @@ export class PuzzleFixture {
     return this.driver.wait(until.elementLocated(By.css(`.modifier-${name.toLowerCase()}:not(.disabled)`)))
   }
 
+  async getShareUrl () {
+    return await this.driver.executeScript('return game.puzzle.getShareUrl()')
+  }
+
   async isLoaded () {
     return await this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-loaded'))
   }
 
   async isMasked () {
     return this.driver.wait(untilElementHasClass(this.elements.body, 'puzzle-mask'))
+  }
+
+  async isNotLoaded () {
+    return await this.driver.wait(untilElementDoesNotHaveClass(this.elements.body, 'puzzle-loaded'))
   }
 
   async isNotMasked () {
@@ -139,6 +152,12 @@ export class PuzzleFixture {
   async process (action) {
     console.log('processing action', JSON.stringify(action))
     switch (action.type) {
+      case 'continue': {
+        await this.clickElement('#back')
+        await this.isNotLoaded()
+        await this.isLoaded()
+        break
+      }
       case 'modifier-invoke': {
         await this.invokeModifier(action.modifier, action.options || {})
         break
@@ -153,6 +172,11 @@ export class PuzzleFixture {
       }
       case 'wait': {
         switch (action.for) {
+          case 'puzzle-loaded': {
+            await this.isNotLoaded()
+            await this.isLoaded()
+            break
+          }
           case 'mask-hidden': {
             await this.isNotMasked()
             break

@@ -105,7 +105,7 @@ export class Tile extends Item {
       ref: this.ref,
       items,
       modifiers
-    })
+    }, 1)
   }
 
   onDeselected (selectedTile) {

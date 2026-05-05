@@ -257,12 +257,17 @@ export class Beam extends Item {
       return
     }
 
+    if (currentStep.state.get(StepState.Reflector)) {
+      // In this case, it was already previously determined that these beams can't collide (see case below)
+      console.debug(this.toString(), 'ignoring collision with beam on opposite side of reflector', beam.toString())
+      return
+    }
+
     // Find the step with matching collision point
     const stepIndex = this.#steps.findLastIndex((step) => fuzzyEquals(collision.point, step.point))
     if (stepIndex < 0) {
-      // This error will occur if the steps are out of sync with the path segments for some reason
-      throw new Error(
-        `Could not find matching step for beam collision between ${this.toString()} and ${beam.toString()}`)
+      console.debug(this.toString(), 'ignoring no longer valid collision with beam', beam.toString())
+      return
     }
 
     const step = this.#steps[stepIndex]
@@ -278,17 +283,15 @@ export class Beam extends Item {
       return
     }
 
-    // Check for a reflector collision or a reflection on either this beam or the one being collided with at the
-    // collision point.
-    const reflector = step.state.get(StepState.Collisions)?.find((col) => col.item.type === Item.Types.Reflector) ??
-      step.state.get(StepState.Reflector) ??
-      currentStep.state.get(StepState.Reflector)
+    const reflector = step.tile.items.find((item) => item.type === Item.Types.Reflector)
     if (reflector) {
-      // Since every step goes to the center of the tile, we need to go one pixel back in the direction we came from
-      // in order to properly test which side of the reflector the beams are on.
-      const stepPoint = getPointFrom(step.point, 1, getOppositeDirection(step.direction))
-      const nextStepPoint = getPointFrom(currentStep.point, 1, getOppositeDirection(currentStep.direction))
-      if (!reflector.item.isSameSide(stepPoint, nextStepPoint)) {
+      // This tile contains a reflector, so we need to verify if it's even possible for the beams to collide.
+      // Since every step goes to the center of the tile, we need to go a little back in the direction we came from
+      // in order to properly test which side of the reflector the beams are on. There is a few pixel margin of error
+      // due to rounding, but 6 was picked arbitrarily because it is safe.
+      const stepPoint = getPointFrom(step.point, 6, getOppositeDirection(step.direction))
+      const nextStepPoint = getPointFrom(nextStep.point, 6, getOppositeDirection(nextStep.direction))
+      if (!reflector.isSameSide(stepPoint, nextStepPoint)) {
         console.debug(this.toString(), 'ignoring collision with beam on opposite side of reflector', beam.toString())
         return
       }

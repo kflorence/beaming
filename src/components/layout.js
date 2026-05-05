@@ -21,6 +21,7 @@ import { Storage } from './storage.js'
 import { Flags } from './flag.js'
 
 export class Layout extends Stateful {
+  #ids = []
   #imports = {}
   #offset
   #tiles = {}
@@ -207,6 +208,17 @@ export class Layout extends Stateful {
     const coordinates = { axial, offset }
     const tile = new Tile(this, coordinates, center, this.parameters, state)
 
+    const ids = [tile.id]
+      .concat(tile.items.map((item) => item.id))
+      .concat(tile.modifiers.map((modifier) => modifier.id))
+
+    const duplicateId = ids.find((id) => this.#ids.includes(id))
+    if (duplicateId !== undefined) {
+      throw new Error(`Duplicate ID detected in puzzle configuration: ${duplicateId}`)
+    }
+
+    this.#ids.push(...ids)
+
     this.#tiles[offset.r] ??= {}
     this.#tiles[offset.r][offset.c] = tile
 
@@ -235,7 +247,7 @@ export class Layout extends Stateful {
   }
 
   getItems () {
-    return this.tiles.flatMap((tile) => tile.items)
+    return this.tiles.flatMap((tile) => tile.items).toSorted((a, b) => a.index - b.index)
   }
 
   getOffset (point) {
@@ -271,7 +283,7 @@ export class Layout extends Stateful {
       modifiers: this.modifiers.map((modifier) => modifier.getState()),
       offset: this.offset,
       tiles
-    })
+    }, 1)
   }
 
   getTile (offset = {}) {
