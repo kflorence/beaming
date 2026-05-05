@@ -466,7 +466,7 @@ export class State {
   }
 
   static resolveImports (original, current) {
-    if (!original.layout.imports?.length) {
+    if (!original.layout?.imports?.length) {
       return
     }
 
