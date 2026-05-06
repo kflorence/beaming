@@ -109,16 +109,16 @@
         <div class="scroll">
           <fieldset>
             <legend>Puzzles</legend>
-            <p>Load an official puzzle by tapping on its name below</p>
+            <p>Load a puzzle by tapping on its name in the list below. Puzzles which are greyed out have not been unlocked yet.</p>
             <ul class="puzzles" id="play-puzzles"></ul>
           </fieldset>
-          <fieldset id="play-custom">
-            <legend>Import</legend>
-            <p><label for="play-custom-configuration">Or load a custom puzzle from configuration</label></p>
+          <details id="play-custom">
+            <summary>Import</summary>
+            <p><label for="play-custom-configuration">Load a custom puzzle from configuration</label></p>
             <textarea id="play-custom-configuration" placeholder="Must be valid JSON. See the puzzle editor for an example"></textarea>
             <div id="play-custom-configuration-error"></div>
             <button id="play-custom-load">Load</button>
-          </fieldset>
+          </details>
         </div>
       </main>
     </dialog>
@@ -372,11 +372,34 @@
           </div>
           <h3>Credits</h3>
           <ul>
-            <li>Game design by: <a href="http://kflorence.com">Kyle Florence</a></li>
-            <li>Logo design by: Kat</li>
-            <li>Built with: <a href="http://paperjs.org">Paper.js</a></li>
-            <li>Inspired by: The Talos Principle and The Witness</li>
-            <li>Special thanks to: Kat and the Thinky Games community for play testing and quality assurance!</li>
+            <li><strong>Game design by</strong> <a href="http://kflorence.com" target="_blank">Kyle Florence</a></li>
+            <li><strong>Logo design by</strong> Kat</li>
+            <li>
+              <strong>Special thanks to</strong>
+              <ul>
+                <li>Kat, Emily and the Thinky Games community for play testing and quality assurance</li>
+                <li>My uncles Brian and Nico for giving me a place to live while I finished development</li>
+                <li>My buddy Dave for letting me borrow this laptop</li>
+                <li>You, for playing</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Built with</strong> (see <a href="https://github.com/kflorence/beaming/blob/main/package.json" target="_blank">package.json</a> for the full list)
+              <ul>
+                <li><a href="https://www.electronjs.org/" target="_blank">Electron</a></li>
+                <li><a href="http://paperjs.org" target="_blank">Paper.js</a></li>
+                <li><a href="https://parceljs.org/" target="_blank">Parcel</a></li>
+                <li><a href="https://phosphoricons.com/" target="_blank">Phosphor Icons</a></li>
+                <li><a href="https://github.com/ArtyProf/steamworks-ffi-node" target="_blank">steamworks-ffi-node</a></li>
+              </ul>
+            </li>
+            <li>
+              <strong>Inspired by</strong>
+              <ul>
+                <li><a href="https://en.wikipedia.org/wiki/The_Talos_Principle" target="_blank">The Talos Principle</a></li>
+                <li><a href="https://en.wikipedia.org/wiki/The_Witness_(2016_video_game)" target="_blank">The Witness</a></li>
+              </ul>
+            </li>
           </ul>
         </div>
       </main>

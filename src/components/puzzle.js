@@ -921,7 +921,7 @@ export class Puzzle {
     if (tile) {
       const puzzleModifier = tile.modifiers.find((modifier) => modifier.type === Modifier.Types.Puzzle)
       if (puzzleModifier) {
-        this.footerMessages.add(`Puzzle '${puzzleModifier.getState().id}'`)
+        this.footerMessages.add(`Puzzle ${Puzzles.getTitle(puzzleModifier.getState().id)}`)
       }
 
       const colors = Array.from(new Set(

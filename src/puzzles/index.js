@@ -21,7 +21,7 @@ export class Puzzles {
       : State.getIds(context)
     const processedIds = []
 
-    function addItem (id, ref) {
+    function addItem (id, parentId) {
       if (processedIds.includes(id)) {
         return
       }
@@ -33,13 +33,19 @@ export class Puzzles {
         return
       }
 
+      const selected = id === currentId
+
       const li = document.createElement('li')
       li.classList.add('puzzle')
       li.classList.toggle('custom', !Puzzles.has(id))
-      li.classList.toggle('selected', id === currentId)
+      li.classList.toggle('selected', selected)
       li.classList.toggle('solved', state?.getSolution() !== undefined)
-      li.classList.toggle('unlocked', Puzzles.isUnlocked(id))
+      li.classList.toggle('unlocked', Puzzles.isUnlocked(id, context))
+
       li.dataset.id = id
+      if (parentId !== undefined) {
+        li.dataset.parentId = parentId
+      }
 
       const div = document.createElement('div')
       div.classList.add('wrapper')
@@ -47,7 +53,18 @@ export class Puzzles {
 
       const span = document.createElement('span')
       span.classList.add('flex-left', 'title')
-      span.textContent = Puzzles.titles[id] ?? state.getTitle() ?? id
+
+      const title = Puzzles.titles[id] ?? state.getTitle() ?? id
+      const idParts = id.split('-')
+      span.textContent = title === id ? title : `${idParts.length ? idParts[idParts.length - 1] : id}: ${title}`
+
+      if (selected) {
+        const cont = document.createElement('span')
+        cont.classList.add('continue')
+        cont.textContent = '(Continue)'
+        span.append(cont)
+      }
+
       div.append(span)
 
       if (!Puzzles.has(id)) {
@@ -59,7 +76,7 @@ export class Puzzles {
       if (context === State.ContextKeys.Play && puzzle.layout?.imports?.length) {
         const ul = document.createElement('ul')
         ul.classList.add('imports')
-        puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id, ref)))
+        puzzle.layout.imports.forEach((ref) => ul.append(addItem(ref.id, id)))
         li.append(ul)
       }
 
@@ -69,6 +86,12 @@ export class Puzzles {
     }
 
     return ids.map((id) => addItem(id)).filter((element) => element !== undefined)
+  }
+
+  static getTitle (id) {
+    const idParts = id.split('-')
+    const title = Puzzles.titles[id]
+    return (idParts.length ? idParts[idParts.length - 1] : id) + (title !== id ? `: "${title}"` : '')
   }
 
   static has (id) {
@@ -82,7 +105,7 @@ export class Puzzles {
     return { ids, titles }
   }
 
-  static isUnlocked (id) {
+  static isUnlocked (id, context) {
     // Allow unlocking a puzzle via URL override
     return params.has(State.ParamKeys.Unlock) ||
       // Custom puzzles are always unlocked
@@ -90,7 +113,7 @@ export class Puzzles {
       // The puzzle is unlocked by default
       Puzzles.get(id).unlocked ||
       // Puzzles the user has unlocked will have their ID in the getIds entry
-      State.getIds().includes(id)
+      State.getIds(context).includes(id)
   }
 
   static updateDom (elementId, context) {

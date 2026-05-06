@@ -1,4 +1,6 @@
 {
+  "id": "001-007",
+  "title": "Changing colors",
   "layout": {
     "offset": "even-row",
     "tiles": {

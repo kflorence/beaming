@@ -112,18 +112,11 @@ export class Game {
     }
 
     const currentId = this.puzzle.state.getId()
-    const parent = params.get(State.CacheKeys.Parent)
-    const parents = parent?.split(',')
-    const parentId = parents?.pop()
+    const parentIds = State.getParentIds()
+    const parentId = parentIds.pop()
 
     if (parentId !== undefined && currentId !== parentId) {
-      // Update parents breadcrumbs
-      if (parents.length) {
-        params.set(State.CacheKeys.Parent, parents.join(','))
-      } else {
-        params.delete(State.CacheKeys.Parent)
-      }
-
+      State.setParentIds(parentIds)
       this.select(parentId, { animations: [Puzzle.Animations.SlideRight] })
     } else {
       Game.dialogOpen(Game.is(State.ContextKeys.Play) ? elements.dialogPlay : elements.dialogEdit)
@@ -175,7 +168,9 @@ export class Game {
     if (event.target.classList.contains('remove')) {
       this.#delete(id, State.ContextKeys.Play)
     } else if ($item.classList.contains('unlocked')) {
-      this.play(id)
+      const parentId = $item.dataset.parentId
+      State.setParentIds(parentId === undefined ? [] : [parentId])
+      this.play(id, parentId)
     }
   }
 
