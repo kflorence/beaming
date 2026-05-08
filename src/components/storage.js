@@ -67,15 +67,12 @@ export class Storage {
       this.name = name
     }
 
-    static get () {
-      const id = Storage.Profile.getId()
-      if (id !== null) {
-        return Storage.Profiles.get(id)
-      }
+    static get (id) {
+      return Storage.Profiles.get(id ?? Storage.Profile.getId())
     }
 
     static getId () {
-      return localStorage.getItem(getKey(Storage.Prefix, Storage.Keys.Profile))
+      return localStorage.getItem(getKey(Storage.Prefix, Storage.Keys.Profile)) ?? Storage.ProfilesByName.Default.id
     }
   }
 

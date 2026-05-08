@@ -623,7 +623,18 @@ dialog ul {
     padding: 0.5em;
     width: 100%;
   }
+
+  #play-profile-wrapper {
+    border-top: 1px solid #ddd;
+    margin-top: 1em;
+    padding-top: 1em;
+  }
 }
+
+#play-profile {
+  font-weight: bold;
+}
+
 
 #play-custom-configuration-error {
   background-color: #dc3545;
@@ -799,7 +810,6 @@ dialog ul {
   overflow: hidden;
 }
 
-
 .puzzles {
   border: 1px solid #aaa;
   border-radius: 0.5em;
@@ -861,6 +871,10 @@ dialog ul {
     .continue {
       font-weight: bold;
       margin-left: 0.5em;
+    }
+
+    &.unlocked > .wrapper .status {
+      color: #333;
     }
 
     .title {

@@ -33,13 +33,15 @@ export class Puzzles {
         return
       }
 
+      const custom = !Puzzles.has(id)
       const selected = id === currentId
+      const solved = state?.getSolution() !== undefined
 
       const li = document.createElement('li')
       li.classList.add('puzzle')
-      li.classList.toggle('custom', !Puzzles.has(id))
+      li.classList.toggle('custom', custom)
       li.classList.toggle('selected', selected)
-      li.classList.toggle('solved', state?.getSolution() !== undefined)
+      li.classList.toggle('solved', solved)
       li.classList.toggle('unlocked', Puzzles.isUnlocked(id, context))
 
       li.dataset.id = id
@@ -51,27 +53,38 @@ export class Puzzles {
       div.classList.add('wrapper')
       li.append(div)
 
-      const span = document.createElement('span')
-      span.classList.add('flex-left', 'title')
+      const left = document.createElement('span')
+      left.classList.add('flex-left', 'title')
 
       const title = Puzzles.titles[id] ?? state.getTitle() ?? id
       const idParts = id.split('-')
-      span.textContent = title === id ? title : `${idParts.length ? idParts[idParts.length - 1] : id}: ${title}`
+      left.textContent = title === id ? title : `${idParts.length ? idParts[idParts.length - 1] : id}: ${title}`
 
       if (selected) {
         const cont = document.createElement('span')
         cont.classList.add('continue')
         cont.textContent = '(Continue)'
-        span.append(cont)
+        left.append(cont)
       }
 
-      div.append(span)
+      div.append(left)
 
-      if (!Puzzles.has(id)) {
-        const i = document.createElement('i')
-        i.classList.add('flex-right', 'ph-bold', 'ph-trash', 'remove')
-        div.append(i)
+      const right = document.createElement('span')
+      right.classList.add('flex-right')
+
+      if (custom) {
+        const remove = document.createElement('i')
+        remove.classList.add('ph-bold', 'ph-trash', 'remove')
+        remove.title = 'Remove from list'
+        right.append(remove)
       }
+
+      const status = document.createElement('i')
+      status.classList.add('ph-bold', solved ? 'ph-check-circle' : 'ph-circle', 'status')
+      status.title = solved ? 'Solved!' : 'Unsolved'
+      right.append(status)
+
+      div.append(right)
 
       if (context === State.ContextKeys.Play && puzzle.layout?.imports?.length) {
         const ul = document.createElement('ul')
