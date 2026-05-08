@@ -863,7 +863,7 @@ dialog ul {
     }
 
     &.unlocked > .wrapper .title,
-    .remove{
+    .remove {
       color: #333;
       cursor: pointer;
     }
