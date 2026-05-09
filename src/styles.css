@@ -891,7 +891,7 @@ dialog ul {
 }
 
 .current-profile {
-  border-top: 1px solid #ddd !important;
+  border-top: 1px solid #ddd;
   margin-top: 1em;
   padding-top: 1em;
 }
