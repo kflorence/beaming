@@ -159,7 +159,7 @@ export class Modifier extends Stateful {
     this.#down = false
   }
 
-  onTap (event, detail) {
+  onTap (event, detail = {}) {
     this.dispatchEvent(Modifier.Events.Invoked, detail)
   }
 

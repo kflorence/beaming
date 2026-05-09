@@ -589,6 +589,7 @@ dialog ul {
   aspect-ratio: 1 / 1;
   color: #000;
   filter: drop-shadow(0 0.25em 0.25em #666);
+  min-height: 240px;
   min-width: 240px;
   margin-bottom: 2em;
   max-width: 480px;
@@ -610,10 +611,6 @@ dialog ul {
     }
   }
 
-  p {
-    margin: 0;
-  }
-
   textarea {
     border: 1px solid #aaa;
     border-radius: 0.5em;
@@ -623,18 +620,7 @@ dialog ul {
     padding: 0.5em;
     width: 100%;
   }
-
-  #play-profile-wrapper {
-    border-top: 1px solid #ddd;
-    margin-top: 1em;
-    padding-top: 1em;
-  }
 }
-
-#play-profile {
-  font-weight: bold;
-}
-
 
 #play-custom-configuration-error {
   background-color: #dc3545;
@@ -893,6 +879,29 @@ dialog ul {
     margin: 0 0 0 1.5em;
     padding: 0;
   }
+
+  .flex-left,
+  .flex-right {
+    flex: auto;
+  }
+
+  .icons {
+    margin-left: 1em;
+  }
+}
+
+.current-profile {
+  border-top: 1px solid #ddd;
+  margin-top: 1em;
+  padding-top: 1em;
+}
+
+.current-profile-name {
+  font-weight: bold;
+}
+
+.edit .puzzles li .status {
+  display: none;
 }
 
 /* ------------------------------------------------------------------------------------------------------------------ */

@@ -23,8 +23,8 @@ const elements = Object.freeze({
   editPuzzles: document.getElementById('edit-puzzles'),
   play: document.getElementById('title-play'),
   playLoad: document.getElementById('play-custom-load'),
-  playProfile: document.getElementById('play-profile'),
   playPuzzles: document.getElementById('play-puzzles'),
+  profile: document.querySelectorAll('.current-profile-name'),
   quit: document.getElementById('title-quit'),
   screen: document.getElementById('screen'),
   select: document.getElementById('select'),
@@ -38,7 +38,7 @@ export class Game {
   #eventListeners = new EventListeners({ context: this })
 
   constructor () {
-    elements.playProfile.textContent = Storage.Profile.get().name
+    elements.profile.forEach((element) => { element.textContent = Storage.Profile.get().name })
 
     this.puzzle = new Puzzle()
     this.editor = new Editor(this.puzzle)
@@ -180,7 +180,7 @@ export class Game {
   async #onProfileUpdate (event) {
     this.#teardown()
     Storage.Profiles.set(event.detail.id)
-    elements.playProfile.textContent = Storage.Profile.get().name
+    elements.profile.forEach((element) => { element.textContent = Storage.Profile.get().name })
     Game.updatePuzzles()
   }
 

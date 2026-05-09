@@ -45,6 +45,11 @@ export class PuzzleModifier extends Modifier {
     await puzzle.select(state.id, { animations: [Puzzle.Animations.SlideLeft] })
   }
 
+  onTap (event, detail) {
+    // Invoking this modifier does not result in a move
+    super.onTap(event, { addMove: false })
+  }
+
   static schema () {
     const imports = Puzzles.imports()
     return Object.freeze(merge([
