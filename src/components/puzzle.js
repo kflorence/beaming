@@ -179,15 +179,16 @@ export class Puzzle {
     return this.#interact.getProjectPoint(point)
   }
 
-  getShareUrl (context = State.getContext()) {
+  getShareUrl (context = State.getContext(), clone = false) {
     // Electron runs on localhost but should use the production web URL
     const shareUrl = new URL(process.env.TARGET === 'electron' ? baseUrl : url)
     shareUrl.search = ''
     shareUrl.searchParams.append(context, '')
-    const state = this.state.getConfig()
+    const state = clone ? this.state.clone() : this.state
+    const config = state.getConfig()
     // Update the imports using data from local cache
-    State.resolveImports(state, this.state.getCurrent())
-    shareUrl.hash = ['', State.getId(), this.state.encode(state)].join('/')
+    State.resolveImports(config, state.getCurrent())
+    shareUrl.hash = ['', State.getId(), state.encode(config)].join('/')
     return shareUrl.toString()
   }
 
@@ -663,7 +664,9 @@ export class Puzzle {
       .sort((beam) => tile.items.some((item) => item === beam) ? -1 : 0)
       .forEach((beam) => beam.onModifierInvoked(event, this))
 
-    this.state.addMove(event.type, tile, modifier, this.selectedTile)
+    if (event.detail.addMove !== false) {
+      this.state.addMove(event.type, tile, modifier, this.selectedTile)
+    }
 
     setTimeout(async () => {
       this.updateState()
@@ -841,6 +844,14 @@ export class Puzzle {
     Game.updatePuzzles([State.ContextKeys.Play])
 
     document.body.classList.add(Puzzle.Events.Loaded)
+
+    document.querySelectorAll('.group').forEach((element) => {
+      // Fixes .group:empty not updating properly in Safari
+      // This bug is marked as resolved but seems to still be manifesting
+      // https://bugs.webkit.org/show_bug.cgi?id=26570
+      element.style.display = 'initial'
+      element.style.display = ''
+    })
   }
 
   async #undo () {

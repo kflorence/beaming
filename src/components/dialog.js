@@ -13,7 +13,7 @@ document.querySelectorAll('[data-dialog]').forEach((target) => {
 
   const close = dialog.querySelector('header button')
   close.addEventListener('click', async () => {
-    const element = document.getElementById(dialog.dataset.from)
+    const element = document.getElementById(dialog.dataset.from) ?? title
     const direction = element.id === title.id ? 'right' : 'left'
 
     delete dialog.dataset.from

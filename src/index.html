@@ -110,7 +110,7 @@
           <fieldset>
             <legend>Puzzles</legend>
             <p>Load a puzzle by tapping on its name in the list below. Puzzles which are greyed out have not been unlocked yet.</p>
-            <p id="play-profile-wrapper">Using profile: <span id="play-profile">default</span> (you can change this on the settings screen)</p>
+            <p class="current-profile">Using profile: <span class="current-profile-name">default</span> (you can change this on the settings screen)</p>
             <ul class="puzzles" id="play-puzzles"></ul>
           </fieldset>
           <details id="play-custom">
@@ -462,6 +462,13 @@
         <div class="scroll">
           <fieldset>
             <legend>Puzzles</legend>
+            <p>
+              Use the puzzle editor to create your own custom puzzles. To start a new puzzle, click the button below.
+              You can test your puzzle by tapping on the play (<i class="ph-bold ph-play"></i>) icon in the editor screen.
+              You can share your puzzle with others by copying the play URL, or by tapping on the share icon after opening
+              your puzzle via the play URL.
+            </p>
+            <p class="current-profile">Using profile: <span class="current-profile-name">default</span> (you can change this on the settings screen)</p>
             <ul class="puzzles" id="edit-puzzles"></ul>
             <button id="edit-new"><i class="ph-bold ph-file-plus"></i> Create New Puzzle</button>
           </fieldset>

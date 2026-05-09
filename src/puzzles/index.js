@@ -70,7 +70,7 @@ export class Puzzles {
       div.append(left)
 
       const right = document.createElement('span')
-      right.classList.add('flex-right')
+      right.classList.add('flex-right', 'icons')
 
       if (custom) {
         const remove = document.createElement('i')

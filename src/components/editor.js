@@ -475,7 +475,9 @@ export class Editor {
   }
 
   #updatePlayUrl () {
-    elements.play.firstElementChild.setAttribute('href', this.#puzzle.getShareUrl(State.ContextKeys.Play))
+    elements.play.firstElementChild.setAttribute(
+      'href',
+      this.#puzzle.getShareUrl(State.ContextKeys.Play, true))
   }
 
   static mark (center, width) {
