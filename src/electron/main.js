@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, screen } from 'electron/main'
 import channels from './channels.js'
 import path from 'path'
+import { Keys, Values } from '../keys.js'
 import Steam from './steam.js'
 import Store from 'electron-store'
 
@@ -15,12 +16,7 @@ const store = new Store()
 
 const minHeight = 680
 const minWidth = 340
-
-const resizeTypes = Object.freeze({
-  custom: 'custom',
-  fullscreen: 'fullscreen',
-  maximized: 'maximized'
-})
+const windowType = store.get(Keys.window)
 
 if (!debug) {
   // Disable default menus when not running in debug mode
@@ -31,17 +27,28 @@ let display
 let window
 function createWindow () {
   display = screen.getPrimaryDisplay()
-  window = new BrowserWindow({
+  const options = {
     // Should match body background color
     backgroundColor: '#ccc',
-    height: 768,
     icon: path.join(__dirname, '../images/icon.png'),
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '../../dist/electron/preload.js')
-    },
-    width: 1024
-  })
+    }
+  }
+
+  if (windowType === Values.fullscreen) {
+    options.fullscreen = true
+  } else {
+    options.height = store.get(Keys.windowHeight) ?? Number(Values.defaultWindowHeight)
+    options.width = store.get(Keys.windowWidth) ?? Number(Values.defaultWindowWidth)
+  }
+
+  window = new BrowserWindow(options)
+
+  if (windowType === Values.maximized) {
+    window.maximize()
+  }
 
   window.loadFile('dist/web/index.html').catch((e) => {
     console.error('Failed to load file', e)
@@ -69,13 +76,13 @@ ipcMain.on(channels.quit, () => {
 })
 
 function onResizeWindow (event, value, settings) {
-  if (value === resizeTypes.maximized) {
+  if (value === Values.maximized) {
     window.maximize()
   } else if (window.isMaximized()) {
     window.unmaximize()
   }
 
-  if (value === resizeTypes.custom) {
+  if (value === Values.custom) {
     const displaySize = display.workAreaSize
     const bounds = {
       height: Number(settings.height),
@@ -99,8 +106,8 @@ function onResizeWindow (event, value, settings) {
 }
 
 ipcMain.on(channels.resizeWindow, (event, value, settings) => {
-  window.setFullScreen(value === resizeTypes.fullscreen)
-  if (window.isFullScreen() && value !== resizeTypes.fullscreen) {
+  window.setFullScreen(value === Values.fullscreen)
+  if (window.isFullScreen() && value !== Values.fullscreen) {
     // On macOS fullscreen transitions are asynchronous, so handle this case asynchronously
     window.once('leave-full-screen', () => onResizeWindow(event, value, settings))
   } else {
@@ -145,7 +152,5 @@ app.on('before-quit', () => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  app.quit()
 })

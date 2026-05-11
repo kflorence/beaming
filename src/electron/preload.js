@@ -15,6 +15,7 @@ const store = {
     return ipcRenderer.invoke(channels.storeGet, key)
   },
   set: async function (key, value) {
+    localStorage.setItem(key, value)
     return ipcRenderer.invoke(channels.storeSet, key, value)
   }
 }

@@ -1,7 +1,14 @@
 import { params } from './util'
+import { Keys } from '../keys.js'
 
 export function debug (debug) {
-  document.body.classList.toggle('debug', debug)
+  if (debug) {
+    params.set(Keys.debug, '')
+  } else {
+    params.delete(Keys.debug)
+  }
+
+  document.body.classList.toggle(Keys.debug, debug)
 }
 
-debug(params.has('debug'))
+debug(params.has(Keys.debug))
