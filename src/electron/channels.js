@@ -3,6 +3,7 @@ export default Object.freeze({
   debug: 'debug',
   quit: 'quit',
   resizeWindow: 'resize-window',
+  steamAchievementUnlock: 'steam-achievement-unlock',
   storeDelete: 'store-delete',
   storeGet: 'store-get',
   storeSet: 'store-set',

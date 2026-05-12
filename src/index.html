@@ -423,7 +423,7 @@
               <button id="settings-profile-create">New Profile</button>
             </div>
           </fieldset>
-          <fieldset id="settings-window">
+          <fieldset class="electron-only" id="settings-window">
             <legend>Window</legend>
             <div class="settings">
               <input id="settings-window-fullscreen" name="settings-window" type="radio" value="fullscreen" />
@@ -438,6 +438,8 @@
                 <input class="number" id="settings-window-height" type="number" />
                 <label for="settings-window-height">Height</label>
               </div>
+              <input id="settings-steam-overlay" type="checkbox" />
+              <label for="settings-steam-overlay">Enable Steam overlay (experimental, requires restart)</label>
             </div>
           </fieldset>
           <fieldset id="settings-troubleshooting">
@@ -446,7 +448,10 @@
               Found a bug? When reporting please include the share URL (<i class="ph-bold ph-share-network"></i>) along
               with your report. For some extra information on screen, you can enable debug mode below.
             </p>
-            <input id="settings-debug" type="checkbox" /><label for="settings-debug">Enable debug mode</label>
+            <div class="settings">
+              <input id="settings-debug" type="checkbox" />
+              <label for="settings-debug">Enable debug mode</label>
+            </div>
           </fieldset>
           <fieldset id="settings-cache">
             <legend>Cache</legend>

@@ -69,3 +69,11 @@ electron.onWindowResized((bounds) => {
     windowWidth.value = bounds.width
   }
 })
+
+const $steamOverlay = document.getElementById('settings-steam-overlay')
+$steamOverlay.checked = localStorage.getItem(Keys.enableSteamOverlay) === 'true'
+
+$steamOverlay.addEventListener('change', () => {
+  localStorage.setItem(Keys.enableSteamOverlay, $steamOverlay.checked)
+  window.electron?.store.set(Keys.enableSteamOverlay, $steamOverlay.checked)
+})

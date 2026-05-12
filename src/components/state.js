@@ -278,6 +278,18 @@ export class State {
     this.#deltas.filter((delta, index) => index <= deltaIndex).forEach((delta) => this.#apply(delta))
   }
 
+  static add (id) {
+    const ids = Array.from(new Set([...State.getIds(), id]))
+    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
+    return ids
+  }
+
+  static addSolution (id, solution) {
+    const solutions = Array.from(new Set([...State.getSolutions(), solution.join(':')]))
+    Storage.set(State.key(id ?? State.getId(), State.CacheKeys.Solutions), JSON.stringify(solutions))
+    return solutions
+  }
+
   static clearCache (id) {
     Storage.delete(id === undefined ? id : State.key(id))
   }
@@ -406,6 +418,10 @@ export class State {
     return params.get(State.CacheKeys.Parent)?.split(',') ?? []
   }
 
+  static getSolutions (id) {
+    return JSON.parse(Storage.get(State.key(id ?? State.getId(), State.CacheKeys.Solutions)) ?? '[]')
+  }
+
   static resolve (id) {
     let values = []
 
@@ -512,7 +528,8 @@ export class State {
     Id: 'id',
     Ids: 'ids',
     Locked: 'locked',
-    Parent: 'parent'
+    Parent: 'parent',
+    Solutions: 'solutions'
   })
 
   static ContextKeys = Object.freeze({
@@ -541,12 +558,6 @@ export class State {
   static key = getKeyFactory([State.getContext, 'puzzle'])
 
   static toString = classToString('State')
-
-  static add (id) {
-    const ids = Array.from(new Set([...State.getIds(), id]))
-    Storage.set(State.key(State.CacheKeys.Ids), JSON.stringify(ids))
-    return ids
-  }
 
   static remove (id, context = State.getContext()) {
     const ids = State.getIds(context)
