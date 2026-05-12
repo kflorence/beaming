@@ -2,7 +2,7 @@
 // See: https://www.electronjs.org/docs/latest/tutorial/sandbox#preload-scripts
 import { contextBridge, ipcRenderer } from 'electron'
 import channels from './channels.js'
-import { Keys } from './settings/keys.js'
+import { Keys } from '../keys.js'
 
 const electron = 'electron'
 const localStorage = window.localStorage

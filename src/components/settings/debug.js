@@ -1,10 +1,9 @@
-import { params } from '../util.js'
 import { debug } from '../debug.js'
 import { Keys } from '../../keys.js'
 
-const $debug = document.getElementById('settings-debug')
-$debug.checked = params.has(Keys.debug)
+const localStorage = window.localStorage
 
-$debug.addEventListener('change', () => {
-  debug($debug.checked)
-})
+const $debug = document.getElementById('settings-debug')
+$debug.checked = localStorage.getItem(Keys.debug) === 'true'
+
+$debug.addEventListener('change', () => { debug($debug.checked) })

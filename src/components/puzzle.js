@@ -31,6 +31,7 @@ import Tippy from 'tippy.js'
 import { Tile } from './items/tile.js'
 import { Storage } from './storage.js'
 import { Puzzles } from '../puzzles/index.js'
+import { debug } from './debug.js'
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas-wrapper'),
@@ -62,7 +63,6 @@ const tippy = Tippy(elements.share, {
 // See: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Event_loop
 export class Puzzle {
   connections = []
-  debug = params.has('debug')
   error = false
   footerMessages
   headerMessages
@@ -630,7 +630,7 @@ export class Puzzle {
   }
 
   async #onKeyup (event) {
-    if (this.debug && event.key === 's') {
+    if (debug() && event.key === 's') {
       await this.update()
     }
   }
@@ -681,7 +681,7 @@ export class Puzzle {
   }
 
   #onPointerMove (event) {
-    if (!event.target.matches?.('canvas') || !this.debug || Game.is(Game.States.Edit)) {
+    if (!event.target.matches?.('canvas') || !debug() || Game.is(Game.States.Edit)) {
       return
     }
 
@@ -910,7 +910,7 @@ export class Puzzle {
       return
     }
 
-    if (this.debug) {
+    if (debug()) {
       this.layers.debug.clear()
     }
 
