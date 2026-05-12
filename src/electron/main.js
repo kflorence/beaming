@@ -46,6 +46,10 @@ function createWindow () {
 
   window = new BrowserWindow(options)
 
+  if (store.get(Keys.enableSteamOverlay) === true) {
+    steam.setupOverlay(window)
+  }
+
   if (windowType === Values.maximized) {
     window.maximize()
   }
@@ -115,6 +119,12 @@ ipcMain.on(channels.resizeWindow, (event, value, settings) => {
   }
 })
 
+ipcMain.handle(channels.steamAchievementUnlock, (event, name) => {
+  steam.unlockAchievement(name).catch((reason) => {
+    console.error('Failed to unlock achievement', reason)
+  })
+})
+
 ipcMain.handle(channels.storeDelete, (event, key) => {
   if (key === undefined) {
     store.clear()
@@ -136,9 +146,9 @@ ipcMain.handle(channels.storeSet, (event, key, value) => {
 })
 
 app.whenReady().then(() => {
-  createWindow()
-
   steam.setup()
+
+  createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

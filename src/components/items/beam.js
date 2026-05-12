@@ -13,6 +13,7 @@ import { Step, StepState } from '../step'
 import { Collision, CollisionMergeWith } from '../collision'
 import { Cache } from '../cache'
 import { Tile } from './tile.js'
+import { Achievements } from '../../keys.js'
 
 export class Beam extends Item {
   done = false
@@ -321,7 +322,10 @@ export class Beam extends Item {
         } else if (!isSameDirection) {
           // For a collision with self, the update at point of impact will occur on the next update loop. This results in
           // a better visualization of the collision which will result in an infinite looping animation.
-          setTimeout(() => this.#update(stepIndex), puzzle.getBeamsUpdateDelay())
+          setTimeout(() => {
+            window.electron?.steam.unlockAchievement(Achievements.Infinity)
+            this.#update(stepIndex)
+          }, puzzle.getBeamsUpdateDelay())
         }
       }
 

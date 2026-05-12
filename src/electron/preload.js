@@ -7,6 +7,12 @@ import { Keys } from '../keys.js'
 const electron = 'electron'
 const localStorage = window.localStorage
 
+const steam = {
+  unlockAchievement: async function (name) {
+    return ipcRenderer.invoke(channels.steamAchievementUnlock, name)
+  }
+}
+
 const store = {
   delete: async function (key) {
     return ipcRenderer.invoke(channels.storeDelete, key)
@@ -62,5 +68,6 @@ contextBridge.exposeInMainWorld(electron, {
   onWindowResized,
   quit,
   resizeWindow,
+  steam,
   store
 })

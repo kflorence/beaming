@@ -32,6 +32,9 @@ import { Tile } from './items/tile.js'
 import { Storage } from './storage.js'
 import { Puzzles } from '../puzzles/index.js'
 import { debug } from './debug.js'
+import { Achievements } from '../keys.js'
+
+const electron = window.electron
 
 const elements = Object.freeze({
   canvas: document.getElementById('puzzle-canvas-wrapper'),
@@ -715,6 +718,8 @@ export class Puzzle {
       return
     }
 
+    const id = this.state.getId()
+
     this.solved = true
 
     this.updateSelectedTile(undefined)
@@ -722,6 +727,8 @@ export class Puzzle {
 
     // Store the solution in cache
     this.state.setSolution(this.layout.tiles.filter(this.#mask.tileFilter))
+
+    const solutions = State.addSolution(id, this.state.getSolution())
 
     const p = document.createElement('p')
     p.classList.add(Puzzle.ClassNames.Solved)
@@ -735,6 +742,19 @@ export class Puzzle {
 
     document.body.classList.add(Puzzle.Events.Solved)
     emitEvent(Puzzle.Events.Solved)
+
+    if (electron) {
+      electron.steam.unlockAchievement(Achievements.FirstSolve)
+
+      if (solutions.length > 5) {
+        electron.steam.unlockAchievement(Achievements.Hex)
+      }
+
+      // TODO should probably come up with a more flexible system for this rather than hard coding it
+      if (this.state.getId() === '001') {
+        electron.steam.unlockAchievement(Achievements.Puzzle001)
+      }
+    }
   }
 
   #onStateUpdate (event) {

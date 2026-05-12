@@ -12,6 +12,7 @@ import { Gutter } from './gutter'
 import { Phosphor } from './iconlib.js'
 import { Icon, Icons } from './icon.js'
 import { Game } from './game.js'
+import { Achievements } from '../keys.js'
 
 const elements = Object.freeze({
   cancel: document.getElementById('editor-cancel'),
@@ -448,6 +449,7 @@ export class Editor {
 
   #updateConfiguration (state) {
     elements.configuration.value = JSON.stringify(state, null, 2)
+    window.electron?.steam.unlockAchievement(Achievements.Edit)
     this.#updatePlayUrl()
   }
 

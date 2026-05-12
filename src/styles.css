@@ -952,11 +952,11 @@ dialog ul {
   margin-right: 1em;
 }
 
-#settings-window {
+.electron-only {
   display: none;
 }
 
-.electron #settings-window {
+.electron .electron-only {
   display: block;
 }
 
