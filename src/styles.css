@@ -72,6 +72,10 @@ input {
   padding: 0.5em;
 }
 
+input[type=checkbox] {
+  margin-right: 0.5em;
+}
+
 button.danger {
   background-color: #dc3545;
   border-color: #dc3545;

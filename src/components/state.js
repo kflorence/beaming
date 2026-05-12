@@ -522,6 +522,7 @@ export class State {
 
   static ParamKeys = Object.freeze({
     ClearCache: 'clearCache',
+    Debug: 'debug',
     Edit: 'edit',
     Parents: 'parents',
     Play: 'play',

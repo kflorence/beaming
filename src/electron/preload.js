@@ -2,7 +2,7 @@
 // See: https://www.electronjs.org/docs/latest/tutorial/sandbox#preload-scripts
 import { contextBridge, ipcRenderer } from 'electron'
 import channels from './channels.js'
-import { Keys } from './settings/keys.js'
+import { Keys } from '../keys.js'
 
 const electron = 'electron'
 const localStorage = window.localStorage
@@ -15,6 +15,7 @@ const store = {
     return ipcRenderer.invoke(channels.storeGet, key)
   },
   set: async function (key, value) {
+    localStorage.setItem(key, value)
     return ipcRenderer.invoke(channels.storeSet, key, value)
   }
 }

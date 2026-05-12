@@ -1,17 +1,18 @@
-import { Keys } from './keys.js'
+import { Keys, Values } from '../../keys.js'
 
+const electron = window.electron
 const localStorage = window.localStorage
+const store = electron.store
+
 const name = 'settings-window'
 const settings = document.getElementsByName(name)
 const windowHeight = document.getElementById('settings-window-height')
 const windowWidth = document.getElementById('settings-window-width')
 const bounds = [windowHeight, windowWidth]
+const windowType = localStorage.getItem(Keys.window) ?? Values.custom
 
-const Values = Object.freeze({
-  custom: 'custom',
-  fullscreen: 'fullscreen',
-  maximized: 'maximized'
-})
+windowHeight.value = localStorage.getItem(Keys.windowHeight) ?? Values.defaultWindowHeight
+windowWidth.value = localStorage.getItem(Keys.windowWidth) ?? Values.defaultWindowWidth
 
 function getBounds () {
   return {
@@ -25,24 +26,25 @@ function getValue () {
 }
 
 function update (value) {
-  localStorage.setItem(Keys.window, value)
+  store.set(Keys.window, value)
 
   windowHeight.disabled = windowWidth.disabled = !(value === Values.custom)
 
   if (value === Values.custom) {
     if (Number(windowHeight.value)) {
-      localStorage.setItem(Keys.windowHeight, windowHeight.value)
+      store.set(Keys.windowHeight, windowHeight.value)
     }
     if (Number(windowWidth.value)) {
-      localStorage.setItem(Keys.windowWidth, windowWidth.value)
+      store.set(Keys.windowWidth, windowWidth.value)
     }
   }
 
   // When running in electron, send a request to update the window
-  window.electron?.resizeWindow(value, getBounds())
+  electron.resizeWindow(value, getBounds())
 }
 
 settings.forEach((element) => {
+  element.checked = element.value === windowType
   element.addEventListener('change', function () {
     if (this.checked) {
       update(this.value)
@@ -50,7 +52,7 @@ settings.forEach((element) => {
   })
 })
 
-if (window.electron?.resizeWindow) {
+if (electron.resizeWindow) {
   bounds.forEach((element) => {
     element.addEventListener('change', function () {
       if (!this.disabled) {
@@ -60,12 +62,10 @@ if (window.electron?.resizeWindow) {
   })
 }
 
-window.electron?.onWindowResized((bounds) => {
+electron.onWindowResized((bounds) => {
   if (getValue() === Values.custom) {
     // Keep window dimensions in sync with window size if resizing manually
     windowHeight.value = bounds.height
     windowWidth.value = bounds.width
   }
 })
-
-update(getValue())
