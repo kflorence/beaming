@@ -22,6 +22,29 @@ A free version of the game is [available online](https://kflorence.github.io/bea
 
 A paid version of the game is [available on Steam](https://store.steampowered.com/app/4172230/Beaming/). In addition to everything in the online version, this will also include integrations with Steam cloud storage, achievements and Steam Workshop for sharing and playing user generated puzzles.
 
+## Development
+
+Here are the necessary steps for local development. It is recommended that you have [nvm](https://github.com/nvm-sh/nvm) installed.
+
+```
+nvm use
+npm install
+```
+
+To test locally in the browser:
+
+```
+npm start
+```
+
+To test locally in Electron:
+
+```
+npm run desktop
+```
+
+Note that not all steam features will be available to you if you don't have Steam running locally, and you don't have access to the game in your Steam library.
+
 ## License
 
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC_BY--NC_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
