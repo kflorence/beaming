@@ -5,7 +5,9 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses'
 // noinspection JSUnusedGlobalSymbols
 export default {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '{**/steamworks_sdk/**,**/steamworks-ffi-node/**/*.node}'
+    },
     icon: './src/images/icon',
     // See: https://github.com/electron/universal/issues/36
     osxSign: {},
@@ -37,10 +39,6 @@ export default {
     }
   ],
   plugins: [
-    {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {}
-    },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
