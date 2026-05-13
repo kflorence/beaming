@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu, screen } from 'electron/main'
 import channels from './channels.js'
+import log from 'electron-log/main.js'
 import path from 'path'
 import { Keys, Values } from '../keys.js'
 import Steam from './steam.js'
@@ -8,6 +9,12 @@ import Store from 'electron-store'
 const __dirname = import.meta.dirname
 const args = process.argv.slice(2)
 const debug = args.includes('--debug')
+
+log.initialize()
+log.transports.console.level = 'debug'
+log.transports.file.level = 'debug'
+
+Object.assign(console, log.functions)
 
 const steam = new Steam()
 
