@@ -6,7 +6,7 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses'
 export default {
   packagerConfig: {
     asar: {
-      unpack: '{**/steamworks_sdk/**,**/steamworks-ffi-node/**}'
+      unpack: '{**/steamworks_sdk/**,**/steamworks-ffi-node/**/*.node}'
     },
     icon: './src/images/icon',
     // See: https://github.com/electron/universal/issues/36
