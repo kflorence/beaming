@@ -318,7 +318,7 @@ describe('Puzzle 001-008', function () {
       { type: 'tile-select', tile: '-12,-2' },
       { type: 'modifier-invoke', modifier: 'rotate' },
       { type: 'modifier-invoke', modifier: 'puzzle' },
-      { type: 'wait', for: 'puzzle-loaded' },
+      { type: 'wait', for: 'puzzle-loaded' }
     ])
 
     await puzzle.solve([
