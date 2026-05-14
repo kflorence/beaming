@@ -31,7 +31,7 @@ export class PuzzleFixture {
   driver
   elements = {}
 
-  static DefaultOptions = Object.freeze({ mode: 'play', unlock: true })
+  static DefaultOptions = Object.freeze({ mode: 'play', unlock: false })
 
   constructor (id, options) {
     options = Object.assign({}, PuzzleFixture.DefaultOptions, options)
@@ -42,7 +42,6 @@ export class PuzzleFixture {
   }
 
   async after () {
-    console.log(await this.getShareUrl())
     if (this.driver) {
       await this.driver.quit()
     }
@@ -209,6 +208,7 @@ export class PuzzleFixture {
     for (const action of actions) {
       await this.process(action)
     }
+    console.log(await this.getShareUrl())
   }
 
   static baseUrl = 'http://localhost:1234'
