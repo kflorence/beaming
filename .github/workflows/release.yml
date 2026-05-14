@@ -15,7 +15,7 @@ jobs:
       version: ${{ steps.build-info.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Shouldn't need fetch-depth: 0, but see:
           # https://github.com/actions/checkout/issues/2199
@@ -45,9 +45,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
       - name: Install dependencies
@@ -71,9 +71,9 @@ jobs:
     needs: [build-info, gh-pages, make]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
       - run: tree artifacts
