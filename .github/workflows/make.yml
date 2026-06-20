@@ -33,6 +33,12 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          if [ -z "$APPLE_CERTIFICATE_BASE64" ]; then
+            echo "Secret is empty or not set!"
+            exit 1
+          else
+            echo "Secret is securely present."
+          fi
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
