@@ -10,7 +10,14 @@ export default {
     },
     icon: './src/images/icon',
     // See: https://github.com/electron/universal/issues/36
-    osxSign: {},
+    osxNotarize: {
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_APP_PASSWORD,
+      teamId: process.env.APPLE_TEAM_ID
+    },
+    osxSign: {
+      optionsForFile: () => ({ entitlements: './build/entitlements.mac.plist' })
+    },
     // See: https://electron.github.io/packager/main/interfaces/OsxUniversalOptions.html
     osxUniversal: {
       mergeASARs: true,
