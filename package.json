@@ -57,7 +57,7 @@
     "@parcel/optimizer-htmlnano": "^2.16.4",
     "@parcel/resolver-glob": "^2.16.4",
     "app-builder-lib": "^26.8.1",
-    "chromedriver": "^147.0.4",
+    "chromedriver": "^149.0.4",
     "cross-env": "^10.1.0",
     "electron": "^41.1.1",
     "mocha": "^11.7.5",
