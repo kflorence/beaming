@@ -8,4 +8,5 @@ jobs:
     uses: './.github/workflows/test.yml'
   make:
     needs: test
+    secrets: inherit
     uses: './.github/workflows/make.yml'
