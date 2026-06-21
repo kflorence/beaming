@@ -65,6 +65,7 @@ jobs:
   make:
     needs: build-info
     if: needs.build-info.outputs.tag != needs.build-info.outputs.latest-tag
+    secrets: inherit
     uses: './.github/workflows/make.yml'
   create:
     runs-on: ubuntu-latest
